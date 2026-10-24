@@ -19,7 +19,7 @@ The app uses port 3000. Without Supabase configuration it runs in clearly labele
 - Agent contact profile reused across every property design.
 - Property creation and editing: headline, location, price/currency, area/unit, bedrooms, bathrooms, description, and amenities.
 - Photo upload, browser-side WebP compression, cover selection, and gallery management. Up to 20 photos, 10 MB per input file.
-- Three distinct responsive websites: **The Editorial**, **The Minimal**, and **The Panorama**.
+- Three distinct responsive websites: **The Editorial**, **The Heritage**, and **The Panorama**.
 - Direct on-page editing of the headline, location, and description, with explicit saving.
 - Drafts, saved previews, publication validation, unpublishing, and stable public URLs.
 - Supabase email/password signup, login, email confirmation, and password reset when configured.

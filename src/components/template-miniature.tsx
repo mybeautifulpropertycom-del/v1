@@ -27,9 +27,8 @@ export function TemplateMiniature({
               </>
             ) : template === "minimal" ? (
               <>
-                A place.
-                <br />
-                To call home.
+                A little character.
+                <br />A new beginning.
               </>
             ) : (
               <>

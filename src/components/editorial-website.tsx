@@ -10,21 +10,18 @@ import {
   BedDouble,
   CalendarDays,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Expand,
   Film,
   Mail,
   MapPin,
   Phone,
   Square,
-  X,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
 import type { PropertyWebsiteProps } from "./property-website";
 import { EditableText } from "./website-editable-text";
 import { ViewingDialog } from "./viewing-dialog";
-import { trapDialogFocus } from "./website-dialog-focus";
+import { PropertyPhotoDialog } from "./property-photo-dialog";
 
 /** A completed, browser-playable film supplied by a future video integration. */
 export type PropertyFilm = { src: string; poster?: string; captions?: string };
@@ -156,87 +153,6 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
         </div>
       </div>
     </section>
-  );
-}
-
-function PhotoDialog({
-  images,
-  title,
-  initial,
-  onClose,
-}: {
-  images: string[];
-  title: string;
-  initial: number;
-  onClose: () => void;
-}) {
-  const [index, setIndex] = useState(initial);
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const dialog = ref.current;
-    const previous = document.activeElement as HTMLElement | null;
-    const overflow = document.body.style.overflow;
-    dialog?.showModal();
-    document.body.style.overflow = "hidden";
-    return () => {
-      dialog?.close();
-      document.body.style.overflow = overflow;
-      previous?.focus({ preventScroll: true });
-    };
-  }, []);
-  return (
-    <dialog
-      ref={ref}
-      className="estate-lightbox lightbox"
-      aria-label="Property photo gallery"
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        trapDialogFocus(e);
-        if (e.key === "ArrowRight") {
-          e.preventDefault();
-          setIndex((index + 1) % images.length);
-        }
-        if (e.key === "ArrowLeft") {
-          e.preventDefault();
-          setIndex((index - 1 + images.length) % images.length);
-        }
-      }}
-    >
-      <button
-        type="button"
-        className="lightbox-close"
-        aria-label="Close gallery"
-        onClick={onClose}
-      >
-        <X size={26} />
-      </button>
-      <button
-        type="button"
-        className="lightbox-prev"
-        aria-label="Previous photo"
-        onClick={() => setIndex((index - 1 + images.length) % images.length)}
-      >
-        <ChevronLeft size={30} />
-      </button>
-      <img src={images[index]} alt={`${title} — view ${index + 1}`} />
-      <button
-        type="button"
-        className="lightbox-next"
-        aria-label="Next photo"
-        onClick={() => setIndex((index + 1) % images.length)}
-      >
-        <ChevronRight size={30} />
-      </button>
-      <span aria-live="polite">
-        {index + 1} / {images.length}
-      </span>
-    </dialog>
   );
 }
 
@@ -859,7 +775,7 @@ export function EditorialWebsite({
         />
       )}
       {lightbox !== null && (
-        <PhotoDialog
+        <PropertyPhotoDialog
           images={property.images}
           title={property.title}
           initial={lightbox}

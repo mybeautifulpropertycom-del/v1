@@ -27,6 +27,7 @@ import {
 
 import { EditableText, type EditableField } from "./website-editable-text";
 import { EditorialWebsite, type PropertyFilm } from "./editorial-website";
+import { HeritageWebsite } from "./heritage-website";
 export type { EditableField } from "./website-editable-text";
 
 export type PropertyWebsiteProps = {
@@ -39,11 +40,11 @@ export type PropertyWebsiteProps = {
 };
 
 export function PropertyWebsite(props: PropertyWebsiteProps) {
-  return props.property.template === "editorial" ? (
-    <EditorialWebsite {...props} />
-  ) : (
-    <ClassicPropertyWebsite {...props} />
-  );
+  if (props.property.template === "editorial")
+    return <EditorialWebsite {...props} />;
+  if (props.property.template === "minimal")
+    return <HeritageWebsite {...props} />;
+  return <ClassicPropertyWebsite {...props} />;
 }
 
 function ClassicPropertyWebsite({

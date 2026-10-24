@@ -3,7 +3,7 @@
 The English Editorial design follows the supplied reference screenshots: an
 image-led hero, cream story section, forest-green scroll sequence, a photograph
 alongside the property specifications, a separate complete gallery, film, agent
-contact, and a final viewing invitation. The Minimal and Panorama remain available.
+contact, and a final viewing invitation. The Heritage and Panorama remain available.
 
 The residence title, description, location, price, dimensions, rooms, amenities,
 and photographs come from the saved property. The agent's identity, brokerage,

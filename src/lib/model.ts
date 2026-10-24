@@ -48,11 +48,11 @@ export const templates = [
   },
   {
     id: "minimal" as const,
-    name: "The Minimal",
-    tag: "CLEAN & CONTEMPORARY",
+    name: "The Heritage",
+    tag: "CHARACTER & CHARM",
     description:
-      "Clean lines. Considered details. Your property, at the center of it all.",
-    color: "#e7eae4",
+      "A warm, collected feel. An immersive opening, an album of photographs, and room for a new beginning.",
+    color: "#f5f2e7",
   },
   {
     id: "panorama" as const,

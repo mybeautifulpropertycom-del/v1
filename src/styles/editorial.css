@@ -52,7 +52,7 @@
 .estate-website .estate-eyebrow + h2 {
   margin-top: 25px;
 }
-.estate-website .estate-button {
+:is(.estate-website, .viewing-dialog) .estate-button {
   display: inline-flex;
   justify-content: space-between;
   align-items: center;
@@ -68,7 +68,7 @@
     background 0.2s,
     color 0.2s;
 }
-.estate-website .estate-button:hover:not(:disabled) {
+:is(.estate-website, .viewing-dialog) .estate-button:hover:not(:disabled) {
   background: #345144;
 }
 .estate-text-link {
@@ -683,7 +683,9 @@
   color: var(--estate-muted);
   margin: 15px 0 29px;
 }
-.estate-website :is(.estate-inquiry, .viewing-fields) label {
+:is(.estate-website, .heritage-website)
+  :is(.estate-inquiry, .viewing-fields)
+  label {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -691,12 +693,17 @@
   color: var(--estate-ink);
   margin-bottom: 19px;
 }
-.estate-website :is(.estate-inquiry, .viewing-fields) label > span {
+:is(.estate-website, .heritage-website)
+  :is(.estate-inquiry, .viewing-fields)
+  label
+  > span {
   display: contents;
   font-weight: 400;
   color: var(--estate-muted);
 }
-.estate-website :is(.estate-inquiry, .viewing-fields) :is(input, textarea) {
+:is(.estate-website, .heritage-website)
+  :is(.estate-inquiry, .viewing-fields)
+  :is(input, textarea) {
   border-color: #d2dcce;
   border-radius: 5px;
   background: #fdfefa;
@@ -704,8 +711,12 @@
   font-size: 13px;
   padding: 14px 15px;
 }
-.estate-website :is(.estate-inquiry, .viewing-fields) input::placeholder,
-.estate-website :is(.estate-inquiry, .viewing-fields) textarea::placeholder {
+:is(.estate-website, .heritage-website)
+  :is(.estate-inquiry, .viewing-fields)
+  input::placeholder,
+:is(.estate-website, .heritage-website)
+  :is(.estate-inquiry, .viewing-fields)
+  textarea::placeholder {
   color: #7b897d;
 }
 .estate-field-pair {
@@ -727,7 +738,7 @@
   color: #667561;
   margin-top: 16px;
 }
-.estate-website .estate-form-status {
+:is(.estate-website, .viewing-dialog) .estate-form-status {
   font-size: 13px;
   line-height: 1.7;
   color: #17332d;
@@ -879,7 +890,7 @@
   display: inline;
   vertical-align: middle;
 }
-.estate-website .estate-lightbox {
+.property-photo-dialog {
   padding: 0;
   border: 0;
   margin: auto;
@@ -890,16 +901,16 @@
   color: white;
   background: #0c1514f5;
 }
-.estate-lightbox::backdrop {
+.property-photo-dialog::backdrop {
   background: #0c1514e6;
 }
-.estate-website .estate-lightbox > img {
+.property-photo-dialog > img {
   width: auto;
   max-width: 88vw;
   max-height: 82dvh;
   object-fit: contain;
 }
-.estate-website .viewing-dialog {
+.viewing-dialog {
   width: min(1000px, calc(100% - 40px));
   max-width: none;
   max-height: calc(100dvh - 40px);
@@ -936,10 +947,16 @@
   font-size: 9px;
   padding-right: 10px;
 }
-.estate-website .viewing-intro h2 {
+.viewing-dialog .viewing-intro h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.12;
   font-size: clamp(34px, 5vw, 65px);
   margin-top: 23px;
   letter-spacing: -2px;
+}
+.viewing-intro h2 em {
+  color: var(--estate-sage);
 }
 .viewing-intro > p {
   font-size: 13px;
@@ -959,7 +976,7 @@
   color: #6a7d6b;
   margin-top: 20px;
 }
-.estate-website .viewing-fields textarea {
+.viewing-dialog .viewing-fields textarea {
   min-height: 76px;
 }
 .viewing-calendar {
@@ -1129,7 +1146,7 @@
   .estate-details li {
     font-size: 10px;
   }
-  .estate-website .viewing-dialog {
+  .viewing-dialog {
     padding: 35px;
   }
   .viewing-calendar {
@@ -1338,7 +1355,7 @@
   .estate-inquiry h3 {
     font-size: 31px;
   }
-  .estate-website .estate-button {
+  :is(.estate-website, .viewing-dialog) .estate-button {
     font-size: 12px;
     padding: 17px 21px;
     gap: 20px;
@@ -1378,7 +1395,7 @@
   .estate-footer > div {
     grid-column: 1/-1;
   }
-  .estate-website .viewing-dialog {
+  .viewing-dialog {
     width: calc(100% - 20px);
     max-height: calc(100dvh - 20px);
     padding: 30px 23px;
@@ -1396,7 +1413,7 @@
     font-size: 7px;
     padding-right: 15px;
   }
-  .estate-website .viewing-intro h2 {
+  .viewing-dialog .viewing-intro h2 {
     font-size: 37px;
     margin-top: 20px;
     letter-spacing: -1.3px;
@@ -1425,7 +1442,7 @@
     text-align: center;
     font-size: 10px;
   }
-  .estate-website .estate-lightbox > img {
+  .property-photo-dialog > img {
     max-width: 95vw;
     max-height: 75dvh;
   }
