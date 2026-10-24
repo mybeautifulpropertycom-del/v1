@@ -15,11 +15,16 @@ export function getSupabase(): SupabaseClient | null {
   return client;
 }
 
-export function serverSupabase(): SupabaseClient | null {
+export function serverSupabase(accessToken?: string): SupabaseClient | null {
   if (!supabaseConfigured) return null;
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
+    {
+      auth: { persistSession: false, autoRefreshToken: false },
+      ...(accessToken
+        ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
+        : {}),
+    },
   );
 }

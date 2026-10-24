@@ -243,6 +243,138 @@ test("a preferred viewing date reaches only the listing agent’s existing inbox
   assert.equal(saved.rows[0].property_id, propertyA);
 });
 
+test("property stories remain owner-controlled, are public only with the listing, and have a durable budget", async () => {
+  await asAnon();
+  await assert.rejects(
+    db.query("select public.reserve_property_story($1)", [propertyA]),
+    /permission denied/i,
+  );
+  await asAgent(agentB);
+  assert.equal(
+    (
+      await db.query<{ result: string }>(
+        "select public.reserve_property_story($1) as result",
+        [propertyA],
+      )
+    ).rows[0].result,
+    "unavailable",
+  );
+  await asAgent(agentA);
+  await assert.rejects(
+    db.query("select * from public.property_story_usage"),
+    /permission denied/i,
+  );
+  await assert.rejects(
+    db.query("delete from public.property_story_usage"),
+    /permission denied/i,
+  );
+  const reserve = async () =>
+    (
+      await db.query<{ result: string }>(
+        "select public.reserve_property_story($1) as result",
+        [propertyA],
+      )
+    ).rows[0].result;
+  assert.equal(await reserve(), "reserved");
+  assert.equal(await reserve(), "cooldown");
+  for (let i = 1; i < 5; i++) {
+    await db.exec(
+      "reset role; update public.property_story_usage set last_started_at = now() - interval '2 minutes';",
+    );
+    await asAgent(agentA);
+    assert.equal(await reserve(), "reserved");
+  }
+  await db.exec(
+    "reset role; update public.property_story_usage set last_started_at = now() - interval '2 minutes';",
+  );
+  await asAgent(agentA);
+  assert.equal(await reserve(), "daily_limit");
+  await db.exec(
+    "reset role; update public.property_story_usage set usage_day = current_date - 1;",
+  );
+  await asAgent(agentA);
+  assert.equal(await reserve(), "reserved");
+  const copy = {
+    version: 1,
+    source: "example",
+    content: { heroLine: "Property-specific copy" },
+  };
+  await db.query("update public.properties set website_copy = $1 where id=$2", [
+    JSON.stringify(copy),
+    propertyA,
+  ]);
+  await asAgent(agentB);
+  assert.equal(
+    (
+      await db.query(
+        "update public.properties set website_copy = null where id=$1 returning id",
+        [propertyA],
+      )
+    ).rows.length,
+    0,
+  );
+  await asAnon();
+  const published = await db.query<{
+    data: { property: { website_copy: unknown } };
+  }>("select public.get_public_property('published-home') as data");
+  assert.deepEqual(published.rows[0].data.property.website_copy, copy);
+});
+
+test("the stories update upgrades the original schema without replacing existing listings", async () => {
+  const isolated = await createTestDatabase();
+  try {
+    await isolated.exec(
+      await readFile(
+        new URL(
+          "../supabase/migrations/202610230001_initial.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    await isolated.query(
+      "insert into auth.users(id, email) values ($1, 'existing@example.com')",
+      [agentA],
+    );
+    await isolated.query(
+      "insert into public.properties(id, owner_id, slug, title) values ($1, $2, 'existing-home', 'Existing property')",
+      [propertyA, agentA],
+    );
+    const before = (await isolated.query("select * from public.properties"))
+      .rows[0];
+    await isolated.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-property-stories.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const { website_copy, ...unchanged } = (
+      await isolated.query<Record<string, unknown>>(
+        "select * from public.properties",
+      )
+    ).rows[0];
+    assert.equal(website_copy, null);
+    assert.deepEqual(unchanged, before);
+  } finally {
+    await isolated.close();
+  }
+});
+
+test("the additive stories installer can be reapplied without changing listings", async () => {
+  await db.exec("reset role;");
+  const before = await db.query("select * from public.properties order by id");
+  const update = await readFile(
+    new URL("../supabase/sql-editor-property-stories.sql", import.meta.url),
+    "utf8",
+  );
+  await db.exec(update);
+  await db.exec(update);
+  assert.deepEqual(
+    (await db.query("select * from public.properties order by id")).rows,
+    before.rows,
+  );
+});
+
 test("unpublishing removes public access immediately", async () => {
   await asAgent(agentA);
   await db.query("update public.properties set status='draft' where id=$1", [

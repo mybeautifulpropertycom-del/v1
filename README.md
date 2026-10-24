@@ -20,6 +20,7 @@ The app uses port 3000. Without Supabase configuration it runs in clearly labele
 - Property creation and editing: headline, location, price/currency, area/unit, bedrooms, bathrooms, description, and amenities.
 - Photo upload, browser-side WebP compression, cover selection, and gallery management. Up to 20 photos, 10 MB per input file.
 - Three distinct responsive websites: **The Editorial**, **The Heritage**, and **The Panorama**.
+- Property-specific Heritage headings and a text-only looping amenity ribbon. Optional photo-based writing with editable suggestions: [activation and limits](docs/PROPERTY-STORIES.md).
 - Direct on-page editing of the headline, location, and description, with explicit saving.
 - Drafts, saved previews, publication validation, unpublishing, and stable public URLs.
 - Supabase email/password signup, login, email confirmation, and password reset when configured.
@@ -33,7 +34,7 @@ The video studio is explicitly a planned feature. No Higgsfield service, video g
 For the step-by-step Romanian connection guide, see [CONNECT-SUPABASE.md](docs/CONNECT-SUPABASE.md). The Free plan is suitable for the current prototype; a Pro subscription is not required to connect it.
 
 1. Create a Supabase project, preferably in a region close to the intended US customers.
-2. Run the entire [`supabase/sql-editor-setup.sql`](supabase/sql-editor-setup.sql) once in a new project's SQL editor. It wraps the initial migration in a transaction, creates profiles, properties, inquiries, row-level security, public RPCs, signup triggers, and the `property-images` storage bucket, then returns `MBP_SETUP_OK`. A conflict rolls back the attempt; inspect existing objects instead of deleting them. Regenerate this file with `npm run supabase:prepare-sql` after editing the source migration. Alternatively, apply `supabase/migrations/202610230001_initial.sql` through your existing Supabase migration workflow. Use one installation method, and reconcile CLI migration history if switching from manual installation later. The ChatGPT Supabase plugin is optional.
+2. Run the entire [`supabase/sql-editor-setup.sql`](supabase/sql-editor-setup.sql) once in a new project's SQL editor. It wraps all migrations in a transaction, creates profiles, properties, inquiries, row-level security, public RPCs, signup triggers, and the `property-images` storage bucket, then returns `MBP_SETUP_OK`. A conflict rolls back the attempt; inspect existing objects instead of deleting them. Regenerate this file with `npm run supabase:prepare-sql` after editing the source migration. Alternatively, apply the files in `supabase/migrations/` in order through your existing migration workflow. Use one installation method, and reconcile CLI migration history if switching from manual installation later. The ChatGPT Supabase plugin is optional.
 3. Copy `.env.example` to `.env.local` and supply:
 
    ```dotenv

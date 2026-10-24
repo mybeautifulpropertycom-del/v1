@@ -31,6 +31,7 @@ import {
 } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { TemplateMiniature } from "./template-miniature";
+import { PropertyStoryComposer } from "./property-story-composer";
 
 export function PropertyEditor({
   id,
@@ -590,6 +591,20 @@ export function PropertyEditor({
                 ))}
               </div>
             </section>
+          )}
+          {step < 2 && (
+            <PropertyStoryComposer
+              property={property}
+              demo={demo}
+              saved={saved}
+              dirty={dirty}
+              locked={busy || uploading}
+              onApply={(next) => {
+                setProperty(next);
+                setDirty(true);
+                setPublished(false);
+              }}
+            />
           )}
           <div className="editor-step-actions">
             {step > 0 ? (

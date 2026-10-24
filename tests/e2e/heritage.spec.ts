@@ -1,4 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { demoWorkspace } from "../../src/lib/demo";
+import {
+  propertyStory,
+  propertyStorySource,
+} from "../../src/lib/property-story";
 
 async function coverScale(page: import("@playwright/test").Page) {
   return page
@@ -30,6 +35,124 @@ test("Heritage cover zooms on scroll, keeps the heading stable, and honors reduc
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(stage).not.toHaveAttribute("data-zoom-pinned");
   await expect.poll(() => coverScale(page)).toBe(1);
+});
+
+test("Heritage highlights loop as text, can pause, and remain fully readable with reduced motion", async ({
+  page,
+}) => {
+  await page.goto("/templates/minimal");
+  const strip = page.getByLabel("Property highlights");
+  await expect(strip.locator("svg")).toHaveCount(0);
+  await expect(strip.locator("ul").first().locator("li")).toHaveText(
+    demoWorkspace().properties[0].amenities,
+  );
+  await expect(strip.locator("ul").last()).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  await expect(strip.locator(".heritage-amenity-track")).toHaveCSS(
+    "animation-iteration-count",
+    "infinite",
+  );
+  await strip.getByRole("button", { name: "Pause highlights" }).click();
+  await expect(strip.locator(".heritage-amenity-track")).toHaveCSS(
+    "animation-play-state",
+    "paused",
+  );
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(strip.locator(".heritage-amenity-track")).toHaveCSS(
+    "animation-name",
+    "none",
+  );
+  await expect(strip.locator("ul").last()).toBeHidden();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(
+    page.getByText("A HOME. A FEELING. A FRESH START.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".heritage-setting-layout figcaption small"),
+  ).toHaveCSS("font-size", "10px");
+  expect(
+    await strip.evaluate((node) => node.scrollWidth <= node.clientWidth),
+  ).toBe(true);
+});
+
+test("reviewed property copy persists, captions match images, and changed facts invalidate old analysis", async ({
+  page,
+}) => {
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const workspace = demoWorkspace();
+  const listing = workspace.properties[1];
+  listing.website_copy = {
+    version: 1,
+    source: propertyStorySource(listing),
+    content: {
+      ...propertyStory(listing),
+      introTitle: "Windows onto a new day.",
+      captions: listing.images.map((_, i) => `Reviewed caption ${i + 1}`),
+    },
+  };
+  await page.evaluate(async (data) => {
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open("my-beautiful-property-demo", 1);
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction("workspace", "readwrite");
+        tx.objectStore("workspace").put(data, "state");
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      };
+      open.onerror = () => reject(open.error);
+    });
+  }, workspace);
+  await page.goto("/preview/demo-apartment");
+  await expect(
+    page.locator(".heritage-story .heritage-section-heading h2"),
+  ).toContainText("Windows onto a new day.");
+  await expect(
+    page.locator(".heritage-photo-grid figure").nth(1).locator("figcaption"),
+  ).toContainText("Reviewed caption 2");
+  await expect(
+    page.getByLabel("Property highlights").locator("ul").first(),
+  ).not.toContainText("Private garden");
+  await page.goto("/dashboard/properties/demo-apartment");
+  const composer = page.getByRole("region", { name: "A story of its own." });
+  await expect(
+    composer.getByRole("button", { name: "Generate a fresh story" }),
+  ).toBeDisabled();
+  await composer.getByRole("button", { name: "Edit website story" }).click();
+  await composer
+    .getByLabel("Introduction heading", { exact: true })
+    .fill("Your Austin story.");
+  await composer.getByRole("button", { name: "Use this story" }).click();
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByText("Your changes are saved.", { exact: true }),
+  ).toBeVisible();
+  await page.goto("/preview/demo-apartment");
+  await expect(
+    page.locator(".heritage-story .heritage-section-heading h2"),
+  ).toContainText("Your Austin story.");
+  await page.goto("/dashboard/properties/demo-apartment");
+  await page.getByLabel(/^Location/).fill("Portland, OR");
+  await expect(composer).toContainText(
+    "The property details or photos have changed.",
+  );
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByText("Your changes are saved.", { exact: true }),
+  ).toBeVisible();
+  await page.goto("/preview/demo-apartment");
+  await expect(page.locator(".heritage-setting h2")).toContainText(
+    "Portland, OR",
+  );
+  await expect(
+    page.locator(".heritage-story .heritage-section-heading h2"),
+  ).not.toContainText("Your Austin story.");
 });
 
 test("every Schedule a tour CTA opens the calendar and sample requests never send", async ({
@@ -127,14 +250,12 @@ test("Heritage uses saved listing data, supports inline edits, and fits phones",
   await expect(page.locator(".heritage-hero-stage")).not.toHaveAttribute(
     "data-zoom-pinned",
   );
-  await page
-    .locator(".heritage-hero-stage")
-    .evaluate((node) =>
-      window.scrollTo({
-        top: node.getBoundingClientRect().top + scrollY + 150,
-        behavior: "instant",
-      }),
-    );
+  await page.locator(".heritage-hero-stage").evaluate((node) =>
+    window.scrollTo({
+      top: node.getBoundingClientRect().top + scrollY + 150,
+      behavior: "instant",
+    }),
+  );
   await expect.poll(() => coverScale(page)).toBeGreaterThan(1);
   for (const section of await page.locator("main > section").all()) {
     await section.scrollIntoViewIfNeeded();

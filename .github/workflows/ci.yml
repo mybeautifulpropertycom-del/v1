@@ -27,7 +27,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run supabase:prepare-sql
-      - run: git diff --exit-code -- supabase/sql-editor-setup.sql
+      - run: git diff --exit-code -- supabase/sql-editor-setup.sql supabase/sql-editor-property-stories.sql
       - run: npm test
       - run: npm run build
       - run: npm run typecheck

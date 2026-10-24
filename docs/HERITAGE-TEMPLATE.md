@@ -17,13 +17,22 @@ No wheel or touch gestures are intercepted.
 
 Saved property and agent data populate the page, including inline-editable title,
 description and location. Gallery filters show all images or the first three;
-captions do not infer room types. The design does not invent construction dates,
+the default captions identify each photo without inferring room types. The design does not invent construction dates,
 land dimensions, renovation history or interior features that are not collected.
 
 The optional property film follows the same behavior as the Editorial template:
 actual video when supplied, a labeled layout preview in sample/saved previews,
 and no empty video section on published pages. Higgsfield remains a future
-integration. No SQL migration or additional paid service is required.
+integration. The visual template does not require an additional paid service.
+
+The typography revision centers the introduction seal and increases the contrast
+and size of the small introduction/location labels. The amenities loop as plain
+property-sourced text, with pause controls and reduced-motion support.
+
+Headings and introductions adapt to the saved property. Optional photo-based
+writing can provide reviewed headings, descriptions, and captions; see
+[PROPERTY-STORIES.md](PROPERTY-STORIES.md) for the additive database update and
+server-only OpenAI configuration. Without it, factual property copy still works.
 
 Shared photo lightbox and viewing-dialog styles are tested with both designs.
 Browser coverage also includes cover zoom/reduced motion, every tour CTA, gallery

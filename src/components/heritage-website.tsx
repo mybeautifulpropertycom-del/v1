@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Asterisk,
-  Check,
   Expand,
   Film,
   Mail,
@@ -16,6 +15,7 @@ import {
   Plus,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
+import { propertyStory } from "@/lib/property-story";
 import type { PropertyWebsiteProps } from "./property-website";
 import { EditableText } from "./website-editable-text";
 import { PropertyPhotoDialog } from "./property-photo-dialog";
@@ -94,6 +94,8 @@ export function HeritageWebsite({
   const [viewing, setViewing] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [highlights, setHighlights] = useState(false);
+  const [amenitiesPaused, setAmenitiesPaused] = useState(false);
+  const copy = propertyStory(property);
   const isPreview = preview || sample;
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
   const size = `${property.area.toLocaleString("en-US")} ${unit}`;
@@ -210,12 +212,8 @@ export function HeritageWebsite({
                   onEdit={onEdit}
                 />
               </h1>
-              <p className="heritage-hero-script">A new beginning.</p>
-              <p className="heritage-hero-intro">
-                Room for the everyday.
-                <br />
-                And everything you’re yet to imagine.
-              </p>
+              <p className="heritage-hero-script">{copy.heroLine}</p>
+              <p className="heritage-hero-intro">{copy.heroIntro}</p>
               {tourButton("heritage-link heritage-hero-tour")}
             </div>
             <div className="heritage-hero-bottom heritage-pad">
@@ -269,17 +267,11 @@ export function HeritageWebsite({
           </div>
           <div className="heritage-section-heading">
             <h2>
-              Character you can feel.
+              {copy.introTitle}
               <br />
-              <em>Comfort you can settle into.</em>
+              <em>{copy.introAccent}</em>
             </h2>
-            <p>
-              A place for slow mornings, familiar faces,
-              <br />
-              and all the things that make a life.
-              <br />
-              Welcome to your next possibility.
-            </p>
+            <p>{copy.introBody}</p>
           </div>
           <div className="heritage-story-layout">
             <figure className="heritage-album-photo">
@@ -301,7 +293,7 @@ export function HeritageWebsite({
                 </div>
               )}
               <figcaption>
-                A little of what makes this place feel like home.
+                {copy.captions[property.images[1] ? 1 : 0] || property.title}
               </figcaption>
               <span className="heritage-seal">
                 <Asterisk size={18} strokeWidth={1} />
@@ -312,9 +304,9 @@ export function HeritageWebsite({
             <div className="heritage-story-copy">
               <span className="heritage-kicker">A fresh perspective</span>
               <h2>
-                Good spaces.
+                {copy.storyTitle}
                 <br />
-                <em>A new beginning.</em>
+                <em>{copy.storyAccent}</em>
               </h2>
               <p>
                 <EditableText
@@ -333,15 +325,26 @@ export function HeritageWebsite({
         <div
           className="heritage-amenity-strip"
           aria-label="Property highlights"
+          data-paused={amenitiesPaused}
         >
-          <ul>
-            {features.map((feature) => (
-              <li key={feature}>
-                <Asterisk size={12} />
-                {feature}
-              </li>
-            ))}
-          </ul>
+          <div className="heritage-amenity-window">
+            <div className="heritage-amenity-track">
+              {[0, 1].map((repeat) => (
+                <ul key={repeat} aria-hidden={repeat === 1 ? true : undefined}>
+                  {features.map((feature, index) => (
+                    <li key={`${feature}-${index}`}>{feature}</li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-pressed={amenitiesPaused}
+            onClick={() => setAmenitiesPaused((paused) => !paused)}
+          >
+            {amenitiesPaused ? "Resume highlights" : "Pause highlights"}
+          </button>
         </div>
         <section
           className="heritage-gallery heritage-section heritage-pad"
@@ -355,8 +358,9 @@ export function HeritageWebsite({
           </div>
           <div className="heritage-section-heading">
             <h2>
-              Every {property.type === "Land" ? "angle" : "room"}.<br />
-              <em>A little possibility.</em>
+              {copy.galleryTitle}
+              <br />
+              <em>{copy.galleryAccent}</em>
             </h2>
             <p>
               Take a look around.
@@ -406,16 +410,7 @@ export function HeritageWebsite({
                 </button>
                 <figcaption>
                   <span>{String(index + 1).padStart(2, "0")}.</span>
-                  {
-                    [
-                      "A first impression",
-                      "A little closer to home",
-                      "A different perspective",
-                      "Room to imagine",
-                      "Another little detail",
-                      "A place for your next chapter",
-                    ][index % 6]
-                  }
+                  {copy.captions[index]}
                 </figcaption>
               </figure>
             ))}
@@ -455,21 +450,14 @@ export function HeritageWebsite({
           <div className="heritage-details-copy">
             <span className="heritage-kicker">Thoughtfully yours</span>
             <h2 id="heritage-details-title">
-              The charm stays.
+              {copy.detailsTitle}
               <br />
-              <em>The next chapter begins.</em>
+              <em>{copy.detailsAccent}</em>
             </h2>
-            <p>
-              Discover the details that make this home its own.
-              <br />
-              Imagine how you’ll make it yours.
-            </p>
+            <p>{copy.detailsBody}</p>
             <ul>
               {features.slice(0, 6).map((feature) => (
-                <li key={feature}>
-                  <Check size={15} />
-                  {feature}
-                </li>
+                <li key={feature}>{feature}</li>
               ))}
             </ul>
           </div>
@@ -600,15 +588,11 @@ export function HeritageWebsite({
             <div>
               <span className="heritage-kicker">More than an address</span>
               <h2>
-                A little breathing room.
+                {copy.settingTitle}
                 <br />
-                <em>A lot to come home to.</em>
+                <em>{copy.settingAccent}</em>
               </h2>
-              <p>
-                Every new chapter starts somewhere.
-                <br />
-                Take a closer look at this one, and imagine your everyday.
-              </p>
+              <p>{copy.settingBody}</p>
               <dl>
                 <div>
                   <dt>Living space</dt>
@@ -652,9 +636,9 @@ export function HeritageWebsite({
               Some things are better in person
             </span>
             <h2>
-              Come for the character.
+              {copy.closingTitle}
               <br />
-              <em>Stay for the possibilities.</em>
+              <em>{copy.closingAccent}</em>
             </h2>
             {tourButton("heritage-button heritage-button-paper")}
           </div>

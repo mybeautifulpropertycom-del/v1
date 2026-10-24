@@ -1,4 +1,5 @@
 import { locale, defaultCurrency, defaultAreaUnit } from "@/i18n/config";
+import type { SavedPropertyStory } from "./property-story";
 export type TemplateId = "editorial" | "minimal" | "panorama";
 export type Profile = {
   id: string;
@@ -29,6 +30,7 @@ export type Property = {
   status: "draft" | "published";
   created_at: string;
   updated_at: string;
+  website_copy?: SavedPropertyStory | null;
 };
 export type Workspace = { profile: Profile; properties: Property[] };
 export type PublicProperty = Omit<
