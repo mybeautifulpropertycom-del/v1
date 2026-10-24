@@ -108,17 +108,16 @@ test("each template has working gallery controls and honest preview contact beha
     await expect(page.locator(".lightbox>span")).toHaveText("2 / 4");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    expect(
-      await page
-        .locator("img")
-        .evaluateAll((images) =>
-          images.every(
-            (image) =>
-              (image as HTMLImageElement).complete &&
-              (image as HTMLImageElement).naturalWidth > 0,
-          ),
-        ),
-    ).toBe(true);
+    // Offscreen photographs load lazily. Check them after bringing each
+    // gallery image into view, rather than requiring every image at page load.
+    for (const photo of await page.locator("#gallery img").all()) {
+      await photo.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() =>
+          photo.evaluate((image) => (image as HTMLImageElement).naturalWidth),
+        )
+        .toBeGreaterThan(0);
+    }
   }
   await page.getByLabel("Your name").fill("Alex Morgan");
   await page.getByLabel("Email address").fill("alex@example.com");

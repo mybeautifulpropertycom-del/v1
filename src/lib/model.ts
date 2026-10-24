@@ -41,10 +41,10 @@ export const templates = [
   {
     id: "editorial" as const,
     name: "The Editorial",
-    tag: "ELEGANT & TIMELESS",
+    tag: "WARM & IMMERSIVE",
     description:
-      "Space, light, and expressive typography. A beautiful story for every home.",
-    color: "#eee8dc",
+      "Soft sage, cinematic photography, and a personal invitation. A home to fall in love with.",
+    color: "#e9eee5",
   },
   {
     id: "minimal" as const,

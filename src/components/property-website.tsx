@@ -25,39 +25,28 @@ import {
   type PublicProperty,
 } from "@/lib/model";
 
-export type EditableField = "title" | "location" | "description";
-function EditableText({
-  field,
-  value,
-  onEdit,
-}: {
-  field: EditableField;
-  value: string;
+import { EditableText, type EditableField } from "./website-editable-text";
+import { EditorialWebsite, type PropertyFilm } from "./editorial-website";
+export type { EditableField } from "./website-editable-text";
+
+export type PropertyWebsiteProps = {
+  property: PublicProperty;
+  profile: PublicProfile;
+  preview?: boolean;
+  sample?: boolean;
   onEdit?: (field: EditableField, value: string) => void;
-}) {
-  if (!onEdit) return <>{value}</>;
-  return (
-    <span
-      className="editable-text"
-      contentEditable
-      suppressContentEditableWarning
-      role="textbox"
-      aria-label={`Edit property ${field === "title" ? "headline" : field}`}
-      aria-multiline={field === "description"}
-      tabIndex={0}
-      onBlur={(e) => onEdit(field, (e.currentTarget.textContent || "").trim())}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && field !== "description") {
-          e.preventDefault();
-          e.currentTarget.blur();
-        }
-      }}
-    >
-      {value}
-    </span>
+  film?: PropertyFilm;
+};
+
+export function PropertyWebsite(props: PropertyWebsiteProps) {
+  return props.property.template === "editorial" ? (
+    <EditorialWebsite {...props} />
+  ) : (
+    <ClassicPropertyWebsite {...props} />
   );
 }
-export function PropertyWebsite({
+
+function ClassicPropertyWebsite({
   property,
   profile,
   preview = false,

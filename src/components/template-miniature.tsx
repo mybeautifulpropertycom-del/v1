@@ -22,9 +22,8 @@ export function TemplateMiniature({
           <strong>
             {template === "editorial" ? (
               <>
-                The art of
-                <br />
-                living well.
+                A home.
+                <br />A new chapter.
               </>
             ) : template === "minimal" ? (
               <>

@@ -1,3 +1,5 @@
+import { validViewingDate, viewingDateLabel } from "./viewing-date";
+
 type Inquiry = {
   slug: string;
   name: string;
@@ -23,6 +25,22 @@ export function validateInquiry(
     phone: (value.phone as string).trim(),
     message: (value.message as string).trim(),
   };
+  if (value.preferredDate !== undefined) {
+    if (!validViewingDate(value.preferredDate))
+      return {
+        ok: false,
+        error: "Choose a valid preferred date within the next year.",
+      };
+    if (
+      result.phone.replace(/\D/g, "").length < 8 ||
+      result.message.length > 1600
+    )
+      return {
+        ok: false,
+        error: "Add a phone number and keep your note under 1,600 characters.",
+      };
+    result.message = `Viewing request\nPreferred date: ${viewingDateLabel(value.preferredDate)} (${value.preferredDate})\nTime and availability to be confirmed by the agent.${result.message ? `\n\n${result.message}` : ""}`;
+  }
   if (
     !/^[a-z0-9-]{1,110}$/.test(result.slug) ||
     result.name.length < 2 ||

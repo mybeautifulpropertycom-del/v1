@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { after, before, test } from "node:test";
 import { PGlite } from "@electric-sql/pglite";
+import { validateInquiry } from "../src/lib/validation";
 
 // Real PostgreSQL semantics in WASM; only Supabase-owned auth/storage scaffolding
 // is stubbed. This does not replace a staging test against Supabase Auth/Storage.
@@ -204,6 +205,44 @@ test("contact forms route to the correct owner, limit repeat sends, and hide mes
     3,
   );
 });
+test("a preferred viewing date reaches only the listing agent’s existing inbox", async () => {
+  const future = new Date();
+  future.setUTCDate(future.getUTCDate() + 2);
+  const preferredDate = future.toISOString().slice(0, 10);
+  const parsed = validateInquiry({
+    slug: "published-home",
+    name: "Viewing Guest",
+    email: "viewing@example.com",
+    phone: "+1 202 555 0100",
+    message: "Please call to confirm.",
+    preferredDate,
+  });
+  assert.ok(parsed.ok);
+  const value = parsed.value;
+  await asAnon();
+  const result = await db.query<{ result: string }>(
+    "select public.submit_property_inquiry($1,$2,$3,$4,$5) as result",
+    [value.slug, value.name, value.email, value.phone, value.message],
+  );
+  assert.equal(result.rows[0].result, "received");
+  await asAgent(agentB);
+  assert.equal(
+    (
+      await db.query(
+        "select * from public.inquiries where email = 'viewing@example.com'",
+      )
+    ).rows.length,
+    0,
+  );
+  await asAgent(agentA);
+  const saved = await db.query<{ message: string; property_id: string }>(
+    "select message, property_id from public.inquiries where email = 'viewing@example.com'",
+  );
+  assert.equal(saved.rows[0].message, value.message);
+  assert.ok(saved.rows[0].message.includes(preferredDate));
+  assert.equal(saved.rows[0].property_id, propertyA);
+});
+
 test("unpublishing removes public access immediately", async () => {
   await asAgent(agentA);
   await db.query("update public.properties set status='draft' where id=$1", [

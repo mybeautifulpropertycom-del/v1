@@ -1,4 +1,5 @@
 @import "../styles/website.css";
+@import "../styles/editorial.css";
 
 :root {
   --paper: #f8f9f7;
@@ -4022,4 +4023,38 @@ label small {
     padding: 13px 18px;
     font-size: 11px;
   }
+}
+
+/* Editorial preview mirrors the photograph-led, forest-green landing page. */
+.template-miniature.miniature-editorial {
+  background: #173c30;
+  color: #fff;
+}
+.miniature-editorial .mini-nav,
+.miniature-editorial .mini-bottom {
+  position: relative;
+  z-index: 2;
+  color: #eff4e9;
+}
+.miniature-editorial .mini-content {
+  position: static;
+}
+.miniature-editorial .mini-content > img {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.42;
+}
+.miniature-editorial .mini-copy {
+  width: 85%;
+  padding-left: 4%;
+}
+.miniature-editorial .mini-copy strong {
+  color: #f5f5e7;
+}
+.miniature-editorial .mini-copy i {
+  color: #e6eddb;
+  border-color: #ffffff60;
 }
