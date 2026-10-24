@@ -1,0 +1,21 @@
+import { notFound } from "next/navigation";
+import { PropertyWebsite } from "@/components/property-website";
+import { demoWorkspace } from "@/lib/demo";
+import { templates, type TemplateId } from "@/lib/model";
+export const metadata = { robots: { index: false, follow: false } };
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ template: string }>;
+}) {
+  const { template } = await params;
+  if (!templates.some((t) => t.id === template)) notFound();
+  const data = demoWorkspace();
+  return (
+    <PropertyWebsite
+      property={{ ...data.properties[0], template: template as TemplateId }}
+      profile={data.profile}
+      sample
+    />
+  );
+}

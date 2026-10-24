@@ -1,0 +1,727 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  Copy,
+  ExternalLink,
+  Eye,
+  Globe2,
+  Mail,
+  Phone,
+  Save,
+  Sparkles,
+  Upload,
+  X,
+} from "lucide-react";
+import { en } from "@/i18n/en";
+import {
+  createProperty,
+  profileErrors,
+  publicPath,
+  templates,
+  type Property,
+  type TemplateId,
+} from "@/lib/model";
+import { useWorkspace } from "./workspace-provider";
+import { TemplateMiniature } from "./template-miniature";
+
+export function PropertyEditor({
+  id,
+  initialTemplate,
+}: {
+  id?: string;
+  initialTemplate?: TemplateId;
+}) {
+  const { profile, properties, demo, saveProperty, uploadImage, notify } =
+    useWorkspace();
+  const router = useRouter();
+  const existing = properties.find((p) => p.id === id);
+  const [property, setProperty] = useState<Property>(
+    () =>
+      existing ?? {
+        ...createProperty(profile.id),
+        template: initialTemplate ?? "editorial",
+      },
+  );
+  const [step, setStep] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [saved, setSaved] = useState(Boolean(existing));
+  const [published, setPublished] = useState(false);
+  const [customAmenity, setCustomAmenity] = useState("");
+  const fileInput = useRef<HTMLInputElement>(null);
+  const t = en.editor;
+  useEffect(() => {
+    function beforeUnload(e: BeforeUnloadEvent) {
+      if (dirty) e.preventDefault();
+    }
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => window.removeEventListener("beforeunload", beforeUnload);
+  }, [dirty]);
+
+  function update<K extends keyof Property>(key: K, value: Property[K]) {
+    setProperty((p) => ({ ...p, [key]: value }));
+    setDirty(true);
+    setPublished(false);
+  }
+  async function persist(publish = false, unpublish = false) {
+    setBusy(true);
+    setError("");
+    try {
+      const value = await saveProperty(
+        unpublish ? { ...property, status: "draft" } : property,
+        publish,
+      );
+      setProperty(value);
+      setDirty(false);
+      setSaved(true);
+      notify(
+        unpublish
+          ? t.unpublished
+          : publish
+            ? demo
+              ? t.demoPublished
+              : t.published
+            : t.saved,
+      );
+      if (publish) setPublished(true);
+      if (!id) router.replace(`/dashboard/properties/${value.id}`);
+      return value;
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Your property could not be saved.",
+      );
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function addFiles(files: FileList | File[] | null) {
+    if (!files || uploading || busy) return;
+    if (property.images.length + files.length > 20) {
+      setError("You can add up to 20 photos per property.");
+      return;
+    }
+    setUploading(true);
+    setError("");
+    const added: string[] = [];
+    try {
+      for (const file of Array.from(files))
+        added.push(await uploadImage(file, property.id));
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "A photo could not be uploaded.",
+      );
+    } finally {
+      if (added.length) {
+        setProperty((p) => ({ ...p, images: [...p.images, ...added] }));
+        setDirty(true);
+      }
+      setUploading(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  }
+  async function copyLink() {
+    if (demo) {
+      notify(
+        "Demo websites stay in this browser. Connect Supabase to share a public link.",
+      );
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}${publicPath(property)}`,
+      );
+      notify("Your public link is copied.");
+    } catch {
+      setError(
+        "Your browser could not copy the link. Open the published website and copy its address.",
+      );
+    }
+  }
+  function toggleAmenity(value: string) {
+    update(
+      "amenities",
+      property.amenities.includes(value)
+        ? property.amenities.filter((v) => v !== value)
+        : [...property.amenities, value],
+    );
+  }
+  if (id && !existing)
+    return (
+      <div className="empty-state">
+        <h1>That property isn’t in your workspace.</h1>
+        <Link className="button primary" href="/dashboard">
+          Back to properties
+        </Link>
+      </div>
+    );
+  if (profileErrors(profile).length)
+    return (
+      <div className="empty-state">
+        <span className="eyebrow">FIRST, A LITTLE INTRODUCTION</span>
+        <h1>Let’s make it yours.</h1>
+        <p>
+          Add your name, phone, and email. We’ll include them on every property
+          website.
+        </p>
+        <Link href="/dashboard/profile" className="button primary">
+          Complete my profile <ArrowRight size={17} />
+        </Link>
+      </div>
+    );
+  const amenities = [
+    ...new Set([
+      "Private garden",
+      "Pool",
+      "Outdoor terrace",
+      "Two-car garage",
+      "Central air",
+      "Chef’s kitchen",
+      "Walk-in closet",
+      "City views",
+      "Elevator",
+      "Fireplace",
+      ...property.amenities,
+    ]),
+  ];
+  return (
+    <>
+      <Link
+        href="/dashboard"
+        className="back-link"
+        onClick={(e) => {
+          if (dirty && !confirm(t.unsaved)) e.preventDefault();
+        }}
+      >
+        <ArrowLeft size={15} />
+        {en.common.back}
+      </Link>
+      <div className="page-heading compact editor-heading">
+        <div>
+          <span className="eyebrow">{t.eyebrow}</span>
+          <h1>{id ? t.editTitle : t.newTitle}</h1>
+          <p>{t.intro}</p>
+        </div>
+        <div className="editor-header-actions">
+          {saved && (
+            <Link
+              className="button secondary"
+              href={`/preview/${property.id}`}
+              target="_blank"
+            >
+              <Eye size={16} />
+              {en.common.preview}
+            </Link>
+          )}
+          <button
+            className="button primary"
+            disabled={busy || uploading}
+            onClick={() => persist()}
+          >
+            <Save size={16} />
+            {busy ? en.common.saving : en.common.save}
+          </button>
+        </div>
+      </div>
+      <div className="editor-steps">
+        {t.steps.map((label, index) => (
+          <button
+            key={label}
+            onClick={() => setStep(index)}
+            className={step === index ? "active" : ""}
+          >
+            <span>{index + 1}</span>
+            {label}
+            {index < 2 && <ChevronLeft className="step-chevron" size={16} />}
+          </button>
+        ))}
+      </div>
+      {error && (
+        <div className="form-error editor-error" role="alert">
+          {error}
+          <button
+            className="icon-button"
+            aria-label="Dismiss error"
+            onClick={() => setError("")}
+          >
+            <X size={17} />
+          </button>
+        </div>
+      )}
+      {dirty && property.status === "published" && (
+        <div className="inline-notice">
+          This website is published. Saving applies your changes to the live
+          website.
+        </div>
+      )}
+      <div className="editor-layout">
+        <div className="editor-content">
+          {step === 0 && (
+            <>
+              <section className="form-card">
+                <div className="form-section-title">
+                  <span>01</span>
+                  <h2>{t.details}</h2>
+                </div>
+                <div className="field-grid">
+                  <label className="full-width">
+                    Property headline
+                    <input
+                      value={property.title}
+                      maxLength={160}
+                      placeholder="A home with a beautiful point of view."
+                      onChange={(e) => update("title", e.target.value)}
+                    />
+                  </label>
+                  <label className="full-width">
+                    Location
+                    <input
+                      value={property.location}
+                      maxLength={200}
+                      placeholder="Beverly Hills, CA"
+                      onChange={(e) => update("location", e.target.value)}
+                    />
+                    <small>
+                      Use a full address or a neighborhood and city. This
+                      appears publicly.
+                    </small>
+                  </label>
+                  <label>
+                    Property type
+                    <select
+                      value={property.type}
+                      onChange={(e) =>
+                        update("type", e.target.value as Property["type"])
+                      }
+                    >
+                      {["House", "Condo", "Penthouse", "Land"].map((v) => (
+                        <option key={v}>{v}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Listing type
+                    <select
+                      value={property.transaction}
+                      onChange={(e) =>
+                        update(
+                          "transaction",
+                          e.target.value as Property["transaction"],
+                        )
+                      }
+                    >
+                      <option value="sale">For sale</option>
+                      <option value="rent">For rent</option>
+                    </select>
+                  </label>
+                  <label>
+                    Price
+                    <input
+                      type="number"
+                      min="0"
+                      max="999999999999"
+                      value={property.price || ""}
+                      placeholder="1250000"
+                      onChange={(e) => update("price", Number(e.target.value))}
+                    />
+                  </label>
+                  <label>
+                    Currency
+                    <select
+                      value={property.currency}
+                      onChange={(e) =>
+                        update(
+                          "currency",
+                          e.target.value as Property["currency"],
+                        )
+                      }
+                    >
+                      <option value="USD">USD — US Dollar</option>
+                      <option value="EUR">EUR — Euro</option>
+                      <option value="RON">RON — Romanian Leu</option>
+                    </select>
+                  </label>
+                  <label>
+                    Property size
+                    <input
+                      type="number"
+                      min="0"
+                      value={property.area || ""}
+                      placeholder="2500"
+                      onChange={(e) => update("area", Number(e.target.value))}
+                    />
+                  </label>
+                  <label>
+                    Area unit
+                    <select
+                      value={property.area_unit}
+                      onChange={(e) =>
+                        update(
+                          "area_unit",
+                          e.target.value as Property["area_unit"],
+                        )
+                      }
+                    >
+                      <option value="sqft">Square feet (sq ft)</option>
+                      <option value="sqm">Square meters (m²)</option>
+                    </select>
+                  </label>
+                  <label>
+                    Bedrooms
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={property.bedrooms}
+                      onChange={(e) =>
+                        update("bedrooms", Number(e.target.value))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Bathrooms
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={property.bathrooms}
+                      onChange={(e) =>
+                        update("bathrooms", Number(e.target.value))
+                      }
+                    />
+                  </label>
+                </div>
+              </section>
+              <section className="form-card">
+                <div className="form-section-title">
+                  <span>02</span>
+                  <h2>{t.description}</h2>
+                </div>
+                <label>
+                  Description
+                  <textarea
+                    rows={7}
+                    maxLength={12000}
+                    value={property.description}
+                    placeholder="What makes this home feel special? Tell the story in your own words…"
+                    onChange={(e) => update("description", e.target.value)}
+                  />
+                  <small>
+                    {property.description.length.toLocaleString("en-US")} /
+                    12,000 characters · At least 30 to publish
+                  </small>
+                </label>
+                <label className="amenity-label">The little extras</label>
+                <div className="amenity-options">
+                  {amenities.map((v) => (
+                    <button
+                      key={v}
+                      className={
+                        property.amenities.includes(v) ? "selected" : ""
+                      }
+                      aria-pressed={property.amenities.includes(v)}
+                      onClick={() => toggleAmenity(v)}
+                    >
+                      {property.amenities.includes(v) && <Check size={13} />}
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                <div className="custom-amenity">
+                  <input
+                    aria-label="Custom amenity"
+                    maxLength={60}
+                    placeholder="Add another feature…"
+                    value={customAmenity}
+                    onChange={(e) => setCustomAmenity(e.target.value)}
+                  />
+                  <button
+                    className="button secondary"
+                    disabled={
+                      !customAmenity.trim() || property.amenities.length >= 30
+                    }
+                    onClick={() => {
+                      if (!property.amenities.includes(customAmenity.trim()))
+                        update("amenities", [
+                          ...property.amenities,
+                          customAmenity.trim(),
+                        ]);
+                      setCustomAmenity("");
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+              </section>
+            </>
+          )}
+          {step === 1 && (
+            <section className="form-card">
+              <div className="form-section-title">
+                <span>02</span>
+                <h2>{t.photography}</h2>
+              </div>
+              <p className="form-intro">
+                Great photographs make the introduction. Your first photo
+                becomes the cover.
+              </p>
+              <button
+                className={`upload-area ${uploading ? "uploading" : ""}`}
+                disabled={uploading || busy}
+                onClick={() => fileInput.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  void addFiles(e.dataTransfer.files);
+                }}
+              >
+                <span>
+                  <Upload size={26} />
+                </span>
+                <strong>
+                  {uploading
+                    ? "Giving your photos a little polish…"
+                    : "Drop your photos here"}
+                </strong>
+                <p>or click to browse your files</p>
+                <small>
+                  JPG, PNG, WebP · Up to 10 MB each · {property.images.length}
+                  /20 photos
+                </small>
+              </button>
+              <input
+                ref={fileInput}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                hidden
+                onChange={(e) => void addFiles(e.target.files)}
+              />
+              <div className="image-editor-grid">
+                {property.images.map((image, i) => (
+                  <div className="image-editor-card" key={image}>
+                    <img src={image} alt={`Property photo ${i + 1}`} />
+                    <span className="image-order">
+                      {i === 0 ? "Cover photo" : String(i + 1).padStart(2, "0")}
+                    </span>
+                    <button
+                      className="image-remove"
+                      disabled={uploading}
+                      aria-label={`Remove photo ${i + 1}`}
+                      onClick={() =>
+                        update(
+                          "images",
+                          property.images.filter((_, j) => j !== i),
+                        )
+                      }
+                    >
+                      <X size={15} />
+                    </button>
+                    {i > 0 && (
+                      <button
+                        className="make-cover"
+                        disabled={uploading}
+                        onClick={() =>
+                          update("images", [
+                            image,
+                            ...property.images.filter((_, j) => j !== i),
+                          ])
+                        }
+                      >
+                        Make cover
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {property.images.length === 0 && (
+                <p className="photo-tip">
+                  <Sparkles size={16} />
+                  Start with a wide, well-lit photograph of your property.
+                </p>
+              )}
+            </section>
+          )}
+          {step === 2 && (
+            <section className="form-card">
+              <div className="form-section-title">
+                <span>03</span>
+                <h2>{t.design}</h2>
+              </div>
+              <p className="form-intro">
+                Same property. Three different feelings. Choose the one that
+                tells your story.
+              </p>
+              <div className="template-choices">
+                {templates.map((template) => (
+                  <button
+                    key={template.id}
+                    className={`template-choice ${property.template === template.id ? "selected" : ""}`}
+                    aria-pressed={property.template === template.id}
+                    onClick={() => update("template", template.id)}
+                  >
+                    <TemplateMiniature
+                      template={template.id}
+                      image={property.images[0]}
+                    />
+                    <div>
+                      <span>
+                        <strong>{template.name}</strong>
+                        <small>{template.tag}</small>
+                      </span>
+                      <span className="radio-circle">
+                        {property.template === template.id && (
+                          <Check size={14} />
+                        )}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+          <div className="editor-step-actions">
+            {step > 0 ? (
+              <button
+                className="button secondary"
+                onClick={() => setStep(step - 1)}
+              >
+                <ArrowLeft size={16} />
+                Previous
+              </button>
+            ) : (
+              <span />
+            )}
+            {step < 2 ? (
+              <button className="button dark" onClick={() => setStep(step + 1)}>
+                {step === 0 ? "Add your photos" : "Choose your design"}
+                <ArrowRight size={17} />
+              </button>
+            ) : (
+              <button
+                className="button primary"
+                disabled={busy || uploading}
+                onClick={() => persist(true)}
+              >
+                <Globe2 size={16} />
+                {demo ? "Publish in demo" : en.common.publish}
+              </button>
+            )}
+          </div>
+        </div>
+        <aside className="editor-aside">
+          <div className="editor-preview-card">
+            <span className="eyebrow">YOUR WEBSITE, TAKING SHAPE</span>
+            <TemplateMiniature
+              template={property.template}
+              image={property.images[0]}
+            />
+            <h3>{property.title || "Your next beautiful property"}</h3>
+            <p>{property.location || "Somewhere worth calling home"}</p>
+            <div className="editor-site-link">
+              <Globe2 size={14} />
+              <span>mybeautifulproperty.com/p/…</span>
+            </div>
+            {saved && (
+              <Link
+                href={`/preview/${property.id}`}
+                target="_blank"
+                className="button secondary full-button"
+              >
+                <Eye size={15} />
+                Preview saved website
+              </Link>
+            )}
+            {dirty && (
+              <small className="unsaved-hint">
+                Save your changes to update the full preview.
+              </small>
+            )}
+          </div>
+          <div className="agent-sync-card">
+            <span className="eyebrow">{t.contact}</span>
+            <div>
+              <span className="avatar">
+                {profile.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("")}
+              </span>
+              <strong>
+                {profile.name}
+                <small>{profile.agency}</small>
+              </strong>
+              <CheckCircle2 size={17} />
+            </div>
+            <span>
+              <Phone size={14} />
+              {profile.phone}
+            </span>
+            <span>
+              <Mail size={14} />
+              {profile.email}
+            </span>
+            <Link href="/dashboard/profile">
+              Edit contact details <ExternalLink size={12} />
+            </Link>
+          </div>
+          {property.status === "published" && (
+            <div className="published-card">
+              <span>
+                <CheckCircle2 size={19} />
+                {demo ? "Published in demo" : "Your website is live"}
+              </span>
+              <p>
+                {demo
+                  ? "Saved in this browser. Online sharing is available once Supabase and hosting are connected."
+                  : "Your next client is one link away."}
+              </p>
+              {!demo && (
+                <>
+                  <button
+                    className="button secondary full-button"
+                    onClick={copyLink}
+                  >
+                    <Copy size={14} />
+                    Copy public link
+                  </button>
+                  <Link
+                    className="text-button"
+                    href={publicPath(property)}
+                    target="_blank"
+                  >
+                    Open published website <ExternalLink size={14} />
+                  </Link>
+                </>
+              )}
+              <button
+                className="unpublish-button"
+                disabled={busy}
+                onClick={() => persist(false, true)}
+              >
+                Unpublish website
+              </button>
+            </div>
+          )}
+        </aside>
+      </div>
+      {published && (
+        <p className="inline-notice success" role="status">
+          {demo ? t.demoPublished : t.published}
+        </p>
+      )}
+    </>
+  );
+}

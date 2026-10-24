@@ -1,0 +1,187 @@
+-- My Beautiful Property: accounts, listings, public presentation, and inquiries.
+-- Apply once to a new Supabase project using the SQL editor or `supabase db push`.
+-- No service_role key is required by the application.
+
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  name text not null default '' check (char_length(name) <= 100),
+  email text not null default '' check (char_length(email) <= 254),
+  phone text not null default '' check (char_length(phone) <= 30),
+  agency text not null default '' check (char_length(agency) <= 120),
+  bio text not null default '' check (char_length(bio) <= 1000)
+);
+
+create table public.properties (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  slug text unique not null check (slug ~ '^[a-z0-9-]{1,110}$'),
+  title text not null default '' check (char_length(title) <= 160),
+  description text not null default '' check (char_length(description) <= 12000),
+  location text not null default '' check (char_length(location) <= 200),
+  price numeric not null default 0 check (price >= 0 and price <= 999999999999),
+  currency text not null default 'USD' check (currency in ('USD', 'EUR', 'RON')),
+  transaction text not null default 'sale' check (transaction in ('sale', 'rent')),
+  type text not null default 'House' check (type in ('House', 'Condo', 'Penthouse', 'Land')),
+  area numeric not null default 0 check (area >= 0 and area <= 999999999),
+  area_unit text not null default 'sqft' check (area_unit in ('sqft', 'sqm')),
+  bedrooms integer not null default 0 check (bedrooms between 0 and 100),
+  bathrooms numeric not null default 0 check (bathrooms between 0 and 100 and bathrooms * 2 = trunc(bathrooms * 2)),
+  amenities text[] not null default '{}' check (cardinality(amenities) <= 30),
+  images text[] not null default '{}' check (cardinality(images) <= 20),
+  template text not null default 'editorial' check (template in ('editorial', 'minimal', 'panorama')),
+  status text not null default 'draft' check (status in ('draft', 'published')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint published_details_complete check (
+    status = 'draft' or (
+      char_length(trim(title)) >= 5 and char_length(trim(description)) >= 30
+      and char_length(trim(location)) > 0 and price > 0 and area > 0
+      and cardinality(images) > 0
+    )
+  )
+);
+create index properties_owner_created on public.properties(owner_id, created_at desc);
+
+create table public.inquiries (
+  id uuid primary key default gen_random_uuid(),
+  property_id uuid not null references public.properties(id) on delete cascade,
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null check (char_length(name) between 2 and 100),
+  email text not null check (char_length(email) <= 254 and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
+  phone text not null default '' check (char_length(phone) <= 30),
+  message text not null check (char_length(message) between 10 and 2000),
+  created_at timestamptz not null default now()
+);
+create index inquiries_owner_created on public.inquiries(owner_id, created_at desc);
+create index inquiries_rate_limit on public.inquiries(property_id, email, created_at desc);
+
+alter table public.profiles enable row level security;
+alter table public.properties enable row level security;
+alter table public.inquiries enable row level security;
+
+revoke all on public.profiles, public.properties, public.inquiries from anon, authenticated;
+grant select, update on public.profiles to authenticated;
+grant select, insert, update, delete on public.properties to authenticated;
+grant select, delete on public.inquiries to authenticated;
+
+create policy "Agents can read their profile" on public.profiles for select to authenticated using (id = (select auth.uid()));
+create policy "Agents can update their profile" on public.profiles for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
+create policy "Agents own their properties" on public.properties for all to authenticated using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
+create policy "Agents can read their inquiries" on public.inquiries for select to authenticated using (owner_id = (select auth.uid()));
+create policy "Agents can remove their inquiries" on public.inquiries for delete to authenticated using (owner_id = (select auth.uid()));
+
+create function public.create_agent_profile() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  insert into public.profiles(id, name, email)
+  values (new.id, left(coalesce(new.raw_user_meta_data ->> 'name', ''), 100), left(coalesce(new.email, ''), 254));
+  return new;
+end;
+$$;
+revoke all on function public.create_agent_profile() from public;
+create trigger on_agent_signup after insert on auth.users for each row execute function public.create_agent_profile();
+
+-- Also cover accounts created before applying this migration.
+insert into public.profiles(id, name, email)
+select id, left(coalesce(raw_user_meta_data ->> 'name', ''), 100), left(coalesce(email, ''), 254)
+from auth.users on conflict (id) do nothing;
+
+create function public.check_property_publication() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare agent public.profiles;
+begin
+  if tg_op = 'UPDATE' then
+    if new.id <> old.id or new.owner_id <> old.owner_id or new.slug <> old.slug then
+      raise exception 'Property identity, ownership, and public URL cannot be changed';
+    end if;
+    new.created_at = old.created_at;
+  end if;
+  new.updated_at = now();
+  if new.status = 'published' then
+    select * into agent from public.profiles where id = new.owner_id;
+    if not found or char_length(trim(agent.name)) < 2
+      or agent.email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
+      or char_length(regexp_replace(agent.phone, '[^0-9]', '', 'g')) < 8 then
+      raise exception 'Complete your contact profile before publishing';
+    end if;
+  end if;
+  if exists (select 1 from unnest(new.images) image where image is null or image !~ '^https://') then
+    raise exception 'Property photos must use HTTPS storage URLs';
+  end if;
+  if exists (select 1 from unnest(new.amenities) amenity where amenity is null or char_length(amenity) > 60 or char_length(trim(amenity)) = 0) then
+    raise exception 'Each amenity must contain 1 to 60 characters';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.check_property_publication() from public;
+create trigger before_property_write before insert or update on public.properties for each row execute function public.check_property_publication();
+
+create function public.check_agent_profile() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.id <> old.id then raise exception 'Profile identity cannot be changed'; end if;
+  if exists (select 1 from public.properties where owner_id = new.id and status = 'published') and (
+    char_length(trim(new.name)) < 2 or new.email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
+    or char_length(regexp_replace(new.phone, '[^0-9]', '', 'g')) < 8
+  ) then raise exception 'Published websites require complete contact details'; end if;
+  return new;
+end;
+$$;
+revoke all on function public.check_agent_profile() from public;
+create trigger before_agent_profile_update before update on public.profiles for each row execute function public.check_agent_profile();
+
+-- Public visitors receive only a published listing and the current contact profile.
+-- They have no direct SELECT grant on the private tables.
+create function public.get_public_property(property_slug text) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object(
+    'property', to_jsonb(p) - array['owner_id', 'created_at', 'updated_at'],
+    'profile', jsonb_build_object('name', a.name, 'email', a.email, 'phone', a.phone, 'agency', a.agency, 'bio', a.bio)
+  )
+  from public.properties p join public.profiles a on a.id = p.owner_id
+  where p.slug = property_slug and p.status = 'published'
+  limit 1;
+$$;
+revoke all on function public.get_public_property(text) from public;
+grant execute on function public.get_public_property(text) to anon, authenticated;
+
+-- Serialize requests for the same listing/email so simultaneous sends cannot
+-- bypass the limit. Account ownership always comes from the published property.
+create function public.submit_property_inquiry(property_slug text, sender_name text, sender_email text, sender_phone text, sender_message text) returns text
+language plpgsql security definer set search_path = '' as $$
+declare listing public.properties;
+declare recent_count integer;
+declare normalized_email text := lower(trim(sender_email));
+begin
+  if sender_name is null or sender_email is null or sender_phone is null or sender_message is null
+    or char_length(trim(sender_name)) not between 2 and 100
+    or char_length(normalized_email) > 254 or normalized_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
+    or char_length(sender_phone) > 30 or char_length(trim(sender_message)) not between 10 and 2000 then
+    return 'invalid';
+  end if;
+  select * into listing from public.properties where slug = property_slug and status = 'published' for share;
+  if not found then return 'unavailable'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(listing.id::text || normalized_email, 0));
+  select count(*) into recent_count from public.inquiries
+    where property_id = listing.id and email = normalized_email and created_at > now() - interval '1 hour';
+  if recent_count >= 3 then return 'rate_limited'; end if;
+  insert into public.inquiries(property_id, owner_id, name, email, phone, message)
+  values (listing.id, listing.owner_id, trim(sender_name), normalized_email, trim(sender_phone), trim(sender_message));
+  return 'received';
+end;
+$$;
+revoke all on function public.submit_property_inquiry(text, text, text, text, text) from public;
+grant execute on function public.submit_property_inquiry(text, text, text, text, text) to anon, authenticated;
+
+-- Marketing photos are public by URL, including photos attached to draft listings.
+-- Do not upload private documents. Metadata and inquiries remain private.
+insert into storage.buckets(id, name, public, file_size_limit, allowed_mime_types)
+values ('property-images', 'property-images', true, 10485760, array['image/jpeg', 'image/png', 'image/webp']);
+
+create policy "Agents upload their own marketing photos" on storage.objects
+for insert to authenticated with check (bucket_id = 'property-images' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy "Agents read their own media metadata" on storage.objects
+for select to authenticated using (bucket_id = 'property-images' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy "Agents delete their own marketing photos" on storage.objects
+for delete to authenticated using (bucket_id = 'property-images' and (storage.foldername(name))[1] = (select auth.uid())::text);
