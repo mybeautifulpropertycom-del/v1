@@ -4123,6 +4123,15 @@ label small {
   color: #687366;
   margin-block: 12px;
 }
+.story-feedback {
+  scroll-margin-top: 120px;
+}
+.story-support-code {
+  display: block;
+  font-size: 11px;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
 .story-composer-actions {
   display: flex;
   flex-wrap: wrap;

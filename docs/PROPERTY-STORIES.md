@@ -6,7 +6,7 @@ listing facts when no amenities exist), with no SVG icons. It can be paused and
 becomes a static wrapping list when reduced motion is preferred.
 
 Optional OpenAI integration analyzes all saved photographs and proposes an English
-description, seventeen section headings/introductions, and one caption per photo.
+description, nineteen section headings/introductions, and one caption per photo.
 The description appears in all three designs; the additional headings/captions are
 currently used by The Heritage. Other designs keep their existing section layouts.
 
@@ -25,8 +25,8 @@ currently used by The Heritage. Other designs keep their existing section layout
 3. Optionally set `OPENAI_PROPERTY_MODEL`; the default is `gpt-4.1-mini`, which
    supports image input and structured output. Use a model with those capabilities.
    Redeploy after changing variables. The server uses OpenAI's Responses API with
-   `store: false`, low-detail image input, a 5,000-output-token cap, and a 45-second
-   timeout. Charges depend on image count, model, and output; set API project
+   `store: false`, low-detail image input, a 4,000-output-token cap, and a 45-second
+   provider timeout within a 55-second request deadline. Charges depend on image count, model, and output; set API project
    budgets/alerts as appropriate. Limits/alerts in the provider dashboard may not
    be hard spending caps.
 4. In a real signed-in agent account, save a property and its uploaded photos.
@@ -39,6 +39,39 @@ untouched. Editing a listing's facts or photo order invalidates previously saved
 headings/captions; current factual copy takes over until a new story is generated.
 The agent's saved description remains editable. A suggested story cannot be applied
 if the listing changed while it was being generated or reviewed.
+
+New generations request two short, persuasive sentences per descriptive section,
+including the gallery and closing invitation. The server limits these paragraphs
+to the first two sentences and validates character limits before returning them.
+Headings stay short; factual claims must still come from listing details or visible
+features. Existing saved stories remain compatible; no further SQL update is needed
+for the shorter-copy/error-handling revision.
+
+The editor shows elapsed time while generating and brings either the copy or error
+into view when the request finishes. After **Use this story**, a **Save changes**
+button beside the result saves it; **Preview updated website** then opens the saved
+page. Generating and reviewing still do not automatically publish anything.
+
+## Troubleshooting generation
+
+Failures now carry a safe support code and request reference. The matching Vercel
+log entry is `property_story_failed`; it contains only the code, reference, and
+provider HTTP status, never API keys, auth tokens, image URLs or provider messages.
+
+| Code | What to check |
+| --- | --- |
+| `AI_CREDITS` | OpenAI API billing, available credit, and project limits. ChatGPT billing is separate. |
+| `AI_AUTH` | The server-only `OPENAI_API_KEY` and the production redeployment. |
+| `AI_MODEL` | Access to the configured Responses/image-capable model. |
+| `AI_PHOTO` | Public accessibility and validity of the uploaded property photos. |
+| `AI_REQUEST` | Request-format compatibility; share the reference with the developer. |
+| `AI_TIMEOUT` / `AI_BUSY` | Wait briefly and retry. The saved property is unchanged. |
+| `AI_OUTPUT` | The provider returned incomplete or invalid copy; retry. |
+| `AI_UNAVAILABLE` | A temporary connection or service issue; retry later. |
+
+Sign-in retrieval, upstream requests, and the client wait have deadlines. Non-JSON
+platform timeout pages produce readable messages. Structured output uses the basic
+object/string/array schema; paragraph lengths and caption counts are checked locally.
 
 ## Scope and safeguards
 
@@ -67,6 +100,12 @@ if the listing changed while it was being generated or reviewed.
 Tests cover owner isolation, daily budget/cooldown/reset, repeated additive SQL,
 image URL restrictions, request authentication, malformed/refused model output,
 no-save generation, reviewed copy persistence, and stale-copy fallback. Provider
-HTTP is mocked in tests: no paid OpenAI request or live schema migration has been
-performed as part of this change. Complete a real photo-generation smoke test
-after configuration before offering this feature to customers.
+HTTP is mocked in tests. Connected browser tests also exercise the actual signed-in
+editor path with intercepted Auth/Storage/database/AI responses: generate, review,
+save, preview, provider-credit failure, and non-JSON platform timeouts. They run
+with `npm run test:e2e:connected` after building with
+`NEXT_PUBLIC_SUPABASE_URL=https://browser-test.supabase.co` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY=public-test-key` (test fixtures, never production).
+No paid OpenAI request has been performed from this development environment.
+Complete a real photo-generation smoke test on the deployment before offering this
+feature to customers; a local mocked pass does not verify live API billing or credentials.

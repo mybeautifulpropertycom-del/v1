@@ -15,16 +15,34 @@ export function getSupabase(): SupabaseClient | null {
   return client;
 }
 
-export function serverSupabase(accessToken?: string): SupabaseClient | null {
+export function serverSupabase(
+  accessToken?: string,
+  signal?: AbortSignal,
+): SupabaseClient | null {
   if (!supabaseConfigured) return null;
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: { persistSession: false, autoRefreshToken: false },
-      ...(accessToken
-        ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
-        : {}),
+      global: {
+        ...(accessToken
+          ? { headers: { Authorization: `Bearer ${accessToken}` } }
+          : {}),
+        ...(signal
+          ? {
+              fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+                fetch(input, {
+                  ...init,
+                  signal: AbortSignal.any([
+                    signal,
+                    AbortSignal.timeout(10000),
+                    ...(init?.signal ? [init.signal] : []),
+                  ]),
+                }),
+            }
+          : {}),
+      },
     },
   );
 }

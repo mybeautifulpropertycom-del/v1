@@ -126,10 +126,15 @@ test("reviewed property copy persists, captions match images, and changed facts 
   ).toBeDisabled();
   await composer.getByRole("button", { name: "Edit website story" }).click();
   await composer
+    .getByText("Website headings and introductions", { exact: true })
+    .click();
+  await composer
     .getByLabel("Introduction heading", { exact: true })
     .fill("Your Austin story.");
   await composer.getByRole("button", { name: "Use this story" }).click();
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await composer
+    .getByRole("button", { name: "Save changes", exact: true })
+    .click();
   await expect(
     page.getByText("Your changes are saved.", { exact: true }),
   ).toBeVisible();

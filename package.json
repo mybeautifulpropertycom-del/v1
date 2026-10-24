@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:connected": "playwright test --config playwright.connected.config.ts",
     "supabase:prepare-sql": "node scripts/prepare-supabase-sql.mjs",
     "supabase:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/check-supabase.mjs"
   },

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { demoWorkspace } from "../src/lib/demo";
-import { propertyStory } from "../src/lib/property-story";
+import { storyFixture } from "./story-fixture";
 
 // Mock the two external services at their HTTP boundary; never send real photos,
 // credentials, or paid requests in tests.
@@ -28,6 +28,7 @@ let quota = "reserved";
 let providerCalls = 0;
 let databaseCalls = 0;
 let mutationCalls = 0;
+let providerStatus = 200;
 globalThis.fetch = async (input, init) => {
   const url = new URL(
     typeof input === "string"
@@ -57,14 +58,19 @@ globalThis.fetch = async (input, init) => {
     assert.equal(url.searchParams.get("owner_id"), `eq.${owner}`);
     return available
       ? Response.json(property)
-      : Response.json({ message: "Not available" }, { status: 406 });
+      : Response.json(
+          { code: "PGRST116", message: "Not available" },
+          { status: 406 },
+        );
   }
   assert.equal(url.href, "https://api.openai.com/v1/responses");
   providerCalls++;
-  const draft = {
-    description: property.description,
-    content: propertyStory(property),
-  };
+  if (providerStatus !== 200)
+    return Response.json(
+      { error: { code: "insufficient_quota", message: "private-test-key" } },
+      { status: providerStatus },
+    );
+  const draft = storyFixture(property);
   return Response.json({
     status: "completed",
     output: [
@@ -118,9 +124,32 @@ test("authorized generation returns a reviewable draft without saving or publish
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "no-store");
   const body = await response.json();
-  assert.equal(body.draft.description, property.description);
+  assert.equal(body.draft.description, storyFixture(property).description);
   assert.equal(body.draft.content.captions.length, 1);
   assert.equal(typeof body.source, "string");
   assert.equal(providerCalls, 1);
   assert.equal(mutationCalls, 0);
+});
+
+test("the route preserves safe provider diagnostics instead of swallowing the real failure", async () => {
+  providerStatus = 429;
+  const originalWarn = console.warn;
+  const logs: string[] = [];
+  console.warn = (message) => {
+    logs.push(String(message));
+  };
+  try {
+    const response = await POST(request());
+    assert.equal(response.status, 503);
+    const body = await response.json();
+    assert.equal(body.code, "AI_CREDITS");
+    assert.match(body.reference, /^[a-f\d-]{36}$/);
+    assert.ok(!JSON.stringify(body).includes("private-test-key"));
+    assert.equal(JSON.parse(logs[0]).reference, body.reference);
+    assert.ok(!logs.join("").includes("private-test-key"));
+    assert.equal(mutationCalls, 0);
+  } finally {
+    console.warn = originalWarn;
+    providerStatus = 200;
+  }
 });

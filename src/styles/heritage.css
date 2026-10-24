@@ -873,6 +873,13 @@
 .heritage-invitation h2 em {
   color: #e1e5c6;
 }
+.heritage-invitation-copy {
+  max-width: 560px;
+  margin: -8px auto 28px;
+  color: #f4f4e7;
+  font-size: 14px;
+  line-height: 1.8;
+}
 .heritage-footer {
   padding-block: 26px;
   display: flex;

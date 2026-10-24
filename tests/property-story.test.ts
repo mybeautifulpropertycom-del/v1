@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { demoWorkspace } from "../src/lib/demo";
+import { storyFixture } from "./story-fixture";
+import { PropertyStoryError } from "../src/lib/property-story-error";
 import {
   propertyStory,
   propertyStorySource,
@@ -95,10 +97,7 @@ test("analysis accepts only this owner's saved property image paths in the confi
 
 test("vision request sends each image in order, excludes agent data, and validates the response", async () => {
   const property = demoWorkspace().properties[0];
-  const draft = {
-    description: property.description,
-    content: propertyStory(property),
-  };
+  const draft = storyFixture(property);
   let calls = 0;
   const fetcher: typeof fetch = async (url, init) => {
     calls++;
@@ -155,4 +154,89 @@ test("vision request sends each image in order, excludes agent data, and validat
         fetcher: async () => Response.json(body),
       }),
     );
+});
+
+test("generated paragraphs are limited to two sentences while saved older stories remain readable", async () => {
+  const property = demoWorkspace().properties[0];
+  const draft = storyFixture(property);
+  const text =
+    "A generous terrace opens up new possibilities. Arrange a tour to enjoy the setting in person.";
+  draft.description = `${text} This extra sentence should not appear.`;
+  draft.content.introBody = draft.description;
+  const result = await generatePropertyStory(property, property.images, {
+    apiKey: "test",
+    model: "test",
+    fetcher: async () =>
+      Response.json({
+        status: "completed",
+        output: [
+          {
+            type: "message",
+            content: [{ type: "output_text", text: JSON.stringify(draft) }],
+          },
+        ],
+      }),
+  });
+  assert.equal(result.description, text);
+  assert.equal(result.content.introBody, text);
+  const old = { ...draft.content } as Partial<typeof draft.content>;
+  delete old.galleryBody;
+  delete old.closingBody;
+  assert.ok(
+    parseStoryDraft(
+      { description: property.description, content: old },
+      property.images.length,
+    ),
+  );
+});
+
+test("provider failures identify credit, key, format, photo, model, and timeout issues without exposing raw messages", async () => {
+  const property = demoWorkspace().properties[0];
+  for (const [status, code, expected] of [
+    [401, "invalid_api_key", "AI_AUTH"],
+    [429, "insufficient_quota", "AI_CREDITS"],
+    [429, "rate_limit_exceeded", "AI_BUSY"],
+    [400, "invalid_json_schema", "AI_REQUEST"],
+    [400, "invalid_image_url", "AI_PHOTO"],
+    [404, "model_not_found", "AI_MODEL"],
+    [504, "timeout", "AI_TIMEOUT"],
+    [500, "server_error", "AI_UNAVAILABLE"],
+  ] as const) {
+    await assert.rejects(
+      generatePropertyStory(property, property.images, {
+        apiKey: "private-test-key",
+        model: "test",
+        fetcher: async () =>
+          Response.json(
+            {
+              error: {
+                code,
+                message:
+                  "Do not expose private-test-key or https://private.example/photo",
+              },
+            },
+            { status },
+          ),
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof PropertyStoryError);
+        assert.equal(error.code, expected);
+        assert.ok(!error.message.includes("private-test-key"));
+        assert.ok(!error.message.includes("private.example"));
+        return true;
+      },
+    );
+  }
+  await assert.rejects(
+    generatePropertyStory(property, property.images, {
+      apiKey: "test",
+      model: "test",
+      signal: AbortSignal.abort(),
+      fetcher: async () => {
+        throw new DOMException("Aborted", "AbortError");
+      },
+    }),
+    (error: unknown) =>
+      error instanceof PropertyStoryError && error.code === "AI_TIMEOUT",
+  );
 });

@@ -599,6 +599,7 @@ export function PropertyEditor({
               saved={saved}
               dirty={dirty}
               locked={busy || uploading}
+              onSave={() => persist()}
               onApply={(next) => {
                 setProperty(next);
                 setDirty(true);

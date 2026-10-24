@@ -363,9 +363,8 @@ export function HeritageWebsite({
               <em>{copy.galleryAccent}</em>
             </h2>
             <p>
-              Take a look around.
-              <br />
-              Imagine what you’ll bring to it.
+              {copy.galleryBody ||
+                "Take a look around. Arrange a tour to see the details in person."}
             </p>
           </div>
           <div className="heritage-gallery-tools">
@@ -640,6 +639,9 @@ export function HeritageWebsite({
               <br />
               <em>{copy.closingAccent}</em>
             </h2>
+            {copy.closingBody && (
+              <p className="heritage-invitation-copy">{copy.closingBody}</p>
+            )}
             {tourButton("heritage-button heritage-button-paper")}
           </div>
         </section>

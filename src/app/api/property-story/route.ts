@@ -6,17 +6,23 @@ import {
   generatePropertyStory,
 } from "@/lib/property-story-generator";
 import type { Property } from "@/lib/model";
+import { PropertyStoryError } from "@/lib/property-story-error";
 
 export const maxDuration = 60;
 const json = (body: unknown, status = 200) =>
   NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
 export async function POST(request: Request) {
+  const reference = crypto.randomUUID();
+  const deadline = AbortSignal.any([
+    request.signal,
+    AbortSignal.timeout(55000),
+  ]);
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ") || authorization.length > 10000)
     return json({ error: "Sign in to create a property story." }, 401);
   const token = authorization.slice(7);
-  const supabase = serverSupabase(token);
+  const supabase = serverSupabase(token, deadline);
   if (!supabase)
     return json(
       {
@@ -30,9 +36,13 @@ export async function POST(request: Request) {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser(token);
+    if (deadline.aborted) throw new PropertyStoryError("AI_TIMEOUT", 504);
+    if (authError?.name === "AuthRetryableFetchError")
+      throw new PropertyStoryError("AI_UNAVAILABLE", 503);
     if (authError || !user)
       return json({ error: "Please sign in again." }, 401);
-    if (!process.env.OPENAI_API_KEY)
+    const apiKey = process.env.OPENAI_API_KEY?.trim();
+    if (!apiKey)
       return json(
         {
           error:
@@ -76,6 +86,9 @@ export async function POST(request: Request) {
       .eq("id", id)
       .eq("owner_id", user.id)
       .single();
+    if (deadline.aborted) throw new PropertyStoryError("AI_TIMEOUT", 504);
+    if (error && !error.code)
+      throw new PropertyStoryError("AI_UNAVAILABLE", 503);
     if (error || !data)
       return json(
         { error: "This property is not available in your workspace." },
@@ -98,6 +111,7 @@ export async function POST(request: Request) {
       "reserve_property_story",
       { property_id: property.id },
     );
+    if (deadline.aborted) throw new PropertyStoryError("AI_TIMEOUT", 504);
     if (reservationError)
       return json(
         {
@@ -117,18 +131,33 @@ export async function POST(request: Request) {
         429,
       );
     const draft = await generatePropertyStory(property, images, {
-      apiKey: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_PROPERTY_MODEL || "gpt-4.1-mini",
+      apiKey,
+      model: process.env.OPENAI_PROPERTY_MODEL?.trim() || "gpt-4.1-mini",
+      signal: deadline,
     });
     // Generating never writes to a listing or publishes it.
     return json({ draft, source: propertyStorySource(property) });
-  } catch {
+  } catch (error) {
+    const failure =
+      error instanceof PropertyStoryError
+        ? error
+        : new PropertyStoryError(
+            deadline.aborted ? "AI_TIMEOUT" : "AI_UNAVAILABLE",
+            deadline.aborted ? 504 : 502,
+          );
+    // Safe diagnostics for Vercel logs: never log keys, tokens, provider messages,
+    // listing text, image URLs, or generated copy.
+    console.warn(
+      JSON.stringify({
+        event: "property_story_failed",
+        reference,
+        code: failure.code,
+        providerStatus: failure.providerStatus,
+      }),
+    );
     return json(
-      {
-        error:
-          "The property story could not be created. Please try again later. Your saved property has not changed.",
-      },
-      502,
+      { error: failure.message, code: failure.code, reference },
+      failure.status,
     );
   }
 }

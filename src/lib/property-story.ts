@@ -10,6 +10,7 @@ export const storyFields = {
   storyAccent: { label: "Property story accent", max: 90 },
   galleryTitle: { label: "Gallery heading", max: 90 },
   galleryAccent: { label: "Gallery accent", max: 90 },
+  galleryBody: { label: "Gallery introduction", max: 300 },
   detailsTitle: { label: "Features heading", max: 90 },
   detailsAccent: { label: "Features accent", max: 90 },
   detailsBody: { label: "Features introduction", max: 450 },
@@ -18,6 +19,7 @@ export const storyFields = {
   settingBody: { label: "Location introduction", max: 450 },
   closingTitle: { label: "Invitation heading", max: 90 },
   closingAccent: { label: "Invitation accent", max: 90 },
+  closingBody: { label: "Invitation text", max: 300 },
 } as const;
 export type StoryField = keyof typeof storyFields;
 export type StoryContent = Record<StoryField, string> & { captions: string[] };
@@ -66,7 +68,19 @@ export function parseStoryContent(
   if (!record(value)) return null;
   const result = {} as StoryContent;
   for (const key of Object.keys(storyFields) as StoryField[]) {
+    // Preserve stories saved before these two optional sections were introduced.
+    if (
+      (key === "galleryBody" || key === "closingBody") &&
+      value[key] === undefined
+    ) {
+      result[key] = "";
+      continue;
+    }
     const text = value[key];
+    if ((key === "galleryBody" || key === "closingBody") && text === "") {
+      result[key] = "";
+      continue;
+    }
     if (!validText(text, storyFields[key].max)) return null;
     result[key] = text.trim();
   }
@@ -128,6 +142,7 @@ export function propertyStory(p: Listing): StoryContent {
       p.transaction === "rent" ? "A place to settle in." : "A new beginning.",
     galleryTitle: `Explore this ${type}.`,
     galleryAccent: `${p.images.length} photographs. A closer look.`,
+    galleryBody: `Explore ${p.images.length} photographs of this ${type}. Arrange a tour to see the details in person.`,
     detailsTitle: p.amenities[0] || `Discover the ${type}.`,
     detailsAccent: "The details, considered.",
     detailsBody:
@@ -138,6 +153,7 @@ export function propertyStory(p: Listing): StoryContent {
     settingBody: `Explore this ${type} in ${location}. Contact the listing agent for more about the property and to arrange a visit.`,
     closingTitle: p.title || `Discover this ${type}.`,
     closingAccent: "Experience it in person.",
+    closingBody: `Take the next step with this ${type} in ${location}. Schedule a tour with the listing agent and see how it feels in person.`,
     captions: p.images.map(
       (_, i) => `${p.title || p.type} · Photograph ${i + 1}`,
     ),
