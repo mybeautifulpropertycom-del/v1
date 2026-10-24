@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowLeft,
-  ArrowRight,
   ArrowUpRight,
   Bath,
   BedDouble,
@@ -30,17 +29,9 @@ import { trapDialogFocus } from "./website-dialog-focus";
 /** A completed, browser-playable film supplied by a future video integration. */
 export type PropertyFilm = { src: string; poster?: string; captions?: string };
 
-function ScrollGallery({
-  images,
-  title,
-  onOpen,
-}: {
-  images: string[];
-  title: string;
-  onOpen: (index: number) => void;
-}) {
-  const section = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(0);
+function ScrollGallery({ images, title }: { images: string[]; title: string }) {
+  const stage = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({ pinned: false, active: 0 });
   const captions = [
     ["Start with a", "breath of fresh air."],
     ["A little more", "to fall in love with."],
@@ -49,7 +40,7 @@ function ScrollGallery({
   ];
 
   useEffect(() => {
-    const root = section.current;
+    const root = stage.current;
     if (!root) return;
     const media = matchMedia(
       "(min-width: 900px) and (min-height: 650px) and (prefers-reduced-motion: no-preference)",
@@ -58,20 +49,23 @@ function ScrollGallery({
     function update() {
       frame = 0;
       if (!root) return;
-      if (!media.matches || images.length < 2) {
-        root.removeAttribute("data-pinned");
-        root.style.removeProperty("height");
-        return;
-      }
-      root.dataset.pinned = "true";
-      const step = window.innerHeight * 0.85;
-      const distance = step * (images.length - 1);
-      root.style.height = `${window.innerHeight + distance}px`;
-      const offset = Math.max(
-        0,
-        Math.min(distance, -root.getBoundingClientRect().top),
+      const pinned = media.matches && images.length > 1;
+      let active = 0;
+      if (pinned) {
+        const step = window.innerHeight * 0.85;
+        const distance = step * (images.length - 1);
+        root.style.height = `${window.innerHeight + distance}px`;
+        const offset = Math.max(
+          0,
+          Math.min(distance, -root.getBoundingClientRect().top),
+        );
+        active = Math.min(images.length - 1, Math.round(offset / step));
+      } else root.style.removeProperty("height");
+      setScrollState((current) =>
+        current.pinned === pinned && current.active === active
+          ? current
+          : { pinned, active },
       );
-      setActive(Math.min(images.length - 1, Math.round(offset / step)));
     }
     function schedule() {
       if (!frame) frame = requestAnimationFrame(update);
@@ -85,134 +79,80 @@ function ScrollGallery({
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       media.removeEventListener("change", schedule);
-      root.removeAttribute("data-pinned");
       root.style.removeProperty("height");
     };
   }, [images.length]);
 
-  function go(index: number) {
-    const next = Math.max(0, Math.min(images.length - 1, index));
-    const root = section.current;
-    if (root?.dataset.pinned) {
-      window.scrollTo({
-        top:
-          root.getBoundingClientRect().top +
-          window.scrollY +
-          next * window.innerHeight * 0.85,
-        behavior: "smooth",
-      });
-    } else setActive(next);
-  }
-
   if (!images.length) return null;
-  const caption = captions[active % captions.length];
   return (
     <section
       className="estate-scroll-gallery"
-      ref={section}
       aria-labelledby="scroll-gallery-title"
     >
-      <div className="estate-scroll-sticky">
-        <div className="estate-scroll-heading estate-pad">
-          <div>
-            <span className="estate-eyebrow">A home, one moment at a time</span>
-            <h2 id="scroll-gallery-title">
-              Let your curiosity
-              <br />
-              <em>lead the way.</em>
-            </h2>
-          </div>
-          <div>
-            <p>
-              Some details are best discovered slowly.
-              <br />
-              Stay a little. Take it all in.
-            </p>
-            <a href="#gallery" className="estate-text-link">
-              Explore the complete gallery <ArrowDown size={15} />
-            </a>
-          </div>
+      <div className="estate-scroll-heading estate-pad">
+        <div>
+          <span className="estate-eyebrow">A home, one moment at a time</span>
+          <h2 id="scroll-gallery-title">
+            Let your curiosity
+            <br />
+            <em>lead the way.</em>
+          </h2>
         </div>
-        <div
-          className="estate-scenes"
-          aria-roledescription="carousel"
-          aria-label="A closer look at the property"
-        >
-          {images.map((image, index) => (
-            <div
-              key={`${image}-${index}`}
-              className={`estate-scene ${active === index ? "is-active" : ""}`}
-              aria-hidden={active !== index}
-            >
-              <img
-                src={image}
-                alt={`${title} — view ${index + 1}`}
-                loading="lazy"
-              />
-            </div>
-          ))}
-          <div className="estate-scene-copy">
-            <span className="estate-eyebrow">A different perspective</span>
-            <h3>
-              {caption[0]}
-              <br />
-              <em>{caption[1]}</em>
-            </h3>
-            <p>
-              There’s more to a home than a first impression.
-              <br />
-              Picture yourself here.
-            </p>
-            <button
-              type="button"
-              className="estate-text-link"
-              onClick={() => onOpen(active)}
-            >
-              Take a closer look <Expand size={15} />
-            </button>
-          </div>
+        <div>
+          <p>
+            Some details are best discovered slowly.
+            <br />
+            Stay a little. Take it all in.
+          </p>
+        </div>
+      </div>
+      <div
+        className="estate-scroll-stage"
+        ref={stage}
+        data-pinned={scrollState.pinned ? "true" : undefined}
+      >
+        <div className="estate-scroll-sticky">
           <div
-            className="estate-scene-pagination"
-            aria-label="Choose a property photograph"
+            className="estate-scenes"
+            role="group"
+            aria-label="Property photographs"
           >
-            {images.map((_, index) => (
-              <button
-                type="button"
-                key={index}
-                aria-label={`Show photograph ${index + 1}`}
-                aria-pressed={active === index}
-                onClick={() => go(index)}
-              >
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <i />
-              </button>
-            ))}
+            {images.map((image, index) => {
+              const caption = captions[index % captions.length];
+              return (
+                <div
+                  key={`${image}-${index}`}
+                  className={`estate-scene ${scrollState.active === index ? "is-active" : ""}`}
+                  aria-hidden={
+                    scrollState.pinned && scrollState.active !== index
+                      ? true
+                      : undefined
+                  }
+                >
+                  <img
+                    src={image}
+                    alt={`${title} — view ${index + 1}`}
+                    loading="lazy"
+                  />
+                  <div className="estate-scene-copy">
+                    <span className="estate-eyebrow">
+                      A different perspective
+                    </span>
+                    <h3>
+                      {caption[0]}
+                      <br />
+                      <em>{caption[1]}</em>
+                    </h3>
+                    <p>
+                      There’s more to a home than a first impression.
+                      <br />
+                      Picture yourself here.
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="estate-scene-controls">
-            <span aria-live="off">
-              {String(active + 1).padStart(2, "0")} /{" "}
-              {String(images.length).padStart(2, "0")}
-            </span>
-            <button
-              type="button"
-              aria-label="Previous featured photo"
-              disabled={active === 0}
-              onClick={() => go(active - 1)}
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <button
-              type="button"
-              aria-label="Next featured photo"
-              disabled={active === images.length - 1}
-              onClick={() => go(active + 1)}
-            >
-              <ArrowRight size={18} />
-            </button>
-          </div>
-          <span className="estate-scroll-instruction">
-            SCROLL TO DISCOVER <ArrowDown size={15} />
-          </span>
         </div>
       </div>
     </section>
@@ -538,11 +478,7 @@ export function EditorialWebsite({
             </div>
           </dl>
         </section>
-        <ScrollGallery
-          images={property.images}
-          title={property.title}
-          onOpen={setLightbox}
-        />
+        <ScrollGallery images={property.images} title={property.title} />
         <section className="estate-details estate-pad estate-space">
           <div className="estate-details-photo">
             {property.images[1] || property.images[0] ? (

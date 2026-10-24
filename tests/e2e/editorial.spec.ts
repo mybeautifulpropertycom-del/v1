@@ -103,10 +103,10 @@ test("the pinned photographs change on scroll and remain separate from the compl
   page,
 }) => {
   await page.goto("/templates/editorial");
-  const scroll = page.locator(".estate-scroll-gallery");
+  const scroll = page.locator(".estate-scroll-stage");
   await expect(scroll).toHaveAttribute("data-pinned", "true");
   await page.evaluate(() => {
-    const root = document.querySelector(".estate-scroll-gallery")!;
+    const root = document.querySelector(".estate-scroll-stage")!;
     window.scrollTo({
       top:
         root.getBoundingClientRect().top +
@@ -123,10 +123,18 @@ test("the pinned photographs change on scroll and remain separate from the compl
     "position",
     "sticky",
   );
+  const bounds = await page.locator(".estate-scenes").boundingBox();
+  expect(bounds?.y).toBeCloseTo(0, 0);
+  expect(bounds?.height).toBe(page.viewportSize()!.height);
+  expect(
+    await page
+      .locator(".estate-scroll-heading")
+      .evaluate((node) => node.getBoundingClientRect().bottom),
+  ).toBeLessThanOrEqual(0);
+  await expect(scroll.locator("button, a, svg")).toHaveCount(0);
+  await expect(scroll).not.toContainText("Take a closer look");
+  await expect(scroll).not.toContainText("SCROLL TO DISCOVER");
   await expect(page.locator(".estate-gallery-grid > button")).toHaveCount(4);
-  await page
-    .getByRole("link", { name: "Explore the complete gallery" })
-    .click();
   const photo = page.getByRole("button", {
     name: "Enlarge property photo 3",
     exact: true,
@@ -144,20 +152,29 @@ test("the pinned photographs change on scroll and remain separate from the compl
   expect(sections.indexOf("contact")).toBe(sections.indexOf("film") + 1);
 });
 
-test("reduced motion and mobile use photo controls without a long pinned scroll", async ({
+test("reduced motion and mobile show every featured photo through normal scrolling", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/templates/editorial");
-  await expect(page.locator(".estate-scroll-gallery")).not.toHaveAttribute(
+  await expect(page.locator(".estate-scroll-stage")).not.toHaveAttribute(
     "data-pinned",
   );
-  await page.getByRole("button", { name: "Next featured photo" }).click();
-  await expect(page.locator(".estate-scene.is-active img")).toHaveAttribute(
-    "alt",
-    /view 2$/,
-  );
+  for (const scene of await page.locator(".estate-scene").all()) {
+    await scene.scrollIntoViewIfNeeded();
+    await expect(scene).not.toHaveAttribute("aria-hidden", "true");
+    await expect(scene).toHaveCSS("opacity", "1");
+    await expect(scene.locator("img")).toBeInViewport();
+  }
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".estate-scroll-stage")).not.toHaveAttribute(
+    "data-pinned",
+  );
+  for (const scene of await page.locator(".estate-scene").all()) {
+    await scene.scrollIntoViewIfNeeded();
+    await expect(scene.locator("img")).toBeInViewport();
+  }
   await page
     .getByRole("button", { name: "Arrange a viewing", exact: true })
     .click();

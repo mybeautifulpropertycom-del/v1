@@ -13,11 +13,12 @@ the notes in [ASSETS.md](ASSETS.md).
 
 ## Photography
 
-On larger screens, scrolling through the pinned dark section changes the featured
-photo, caption, and progress indicator. Buttons also navigate the photos. On
-smaller screens and with reduced motion enabled, the section has a normal height
-and photos can be selected with its controls. The complete gallery is independent
-and opens a keyboard-accessible lightbox.
+The introduction scrolls out of view before the photograph sequence begins.
+On larger screens, only the photographs and their captions fill the pinned
+viewport, changing as the visitor scrolls. The sequence has no buttons, numbers,
+arrows, progress lines, or scrolling prompts. On smaller screens and with reduced
+motion enabled, all featured photographs follow one another in the normal page
+flow. The complete gallery is independent and opens a keyboard-accessible lightbox.
 
 ## Viewing requests
 
