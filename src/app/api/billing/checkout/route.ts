@@ -1,4 +1,5 @@
 import { publicationErrors, type Profile, type Property } from "@/lib/model";
+import { createLiveCheckout, liveBillingStatus } from "@/lib/stripe-live";
 import {
   billingDatabase,
   billingFailure,
@@ -10,7 +11,7 @@ import {
   readLimitedBody,
   stripeClient,
   stripeConfiguration,
-  testCheckoutEnabled,
+  checkoutMode,
   UUID,
 } from "@/lib/stripe-server";
 
@@ -19,7 +20,7 @@ export const maxDuration = 60;
 
 export async function GET(request: Request) {
   try {
-    if (!testCheckoutEnabled()) return billingJson({ enabled: false });
+    if (checkoutMode() === "off") return billingJson({ enabled: false });
     const { user, db } = await billingUser(request);
     const config = stripeConfiguration();
     const id = new URL(request.url).searchParams.get("propertyId");
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
       .eq("owner_id", user.id)
       .maybeSingle();
     if (error) throw error;
+    if (config.live) return await liveBillingStatus(config, id, user.id);
     if (!property) return billingJson({ enabled: true, paid: false });
     const { data: order, error: orderError } = await billingDatabase(config)
       .from("stripe_test_orders")
@@ -79,6 +81,7 @@ export async function POST(request: Request) {
       throw new BillingError("Complete your agent profile first.", 400);
     const errors = publicationErrors(property as Property, profile as Profile);
     if (errors.length) throw new BillingError(errors.join(" "), 400);
+    if (config.live) return await createLiveCheckout(config, id, user.id);
     const admin = billingDatabase(config);
     const { data: order, error: reservationError } = await admin.rpc(
       "reserve_stripe_test_order",

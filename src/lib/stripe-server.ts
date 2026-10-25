@@ -17,9 +17,19 @@ export class BillingError extends Error {
 export function testCheckoutEnabled() {
   return process.env.STRIPE_CHECKOUT_MODE === "test";
 }
+export function checkoutMode(): "test" | "live" | "off" {
+  const mode = process.env.STRIPE_CHECKOUT_MODE;
+  return mode === "test" || mode === "live" ? mode : "off";
+}
+export function livePaymentsEnabled() {
+  return (
+    checkoutMode() === "live" &&
+    process.env.STRIPE_LIVE_PAYMENTS_ENABLED === "true"
+  );
+}
 export function stripeConfiguration() {
-  if (!testCheckoutEnabled())
-    throw new BillingError("Test checkout is not enabled yet.");
+  const mode = checkoutMode();
+  if (mode === "off") throw new BillingError("Checkout is not enabled yet.");
   const key = process.env.STRIPE_SECRET_KEY?.trim();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -41,17 +51,23 @@ export function stripeConfiguration() {
     throw new BillingError(
       "The checkout return address must be an HTTPS site origin.",
     );
-  // This release deliberately cannot create live charges, even with a live key.
   if (
-    !key?.startsWith("sk_test_") ||
+    !key?.startsWith(mode === "live" ? "sk_live_" : "sk_test_") ||
     !webhookSecret?.startsWith("whsec_") ||
     !serviceKey ||
     !supabaseUrl
   )
     throw new BillingError(
-      "Stripe test checkout is not fully configured. Please contact support.",
+      "Stripe checkout is not fully configured for this payment mode. Please contact support.",
     );
-  return { key, webhookSecret, serviceKey, supabaseUrl, origin: origin.origin };
+  return {
+    key,
+    webhookSecret,
+    serviceKey,
+    supabaseUrl,
+    origin: origin.origin,
+    live: mode === "live",
+  };
 }
 export function stripeClient(key: string) {
   return new Stripe(key, {
@@ -112,9 +128,7 @@ export function billingFailure(error: unknown) {
   if (error instanceof BillingError)
     return billingJson({ error: error.message }, error.status);
   const reference = crypto.randomUUID();
-  console.warn(
-    JSON.stringify({ event: "stripe_test_checkout_failed", reference }),
-  );
+  console.warn(JSON.stringify({ event: "stripe_checkout_failed", reference }));
   return billingJson(
     {
       error: "Checkout could not be completed. Please try again shortly.",

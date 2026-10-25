@@ -75,3 +75,20 @@ commit;
 select 'MBP_STRIPE_TEST_OK' as status;
 `,
 );
+
+const stripeLive = await readFile(
+  new URL("202610250003_stripe_live_checkout.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-stripe-live.sql", import.meta.url),
+  `-- Existing installations: run this ENTIRE file in Supabase SQL Editor.
+-- Includes sandbox setup, plus live purchases and database publication enforcement.
+-- Does NOT activate billing or charge anyone. Existing pages are preserved at activation.
+begin;
+${stripeTest.trim()}
+${stripeLive.trim()}
+commit;
+select 'MBP_STRIPE_LIVE_READY' as status;
+`,
+);

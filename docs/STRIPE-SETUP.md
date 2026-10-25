@@ -1,69 +1,86 @@
-# Stripe test checkout — $97 USD per property
+# Stripe — $97 USD per property, test and live
 
-This release prepares **one property website + one presentation video for a one-time $97 USD payment**. It is deliberately **test-only**, as requested. It does not collect real money, enforce a paywall, publish properties, or generate/order a video. Existing publication continues unchanged. Live Stripe keys are rejected. Video integration and live purchase entitlements will be added before launching real payments.
+The package is **one property website + one presentation video**, a **one-time $97 USD payment**, not a subscription. Both Stripe modes are implemented; changing mode needs configuration and a redeploy, not a Stripe code change.
 
-## 1. Apply the additive Supabase installer
+The agreed rollout is: **configure live now, integrate Higgsfield next, then open purchases**. Leave `STRIPE_LIVE_PAYMENTS_ENABLED=false` until video fulfilment is ready. Live keys can be installed while sales remain closed.
 
-On the existing `aqfqhpdfhkegotsigemw` project, open SQL Editor → New query. Copy the **entire** contents of [`supabase/sql-editor-stripe-test.sql`](../supabase/sql-editor-stripe-test.sql), preferably using GitHub's Raw / Copy raw file control. Run the query. Expect **MBP_STRIPE_TEST_OK**.
+## 1. Supabase: one additive installer
 
-This creates a private test-order table and a server-only reservation function. It does not delete or change existing properties, profiles, leads, or publication rules. It can be rerun. Do not run the full first-installation SQL file on an existing project.
+On project `aqfqhpdfhkegotsigemw`, open SQL Editor → New query. Copy and run the **entire** [`supabase/sql-editor-stripe-live.sql`](../supabase/sql-editor-stripe-live.sql). Expect **MBP_STRIPE_LIVE_READY**.
 
-## 2. Get the Stripe TEST credentials
+This includes the sandbox setup, so it works whether or not the earlier Stripe test installer was applied. It is rerunnable. It adds private payment tables and a publication trigger; it does not charge anyone or activate the payment gate. The trigger is replaced on reruns, which can produce Supabase's generic destructive-operation warning; existing listings, profiles and leads are not deleted. Never run the first-installation SQL on the existing database.
 
-In Stripe, switch to **Test mode** or a **Sandbox**. Keep the key, webhook, and test payment in the same Stripe account/sandbox.
+## 2. Stripe: live key and webhook
 
-- Open Developers / API keys (or the API keys page in Workbench).
-- Copy the **Secret key** beginning `sk_test_` directly into Vercel. A `pk_test_` publishable key is not needed for this hosted Checkout integration.
-- This app uses Stripe Node SDK 23 and API **2026-09-30.endive**.
+Use the Stripe **live account**, outside Test mode / Sandbox. Complete Stripe's account activation if Stripe requires it before accepting payments.
 
-In Developers / Workbench → **Webhooks**, add an endpoint/event destination:
+- Developers / API keys: copy the **Secret key**, beginning `sk_live_`, directly into Vercel.
+- A `pk_live_` publishable key is not needed for hosted Checkout.
+- Developers / Workbench → Webhooks: add an event destination for **Your account**, type **Webhook endpoint**.
+- Endpoint: **https://www.mybeautifulproperty.com/api/stripe/webhook**
+- Events:
+  - `checkout.session.completed`
+  - `checkout.session.async_payment_succeeded`
+  - `charge.refunded`
+  - `charge.dispute.created`
+  - `charge.dispute.updated`
+  - `charge.dispute.closed`
+- Copy this LIVE endpoint's **Signing secret**, beginning `whsec_`, directly into Vercel.
+- The SDK uses API **2026-09-30.endive**. Prefer that event version if selectable.
 
-- Source: **Your account** (not connected accounts).
-- Destination type: **Webhook endpoint**.
-- URL: **https://www.mybeautifulproperty.com/api/stripe/webhook**
-- Events: **checkout.session.completed** and **checkout.session.async_payment_succeeded**.
-- Prefer API version **2026-09-30.endive** if selectable.
-- Copy this endpoint's **Signing secret**, beginning `whsec_`, directly into Vercel.
+Keys and webhook secrets must belong to the same Stripe account and mode. No manual Product, Price, Payment Link, subscription or Stripe Connect setup is required: the server creates the fixed one-time line item. Adaptive Pricing is disabled to retain USD. This implementation does not add coupons, automatic taxes or a hosting-expiry promise.
 
-There is no need to create a Product, Price, subscription, Payment Link, or Stripe Connect account. The server builds the one-time $97 USD Checkout line item. Adaptive Pricing is disabled so the checkout currency stays USD. No coupons or automatic taxes are configured in this test release.
+## 3. Vercel: prepare live with sales closed
 
-## 3. Add SERVER variables in Vercel
+Project **v1 → Settings → Environment Variables → Production**:
 
-Project **v1 → Settings → Environment Variables**, environment **Production** for testing through the custom domain:
-
-| Variable | Value |
+| Variable | Value now |
 | --- | --- |
-| `STRIPE_CHECKOUT_MODE` | `test` |
-| `STRIPE_SECRET_KEY` | Secret TEST key from Stripe, beginning `sk_test_` |
-| `STRIPE_WEBHOOK_SECRET` | This webhook endpoint's signing secret, beginning `whsec_` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase server secret key or legacy `service_role` key |
+| `STRIPE_CHECKOUT_MODE` | `live` |
+| `STRIPE_LIVE_PAYMENTS_ENABLED` | `false` |
+| `STRIPE_SECRET_KEY` | `sk_live_…` |
+| `STRIPE_WEBHOOK_SECRET` | LIVE endpoint signing secret, `whsec_…` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase server secret or legacy `service_role` key |
 | `NEXT_PUBLIC_SITE_URL` | `https://www.mybeautifulproperty.com` |
 
-**Production is the Vercel environment name, not Stripe live mode. These are still test payments.** For isolated testing on a Preview deployment instead, configure its own HTTPS return origin and reachable webhook in that deployment's environment. A deployment protected by Vercel authentication cannot receive Stripe webhooks without an appropriate access configuration; use the public custom domain for this setup.
+Get the Supabase server key from Project Settings → API keys (legacy keys → `service_role`, or a current server secret key). Do not replace the existing public Supabase key. All Stripe and service-role secrets are server-only: never prefix them with `NEXT_PUBLIC_`, commit them to GitHub or share their values in chat.
 
-Get the Supabase server key from Project Settings → API keys. Under legacy keys, use **service_role**, not anon. A current server secret key is also supported. Do not replace the existing public Supabase key. Never prefix these new secret variables with `NEXT_PUBLIC_`, put them in GitHub, or paste their values into chat.
+Redeploy after saving and wait for **Ready**. In a complete property's **Website design** step, the package panel says purchases will open with the video service, with no payment button. Existing publication continues until billing is activated. This is live-ready configuration, not evidence that a real charge has been tested.
 
-After saving the variables, **Redeploy** and wait for **Ready**. Copy the values without quotes, spaces, or line breaks. A changed key or signing secret requires another redeploy.
+## 4. Open purchases after Higgsfield fulfilment is ready
 
-## 4. Complete a test
+Change **only** `STRIPE_LIVE_PAYMENTS_ENABLED` to **`true`**, then **Redeploy**. Keep the live key and webhook secret.
 
-1. Open a complete saved property, then **Website design**.
-2. The **STRIPE TEST MODE** package panel appears with **Try $97 test checkout**.
-3. Click it. Existing changes/descriptions are saved first; validation errors must be fixed before checkout.
-4. Stripe's hosted test page should show **$97.00 USD** and the package name.
-5. Use Stripe's test card **4242 4242 4242 4242**, any future expiry, any three-digit CVC, and a test billing ZIP such as **10001**. Do not use a real card.
-6. Complete checkout. The app returns to Website design and waits for the signed webhook. Expect **Test payment confirmed. Thank you!**
-7. Check Stripe's test payment record and the webhook delivery response (**200**).
-8. Reload the property page; the test confirmation should remain. Trying again must not create another test charge for the same property.
+The first authenticated request to the billing status/checkout API activates the persistent database gate. Open **Website design** once after deployment to complete this activation. In one transaction:
 
-Also test cancelling checkout: the saved property remains and can be retried. A return URL saying `checkout=success` is not proof of payment; only the verified Stripe webhook updates the test order. Pending confirmation can be refreshed with **Check payment status**. Failed webhook saves return an error so Stripe can retry; the dashboard can resend a failed event.
+- Properties already **published** receive legacy publication access; their existing pages remain available without a retroactive charge. This does not create a paid video order for those properties.
+- Other properties require their own confirmed live payment to publish.
+- The gate applies to direct Supabase writes as well as the UI. Sandbox receipts cannot unlock it.
 
-## What is verified locally
+The agent flow is **Save → Pay $97 · Unlock website → Stripe Checkout → Payment confirmed → Publish website**. The return URL alone never grants access. A verified payment creates a pending video entitlement in `property_orders.video_status`; the Higgsfield worker must fulfil that entitlement before real sales open. The current Stripe change does not itself generate a video.
 
-Automated tests exercise the Stripe request and signed webhook at HTTP boundaries, without real network payments. Database tests check restricted permissions, stable reservation/idempotency, expiration/retry, confirmation persistence, and retention of test receipts after property deletion. Browser tests cover checkout redirect, cancellation, confirmation, and no publication triggered by payment.
+A paid property can be edited, unpublished and republished without another publication charge. Paid and already-published legacy properties do not get another checkout offer. The price is for one saved property/page; it does not cover a second property.
 
-The real Stripe account, webhook delivery and Vercel secrets cannot be checked from this cloud environment. The complete Stripe sandbox test above is still required after configuration.
+Setting `STRIPE_LIVE_PAYMENTS_ENABLED=false` again pauses creation of new Checkout sessions while keeping webhook processing and existing paid access active. Already-open Stripe sessions can still complete. It does **not** disable the database paywall. Do not switch a launched production deployment to `test` or `off` to pause sales; retain live mode and use the launch flag. The database gate is deliberately not disabled by client actions or an environment-mode change.
 
-## Before live launch
+## Sandbox testing (optional, same code)
 
-The agreed next phase is video integration, then live payments. Do not merely substitute a live API key; this release rejects it intentionally. The live phase must add database-enforced per-property purchase access, fulfilment and regeneration limits for the included video, and refund/dispute handling. Confirm the hosting duration and the refund/delivery terms before displaying them in a live offer. The previously discussed 12-month duration was a suggestion, not an implemented product commitment. Tax collection settings also remain to be configured for the business's requirements.
+To test before launch, set `STRIPE_CHECKOUT_MODE=test`, use an `sk_test_…` key and the matching test endpoint's `whsec_…`. The live launch flag has no effect in test mode. Redeploy.
+
+Use **Try $97 test checkout**, then Stripe's test card **4242 4242 4242 4242**, any future expiry, any three-digit CVC and a test ZIP such as **10001**. Never use test cards in live mode or real cards in test mode. Expect **Test payment confirmed. Thank you!** after the webhook arrives. Cancellation leaves the property saved. Reload to check confirmation persistence; retrying the same purchase reuses the session instead of offering a second charge.
+
+Use a separate preview deployment/database for ongoing sandbox tests after live launch. A Vercel deployment protected by authentication cannot receive ordinary Stripe webhook deliveries; use a publicly reachable endpoint or configure suitable access.
+
+## Refunds, disputes and delivery state
+
+Full refunds and open/lost disputes revoke the purchase and unpublish the affected property. Partial refunds retain access. A won dispute restores purchase rights but does not automatically republish the page. Full refunds remain revoked; repurchasing a refunded/disputed property requires support rather than silently creating another charge.
+
+Stripe's current PaymentIntent, charge and dispute state is checked before the atomic database update. Duplicate/stale events cannot restore a refunded purchase. Failed database processing returns an error so Stripe can retry; operators can also resend failed webhook deliveries in Stripe. Payment receipts survive property deletion. Deleting a page is not a refund and does not issue money automatically.
+
+The private `property_orders` ledger stores payment and video status. The next Higgsfield integration should process only active paid orders, write `video_status=delivered` after successful fulfilment and respect revoked/cancelled purchases. It must not deliver video from sandbox receipts.
+
+## Verification and remaining rollout work
+
+Automated tests cover fixed-price live/test checkout, authentication, duplicate prevention, signed webhooks, real PostgreSQL publication enforcement, ownership, refunds, disputes, mode separation and the UI. They use mocked external services and make no real charges. The actual Stripe account, Vercel secrets and webhook delivery must still be verified in the configured deployment.
+
+Before switching the launch flag on, finish video fulfilment and the customer-facing delivery/refund/hosting terms, and configure any applicable tax handling. A twelve-month hosting period was previously suggested but has not been agreed or implemented. These product choices are separate from switching Stripe modes.

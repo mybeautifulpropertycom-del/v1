@@ -23,32 +23,60 @@ async function checkoutRequest(propertyId: string, method: "GET" | "POST") {
   const result = await response.json();
   if (!response.ok)
     throw new Error(
-      result.error || "Test checkout is unavailable. Please try again.",
+      result.error || "Checkout is unavailable. Please try again.",
     );
   return result;
 }
 
-export function PropertyTestCheckout({
+export function PropertyCheckout({
   propertyId,
   prepare,
   disabled,
+  onAccessChange,
 }: {
   propertyId: string;
   prepare: () => Promise<Property | null>;
   disabled: boolean;
+  onAccessChange: (access: { ready: boolean; allowed: boolean }) => void;
 }) {
   const [enabled, setEnabled] = useState(false);
   const [paid, setPaid] = useState(false);
+  const [live, setLive] = useState(false);
+  const [canPurchase, setCanPurchase] = useState(true);
+  const [allowed, setAllowed] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const pending = useRef(false);
+  const applyStatus = useCallback(
+    (status: {
+      enabled?: boolean;
+      mode?: string;
+      canPurchase?: boolean;
+      requiresPayment?: boolean;
+      paid?: boolean;
+      allowed?: boolean;
+      status?: string;
+    }) => {
+      setEnabled(Boolean(status.enabled));
+      setLive(status.mode === "live");
+      setCanPurchase(status.canPurchase !== false);
+      setPaid(Boolean(status.paid));
+      setAllowed(Boolean(status.allowed));
+      setPaymentStatus(status.status || "unpaid");
+      onAccessChange({
+        ready: true,
+        allowed: !status.requiresPayment || Boolean(status.allowed),
+      });
+    },
+    [onAccessChange],
+  );
   const refresh = useCallback(async () => {
     const status = await checkoutRequest(propertyId, "GET");
-    setEnabled(Boolean(status.enabled));
-    setPaid(Boolean(status.paid));
+    applyStatus(status);
     return Boolean(status.paid);
-  }, [propertyId]);
+  }, [propertyId, applyStatus]);
 
   useEffect(() => {
     let active = true;
@@ -59,14 +87,12 @@ export function PropertyTestCheckout({
       setMessage(
         "Checkout was cancelled. You can try again when you’re ready.",
       );
-    if (result === "success")
-      setMessage("Checking your test payment confirmation…");
+    if (result === "success") setMessage("Checking your payment confirmation…");
     async function check() {
       try {
         const status = await checkoutRequest(propertyId, "GET");
         if (!active) return;
-        setEnabled(Boolean(status.enabled));
-        setPaid(Boolean(status.paid));
+        applyStatus(status);
         if (status.paid) setMessage("");
         else if (result === "success" && attempts++ < 15)
           timer = setTimeout(check, 2000);
@@ -76,9 +102,7 @@ export function PropertyTestCheckout({
           );
       } catch (e) {
         if (active)
-          setError(
-            e instanceof Error ? e.message : "Test checkout is unavailable.",
-          );
+          setError(e instanceof Error ? e.message : "Checkout is unavailable.");
       }
     }
     void check();
@@ -86,7 +110,7 @@ export function PropertyTestCheckout({
       active = false;
       clearTimeout(timer);
     };
-  }, [propertyId]);
+  }, [propertyId, applyStatus]);
 
   async function start() {
     if (pending.current || disabled) return;
@@ -98,13 +122,11 @@ export function PropertyTestCheckout({
       if (!property) return;
       const result = await checkoutRequest(property.id, "POST");
       if (result.paid) {
-        setPaid(true);
+        await refresh();
         return;
       }
       if (result.processing) {
-        setMessage(
-          "Your test payment is processing. Check payment status shortly.",
-        );
+        setMessage("Your payment is processing. Check payment status shortly.");
         return;
       }
       const url = new URL(result.url);
@@ -113,7 +135,7 @@ export function PropertyTestCheckout({
       window.location.assign(url.href);
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Test checkout could not be opened.",
+        e instanceof Error ? e.message : "Checkout could not be opened.",
       );
     } finally {
       pending.current = false;
@@ -124,10 +146,14 @@ export function PropertyTestCheckout({
   return (
     <section
       className="property-checkout-card"
-      aria-label="Property package test checkout"
+      aria-label={
+        live ? "Property package checkout" : "Property package test checkout"
+      }
     >
       <div>
-        <span className="eyebrow">STRIPE TEST MODE</span>
+        <span className="eyebrow">
+          {live ? "YOUR PROPERTY PACKAGE" : "STRIPE TEST MODE"}
+        </span>
         <h3>One property. A complete presentation.</h3>
         <p>Your property website and presentation video, together.</p>
       </div>
@@ -138,17 +164,31 @@ export function PropertyTestCheckout({
         <span>One-time payment per property</span>
       </div>
       <p className="property-checkout-note">
-        Test checkout only. No real money is collected. Video generation is
-        being prepared; this test does not order a video or publish your
-        website.
+        {live
+          ? canPurchase
+            ? "One website and one presentation video for this property. Pay once, then publish and edit your website without another publication fee."
+            : "Purchases will open when our presentation-video service launches."
+          : "Test checkout only. No real money is collected. Video generation is being prepared; this test does not order a video or publish your website."}
       </p>
-      {paid ? (
+      {paid || (live && allowed) ? (
         <p className="property-checkout-confirmed" role="status">
           <CheckCircle2 size={18} />
-          Test payment confirmed. Thank you!
+          {live
+            ? paid
+              ? "Payment confirmed. Your website is ready to publish."
+              : "Publication is included for this existing website."
+            : "Test payment confirmed. Thank you!"}
+        </p>
+      ) : paymentStatus === "refunded" || paymentStatus === "disputed" ? (
+        <p role="status">
+          {paymentStatus === "refunded"
+            ? "This purchase has been refunded."
+            : "This payment is under review."}{" "}
+          Please contact support before publishing.
         </p>
       ) : (
-        enabled && (
+        enabled &&
+        canPurchase && (
           <button
             type="button"
             className="button dark"
@@ -156,12 +196,16 @@ export function PropertyTestCheckout({
             disabled={busy || disabled}
           >
             <CreditCard size={17} />
-            {busy ? "Opening test checkout…" : "Try $97 test checkout"}
+            {busy
+              ? "Opening checkout…"
+              : live
+                ? "Pay $97 · Unlock website"
+                : "Try $97 test checkout"}
           </button>
         )
       )}
       {message && !paid && <p role="status">{message}</p>}
-      {enabled && !paid && (
+      {enabled && canPurchase && !paid && !allowed && (
         <button
           type="button"
           className="text-button"
@@ -171,7 +215,7 @@ export function PropertyTestCheckout({
             try {
               if (!(await refresh()))
                 setMessage(
-                  "No confirmed test payment yet. If you just paid, please check again shortly.",
+                  "No confirmed payment yet. If you just paid, please check again shortly.",
                 );
             } catch (e) {
               setError(

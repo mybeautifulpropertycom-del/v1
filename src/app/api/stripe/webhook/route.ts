@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { handleLiveWebhook } from "@/lib/stripe-live";
 import {
   billingDatabase,
   billingFailure,
@@ -30,8 +31,12 @@ export async function POST(request: Request) {
     } catch {
       throw new BillingError("Invalid Stripe signature.", 400);
     }
-    if (event.livemode)
-      throw new BillingError("Only Stripe test events are accepted.", 400);
+    if (event.livemode !== config.live)
+      throw new BillingError(
+        "The Stripe event does not match the configured payment mode.",
+        400,
+      );
+    if (config.live) return await handleLiveWebhook(config, event);
     if (
       event.type !== "checkout.session.completed" &&
       event.type !== "checkout.session.async_payment_succeeded"

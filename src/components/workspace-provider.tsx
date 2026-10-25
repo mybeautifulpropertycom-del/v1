@@ -183,7 +183,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         .single();
       if (error)
         throw new Error(
-          "Your property was not saved. Check the details and your connection, then try again.",
+          error.code === "P0402"
+            ? "Complete the $97 payment in Website design before publishing this property."
+            : "Your property was not saved. Check the details and your connection, then try again.",
         );
     }
     const next = {

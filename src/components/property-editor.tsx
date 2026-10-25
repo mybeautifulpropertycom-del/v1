@@ -34,7 +34,7 @@ import { useWorkspace } from "./workspace-provider";
 import { TemplateMiniature } from "./template-miniature";
 import { editWebsiteCopy, hasWebsiteDescriptions } from "@/lib/property-story";
 import { preparePropertyWebsite } from "@/lib/request-property-story";
-import { PropertyTestCheckout } from "./property-test-checkout";
+import { PropertyCheckout } from "./property-checkout";
 
 export function PropertyEditor({
   id,
@@ -72,6 +72,10 @@ export function PropertyEditor({
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(Boolean(existing));
   const [published, setPublished] = useState(false);
+  const [publicationAccess, setPublicationAccess] = useState({
+    ready: demo,
+    allowed: demo,
+  });
   const [customAmenity, setCustomAmenity] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const t = en.editor;
@@ -674,10 +678,11 @@ export function PropertyEditor({
             </section>
           )}
           {!demo && step === 2 && (
-            <PropertyTestCheckout
+            <PropertyCheckout
               propertyId={property.id}
               prepare={() => persist(false, false, false)}
               disabled={busy || uploading}
+              onAccessChange={setPublicationAccess}
             />
           )}
           <div className="editor-step-actions">
@@ -707,7 +712,12 @@ export function PropertyEditor({
             ) : (
               <button
                 className="button primary"
-                disabled={busy || uploading}
+                disabled={
+                  busy ||
+                  uploading ||
+                  !publicationAccess.ready ||
+                  !publicationAccess.allowed
+                }
                 onClick={() => persist(true)}
               >
                 <Globe2 size={16} />
