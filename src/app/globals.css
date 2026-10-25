@@ -4124,3 +4124,57 @@ fieldset.editor-content {
   margin: 20px auto 28px;
   line-height: 1.7;
 }
+
+.miniature-atelier {
+  background: #fafaf6;
+  color: #292e29;
+  overflow: hidden;
+}
+.miniature-atelier .mini-nav {
+  position: static;
+  display: flex;
+  justify-content: space-between;
+  padding: 5% 6%;
+  font-size: 6px;
+  color: #454b3e;
+}
+.mini-atelier-gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  height: 44%;
+  padding: 0 3%;
+}
+.mini-atelier-gallery > img,
+.mini-atelier-gallery > div img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  min-height: 0;
+}
+.mini-atelier-gallery > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  min-height: 0;
+}
+.mini-atelier-title {
+  font: clamp(10px, 1.3vw, 20px)/1.2 var(--serif);
+  padding: 5% 7%;
+}
+.mini-atelier-title em {
+  display: block;
+  color: #7b826e;
+  font-size: 0.8em;
+  margin-top: 3px;
+}
+.mini-atelier-facts {
+  border-top: 1px solid #dcded5;
+  margin: 0 7%;
+  padding-top: 3%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 5px;
+  letter-spacing: 0.05em;
+}

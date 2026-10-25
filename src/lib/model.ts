@@ -58,11 +58,11 @@ export const templates = [
   },
   {
     id: "panorama" as const,
-    name: "The Panorama",
-    tag: "IMMERSIVE & BOLD",
+    name: "The Atelier",
+    tag: "A NEW PERSPECTIVE",
     description:
-      "Expansive photography and striking contrasts. A first impression that stays.",
-    color: "#252d2a",
+      "An opening gallery, sculptural typography, and considered details. An invitation to see things differently.",
+    color: "#e9e5dc",
   },
 ];
 

@@ -1,0 +1,1069 @@
+.atelier-website {
+  --at-ink: #282b27;
+  --at-muted: #71756a;
+  --at-line: #dcded5;
+  --at-paper: #fafaf6;
+  background: var(--at-paper);
+  color: var(--at-ink);
+  font-family: var(--sans);
+  padding-bottom: 0;
+}
+.atelier-website * {
+  box-sizing: border-box;
+}
+.atelier-website h1,
+.atelier-website h2,
+.atelier-website h3,
+.atelier-website p,
+.atelier-website figure,
+.atelier-website dl {
+  margin: 0;
+}
+.atelier-website button,
+.atelier-website a {
+  -webkit-tap-highlight-color: transparent;
+}
+.atelier-website button {
+  cursor: pointer;
+}
+.atelier-website a {
+  color: inherit;
+  text-decoration: none;
+}
+.atelier-website button:focus-visible,
+.atelier-website a:focus-visible,
+.atelier-website summary:focus-visible {
+  outline: 2px solid #a47830;
+  outline-offset: 5px;
+}
+.atelier-pad {
+  padding-inline: clamp(24px, 6vw, 110px);
+}
+.atelier-website h2 {
+  font: clamp(34px, 4.3vw, 66px)/1.13 var(--serif);
+  letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
+}
+.atelier-website h2 em {
+  display: block;
+  font-weight: 400;
+  color: #7b826e;
+}
+.atelier-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: 0.16em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.atelier-website p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--at-muted);
+  overflow-wrap: anywhere;
+}
+.atelier-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  background: var(--at-ink);
+  color: #fff;
+  border: 1px solid var(--at-ink);
+  padding: 17px 24px;
+  font: 500 12px var(--sans);
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+.atelier-button:hover {
+  background: #505647;
+}
+.atelier-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 12px;
+  background: none;
+  color: inherit;
+  border: 0;
+  padding: 8px 0;
+}
+.atelier-nav {
+  height: 100px;
+  padding: 0 3vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  position: relative;
+  z-index: 5;
+  border-bottom: 1px solid var(--at-line);
+}
+.atelier-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+  max-width: 45%;
+  overflow-wrap: anywhere;
+}
+.atelier-brand small {
+  display: block;
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  margin-top: 7px;
+}
+.atelier-brand-mark {
+  font: 30px var(--serif);
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--at-line);
+  padding-right: 16px;
+  white-space: nowrap;
+}
+.atelier-brand-mark > svg {
+  font: 17px var(--sans);
+  margin-left: 3px;
+}
+.atelier-nav > nav:not(.atelier-menu) {
+  display: flex;
+  gap: 28px;
+  font-size: 11px;
+}
+.atelier-menu-button {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 11px;
+  border: 0;
+  background: none;
+  padding: 14px 0;
+}
+.atelier-menu {
+  position: absolute;
+  right: 3vw;
+  top: 85px;
+  background: #fff;
+  box-shadow: 0 12px 50px #23272118;
+  border: 1px solid var(--at-line);
+  padding: 25px;
+  display: grid;
+  gap: 10px;
+  min-width: 280px;
+}
+.atelier-menu > a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 14px;
+}
+.atelier-menu > a > svg {
+  width: 16px;
+}
+.atelier-mosaic {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin: 12px 12px 0;
+  height: clamp(320px, 35vw, 550px);
+  position: relative;
+}
+.atelier-mosaic-single {
+  grid-template-columns: 1fr;
+}
+.atelier-mosaic button {
+  border: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  background: #e3e3d9;
+  text-align: left;
+}
+.atelier-mosaic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.65s;
+}
+.atelier-mosaic button:hover img {
+  transform: scale(1.035);
+}
+.atelier-cover:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#0002, transparent 50%, #0005);
+  pointer-events: none;
+}
+.atelier-cover-label {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  background: #fafaf5ec;
+  z-index: 1;
+  padding: 10px 13px;
+  font-size: 10px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+.atelier-cover-label > span {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  border-left: 1px solid #aaa;
+  padding-left: 15px;
+}
+.atelier-cover-note {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  color: white;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font: italic 23px var(--serif);
+}
+.atelier-mosaic-side {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 5px;
+  min-height: 0;
+  min-width: 0;
+}
+.atelier-mosaic-side[data-odd="true"] > button:last-child:not(:only-child) {
+  grid-column: span 2;
+}
+.atelier-mosaic-side > button:only-child {
+  grid-row: 1/-1;
+}
+.atelier-mosaic .atelier-all-photos {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  background: #fffffff2;
+  border: 1px solid #fff8;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 30px;
+  font-size: 10px;
+  box-shadow: 0 2px 12px #0001;
+}
+.atelier-expand {
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  background: #ffffffdf;
+  color: #282b27;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.atelier-website button:hover > .atelier-expand,
+.atelier-website button:focus-visible > .atelier-expand {
+  opacity: 1;
+}
+.atelier-no-photo {
+  display: grid;
+  place-items: center;
+  background: #e9e9e0;
+  min-height: 240px;
+  color: #626858;
+  font-size: 14px;
+  padding: 30px;
+}
+.atelier-intro {
+  padding-top: 42px;
+  padding-bottom: 0;
+}
+.atelier-intro-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  align-items: center;
+}
+.atelier-title-row {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 9%;
+  padding: 35px 0 60px;
+  align-items: end;
+}
+.atelier-title-row h1 {
+  font: clamp(48px, 6.3vw, 96px)/1.06 var(--serif);
+  letter-spacing: -0.055em;
+  overflow-wrap: anywhere;
+  font-weight: 400;
+}
+.atelier-title-row h1 > em {
+  display: block;
+  font-size: 0.65em;
+  color: #7b826e;
+  margin-top: 12px;
+  letter-spacing: -0.035em;
+}
+.atelier-intro-copy {
+  max-width: 390px;
+  justify-self: end;
+}
+.atelier-intro-copy .atelier-button {
+  margin-top: 24px;
+}
+.atelier-facts {
+  display: grid;
+  grid-template-columns: 1.45fr 0.7fr 0.7fr 1.15fr 1fr;
+  border-block: 1px solid var(--at-line);
+  padding: 28px 0;
+}
+.atelier-facts > div {
+  padding: 0 24px;
+  border-left: 1px solid var(--at-line);
+  min-width: 0;
+}
+.atelier-facts > div:first-child {
+  padding-left: 0;
+  border: 0;
+}
+.atelier-facts dt {
+  font-size: 10px;
+  color: var(--at-muted);
+  margin-bottom: 12px;
+}
+.atelier-facts dd {
+  font: clamp(23px, 2.7vw, 40px) var(--serif);
+  margin: 0;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+.atelier-facts dd small {
+  font: 11px var(--sans);
+  letter-spacing: 0;
+}
+.atelier-facts .atelier-type {
+  font-size: 23px;
+  padding-top: 8px;
+}
+.atelier-story {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 10%;
+  padding-block: 110px;
+  align-items: center;
+}
+.atelier-story figure {
+  min-width: 0;
+}
+.atelier-story-photo {
+  width: 100%;
+  aspect-ratio: 1/0.95;
+  border: 0;
+  padding: 0;
+  position: relative;
+  background: #e0e3d8;
+  overflow: hidden;
+}
+.atelier-story-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.atelier-story figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 8px;
+  letter-spacing: 0.09em;
+  margin-top: 17px;
+  color: var(--at-muted);
+}
+.atelier-story-copy .atelier-kicker {
+  margin-bottom: 26px;
+}
+.atelier-story-copy p {
+  margin-top: 28px;
+  white-space: pre-line;
+}
+.atelier-round-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-block: 1px solid var(--at-line);
+  margin-top: 40px;
+  padding: 20px 0;
+  font-size: 11px;
+}
+.atelier-round-link > svg {
+  border: 1px solid var(--at-line);
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  padding: 12px;
+}
+.atelier-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #292e29;
+  color: #f2f1e8;
+}
+.atelier-details-copy {
+  padding: 75px clamp(24px, 6vw, 95px);
+}
+.atelier-details h2 {
+  font-size: clamp(35px, 4vw, 60px);
+  margin-top: 30px;
+}
+.atelier-details h2 em {
+  color: #b7baa3;
+}
+.atelier-details p {
+  color: #c1c4b8;
+  margin-top: 25px;
+}
+.atelier-accordions {
+  margin-top: 35px;
+}
+.atelier-accordions details {
+  border-top: 1px solid #ffffff30;
+}
+.atelier-accordions details:last-child {
+  border-bottom: 1px solid #ffffff30;
+}
+.atelier-accordions summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  padding: 19px 0;
+}
+.atelier-accordions summary::-webkit-details-marker {
+  display: none;
+}
+.atelier-accordions details[open] summary > svg {
+  transform: rotate(45deg);
+}
+.atelier-accordions dl {
+  padding-bottom: 18px;
+}
+.atelier-accordions dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  font-size: 11px;
+  padding: 8px 0;
+}
+.atelier-accordions dt {
+  color: #b7bdae;
+}
+.atelier-accordions dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.atelier-accordions ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 22px;
+  list-style: none;
+  padding: 0 0 22px;
+  margin: 0;
+  font-size: 12px;
+}
+.atelier-accordions li:before {
+  content: "—";
+  margin-right: 9px;
+  color: #b7baa3;
+}
+.atelier-accordions details > p {
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+.atelier-accordions .atelier-text-link {
+  margin-bottom: 20px;
+}
+.atelier-detail-image {
+  position: relative;
+  min-height: 600px;
+}
+.atelier-detail-image > button {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: #454c3f;
+}
+.atelier-detail-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.atelier-detail-image > span {
+  position: absolute;
+  bottom: 25px;
+  left: 25px;
+  right: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 18px;
+  background: #fafaf3ef;
+  color: #353c30;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+.atelier-gallery {
+  padding-block: 100px;
+  overflow: hidden;
+}
+.atelier-section-heading {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12%;
+  align-items: end;
+  margin-bottom: 45px;
+}
+.atelier-section-heading h2 {
+  margin-top: 20px;
+}
+.atelier-gallery-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.atelier-gallery-controls button {
+  border: 1px solid var(--at-line);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  background: transparent;
+  color: var(--at-ink);
+}
+.atelier-gallery-controls button:hover {
+  background: #e9e9df;
+}
+.atelier-photo-strip {
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #aeb1a2 #e7e8e0;
+}
+.atelier-photo-strip figure {
+  flex: 0 0 44%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.atelier-photo-strip figure:nth-child(even) {
+  flex-basis: 33%;
+}
+.atelier-photo-strip button {
+  width: 100%;
+  height: 350px;
+  position: relative;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #e7e8de;
+}
+.atelier-photo-strip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+.atelier-photo-strip button:hover img {
+  transform: scale(1.035);
+}
+.atelier-photo-strip figcaption {
+  display: flex;
+  align-items: start;
+  gap: 15px;
+  color: var(--at-muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 14px;
+}
+.atelier-photo-strip figcaption > span {
+  font-size: 9px;
+  border: 1px solid var(--at-line);
+  padding: 2px 7px;
+}
+.atelier-film {
+  padding-block: 70px 90px;
+  background: #eaece3;
+}
+.atelier-film-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+.atelier-film-heading h2 {
+  font-size: clamp(34px, 3.8vw, 54px);
+}
+.atelier-film video,
+.atelier-film-placeholder {
+  width: 100%;
+  aspect-ratio: 16/8;
+  object-fit: cover;
+  background: #30372e;
+}
+.atelier-film-placeholder {
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: #fff;
+  text-align: center;
+  padding: 25px;
+}
+.atelier-film-placeholder > span {
+  font: italic clamp(26px, 4vw, 50px) var(--serif);
+}
+.atelier-film-placeholder p,
+.atelier-film-placeholder small {
+  color: #f1f1e8;
+  font-size: 11px;
+}
+.atelier-film-placeholder small {
+  opacity: 0.8;
+  font-size: 9px;
+}
+.atelier-contact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12%;
+  padding-block: 110px;
+}
+.atelier-contact h2 {
+  margin: 25px 0 35px;
+  font-size: clamp(35px, 4vw, 56px);
+}
+.atelier-contact .landing-agent > p {
+  color: var(--at-muted);
+}
+.atelier-contact .landing-agent-profile {
+  margin: 30px 0;
+  gap: 15px;
+}
+.atelier-avatar {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: #e7e8de;
+  display: grid;
+  place-items: center;
+  font: 25px var(--serif);
+  flex-shrink: 0;
+}
+.atelier-agent-links {
+  margin: 25px 0 30px;
+}
+.atelier-agent-links > a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--at-line);
+  padding: 17px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.atelier-agent-links > a:last-child {
+  border-bottom: 1px solid var(--at-line);
+}
+.atelier-agent-links > a > svg {
+  flex-shrink: 0;
+}
+.atelier-agent-links > a > svg:last-child {
+  margin-left: auto;
+}
+.atelier-contact .landing-inquiry {
+  background: #f0f1e9;
+  border: 1px solid #e1e3d8;
+  padding: 35px;
+  border-radius: 2px;
+  align-self: start;
+}
+.atelier-contact .landing-inquiry h3 {
+  font: 30px var(--serif);
+  letter-spacing: -0.02em;
+}
+.atelier-contact .landing-inquiry > p {
+  font-size: 12px;
+  margin: 12px 0 24px;
+}
+.atelier-contact .landing-inquiry label {
+  font-size: 11px;
+}
+.atelier-contact .landing-inquiry input,
+.atelier-contact .landing-inquiry textarea {
+  background: #fafbf6;
+  border-color: #d7dbcd;
+  border-radius: 1px;
+  font-size: 12px;
+}
+.atelier-contact .landing-inquiry .landing-button {
+  background: #292e29;
+  border-radius: 1px;
+  color: #fff;
+  padding: 16px;
+  font-size: 12px;
+}
+.atelier-contact .landing-inquiry small {
+  font-size: 10px;
+  color: #646a5c;
+}
+.atelier-invitation {
+  padding-block: 85px;
+  text-align: center;
+  background: #e8dfcc;
+  position: relative;
+  border-block: 1px solid #d7ceb9;
+}
+.atelier-invitation .atelier-kicker {
+  justify-content: center;
+}
+.atelier-invitation h2 {
+  max-width: 850px;
+  margin: 30px auto 25px;
+  font-size: clamp(40px, 5.5vw, 80px);
+}
+.atelier-invitation h2 em {
+  color: #7b735e;
+}
+.atelier-invitation p {
+  max-width: 480px;
+  margin: 0 auto 28px;
+  color: #6f695b;
+}
+.atelier-invitation-footnote {
+  display: block;
+  margin-top: 22px;
+  font-size: 10px;
+  color: #786f5d;
+}
+.atelier-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  padding-block: 35px;
+}
+.atelier-footer > a {
+  font-size: 11px;
+}
+.atelier-footer > a:first-child {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.atelier-footer p {
+  font-size: 9px;
+}
+.atelier-footer strong {
+  font-size: 12px;
+}
+.atelier-mobile-tour {
+  display: none;
+}
+@media (min-width: 1700px) {
+  .atelier-website main,
+  .atelier-nav,
+  .atelier-footer {
+    max-width: 1920px;
+    margin-inline: auto;
+  }
+}
+@media (max-width: 900px) {
+  .atelier-nav {
+    height: 80px;
+    padding: 0 24px;
+  }
+  .atelier-nav > nav:not(.atelier-menu) {
+    display: none;
+  }
+  .atelier-brand {
+    max-width: 80%;
+  }
+  .atelier-title-row {
+    gap: 5%;
+  }
+  .atelier-facts > div {
+    padding-inline: 14px;
+  }
+  .atelier-story {
+    gap: 6%;
+    padding-block: 70px;
+  }
+  .atelier-details-copy {
+    padding: 45px 25px;
+  }
+  .atelier-detail-image {
+    min-height: 500px;
+  }
+  .atelier-contact {
+    gap: 6%;
+    padding-block: 75px;
+  }
+  .atelier-contact .landing-inquiry {
+    padding: 24px;
+  }
+  .atelier-photo-strip button {
+    height: 290px;
+  }
+  .atelier-section-heading {
+    gap: 6%;
+  }
+}
+@media (max-width: 640px) {
+  .atelier-website {
+    padding-bottom: 78px;
+  }
+  .atelier-nav {
+    height: 76px;
+  }
+  .atelier-brand {
+    font-size: 11px;
+    gap: 10px;
+  }
+  .atelier-brand-mark {
+    font-size: 25px;
+    padding-right: 10px;
+  }
+  .atelier-brand small {
+    font-size: 6px;
+    letter-spacing: 0.06em;
+  }
+  .atelier-menu-button {
+    gap: 8px;
+  }
+  .atelier-menu {
+    left: 15px;
+    right: 15px;
+    top: 70px;
+    min-width: 0;
+  }
+  .atelier-mosaic {
+    height: 370px;
+    margin: 6px 6px 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: 250px 115px;
+    gap: 5px;
+  }
+  .atelier-mosaic-single {
+    grid-template-rows: 1fr;
+    height: 300px;
+  }
+  .atelier-mosaic-side {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: 1fr;
+  }
+  .atelier-mosaic-side > button:nth-child(n + 4) {
+    display: none;
+  }
+  .atelier-mosaic-side[data-odd="true"] > button:last-child:not(:only-child) {
+    grid-column: auto;
+  }
+  .atelier-mosaic-side > button:only-child {
+    grid-column: 1/-1;
+  }
+  .atelier-all-photos {
+    right: 10px !important;
+    bottom: 130px !important;
+  }
+  .atelier-mosaic-single .atelier-all-photos {
+    bottom: 12px !important;
+  }
+  .atelier-cover-label {
+    left: 16px;
+    top: 16px;
+  }
+  .atelier-cover-note {
+    bottom: 15px;
+    left: 16px;
+    font-size: 21px;
+  }
+  .atelier-intro {
+    padding-top: 28px;
+  }
+  .atelier-intro-top > a {
+    display: none;
+  }
+  .atelier-title-row {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    padding: 25px 0 35px;
+  }
+  .atelier-title-row h1 {
+    font-size: 46px;
+  }
+  .atelier-intro-copy {
+    max-width: none;
+    justify-self: stretch;
+  }
+  .atelier-facts {
+    grid-template-columns: 1fr 1fr;
+    padding: 0;
+  }
+  .atelier-facts > div {
+    padding: 20px 0 !important;
+    border-left: 0;
+    border-bottom: 1px solid var(--at-line);
+  }
+  .atelier-facts > div:first-child {
+    grid-column: 1/-1;
+    border-bottom: 1px solid var(--at-line);
+  }
+  .atelier-facts > div:nth-child(2n + 3) {
+    padding-left: 20px !important;
+    border-left: 1px solid var(--at-line);
+  }
+  .atelier-facts > div:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+  .atelier-facts dd {
+    font-size: 30px;
+  }
+  .atelier-facts .atelier-type {
+    padding-top: 0;
+  }
+  .atelier-story {
+    grid-template-columns: 1fr;
+    gap: 35px;
+    padding-block: 55px;
+  }
+  .atelier-story-photo {
+    aspect-ratio: 1/1;
+  }
+  .atelier-story figcaption {
+    font-size: 7px;
+  }
+  .atelier-round-link {
+    margin-top: 25px;
+  }
+  .atelier-details {
+    grid-template-columns: 1fr;
+  }
+  .atelier-details-copy {
+    padding: 45px 24px;
+  }
+  .atelier-detail-image {
+    min-height: 380px;
+  }
+  .atelier-section-heading {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    margin-bottom: 28px;
+  }
+  .atelier-gallery {
+    padding-block: 55px;
+  }
+  .atelier-photo-strip {
+    gap: 15px;
+  }
+  .atelier-photo-strip figure,
+  .atelier-photo-strip figure:nth-child(even) {
+    flex-basis: 85%;
+  }
+  .atelier-photo-strip button {
+    height: 310px;
+  }
+  .atelier-film {
+    padding-block: 45px;
+  }
+  .atelier-film-heading {
+    display: block;
+  }
+  .atelier-film-heading h2 {
+    margin-top: 20px;
+  }
+  .atelier-film-placeholder,
+  .atelier-film video {
+    aspect-ratio: 4/3;
+  }
+  .atelier-contact {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-block: 55px;
+  }
+  .atelier-contact .landing-inquiry {
+    padding: 24px 20px;
+  }
+  .atelier-invitation {
+    padding-block: 55px;
+  }
+  .atelier-invitation h2 {
+    font-size: 43px;
+  }
+  .atelier-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding-block: 30px;
+  }
+  .atelier-mobile-tour {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 20px max(12px, env(safe-area-inset-bottom));
+    background: #fafaf6f5;
+    border-top: 1px solid var(--at-line);
+    backdrop-filter: blur(10px);
+  }
+  .atelier-mobile-tour > span {
+    font: 20px var(--serif);
+  }
+  .atelier-mobile-tour small {
+    display: block;
+    font: 8px var(--sans);
+    color: var(--at-muted);
+    margin-top: 4px;
+  }
+  .atelier-mobile-tour .atelier-button {
+    font-size: 10px;
+    padding: 13px 15px;
+    gap: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atelier-website * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .atelier-mosaic-side[data-count="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

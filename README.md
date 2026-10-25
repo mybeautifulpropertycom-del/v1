@@ -100,3 +100,5 @@ Deployment checks also reject absent configuration, privileged keys, and invalid
 Before a commercial launch, connect and validate Supabase Auth/Storage/SMTP on a staging deployment, add payment/subscription enforcement, strengthen contact anti-spam with a challenge and edge rate limiting, and publish the actual product’s privacy/terms pages. The current contact endpoint validates payloads, includes a honeypot, and enforces three messages per property/email per hour in PostgreSQL; it is not a complete anti-abuse system.
 
 For future cloud tasks, use this existing isolated checkout. Do not create a Git worktree unless the user explicitly requests one.
+
+The third design is now **The Atelier**, replacing Panorama: a gallery opening, independently editable section copy, property detail accordions, photograph strip, film slot and agent contact with tour scheduling. See [template details](docs/ATELIER-TEMPLATE.md). Existing `panorama` listings and URLs keep working.

@@ -9,8 +9,7 @@ OpenAI analyzes the saved photographs and writes separate English paragraphs for
 positions on the landing page. Each paragraph requests two short sentences. The
 introduction uses the cover photo, the main story uses photo 2 (or the cover), the
 features section uses photo 3 (or the last available photo), and gallery copy uses
-all photographs. Editorial and Heritage use independent section text; Panorama uses
-the main story paragraph. The page layouts and property facts remain unchanged.
+all photographs. Editorial, Heritage and Atelier use independent section text. The page layouts and property facts remain unchanged.
 
 There is no separate AI card, generation button, or review form. In a connected
 workspace, **Save changes**, **Choose your design**, and **Publish website** prepare

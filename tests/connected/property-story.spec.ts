@@ -318,3 +318,44 @@ test("Editorial displays independent introduction, main story and invitation par
     draft.description,
   );
 });
+
+test("Atelier uses separate photo-based paragraphs and saves inline section edits", async ({
+  page,
+}) => {
+  const state = await workspace(page, { template: "panorama" });
+  const draft = storyFixture(state.property);
+  await page.route("**/api/property-story", (route) =>
+    route.fulfill({
+      json: { draft, source: propertyStorySource(state.property) },
+    }),
+  );
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".atelier-intro-copy > p")).toHaveText(
+    draft.content.introBody,
+  );
+  await expect(page.locator(".atelier-story-copy > p")).toHaveText(
+    draft.description,
+  );
+  await expect(page.locator(".atelier-details-copy > p")).toHaveText(
+    draft.content.detailsBody,
+  );
+  await page
+    .getByRole("textbox", {
+      name: "Edit Main section description",
+      exact: true,
+    })
+    .fill(
+      "A personal perspective on this home. Come and discover it for yourself.",
+    );
+  await page.getByRole("button", { name: "Save website" }).click();
+  await expect(
+    page.getByText("Your website changes are saved.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".atelier-story-copy > p")).toHaveText(
+    "A personal perspective on this home. Come and discover it for yourself.",
+  );
+  await expect(page.locator(".atelier-details-copy > p")).toHaveText(
+    draft.content.detailsBody,
+  );
+});

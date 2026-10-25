@@ -42,7 +42,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
     .setInputFiles(path.join(process.cwd(), "public/images/villa.jpg"));
   await expect(page.locator(".image-editor-card")).toHaveCount(1);
   await page.getByRole("button", { name: "Choose your design" }).click();
-  await page.getByRole("button", { name: /The Panorama/ }).click();
+  await page.getByRole("button", { name: /The Atelier/ }).click();
   await page.getByRole("button", { name: "Publish in demo" }).click();
   await expect(page).toHaveURL(/dashboard\/properties\/[a-f0-9-]+$/);
   await expect(page.locator(".published-card")).toContainText(
@@ -57,9 +57,9 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
   await page.goto(`/preview/${propertyId}`);
   await expect(page.locator(".website-panorama")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "A new chapter in Austin" }),
+    page.getByRole("heading", { name: "A new chapter in Austin", level: 1 }),
   ).toBeVisible();
-  await expect(page.locator(".landing-hero-image img")).toHaveJSProperty(
+  await expect(page.locator(".atelier-cover img")).toHaveJSProperty(
     "naturalWidth",
     540,
   );

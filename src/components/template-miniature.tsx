@@ -7,6 +7,35 @@ export function TemplateMiniature({
   template: TemplateId;
   image?: string;
 }) {
+  if (template === "panorama")
+    return (
+      <div className="template-miniature miniature-atelier" aria-hidden="true">
+        <div className="mini-nav">
+          <span>THE ATELIER ↗</span>
+          <span>MENU +</span>
+        </div>
+        <div className="mini-atelier-gallery">
+          <img src={image} alt="" loading="lazy" />
+          <div>
+            {[
+              photos.interior,
+              photos.bedroom,
+              photos.kitchen,
+              photos.apartment,
+            ].map((src, i) => (
+              <img src={src || image} alt="" key={i} loading="lazy" />
+            ))}
+          </div>
+        </div>
+        <div className="mini-atelier-title">
+          A different perspective.<em>A place to call home.</em>
+        </div>
+        <div className="mini-atelier-facts">
+          <span>THOUGHTFULLY CONSIDERED</span>
+          <span>EXPLORE ↗</span>
+        </div>
+      </div>
+    );
   return (
     <div
       className={`template-miniature miniature-${template}`}
