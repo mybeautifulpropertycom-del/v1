@@ -732,6 +732,7 @@
 }
 .atelier-contact .landing-inquiry input,
 .atelier-contact .landing-inquiry textarea {
+  padding-inline: 20px;
   background: #fafbf6;
   border-color: #d7dbcd;
   border-radius: 1px;
@@ -1093,4 +1094,20 @@
   opacity: 0.15;
   z-index: -1;
   pointer-events: none;
+}
+
+.atelier-website .viewing-dialog {
+  --estate-paper: #fafaf6;
+  --estate-ink: #282b27;
+  --estate-sage: #7b826e;
+  --estate-muted: #71756a;
+  --estate-line: #dcded5;
+}
+.atelier-website .viewing-intro > p {
+  margin: 24px 0 31px;
+  color: var(--at-muted);
+}
+.atelier-website .viewing-fields > .viewing-privacy {
+  margin-top: 20px;
+  font-size: 11px;
 }

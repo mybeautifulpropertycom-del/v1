@@ -338,7 +338,6 @@ export function AtelierWebsite({
               {text("detailsTitle")}
               <em>{text("detailsAccent")}</em>
             </h2>
-            <p>{text("detailsBody")}</p>
             <dl className="atelier-spec-grid">
               <div>
                 <dt>Living area</dt>
@@ -570,7 +569,7 @@ export function AtelierWebsite({
                 />
               </label>
               <label>
-                Phone <span>(optional)</span>
+                Phone
                 <input
                   type="tel"
                   name="phone"

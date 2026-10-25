@@ -61,6 +61,22 @@ test("Atelier navigation, feature details, tour popup and honest film preview wo
     .getByRole("button", { name: "Schedule a tour" })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCSS(
+    "background-color",
+    "rgb(250, 250, 246)",
+  );
+  await expect(page.locator(".viewing-fields > label").first()).toHaveCSS(
+    "display",
+    "flex",
+  );
+  await expect(page.locator(".atelier-details-copy > p")).toHaveCount(0);
+  await expect(
+    page.locator(".atelier-contact input[name=phone]"),
+  ).toHaveAccessibleName("Phone");
+  await expect(page.locator(".atelier-contact input[name=name]")).toHaveCSS(
+    "padding-left",
+    "20px",
+  );
   await expect(
     page.getByRole("dialog").locator("input[type=email]"),
   ).toBeVisible();

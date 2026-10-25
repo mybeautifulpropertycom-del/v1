@@ -336,9 +336,7 @@ test("Atelier uses separate photo-based paragraphs and saves inline section edit
   await expect(page.locator(".atelier-story-copy > p")).toHaveText(
     draft.description,
   );
-  await expect(page.locator(".atelier-details-copy > p")).toHaveText(
-    draft.content.detailsBody,
-  );
+  await expect(page.locator(".atelier-details-copy > p")).toHaveCount(0);
   await page
     .getByRole("textbox", {
       name: "Edit Main section description",
@@ -355,7 +353,5 @@ test("Atelier uses separate photo-based paragraphs and saves inline section edit
   await expect(page.locator(".atelier-story-copy > p")).toHaveText(
     "A personal perspective on this home. Come and discover it for yourself.",
   );
-  await expect(page.locator(".atelier-details-copy > p")).toHaveText(
-    draft.content.detailsBody,
-  );
+  await expect(page.locator(".atelier-details-copy > p")).toHaveCount(0);
 });

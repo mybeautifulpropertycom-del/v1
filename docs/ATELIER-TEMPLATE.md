@@ -16,8 +16,8 @@ previews show an explicitly labeled placeholder. No video integration is enabled
 by this template change.
 
 Copy uses the existing property-story fields and photo mapping: intro/cover,
-story/second photograph, details/third photograph. Each section supports inline
-editing. Profile information, price, amenities and measurements come from saved
+story/second photograph. The features section shows its heading and saved facts
+without an introductory subtitle. Displayed section copy supports inline editing. Profile information, price, amenities and measurements come from saved
 data. Agent biography remains the agent's own words.
 
 Schedule a tour opens the existing viewing calendar and contact dialog. Inquiries

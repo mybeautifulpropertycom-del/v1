@@ -683,7 +683,7 @@
   color: var(--estate-muted);
   margin: 15px 0 29px;
 }
-:is(.estate-website, .heritage-website)
+:is(.estate-website, .heritage-website, .atelier-website)
   :is(.estate-inquiry, .viewing-fields)
   label {
   display: flex;
@@ -693,7 +693,7 @@
   color: var(--estate-ink);
   margin-bottom: 19px;
 }
-:is(.estate-website, .heritage-website)
+:is(.estate-website, .heritage-website, .atelier-website)
   :is(.estate-inquiry, .viewing-fields)
   label
   > span {
@@ -701,7 +701,7 @@
   font-weight: 400;
   color: var(--estate-muted);
 }
-:is(.estate-website, .heritage-website)
+:is(.estate-website, .heritage-website, .atelier-website)
   :is(.estate-inquiry, .viewing-fields)
   :is(input, textarea) {
   border-color: #d2dcce;
@@ -711,10 +711,10 @@
   font-size: 13px;
   padding: 14px 15px;
 }
-:is(.estate-website, .heritage-website)
+:is(.estate-website, .heritage-website, .atelier-website)
   :is(.estate-inquiry, .viewing-fields)
   input::placeholder,
-:is(.estate-website, .heritage-website)
+:is(.estate-website, .heritage-website, .atelier-website)
   :is(.estate-inquiry, .viewing-fields)
   textarea::placeholder {
   color: #7b897d;
@@ -918,8 +918,8 @@
   padding: 42px;
   border-radius: 8px;
   margin: auto;
-  background: var(--estate-paper);
-  color: var(--estate-ink);
+  background: var(--estate-paper, #f7f7f1);
+  color: var(--estate-ink, #17332d);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
