@@ -4,10 +4,11 @@ import Link from "next/link";
 import { ArrowUpRight, Inbox, Mail, Phone } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { safePhone } from "@/lib/model";
+import { DeleteAction } from "./delete-action";
 import { useWorkspace } from "./workspace-provider";
 type Inquiry = {
   id: string;
-  property_id: string;
+  property_id: string | null;
   name: string;
   email: string;
   phone: string;
@@ -15,7 +16,7 @@ type Inquiry = {
   created_at: string;
 };
 export function Inquiries() {
-  const { demo, profile, properties } = useWorkspace();
+  const { demo, profile, properties, notify } = useWorkspace();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(!demo);
   const [error, setError] = useState("");
@@ -42,6 +43,23 @@ export function Inquiries() {
       active = false;
     };
   }, [profile.id]);
+  async function deleteInquiry(id: string) {
+    const supabase = getSupabase();
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from("inquiries")
+      .delete()
+      .eq("id", id)
+      .eq("owner_id", profile.id)
+      .select("id")
+      .single();
+    if (error || !data)
+      throw new Error(
+        "This lead could not be deleted. Please check your connection and try again.",
+      );
+    setInquiries((current) => current.filter((item) => item.id !== id));
+    notify("Lead deleted.");
+  }
   return (
     <>
       <div className="page-heading compact">
@@ -70,7 +88,9 @@ export function Inquiries() {
                   <h3>{item.name}</h3>
                   <small>
                     {properties.find((p) => p.id === item.property_id)?.title ||
-                      "Property inquiry"}
+                      (item.property_id
+                        ? "Property inquiry"
+                        : "Deleted property")}
                   </small>
                 </div>
                 <small>
@@ -92,9 +112,16 @@ export function Inquiries() {
                     {item.phone}
                   </a>
                 )}
-                <Link href={`/dashboard/properties/${item.property_id}`}>
-                  View property <ArrowUpRight size={14} />
-                </Link>
+                {item.property_id && (
+                  <Link href={`/dashboard/properties/${item.property_id}`}>
+                    View property <ArrowUpRight size={14} />
+                  </Link>
+                )}
+                <DeleteAction
+                  label={`Delete lead from ${item.name}`}
+                  confirmation={`Delete the lead from ${item.name}? Their contact details and message will be permanently removed from your inbox. This cannot be undone.`}
+                  onDelete={() => deleteInquiry(item.id)}
+                />
               </div>
             </article>
           ))}

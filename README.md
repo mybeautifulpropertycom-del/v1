@@ -102,3 +102,5 @@ Before a commercial launch, connect and validate Supabase Auth/Storage/SMTP on a
 For future cloud tasks, use this existing isolated checkout. Do not create a Git worktree unless the user explicitly requests one.
 
 The third design is now **The Atelier**, replacing Panorama: a gallery opening, independently editable section copy, visible property details and amenities, photograph strip, film slot and agent contact with tour scheduling. See [template details](docs/ATELIER-TEMPLATE.md). Existing `panorama` listings and URLs keep working.
+
+Agent profile photos and property/lead deletion are available in the workspace. Existing Supabase installations need the additive [account tools update](supabase/sql-editor-account-tools.sql); see [activation instructions](docs/ACCOUNT-TOOLS.md).

@@ -1,4 +1,5 @@
 "use client";
+import { AgentAvatar } from "./agent-avatar";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,7 +26,7 @@ const nav = [
   { href: "/dashboard", label: "My properties", icon: Building2 },
   {
     href: "/dashboard/templates",
-    label: "Design collection",
+    label: "Design templates",
     icon: LayoutTemplate,
   },
   { href: "/dashboard/video", label: "Video studio", icon: Video, soon: true },
@@ -52,12 +53,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { profile, demo, signOut } = useWorkspace();
   const [menu, setMenu] = useState(false);
   const [help, setHelp] = useState(false);
-  const first =
-    profile.name
-      .split(" ")
-      .map((x) => x[0])
-      .slice(0, 2)
-      .join("") || "AG";
   return (
     <div className="app-shell">
       {menu && (
@@ -122,7 +117,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </button>
           <div className="account-row">
             <Link href="/dashboard/profile" className="avatar">
-              {first}
+              <AgentAvatar profile={profile} />
             </Link>
             <Link href="/dashboard/profile" className="account-name">
               {profile.name || "Your profile"}
@@ -168,7 +163,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <CircleHelp size={19} />
             </button>
             <Link className="avatar small" href="/dashboard/profile">
-              {first}
+              <AgentAvatar profile={profile} />
             </Link>
           </div>
         </header>

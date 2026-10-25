@@ -22,6 +22,7 @@ import {
   Square,
   X,
 } from "lucide-react";
+import { DeleteAction } from "./delete-action";
 import { useWorkspace } from "./workspace-provider";
 import {
   formatPrice,
@@ -38,6 +39,7 @@ function PropertyCard({
   property: Property;
   demo: boolean;
 }) {
+  const { deleteProperty } = useWorkspace();
   const template = templates.find((t) => t.id === property.template)!;
   return (
     <article className="property-card">
@@ -108,6 +110,12 @@ function PropertyCard({
         </div>
       </div>
       <div className="property-card-footer">
+        <DeleteAction
+          label={`Delete ${property.title || "property"}`}
+          confirmation={`Delete “${property.title || "Untitled property"}”? This permanently removes the property and its published page. Your leads will remain in your inbox. This cannot be undone.`}
+          onDelete={() => deleteProperty(property)}
+        />
+
         <Link href={`/dashboard/properties/${property.id}`}>
           <FilePenLine size={15} />
           Edit website

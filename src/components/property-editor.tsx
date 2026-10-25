@@ -1,4 +1,5 @@
 "use client";
+import { AgentAvatar } from "./agent-avatar";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -741,11 +742,7 @@ export function PropertyEditor({
             <span className="eyebrow">{t.contact}</span>
             <div>
               <span className="avatar">
-                {profile.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join("")}
+                <AgentAvatar profile={profile} />
               </span>
               <strong>
                 {profile.name}

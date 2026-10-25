@@ -1,74 +1,7 @@
-import { test, expect, type Page } from "@playwright/test";
-import type { Property } from "../../src/lib/model";
-import { demoWorkspace } from "../../src/lib/demo";
+import { test, expect } from "@playwright/test";
 import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
-
-const owner = "11111111-1111-4111-8111-111111111111";
-const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-async function workspace(page: Page, overrides: Partial<Property> = {}) {
-  const data = demoWorkspace();
-  const profile = { ...data.profile, id: owner };
-  let property: Property = {
-    ...data.properties[1],
-    id,
-    owner_id: owner,
-    status: "draft",
-    images: [
-      `https://browser-test.supabase.co/storage/v1/object/public/property-images/${owner}/${id}/photo.webp`,
-    ],
-    ...overrides,
-  };
-  const expires = Math.floor(Date.now() / 1000) + 3600;
-  const token = `${Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url")}.${Buffer.from(JSON.stringify({ sub: owner, exp: expires, role: "authenticated", aud: "authenticated" })).toString("base64url")}.test-signature`;
-  const user = {
-    id: owner,
-    email: profile.email,
-    aud: "authenticated",
-    role: "authenticated",
-  };
-  await page.addInitScript(
-    ({ token, user, expires }) => {
-      localStorage.setItem(
-        "sb-browser-test-auth-token",
-        JSON.stringify({
-          access_token: token,
-          refresh_token: "test-refresh",
-          token_type: "bearer",
-          expires_at: expires,
-          expires_in: 3600,
-          user,
-        }),
-      );
-    },
-    { token, user, expires },
-  );
-  await page.route(/https:\/\/[^/]+\.supabase\.co\//, async (route) => {
-    const url = new URL(route.request().url());
-    if (url.pathname.startsWith("/storage/"))
-      return route.fulfill({
-        path: "public/images/villa.jpg",
-        contentType: "image/jpeg",
-      });
-    if (url.pathname === "/auth/v1/user") return route.fulfill({ json: user });
-    if (url.pathname === "/rest/v1/profiles")
-      return route.fulfill({ json: profile });
-    if (url.pathname === "/rest/v1/properties") {
-      if (route.request().method() === "POST") {
-        property = route.request().postDataJSON();
-        return route.fulfill({ json: { id: property.id } });
-      }
-      return route.fulfill({ json: [property] });
-    }
-    return route.abort();
-  });
-  return {
-    get property() {
-      return property;
-    },
-    token,
-  };
-}
+import { workspace, id } from "./workspace-fixture";
 
 test("save prepares separate section text, preserves notes, and reuses saved copy", async ({
   page,

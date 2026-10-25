@@ -45,3 +45,18 @@ commit;
 select 'MBP_PROPERTY_STORIES_OK' as status;
 `,
 );
+
+const accountTools = await readFile(
+  new URL("202610250001_account_tools.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-account-tools.sql", import.meta.url),
+  `-- Existing installations: run this ENTIRE file in Supabase SQL Editor.
+-- Adds agent photos and preserves leads when a property is deleted.
+begin;
+${accountTools.trim()}
+commit;
+select 'MBP_ACCOUNT_TOOLS_OK' as status;
+`,
+);

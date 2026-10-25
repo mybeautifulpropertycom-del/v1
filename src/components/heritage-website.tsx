@@ -1,4 +1,5 @@
 "use client";
+import { AgentAvatar } from "./agent-avatar";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -121,12 +122,6 @@ export function HeritageWebsite({
         `${property.bathrooms} bathrooms`,
         `${size} of living space`,
       ];
-  const initials = profile.name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("");
   const tourButton = (className = "heritage-button") => (
     <button
       type="button"
@@ -605,7 +600,9 @@ export function HeritageWebsite({
               A personal <em>introduction.</em>
             </h2>
             <div className="heritage-agent-profile landing-agent-profile">
-              <span className="heritage-agent-monogram">{initials || "—"}</span>
+              <span className="heritage-agent-monogram">
+                <AgentAvatar profile={profile} />
+              </span>
               <div>
                 <strong>{profile.name || "Your agent"}</strong>
                 {profile.agency && <span>{profile.agency}</span>}

@@ -20,6 +20,8 @@ type WorkspaceContext = Workspace & {
   saveProfile: (profile: Profile) => Promise<void>;
   saveProperty: (property: Property, publish?: boolean) => Promise<Property>;
   uploadImage: (file: File, propertyId: string) => Promise<string>;
+  uploadAvatar: (file: File) => Promise<string>;
+  deleteProperty: (property: Property) => Promise<void>;
   notify: (message: string) => void;
   signOut: () => Promise<void>;
 };
@@ -30,13 +32,13 @@ export function useWorkspace(): WorkspaceContext {
   return context;
 }
 
-async function optimizeImage(file: File): Promise<Blob> {
+async function optimizeImage(file: File, maxSide = 2000): Promise<Blob> {
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
     throw new Error("Choose a JPG, PNG, or WebP image.");
   if (file.size > 10 * 1024 * 1024)
     throw new Error("Each image can be up to 10 MB.");
   const bitmap = await createImageBitmap(file);
-  const ratio = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+  const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
   canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
@@ -92,11 +94,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         const [profileResult, propertyResult] = await Promise.all([
-          supabase
-            .from("profiles")
-            .select("id,name,email,phone,agency,bio")
-            .eq("id", user.id)
-            .single(),
+          supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase
             .from("properties")
             .select("*")
@@ -142,6 +140,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           phone: profile.phone,
           agency: profile.agency,
           bio: profile.bio,
+          ...(profile.avatar_url !== undefined
+            ? { avatar_url: profile.avatar_url }
+            : {}),
         })
         .eq("id", current.profile.id)
         .select("id")
@@ -221,6 +222,94 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       .publicUrl;
   }
 
+  async function uploadAvatar(file: File) {
+    const blob = await optimizeImage(file, 512);
+    const supabase = getSupabase();
+    if (!supabase)
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () =>
+          reject(new Error("The photo could not be read."));
+        reader.readAsDataURL(blob);
+      });
+    const path = `${stateRef.current!.profile.id}/${crypto.randomUUID()}.webp`;
+    const { error } = await supabase.storage
+      .from("agent-avatars")
+      .upload(path, blob, { contentType: "image/webp", upsert: false });
+    if (error)
+      throw new Error(
+        "Your profile photo could not be uploaded. Check that profile photo storage has been set up, then try again.",
+      );
+    return supabase.storage.from("agent-avatars").getPublicUrl(path).data
+      .publicUrl;
+  }
+
+  async function deleteProperty(property: Property) {
+    const owner = stateRef.current!.profile.id;
+    if (property.owner_id !== owner)
+      throw new Error("This property is not in your workspace.");
+    const supabase = getSupabase();
+    if (supabase) {
+      const { data, error } = await supabase.rpc("delete_owned_property", {
+        property_id: property.id,
+      });
+      if (error || data !== true)
+        throw new Error(
+          "Your property could not be deleted. Check the account tools database update and your connection, then try again.",
+        );
+    }
+    const next = {
+      ...stateRef.current!,
+      properties: stateRef.current!.properties.filter(
+        (p) => p.id !== property.id,
+      ),
+    };
+    if (!supabase) await writeDemo(next);
+    commit(next);
+    notify(
+      "Property deleted. Its public page is no longer available. Your leads remain in your inbox.",
+    );
+    if (supabase) {
+      // Remove only saved images in this owner's exact property folder.
+      const prefix = `/storage/v1/object/public/property-images/${owner}/${property.id}/`;
+      const paths = property.images.flatMap((image) => {
+        try {
+          const url = new URL(image);
+          return url.origin ===
+            new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin &&
+            url.pathname.startsWith(prefix) &&
+            /^[a-zA-Z0-9_-]+\.(webp|png|jpe?g)$/i.test(
+              url.pathname.slice(prefix.length),
+            )
+            ? [
+                url.pathname.slice(
+                  "/storage/v1/object/public/property-images/".length,
+                ),
+              ]
+            : [];
+        } catch {
+          return [];
+        }
+      });
+      if (paths.length) {
+        try {
+          const { error } = await supabase.storage
+            .from("property-images")
+            .remove(paths);
+          if (error)
+            notify(
+              "Property deleted. Some saved photos could not be removed from storage.",
+            );
+        } catch {
+          notify(
+            "Property deleted. Some saved photos could not be removed from storage.",
+          );
+        }
+      }
+    }
+  }
+
   async function signOut() {
     const supabase = getSupabase();
     if (supabase) {
@@ -260,6 +349,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         saveProfile,
         saveProperty,
         uploadImage,
+        uploadAvatar,
+        deleteProperty,
         notify,
         signOut,
       }}

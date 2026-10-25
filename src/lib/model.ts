@@ -8,6 +8,7 @@ export type Profile = {
   phone: string;
   agency: string;
   bio: string;
+  avatar_url?: string;
 };
 export type Property = {
   id: string;

@@ -1,4 +1,5 @@
 "use client";
+import { AgentAvatar } from "./agent-avatar";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -15,14 +16,16 @@ import { profileErrors } from "@/lib/model";
 import { en } from "@/i18n/en";
 
 export function ProfileEditor() {
-  const { profile, saveProfile, notify } = useWorkspace();
+  const { profile, saveProfile, uploadAvatar, notify } = useWorkspace();
   const [form, setForm] = useState(profile);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const t = en.profile;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (uploading || busy) return;
     setError("");
     const errors = profileErrors(form);
     if (errors.length) {
@@ -60,6 +63,60 @@ export function ProfileEditor() {
             <div>
               <h2>{t.contactTitle}</h2>
               <p>{t.contactDescription}</p>
+            </div>
+          </div>
+          <div className="profile-photo-control">
+            <span className="profile-upload-avatar">
+              <AgentAvatar profile={form} />
+            </span>
+            <div>
+              <label>
+                Profile photo
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={busy || uploading}
+                  onChange={async (event) => {
+                    const input = event.currentTarget;
+                    const file = input.files?.[0];
+                    if (!file) return;
+                    setUploading(true);
+                    setError("");
+                    setSaved(false);
+                    try {
+                      const avatar_url = await uploadAvatar(file);
+                      setForm((current) => ({ ...current, avatar_url }));
+                    } catch (e) {
+                      setError(
+                        e instanceof Error
+                          ? e.message
+                          : "Your photo could not be uploaded.",
+                      );
+                    } finally {
+                      setUploading(false);
+                      input.value = "";
+                    }
+                  }}
+                />
+              </label>
+              <small>
+                {uploading
+                  ? "Uploading your photo…"
+                  : "JPG, PNG or WebP, up to 10 MB. Save changes to update your photo everywhere."}
+              </small>
+              {form.avatar_url && (
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={busy || uploading}
+                  onClick={() => {
+                    setForm((current) => ({ ...current, avatar_url: "" }));
+                    setSaved(false);
+                  }}
+                >
+                  Remove photo
+                </button>
+              )}
             </div>
           </div>
           <div className="field-grid">
@@ -133,7 +190,7 @@ export function ProfileEditor() {
               <ShieldCheck size={15} />
               Your public contact details
             </span>
-            <button className="button primary" disabled={busy}>
+            <button className="button primary" disabled={busy || uploading}>
               <Save size={16} />
               {busy ? en.common.saving : en.common.save}
             </button>
@@ -149,11 +206,7 @@ export function ProfileEditor() {
           <div className="profile-preview">
             <span className="eyebrow">A FAMILIAR FACE ON EVERY PAGE</span>
             <div className="profile-preview-avatar">
-              {form.name
-                .split(" ")
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join("") || "YOU"}
+              <AgentAvatar profile={form} />
             </div>
             <h2>{form.name || "Your name here"}</h2>
             <span>{form.agency || "Your brokerage"}</span>

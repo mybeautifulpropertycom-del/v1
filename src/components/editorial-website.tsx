@@ -1,4 +1,5 @@
 "use client";
+import { AgentAvatar } from "./agent-avatar";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -181,12 +182,6 @@ export function EditorialWebsite({
   const showFilm = Boolean(film?.src) || isPreview;
   const copy = propertyStory(property);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
-  const initials = profile.name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((name) => name[0])
-    .join("");
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -638,7 +633,9 @@ export function EditorialWebsite({
               <em>A familiar face.</em>
             </h2>
             <div className="estate-agent-person landing-agent-profile">
-              <span className="estate-agent-monogram">{initials || "—"}</span>
+              <span className="estate-agent-monogram">
+                <AgentAvatar profile={profile} />
+              </span>
               <div>
                 <strong>{profile.name || "Your agent"}</strong>
                 {profile.agency && <span>{profile.agency}</span>}

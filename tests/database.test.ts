@@ -453,3 +453,128 @@ test("a late storage conflict rolls back the entire SQL Editor installation", as
     await isolated.close();
   }
 });
+
+test("account tools upgrade safely, isolate portraits and deletes, and preserve leads after property deletion", async () => {
+  const database = await createTestDatabase();
+  const role = (id: string) =>
+    database.exec(
+      `reset role; set role authenticated; set app.user_id = '${id}';`,
+    );
+  try {
+    await database.exec(
+      await readFile(
+        new URL(
+          "../supabase/migrations/202610230001_initial.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    await database.exec(
+      `insert into auth.users(id,email,raw_user_meta_data) values ('${agentA}','a@example.com','{"name":"Agent A"}'),('${agentB}','b@example.com','{"name":"Agent B"}'); update public.profiles set phone = '+1 202 555 0148';`,
+    );
+    await role(agentA);
+    await database.query(
+      "insert into public.properties(id,owner_id,slug,title,description,location,price,area,images,status) values ($1,$2,'portrait-home','Portrait home','A complete description for this lovely property.','Austin, TX',500000,2000,array['https://example.com/home.jpg'],'published')",
+      [propertyA, agentA],
+    );
+    await database.exec("reset role;");
+    await database.query(
+      "insert into public.inquiries(property_id,owner_id,name,email,message) values ($1,$2,'Buyer','buyer@example.com','Please arrange a private tour.')",
+      [propertyA, agentA],
+    );
+    const upgrade = await readFile(
+      new URL("../supabase/sql-editor-account-tools.sql", import.meta.url),
+      "utf8",
+    );
+    await database.exec(upgrade);
+    await database.exec(upgrade);
+    await role(agentA);
+    const avatar = `https://project.supabase.co/storage/v1/object/public/agent-avatars/${agentA}/photo.webp`;
+    await database.query(
+      "update public.profiles set avatar_url = $1 where id = $2",
+      [avatar, agentA],
+    );
+    await database.query(
+      "insert into storage.objects(bucket_id,name) values ('agent-avatars',$1)",
+      [`${agentA}/photo.webp`],
+    );
+    await assert.rejects(
+      database.query(
+        "insert into storage.objects(bucket_id,name) values ('agent-avatars',$1)",
+        [`${agentB}/photo.webp`],
+      ),
+    );
+    await role(agentB);
+    const forbidden = await database.query<{ deleted: boolean }>(
+      "select public.delete_owned_property($1) as deleted",
+      [propertyA],
+    );
+    assert.equal(forbidden.rows[0].deleted, false);
+    assert.equal(
+      (
+        await database.query(
+          "delete from public.inquiries where owner_id = $1 returning id",
+          [agentA],
+        )
+      ).rows.length,
+      0,
+    );
+    assert.equal(
+      (
+        await database.query(
+          "update public.profiles set avatar_url = '' where id = $1 returning id",
+          [agentA],
+        )
+      ).rows.length,
+      0,
+    );
+    assert.equal(
+      (
+        await database.query(
+          "delete from storage.objects where bucket_id = 'agent-avatars' returning id",
+        )
+      ).rows.length,
+      0,
+    );
+    await database.exec("reset role; set role anon; set app.user_id = ''; ");
+    const publicPage = await database.query<{
+      page: { profile: { avatar_url: string } };
+    }>("select public.get_public_property('portrait-home') as page");
+    assert.equal(publicPage.rows[0].page.profile.avatar_url, avatar);
+    await assert.rejects(
+      database.query("select public.delete_owned_property($1)", [propertyA]),
+    );
+    await role(agentA);
+    assert.equal(
+      (
+        await database.query<{ deleted: boolean }>(
+          "select public.delete_owned_property($1) as deleted",
+          [propertyA],
+        )
+      ).rows[0].deleted,
+      true,
+    );
+    const leads = await database.query<{ property_id: string | null }>(
+      "select property_id from public.inquiries",
+    );
+    assert.equal(leads.rows.length, 1);
+    assert.equal(leads.rows[0].property_id, null);
+    assert.equal(
+      (await database.query("delete from public.inquiries returning id")).rows
+        .length,
+      1,
+    );
+    await database.exec("reset role; set role anon; set app.user_id = ''; ");
+    assert.equal(
+      (
+        await database.query<{ page: null }>(
+          "select public.get_public_property('portrait-home') as page",
+        )
+      ).rows[0].page,
+      null,
+    );
+  } finally {
+    await database.close();
+  }
+});

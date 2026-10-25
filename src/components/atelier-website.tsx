@@ -1,4 +1,5 @@
 "use client";
+import { AgentAvatar } from "./agent-avatar";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import {
@@ -514,7 +515,9 @@ export function AtelierWebsite({
               A familiar face.<em>A personal introduction.</em>
             </h2>
             <div className="landing-agent-profile">
-              <span className="atelier-avatar">{initials}</span>
+              <span className="atelier-avatar">
+                <AgentAvatar profile={profile} />
+              </span>
               <div>
                 <strong>{profile.name}</strong>
                 <span>{profile.agency}</span>
