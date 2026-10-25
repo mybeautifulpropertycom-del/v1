@@ -41,7 +41,8 @@ export function PropertyCheckout({
 }) {
   const [enabled, setEnabled] = useState(false);
   const [paid, setPaid] = useState(false);
-  const [live, setLive] = useState(false);
+  // A failed status request does not establish whether payments are live or test.
+  const [live, setLive] = useState<boolean | null>(null);
   const [canPurchase, setCanPurchase] = useState(true);
   const [allowed, setAllowed] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
@@ -147,12 +148,14 @@ export function PropertyCheckout({
     <section
       className="property-checkout-card"
       aria-label={
-        live ? "Property package checkout" : "Property package test checkout"
+        live === false
+          ? "Property package test checkout"
+          : "Property package checkout"
       }
     >
       <div>
         <span className="eyebrow">
-          {live ? "YOUR PROPERTY PACKAGE" : "STRIPE TEST MODE"}
+          {live === false ? "STRIPE TEST MODE" : "YOUR PROPERTY PACKAGE"}
         </span>
         <h3>One property. A complete presentation.</h3>
         <p>Your property website and presentation video, together.</p>
@@ -164,11 +167,13 @@ export function PropertyCheckout({
         <span>One-time payment per property</span>
       </div>
       <p className="property-checkout-note">
-        {live
-          ? canPurchase
-            ? "One website and one presentation video for this property. Pay once, then publish and edit your website without another publication fee."
-            : "Purchases will open when our presentation-video service launches."
-          : "Test checkout only. No real money is collected. Video generation is being prepared; this test does not order a video or publish your website."}
+        {live === null
+          ? "Checkout is temporarily unavailable. Please try again shortly."
+          : live
+            ? canPurchase
+              ? "One website and one presentation video for this property. Pay once, then publish and edit your website without another publication fee."
+              : "Purchases will open when our presentation-video service launches."
+            : "Test checkout only. No real money is collected. Video generation is being prepared; this test does not order a video or publish your website."}
       </p>
       {paid || (live && allowed) ? (
         <p className="property-checkout-confirmed" role="status">

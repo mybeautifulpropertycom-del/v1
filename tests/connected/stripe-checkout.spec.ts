@@ -142,3 +142,26 @@ test("existing publication access does not offer another charge", async ({
     page.getByRole("button", { name: "Publish website", exact: true }),
   ).toBeEnabled();
 });
+
+test("a configuration failure does not mislabel live checkout as test mode", async ({
+  page,
+}) => {
+  await workspace(page);
+  await page.route("**/api/billing/checkout**", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { error: "The checkout return address is not configured." },
+    }),
+  );
+  await page.goto(`/dashboard/properties/${id}?checkout=cancelled`);
+  const panel = page.getByRole("region", { name: "Property package checkout" });
+  await expect(panel.getByRole("alert")).toHaveText(
+    "The checkout return address is not configured.",
+  );
+  await expect(panel).not.toContainText("STRIPE TEST MODE");
+  await expect(panel).not.toContainText("No real money is collected");
+  await expect(panel.getByRole("button")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Publish website", exact: true }),
+  ).toBeDisabled();
+});
