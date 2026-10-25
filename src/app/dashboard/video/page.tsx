@@ -1,76 +1,73 @@
+"use client";
 import Link from "next/link";
-import { ArrowRight, Film, Images, Play, Sparkles } from "lucide-react";
-import { photos } from "@/lib/demo";
+import { ArrowUpRight, Film, Plus } from "lucide-react";
+import { useWorkspace } from "@/components/workspace-provider";
 export default function Page() {
+  const { properties } = useWorkspace();
   return (
     <>
       <div className="page-heading compact">
         <div>
-          <span className="eyebrow">THE NEXT CHAPTER</span>
+          <span className="eyebrow">YOUR PROPERTIES, IN MOTION</span>
           <h1>
-            A home worth seeing.
-            <br />
-            <em>A story worth moving.</em>
+            A story worth <em>watching.</em>
           </h1>
           <p>
-            Your future home for property films, from first frame to final cut.
+            One presentation video, included with each property package. Follow
+            your film from your website editor.
           </p>
         </div>
-        <span className="coming-pill">
-          <span />
-          Coming soon
-        </span>
       </div>
-      <section className="video-stage">
-        <img src={photos.villa} alt="Contemporary home with a private garden" />
-        <div className="video-stage-overlay">
-          <span className="video-play">
-            <Play size={30} fill="currentColor" />
-          </span>
-          <span className="eyebrow">A NEW PERSPECTIVE IS ON ITS WAY</span>
-          <h2>
-            From stills.
-            <br />
-            To something moving.
-          </h2>
-          <p>Beautiful property films, built from your photos.</p>
+      {properties.length ? (
+        <div className="video-property-grid">
+          {properties.map((property) => (
+            <article className="video-property-card" key={property.id}>
+              {property.images[0] ? (
+                <img src={property.images[0]} alt={property.title} />
+              ) : (
+                <div className="video-property-placeholder">
+                  <Film size={36} />
+                </div>
+              )}
+              <div>
+                <span className="eyebrow">
+                  {property.status === "published"
+                    ? "YOUR PROPERTY FILM"
+                    : "BRING YOUR PROPERTY TO LIFE"}
+                </span>
+                <h2>{property.title || "Your next property"}</h2>
+                <p>
+                  {property.status === "published"
+                    ? "Open your website editor to view your presentation video or follow its progress."
+                    : "Publish property to generate video. Turn your saved photographs into a presentation that helps buyers imagine being there."}
+                </p>
+                <Link
+                  className="button primary"
+                  href={`/preview/${property.id}${property.status === "published" ? "#film" : ""}`}
+                >
+                  {property.status === "published"
+                    ? "View website & video"
+                    : "Publish Property"}
+                  <ArrowUpRight size={16} />
+                </Link>
+              </div>
+            </article>
+          ))}
         </div>
-        <span className="video-corner">MY BEAUTIFUL PROPERTY / STUDIO</span>
-      </section>
-      <div className="video-roadmap">
-        {[
-          {
-            icon: Images,
-            title: "Start with your photos",
-            text: "The photographs you upload to your property will be the starting point for your film.",
-          },
-          {
-            icon: Sparkles,
-            title: "Bring the space to life",
-            text: "A future Higgsfield connection will power image-to-video generation.",
-          },
-          {
-            icon: Film,
-            title: "Make the final cut",
-            text: "A video editor will let you refine the story before sharing it with your clients.",
-          },
-        ].map(({ icon: Icon, title, text }) => (
-          <div key={title}>
-            <Icon size={23} />
-            <h3>{title}</h3>
-            <p>{text}</p>
-          </div>
-        ))}
-      </div>
-      <div className="video-note">
-        <p>
-          Video generation and editing are planned features. There are no
-          connected video services or generation charges in this version.
-        </p>
-        <Link href="/dashboard/properties/new">
-          Start with a property <ArrowRight size={16} />
-        </Link>
-      </div>
+      ) : (
+        <div className="empty-state">
+          <Film size={35} />
+          <h2>Your next story starts with a property.</h2>
+          <p>
+            Add the details and photographs, then preview your website before
+            publishing.
+          </p>
+          <Link className="button primary" href="/dashboard/properties/new">
+            <Plus size={16} />
+            Add a property
+          </Link>
+        </div>
+      )}
     </>
   );
 }

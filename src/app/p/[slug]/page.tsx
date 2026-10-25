@@ -9,7 +9,11 @@ export const dynamic = "force-dynamic";
 const getPublished = cache(
   async (
     slug: string,
-  ): Promise<{ property: PublicProperty; profile: PublicProfile } | null> => {
+  ): Promise<{
+    property: PublicProperty;
+    profile: PublicProfile;
+    film?: { src: string; poster?: string } | null;
+  } | null> => {
     const supabase = serverSupabase();
     if (!supabase) return null;
     const { data, error } = await supabase.rpc("get_public_property", {
@@ -44,5 +48,11 @@ export default async function Page({
 }) {
   const data = await getPublished((await params).slug);
   if (!data) notFound();
-  return <PropertyWebsite property={data.property} profile={data.profile} />;
+  return (
+    <PropertyWebsite
+      property={data.property}
+      profile={data.profile}
+      film={data.film ?? undefined}
+    />
+  );
 }

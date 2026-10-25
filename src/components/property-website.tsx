@@ -12,6 +12,7 @@ export type PropertyWebsiteProps = {
   sample?: boolean;
   onEdit?: (field: EditableField, value: string) => void;
   film?: PropertyFilm;
+  videoPanel?: React.ReactNode;
 };
 export function PropertyWebsite(props: PropertyWebsiteProps) {
   if (props.property.template === "editorial")

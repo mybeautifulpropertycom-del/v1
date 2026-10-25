@@ -107,4 +107,4 @@ Agent profile photos and property/lead deletion are available in the workspace. 
 
 ### Stripe checkout (test and live)
 
-The $97 USD website + presentation-video package supports test and live Checkout, database-enforced publication access, and refund/dispute handling. See [Stripe setup](docs/STRIPE-SETUP.md) for the additive installer, keys, webhook and launch switch. Configure live now with `STRIPE_LIVE_PAYMENTS_ENABLED=false`; enable purchases after Higgsfield fulfilment is ready, without another Stripe code change.
+The $97 USD website + presentation-video package supports test and live Checkout, database-enforced publication access, and refund/dispute handling. See [Stripe setup](docs/STRIPE-SETUP.md) for the additive installer, keys, webhook and launch switch. Agents can preview and edit before opening the embedded **Publish Property** payment modal. Verified payments automatically publish and queue a video; Higgsfield rendering remains the next integration. Existing installations must apply the [publish workflow upgrade](docs/PUBLISH-WORKFLOW.md).

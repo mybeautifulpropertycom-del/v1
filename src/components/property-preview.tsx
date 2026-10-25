@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Save } from "lucide-react";
+import { Pencil, Save, Globe2, ExternalLink } from "lucide-react";
+import { usePropertyPublication } from "./property-publication";
+import { publicPath } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { PropertyWebsite, type EditableField } from "./property-website";
 import {
@@ -11,7 +13,8 @@ import {
 } from "@/lib/property-story";
 import { preparePropertyWebsite } from "@/lib/request-property-story";
 export function PropertyPreview({ id }: { id: string }) {
-  const { properties, profile, demo, saveProperty, notify } = useWorkspace();
+  const { properties, profile, demo, saveProperty, refreshProperty, notify } =
+    useWorkspace();
   const savedProperty = properties.find((p) => p.id === id);
   const [property, setProperty] = useState(savedProperty);
   const [editing, setEditing] = useState(false);
@@ -100,7 +103,7 @@ export function PropertyPreview({ id }: { id: string }) {
     setDirty(true);
   }
   async function save() {
-    if (!property || saving.current || preparing) return;
+    if (!property || saving.current || preparing) return null;
     saving.current = true;
     setBusy(true);
     setError("");
@@ -111,20 +114,39 @@ export function PropertyPreview({ id }: { id: string }) {
         // Save these inputs before asking the server to prepare their update.
         setPreparing(true);
         value = await preparePropertyWebsite(value);
-        await saveProperty(value);
+        value = await saveProperty(value);
       }
+      setProperty(value);
       setDirty(false);
       notify("Your website changes are saved.");
+      return value;
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Your changes could not be saved.",
       );
+      return null;
     } finally {
       setBusy(false);
       setPreparing(false);
       saving.current = false;
     }
   }
+  const publication = usePropertyPublication({
+    property,
+    demo,
+    disabled: busy || preparing,
+    prepare: save,
+    onPublished: async () => {
+      const value = await refreshProperty(id);
+      if (value) setProperty(value);
+    },
+    publishDemo: async () => {
+      if (property) {
+        const value = await saveProperty(property, true);
+        setProperty(value);
+      }
+    },
+  });
   if (!property)
     return (
       <div className="state-screen">
@@ -150,6 +172,16 @@ export function PropertyPreview({ id }: { id: string }) {
           </span>
         </div>
         <div>
+          <Link
+            className="text-button"
+            href={`/dashboard/properties/${id}`}
+            onClick={(e) => {
+              if (dirty && !confirm("Leave without saving your changes?"))
+                e.preventDefault();
+            }}
+          >
+            Property details
+          </Link>
           {editing ? (
             <>
               <button
@@ -185,8 +217,28 @@ export function PropertyPreview({ id }: { id: string }) {
               Edit on page
             </button>
           )}
+          {property.status === "published" ? (
+            <Link
+              className="button primary"
+              href={demo ? `/preview/${id}` : publicPath(property)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View live website <ExternalLink size={15} />
+            </Link>
+          ) : (
+            <button
+              className="button primary"
+              disabled={busy || preparing}
+              onClick={() => void publication.publish()}
+            >
+              <Globe2 size={16} />
+              Publish Property
+            </button>
+          )}
         </div>
       </div>
+      {publication.dialog}
       {preparing && (
         <div className="inline-notice" role="status">
           Preparing the descriptions for your page…
@@ -217,6 +269,8 @@ export function PropertyPreview({ id }: { id: string }) {
           property={property}
           profile={profile}
           preview
+          videoPanel={publication.videoPanel}
+          film={publication.film}
           onEdit={editing && !preparing && !busy ? edit : undefined}
         />
       </div>

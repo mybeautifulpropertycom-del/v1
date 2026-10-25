@@ -110,7 +110,7 @@ function PropertyCard({
         </div>
       </div>
       <div className="property-card-footer">
-        <Link href={`/dashboard/properties/${property.id}`}>
+        <Link href={`/preview/${property.id}`}>
           <FilePenLine size={15} />
           Edit website
         </Link>

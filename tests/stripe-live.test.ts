@@ -30,6 +30,7 @@ before(async () => {
   ({ POST: WEBHOOK } = await import("../src/app/api/stripe/webhook/route"));
 });
 beforeEach(() => {
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_live_fake";
   process.env.STRIPE_CHECKOUT_MODE = "live";
   process.env.STRIPE_SECRET_KEY = "sk_live_fake";
   process.env.STRIPE_LIVE_PAYMENTS_ENABLED = "true";
@@ -71,9 +72,14 @@ globalThis.fetch = async (input, init) => {
     assert.equal(headers.get("authorization"), "Bearer sk_live_fake");
     if (url.pathname === "/v1/checkout/sessions" && method === "POST") {
       stripePosts.push(new URLSearchParams(String(init?.body)));
-      assert.equal(headers.get("idempotency-key"), `mbp-live-${orderId}-1`);
+      assert.ok(
+        [`mbp-live-${orderId}-1`, `mbp-embedded-live-${orderId}-1`].includes(
+          headers.get("idempotency-key")!,
+        ),
+      );
       return Response.json({
         id: "cs_live_one",
+        client_secret: "cs_live_one_secret_fake",
         livemode: true,
         status: "open",
         url: "https://checkout.stripe.com/c/pay/cs_live_one",
@@ -144,6 +150,8 @@ globalThis.fetch = async (input, init) => {
     return Response.json(allowed);
   if (url.pathname.endsWith("/property_billing_settings"))
     return Response.json({ enabled: active });
+  if (url.pathname.endsWith("/rpc/request_property_publication"))
+    return Response.json(allowed ? { published: true, paid: true } : { order });
   if (url.pathname.endsWith("/rpc/reserve_property_order"))
     return Response.json(order);
   if (url.pathname.endsWith("/rpc/apply_property_payment")) {
@@ -323,4 +331,41 @@ test("webhooks keep processing when sales are paused and failed saves are retrya
   failSave = false;
   assert.equal((await WEBHOOK(webhook())).status, 200);
   assert.equal(applications.length, 1);
+});
+
+test("embedded payment uses a fixed-price Stripe iframe session with no external redirect", async () => {
+  const response = await POST(
+    new Request("https://app.example/api/billing/checkout", {
+      method: "POST",
+      headers: { authorization: "Bearer user-token" },
+      body: JSON.stringify({ propertyId: id, embedded: true }),
+    }),
+  );
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.clientSecret, "cs_live_one_secret_fake");
+  assert.equal(body.publishableKey, "pk_live_fake");
+  assert.equal(body.url, undefined);
+  const params = stripePosts[0];
+  assert.equal(params.get("ui_mode"), "embedded_page");
+  assert.equal(params.get("redirect_on_completion"), "never");
+  assert.equal(params.get("success_url"), null);
+  assert.equal(params.get("line_items[0][price_data][unit_amount]"), "9700");
+});
+test("paid publication skips checkout and a missing public key cannot create an embedded charge", async () => {
+  const embedded = () =>
+    new Request("https://app.example/api/billing/checkout", {
+      method: "POST",
+      headers: { authorization: "Bearer user-token" },
+      body: JSON.stringify({ propertyId: id, embedded: true }),
+    });
+  delete process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  assert.equal((await POST(embedded())).status, 503);
+  assert.equal(stripePosts.length, 0);
+  allowed = true;
+  assert.deepEqual(await (await POST(embedded())).json(), {
+    published: true,
+    paid: true,
+  });
+  assert.equal(stripePosts.length, 0);
 });

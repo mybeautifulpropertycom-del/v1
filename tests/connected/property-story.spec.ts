@@ -169,10 +169,11 @@ test("missing configuration keeps the draft saved, shows a useful error, and all
   await page.getByRole("button", { name: "Choose your design" }).click();
   await expect(page.locator(".template-choices")).toBeVisible();
   await page
-    .getByRole("button", { name: "Publish website", exact: true })
+    .getByRole("button", { name: "Open website editor", exact: true })
     .click();
-  await expect(page.locator(".published-card")).toBeVisible();
-  expect(state.property.status).toBe("published");
+  await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
+  await expect(page.locator(".inline-edit-toolbar")).toBeVisible();
+  expect(state.property.status).toBe("draft");
 });
 
 test("private preview reports a platform timeout and lets the agent retry in place", async ({

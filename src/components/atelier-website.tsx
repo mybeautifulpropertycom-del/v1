@@ -29,6 +29,7 @@ export function AtelierWebsite({
   sample = false,
   onEdit,
   film,
+  videoPanel,
 }: PropertyWebsiteProps) {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [viewing, setViewing] = useState(false);
@@ -457,7 +458,7 @@ export function AtelierWebsite({
           {!property.images.length && <p>Your photographs will appear here.</p>}
         </section>
         {(film?.src || isPreview) && (
-          <section className="atelier-film atelier-pad">
+          <section className="atelier-film atelier-pad" id="film">
             <div className="atelier-film-heading">
               <span className="atelier-kicker">
                 A DIFFERENT WAY TO EXPERIENCE IT
@@ -485,6 +486,8 @@ export function AtelierWebsite({
                   />
                 )}
               </video>
+            ) : videoPanel ? (
+              videoPanel
             ) : (
               <div
                 className="atelier-film-placeholder"

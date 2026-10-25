@@ -22,6 +22,7 @@ type WorkspaceContext = Workspace & {
   uploadImage: (file: File, propertyId: string) => Promise<string>;
   uploadAvatar: (file: File) => Promise<string>;
   deleteProperty: (property: Property) => Promise<void>;
+  refreshProperty: (id: string) => Promise<Property | null>;
   notify: (message: string) => void;
   signOut: () => Promise<void>;
 };
@@ -128,6 +129,32 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     };
   }, [commit, router]);
 
+  const refreshProperty = useCallback(
+    async (id: string) => {
+      const supabase = getSupabase();
+      if (!supabase)
+        return stateRef.current?.properties.find((p) => p.id === id) ?? null;
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("id", id)
+        .eq("owner_id", stateRef.current!.profile.id)
+        .single();
+      if (error)
+        throw new Error(
+          "Your property could not be refreshed. Please reload the page.",
+        );
+      const property = data as Property;
+      commit({
+        ...stateRef.current!,
+        properties: stateRef.current!.properties.map((p) =>
+          p.id === id ? property : p,
+        ),
+      });
+      return property;
+    },
+    [commit],
+  );
   async function saveProfile(profile: Profile) {
     const current = stateRef.current!;
     const supabase = getSupabase();
@@ -353,6 +380,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         uploadImage,
         uploadAvatar,
         deleteProperty,
+        refreshProperty,
         notify,
         signOut,
       }}

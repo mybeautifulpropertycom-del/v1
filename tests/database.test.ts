@@ -578,3 +578,236 @@ test("account tools upgrade safely, isolate portraits and deletes, and preserve 
     await database.close();
   }
 });
+
+test("paid publication intent publishes once, preserves payment on invalid drafts, and queues one private video job", async () => {
+  const database = await createTestDatabase();
+  try {
+    await database.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-setup.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const upgrade = await readFile(
+      new URL("../supabase/sql-editor-publish-workflow.sql", import.meta.url),
+      "utf8",
+    );
+    await database.exec(upgrade);
+    await database.exec(upgrade);
+    await database.query(
+      "insert into auth.users(id,email,raw_user_meta_data) values($1,'agent@example.com','{\"name\":\"Agent Owner\"}')",
+      [agentA],
+    );
+    await database.exec("update profiles set phone='+1 202 555 0123'");
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$2,'payment-property','A beautiful property','A generous home with light-filled living spaces.','Austin, TX',900000,2000,array['https://example.com/cover.jpg'])",
+      [propertyA, agentA],
+    );
+    await database.exec("set role authenticated");
+    await assert.rejects(
+      database.query("select request_property_publication($1,$2)", [
+        propertyA,
+        agentA,
+      ]),
+      /permission denied/,
+    );
+    await assert.rejects(
+      database.query("select * from property_video_jobs"),
+      /permission denied/,
+    );
+    await database.exec("reset role; set role service_role");
+    await database.query("select activate_property_billing()");
+    await assert.rejects(
+      database.query("select request_property_publication($1,$2)", [
+        propertyA,
+        agentB,
+      ]),
+      /Property not available/,
+    );
+    const request = await database.query<{
+      request_property_publication: { order: { id: string } };
+    }>("select request_property_publication($1,$2)", [propertyA, agentA]);
+    const order = request.rows[0].request_property_publication.order.id;
+    assert.equal(
+      (await database.query("select * from property_video_jobs")).rows.length,
+      0,
+    );
+    await database.query("select apply_property_payment($1,$2,$3,$4)", [
+      order,
+      "pi_publish",
+      "paid",
+      100,
+    ]);
+    await database.exec("reset role");
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from properties where id=$1",
+          [propertyA],
+        )
+      ).rows[0].status,
+      "published",
+    );
+    const job = await database.query<{
+      status: string;
+      source: { images: string[] };
+    }>("select * from property_video_jobs");
+    assert.equal(job.rows.length, 1);
+    assert.equal(job.rows[0].status, "queued");
+    assert.equal(job.rows[0].source.images[0], "https://example.com/cover.jpg");
+    await database.exec("update property_video_jobs set status='failed'");
+    assert.equal(
+      (
+        await database.query<{ retry_property_video: boolean }>(
+          "select retry_property_video($1,$2)",
+          [propertyA, agentB],
+        )
+      ).rows[0].retry_property_video,
+      false,
+    );
+    assert.equal(
+      (
+        await database.query<{ retry_property_video: boolean }>(
+          "select retry_property_video($1,$2)",
+          [propertyA, agentA],
+        )
+      ).rows[0].retry_property_video,
+      true,
+    );
+    assert.equal(
+      (
+        await database.query<{ retry_property_video: boolean }>(
+          "select retry_property_video($1,$2)",
+          [propertyA, agentA],
+        )
+      ).rows[0].retry_property_video,
+      false,
+    );
+    await database.query("update properties set status='draft' where id=$1", [
+      propertyA,
+    ]);
+    await database.query("select apply_property_payment($1,$2,$3,$4)", [
+      order,
+      "pi_publish",
+      "paid",
+      100,
+    ]);
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from properties where id=$1",
+          [propertyA],
+        )
+      ).rows[0].status,
+      "draft",
+    );
+    await database.query("select request_property_publication($1,$2)", [
+      propertyA,
+      agentA,
+    ]);
+    assert.equal(
+      (await database.query("select * from property_video_jobs")).rows.length,
+      1,
+    );
+    await database.exec(
+      "update property_video_jobs set status='completed',video_url='https://example.com/film.mp4'",
+    );
+    await database.exec("set role anon");
+    const pub = await database.query<{
+      get_public_property: { film: { src: string } };
+    }>("select get_public_property('payment-property')");
+    assert.equal(
+      pub.rows[0].get_public_property.film.src,
+      "https://example.com/film.mp4",
+    );
+    await database.exec("reset role");
+    await database.query("select apply_property_payment($1,$2,$3,$4)", [
+      order,
+      "pi_publish",
+      "refunded",
+      200,
+    ]);
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from property_video_jobs",
+        )
+      ).rows[0].status,
+      "cancelled",
+    );
+    assert.equal(
+      (
+        await database.query<{ retry_property_video: boolean }>(
+          "select retry_property_video($1,$2)",
+          [propertyA, agentA],
+        )
+      ).rows[0].retry_property_video,
+      false,
+    );
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from properties where id=$1",
+          [propertyA],
+        )
+      ).rows[0].status,
+      "draft",
+    );
+
+    // If the saved facts become invalid while Checkout is open, retain the paid
+    // receipt and let the owner fix the draft without paying again.
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$2,'review-property','Another beautiful home','A long, inviting description of this lovely property.','Austin, TX',500000,1500,array['https://example.com/home.jpg'])",
+      [propertyB, agentA],
+    );
+    const next = await database.query<{
+      request_property_publication: { order: { id: string } };
+    }>("select request_property_publication($1,$2)", [propertyB, agentA]);
+    const second = next.rows[0].request_property_publication.order.id;
+    await database.query("update properties set description='' where id=$1", [
+      propertyB,
+    ]);
+    await database.query("select apply_property_payment($1,$2,$3,$4)", [
+      second,
+      "pi_review",
+      "paid",
+      300,
+    ]);
+    const paid = await database.query<{
+      status: string;
+      publication_error: string;
+    }>("select status,publication_error from property_orders where id=$1", [
+      second,
+    ]);
+    assert.equal(paid.rows[0].status, "paid");
+    assert.match(paid.rows[0].publication_error, /Review your property/);
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from properties where id=$1",
+          [propertyB],
+        )
+      ).rows[0].status,
+      "draft",
+    );
+    await database.query(
+      "update properties set description='A long, inviting description of this lovely property.' where id=$1",
+      [propertyB],
+    );
+    await database.query("select request_property_publication($1,$2)", [
+      propertyB,
+      agentA,
+    ]);
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from properties where id=$1",
+          [propertyB],
+        )
+      ).rows[0].status,
+      "published",
+    );
+  } finally {
+    await database.close();
+  }
+});

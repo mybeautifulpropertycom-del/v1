@@ -43,8 +43,20 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
   await expect(page.locator(".image-editor-card")).toHaveCount(1);
   await page.getByRole("button", { name: "Choose your design" }).click();
   await page.getByRole("button", { name: /The Atelier/ }).click();
+  await page.getByRole("button", { name: "Open website editor" }).click();
+  await expect(page).toHaveURL(/preview\/[a-f0-9-]+$/);
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publish Property" })
+    .click();
   await page.getByRole("button", { name: "Publish in demo" }).click();
-  await expect(page).toHaveURL(/dashboard\/properties\/[a-f0-9-]+$/);
+  await expect(page.getByRole("dialog")).toContainText(
+    "Your property website is published.",
+  );
+  await page.getByRole("button", { name: "Back to editing" }).click();
+  await page
+    .getByRole("link", { name: "Property details", exact: true })
+    .click();
   await expect(page.locator(".published-card")).toContainText(
     "Published in demo",
   );
@@ -133,14 +145,18 @@ test("each template has working gallery controls and honest preview contact beha
 test("incomplete properties cannot publish", async ({ page }) => {
   await page.goto("/dashboard/properties/new");
   await page.getByRole("button", { name: "Website design" }).click();
+  await page.getByRole("button", { name: "Open website editor" }).click();
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publish Property" })
+    .click();
   await page.getByRole("button", { name: "Publish in demo" }).click();
-  await expect(page.locator(".editor-error")).toContainText(
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
     "Add at least one photo.",
   );
-  await expect(page.locator(".editor-error")).toContainText(
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
     "The headline needs at least 5 characters.",
   );
-  await expect(page.locator(".published-card")).toHaveCount(0);
 });
 
 test("inline editing saves the property headline and survives reload", async ({

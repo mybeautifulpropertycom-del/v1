@@ -90,6 +90,7 @@ export function HeritageWebsite({
   sample = false,
   onEdit,
   film,
+  videoPanel,
 }: PropertyWebsiteProps) {
   const { stage, cover } = useCoverZoom();
   const [viewing, setViewing] = useState(false);
@@ -565,6 +566,8 @@ export function HeritageWebsite({
                   <a href={film.src}>Open the property film</a>.
                 </video>
               </>
+            ) : videoPanel ? (
+              videoPanel
             ) : (
               <div className="heritage-film-preview">
                 {property.images[0] && (

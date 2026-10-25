@@ -92,3 +92,18 @@ commit;
 select 'MBP_STRIPE_LIVE_READY' as status;
 `,
 );
+
+const publishWorkflow = await readFile(
+  new URL("202610250004_publish_workflow.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-publish-workflow.sql", import.meta.url),
+  `-- Existing installations: run the entire file. Adds automatic publication and a durable video queue.
+-- Requires the previously installed Stripe live schema. Does not charge or publish existing drafts.
+begin;
+${publishWorkflow.trim()}
+commit;
+select 'MBP_PUBLISH_WORKFLOW_OK' as status;
+`,
+);

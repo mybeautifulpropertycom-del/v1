@@ -107,7 +107,9 @@ export async function workspace(
         property = route.request().postDataJSON();
         return route.fulfill({ json: { id: property.id } });
       }
-      return route.fulfill({ json: deleted ? [] : [property] });
+      return route.fulfill({
+        json: deleted ? [] : url.searchParams.has("id") ? property : [property],
+      });
     }
     return route.abort();
   });

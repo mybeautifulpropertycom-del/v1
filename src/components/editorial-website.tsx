@@ -165,6 +165,7 @@ export function EditorialWebsite({
   sample = false,
   onEdit,
   film,
+  videoPanel,
 }: PropertyWebsiteProps) {
   const [viewing, setViewing] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
@@ -596,6 +597,8 @@ export function EditorialWebsite({
                 Your browser does not support this video.{" "}
                 <a href={film.src}>Open the property film</a>.
               </video>
+            ) : videoPanel ? (
+              videoPanel
             ) : (
               <div className="estate-film-preview">
                 {property.images[1] || property.images[0] ? (

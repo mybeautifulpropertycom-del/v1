@@ -1,4 +1,5 @@
 import { publicationErrors, type Profile, type Property } from "@/lib/model";
+import { embeddedCheckout } from "@/lib/embedded-checkout";
 import { createLiveCheckout, liveBillingStatus } from "@/lib/stripe-live";
 import {
   billingDatabase,
@@ -28,12 +29,50 @@ export async function GET(request: Request) {
       throw new BillingError("Choose a property.", 400);
     const { data: property, error } = await db
       .from("properties")
-      .select("id")
+      .select("id,status,slug")
       .eq("id", id)
       .eq("owner_id", user.id)
       .maybeSingle();
     if (error) throw error;
-    if (config.live) return await liveBillingStatus(config, id, user.id);
+    if (config.live) {
+      const response = await liveBillingStatus(config, id, user.id);
+      if (new URL(request.url).searchParams.get("workflow") !== "publish")
+        return response;
+      const admin = billingDatabase(config);
+      const [
+        { data: job, error: jobError },
+        { data: order, error: orderError },
+      ] = await Promise.all([
+        admin
+          .from("property_video_jobs")
+          .select("status,video_url,poster_url")
+          .eq("property_id", id)
+          .eq("owner_id", user.id)
+          .maybeSingle(),
+        admin
+          .from("property_orders")
+          .select("publication_error")
+          .eq("property_id", id)
+          .eq("owner_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (jobError || orderError)
+        throw new BillingError(
+          "Publication setup is incomplete. Please contact support.",
+        );
+      const state = await response.json();
+      return billingJson({
+        ...state,
+        published: property?.status === "published",
+        publicPath: property ? `/p/${property.slug}` : null,
+        publicationError: order?.publication_error ?? null,
+        videoStatus: job?.status ?? null,
+        film:
+          state.paid && job?.status === "completed" && job.video_url
+            ? { src: job.video_url, poster: job.poster_url }
+            : null,
+      });
+    }
     if (!property) return billingJson({ enabled: true, paid: false });
     const { data: order, error: orderError } = await billingDatabase(config)
       .from("stripe_test_orders")
@@ -54,9 +93,12 @@ export async function POST(request: Request) {
     const { user, db } = await billingUser(request);
     const config = stripeConfiguration();
     let id: unknown;
+    let embedded = false;
     const body = await readLimitedBody(request, 1024);
     try {
-      id = JSON.parse(body)?.propertyId;
+      const parsed = JSON.parse(body);
+      id = parsed?.propertyId;
+      embedded = parsed?.embedded === true;
     } catch {
       throw new BillingError("Choose a saved property.", 400);
     }
@@ -81,6 +123,7 @@ export async function POST(request: Request) {
       throw new BillingError("Complete your agent profile first.", 400);
     const errors = publicationErrors(property as Property, profile as Profile);
     if (errors.length) throw new BillingError(errors.join(" "), 400);
+    if (embedded) return await embeddedCheckout(config, id, user.id);
     if (config.live) return await createLiveCheckout(config, id, user.id);
     const admin = billingDatabase(config);
     const { data: order, error: reservationError } = await admin.rpc(

@@ -1,11 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { workspace, id } from "./workspace-fixture";
 import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
 
-test("test checkout shows the fixed package, leaves for Stripe, and does not publish", async ({
-  page,
-}) => {
+async function fixture(page: Page) {
   const state = await workspace(page);
   await page.route("**/api/property-story", (route) =>
     route.fulfill({
@@ -15,153 +13,200 @@ test("test checkout shows the fixed package, leaves for Stripe, and does not pub
       },
     }),
   );
-  await page.route("**/api/billing/checkout**", async (route) => {
-    if (route.request().method() === "GET")
-      return route.fulfill({ json: { enabled: true, paid: false } });
-    expect(route.request().postDataJSON()).toEqual({ propertyId: id });
+  let paid = false,
+    postCount = 0;
+  await page.route("**/api/billing/checkout**", (route) => {
+    if (route.request().method() === "POST") {
+      postCount++;
+      expect(route.request().postDataJSON()).toEqual({
+        propertyId: id,
+        embedded: true,
+      });
+      return route.fulfill({
+        json: {
+          clientSecret: "cs_live_browser_secret_fake",
+          publishableKey: "pk_live_browser",
+          mode: "live",
+        },
+      });
+    }
+    if (paid) state.property.status = "published";
     return route.fulfill({
-      json: { url: "https://checkout.stripe.com/c/pay/cs_test_browser" },
-    });
-  });
-  await page.route("https://checkout.stripe.com/**", (route) =>
-    route.fulfill({
-      contentType: "text/html",
-      body: "<h1>Stripe test checkout</h1>",
-    }),
-  );
-  await page.goto(`/dashboard/properties/${id}?checkout=cancelled`);
-  const panel = page.getByRole("region", {
-    name: "Property package test checkout",
-  });
-  await expect(panel).toContainText("$97");
-  await expect(panel).toContainText("No real money is collected");
-  await expect(panel).toContainText("Checkout was cancelled");
-  await panel.getByRole("button", { name: "Try $97 test checkout" }).click();
-  await expect(page).toHaveURL(/checkout\.stripe\.com/);
-  expect(state.property.status).toBe("draft");
-});
-
-test("returning from Stripe waits for persisted confirmation and prevents another checkout", async ({
-  page,
-}) => {
-  const state = await workspace(page);
-  let paid = false;
-  await page.route("**/api/billing/checkout**", (route) =>
-    route.fulfill({ json: { enabled: true, paid } }),
-  );
-  await page.goto(`/dashboard/properties/${id}?checkout=success`);
-  const panel = page.getByRole("region", {
-    name: "Property package test checkout",
-  });
-  await expect(panel).toContainText("Checking your payment confirmation");
-  await expect(panel).not.toContainText("Test payment confirmed");
-  expect(state.property.status).toBe("draft");
-  paid = true;
-  await expect(panel).toContainText("Test payment confirmed", {
-    timeout: 7000,
-  });
-  await expect(
-    panel.getByRole("button", { name: "Try $97 test checkout" }),
-  ).toHaveCount(0);
-  await page.reload();
-  await expect(panel).toContainText("Test payment confirmed");
-  expect(state.property.status).toBe("draft");
-});
-
-test("live purchases stay closed until launch, then publishing requires confirmed access", async ({
-  page,
-}) => {
-  const state = await workspace(page);
-  let launched = false,
-    paid = false;
-  await page.route("**/api/billing/checkout**", (route) =>
-    route.fulfill({
-      json: {
-        enabled: true,
-        mode: "live",
-        canPurchase: launched,
-        requiresPayment: launched,
-        allowed: paid,
-        paid,
-        status: paid ? "paid" : "unpaid",
-      },
-    }),
-  );
-  await page.goto(`/dashboard/properties/${id}?checkout=cancelled`);
-  const panel = page.getByRole("region", { name: "Property package checkout" });
-  await expect(panel).toContainText("Purchases will open");
-  await expect(
-    panel.getByRole("button", { name: "Pay $97 · Unlock website" }),
-  ).toHaveCount(0);
-  launched = true;
-  await page.reload();
-  await expect(
-    panel.getByRole("button", { name: "Pay $97 · Unlock website" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Publish website", exact: true }),
-  ).toBeDisabled();
-  expect(state.property.status).toBe("draft");
-  paid = true;
-  await panel.getByRole("button", { name: "Check payment status" }).click();
-  await expect(panel).toContainText(
-    "Payment confirmed. Your website is ready to publish.",
-  );
-  await expect(
-    page.getByRole("button", { name: "Publish website", exact: true }),
-  ).toBeEnabled();
-  expect(state.property.status).toBe("draft");
-});
-
-test("existing publication access does not offer another charge", async ({
-  page,
-}) => {
-  await workspace(page, { status: "published" });
-  await page.route("**/api/billing/checkout**", (route) =>
-    route.fulfill({
       json: {
         enabled: true,
         mode: "live",
         canPurchase: true,
         requiresPayment: true,
-        allowed: true,
-        paid: false,
-        status: "unpaid",
+        paid,
+        allowed: paid,
+        published: paid,
+        publicPath: "/p/published-browser-home",
+        videoStatus: paid ? "queued" : null,
       },
+    });
+  });
+  // Stripe is stubbed at its script boundary. No card details or external charges.
+  await page.route("https://js.stripe.com/**", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: `window.Stripe=function(){return {createEmbeddedCheckoutPage:async function(options){let root;return {mount:function(node){root=node;const button=document.createElement('button');button.textContent='Complete secure payment';button.onclick=function(){window.__paymentCompleted=true;options.onComplete();};node.appendChild(button);},destroy:function(){if(root)root.innerHTML='';}};}};};`,
     }),
   );
-  await page.goto(`/dashboard/properties/${id}?checkout=cancelled`);
-  const panel = page.getByRole("region", { name: "Property package checkout" });
-  await expect(panel).toContainText(
-    "Publication is included for this existing website",
-  );
-  await expect(
-    panel.getByRole("button", { name: "Pay $97 · Unlock website" }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "Publish website", exact: true }),
-  ).toBeEnabled();
-});
-
-test("a configuration failure does not mislabel live checkout as test mode", async ({
+  await page.exposeFunction("markPaid", () => {
+    paid = true;
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "__paymentCompleted", {
+      set() {
+        void (window as unknown as { markPaid: () => void }).markPaid();
+      },
+    });
+  });
+  return {
+    state,
+    get posts() {
+      return postCount;
+    },
+  };
+}
+test("the private website can be edited before payment; both Publish buttons open the same modal", async ({
   page,
 }) => {
-  await workspace(page);
+  const setup = await fixture(page);
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".heritage-story-copy")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save website" }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Save website" }).click();
+  expect(setup.state.property.status).toBe("draft");
+  const buttons = page.getByRole("button", {
+    name: "Publish Property",
+    exact: true,
+  });
+  await expect(buttons).toHaveCount(2);
+  await buttons.first().click();
+  await expect(page.getByRole("dialog")).toContainText("$97");
+  await expect(page.getByRole("dialog")).toContainText(
+    "One presentation video",
+  );
+  await expect(
+    page.getByRole("button", { name: "Complete secure payment" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/mbp-publish-desktop.jpg",
+    type: "jpeg",
+    quality: 65,
+  });
+  await page.getByRole("button", { name: "Close publication dialog" }).click();
+  expect(setup.state.property.status).toBe("draft");
+  await buttons.last().click();
+  await expect(
+    page.getByRole("button", { name: "Complete secure payment" }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
+  expect(setup.posts).toBe(2);
+});
+test("completed embedded checkout waits for server publication, shows the live link, and queues video", async ({
+  page,
+}) => {
+  const setup = await fixture(page);
+  await page.goto(`/preview/${id}`);
+  await expect(
+    page.getByRole("button", { name: "Save website" }),
+  ).toBeEnabled();
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publish Property" })
+    .click();
+  await page.getByRole("button", { name: "Complete secure payment" }).click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Your property website is published.",
+    { timeout: 10000 },
+  );
+  await expect(
+    page.getByRole("dialog").getByRole("link", { name: "View live website" }),
+  ).toHaveAttribute("href", "/p/published-browser-home");
+  expect(setup.state.property.status).toBe("published");
+  await page.getByRole("button", { name: "Back to editing" }).click();
+  await expect(page.locator(".property-video-prompt")).toContainText(
+    "Your video is queued",
+  );
+  await expect(
+    page
+      .locator(".inline-edit-toolbar")
+      .getByRole("button", { name: "Publish Property" }),
+  ).toHaveCount(0);
+});
+test("an unavailable payment configuration leaves the saved draft and shows an error without pretending to be in test mode", async ({
+  page,
+}) => {
+  const { state } = await fixture(page);
   await page.route("**/api/billing/checkout**", (route) =>
     route.fulfill({
       status: 503,
-      json: { error: "The checkout return address is not configured." },
+      json: {
+        error:
+          "The secure payment form is not configured. Please contact support.",
+      },
     }),
   );
-  await page.goto(`/dashboard/properties/${id}?checkout=cancelled`);
-  const panel = page.getByRole("region", { name: "Property package checkout" });
-  await expect(panel.getByRole("alert")).toHaveText(
-    "The checkout return address is not configured.",
-  );
-  await expect(panel).not.toContainText("STRIPE TEST MODE");
-  await expect(panel).not.toContainText("No real money is collected");
-  await expect(panel.getByRole("button")).toHaveCount(0);
+  await page.goto(`/preview/${id}`);
   await expect(
-    page.getByRole("button", { name: "Publish website", exact: true }),
-  ).toBeDisabled();
+    page.getByRole("button", { name: "Save website" }),
+  ).toBeEnabled();
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publish Property" })
+    .click();
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+    "not configured",
+  );
+  await expect(page.getByRole("dialog")).not.toContainText("STRIPE TEST MODE");
+  expect(state.property.status).toBe("draft");
+});
+test("choosing a template opens the private website editor before any checkout", async ({
+  page,
+}) => {
+  const setup = await fixture(page);
+  await page.goto(`/dashboard/properties/${id}`);
+  await page.getByRole("button", { name: /Website design/ }).click();
+  await page.getByRole("button", { name: "Open website editor" }).click();
+  await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
+  await expect(
+    page
+      .locator(".inline-edit-toolbar")
+      .getByRole("button", { name: "Publish Property" }),
+  ).toBeVisible();
+  expect(setup.posts).toBe(0);
+  expect(setup.state.property.status).toBe("draft");
+});
+
+test("publication modal fits a mobile viewport and Escape returns to the saved editor", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const setup = await fixture(page);
+  await page.goto(`/preview/${id}`);
+  await expect(
+    page.getByRole("button", { name: "Save website" }),
+  ).toBeEnabled();
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publish Property" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Complete secure payment" }),
+  ).toBeVisible();
+  const box = await page.getByRole("dialog").boundingBox();
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+  await page.screenshot({
+    path: "/tmp/mbp-publish-mobile.jpg",
+    type: "jpeg",
+    quality: 65,
+  });
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(setup.state.property.status).toBe("draft");
 });
