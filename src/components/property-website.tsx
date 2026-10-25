@@ -25,6 +25,7 @@ import {
   type PublicProperty,
 } from "@/lib/model";
 
+import { propertyStory } from "@/lib/property-story";
 import { EditableText, type EditableField } from "./website-editable-text";
 import { EditorialWebsite, type PropertyFilm } from "./editorial-website";
 import { HeritageWebsite } from "./heritage-website";
@@ -71,6 +72,7 @@ function ClassicPropertyWebsite({
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const copy = propertyStory(property);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
   useEffect(() => {
     if (lightbox === null) return;
@@ -265,9 +267,9 @@ function ClassicPropertyWebsite({
         <div className="landing-story-copy">
           <p>
             <EditableText
-              field="description"
+              field="copy.storyBody"
               value={
-                property.description ||
+                copy.storyBody ||
                 "Your property’s story will appear here. Add a description in the editor to bring this space to life."
               }
               onEdit={onEdit}

@@ -17,6 +17,7 @@ import {
   Phone,
   Square,
 } from "lucide-react";
+import { propertyStory } from "@/lib/property-story";
 import { formatPrice, safePhone } from "@/lib/model";
 import type { PropertyWebsiteProps } from "./property-website";
 import { EditableText } from "./website-editable-text";
@@ -178,6 +179,7 @@ export function EditorialWebsite({
   const [sent, setSent] = useState(false);
   const isPreview = preview || sample;
   const showFilm = Boolean(film?.src) || isPreview;
+  const copy = propertyStory(property);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
   const initials = profile.name
     .split(" ")
@@ -343,17 +345,27 @@ export function EditorialWebsite({
               A little closer to what matters
             </span>
             <h2>
-              More room to live.
+              <EditableText
+                field="copy.introTitle"
+                value={copy.introTitle}
+                onEdit={onEdit}
+              />
               <br />
-              <em>More reasons to stay.</em>
+              <em>
+                <EditableText
+                  field="copy.introAccent"
+                  value={copy.introAccent}
+                  onEdit={onEdit}
+                />
+              </em>
             </h2>
           </div>
           <div className="estate-story-copy">
             <p>
               <EditableText
-                field="description"
+                field="copy.introBody"
                 value={
-                  property.description ||
+                  copy.introBody ||
                   "Tell the story of your property. Add a description in the editor to bring this space to life."
                 }
                 onEdit={onEdit}
@@ -422,13 +434,26 @@ export function EditorialWebsite({
               The details make the difference
             </span>
             <h2>
-              A place to gather.
+              <EditableText
+                field="copy.storyTitle"
+                value={copy.storyTitle}
+                onEdit={onEdit}
+              />
               <br />
-              <em>A place to exhale.</em>
+              <em>
+                <EditableText
+                  field="copy.storyAccent"
+                  value={copy.storyAccent}
+                  onEdit={onEdit}
+                />
+              </em>
             </h2>
             <p>
-              Take a closer look at the spaces and details that make this home
-              its own.
+              <EditableText
+                field="copy.storyBody"
+                value={copy.storyBody}
+                onEdit={onEdit}
+              />
             </p>
             <dl className="estate-specifications">
               <div>
@@ -483,15 +508,31 @@ export function EditorialWebsite({
             <div>
               <span className="estate-eyebrow">The complete picture</span>
               <h2>
-                Every space,
+                <EditableText
+                  field="copy.galleryTitle"
+                  value={copy.galleryTitle}
+                  onEdit={onEdit}
+                />
                 <br />
-                <em>a fresh perspective.</em>
+                <em>
+                  <EditableText
+                    field="copy.galleryAccent"
+                    value={copy.galleryAccent}
+                    onEdit={onEdit}
+                  />
+                </em>
               </h2>
             </div>
             <p>
               {String(property.images.length).padStart(2, "0")} PHOTOGRAPHS
               <br />
-              <span>Take your time. Look a little closer.</span>
+              <span>
+                <EditableText
+                  field="copy.galleryBody"
+                  value={copy.galleryBody}
+                  onEdit={onEdit}
+                />
+              </span>
             </p>
           </div>
           <div className="estate-gallery-grid">
@@ -736,10 +777,27 @@ export function EditorialWebsite({
           <div className="estate-invitation-content">
             <span className="estate-eyebrow">Your next chapter is waiting</span>
             <h2>
-              Some places
+              <EditableText
+                field="copy.closingTitle"
+                value={copy.closingTitle}
+                onEdit={onEdit}
+              />
               <br />
-              <em>have to be felt.</em>
+              <em>
+                <EditableText
+                  field="copy.closingAccent"
+                  value={copy.closingAccent}
+                  onEdit={onEdit}
+                />
+              </em>
             </h2>
+            <p className="estate-invitation-copy">
+              <EditableText
+                field="copy.closingBody"
+                value={copy.closingBody}
+                onEdit={onEdit}
+              />
+            </p>
             {viewingButton("Arrange your private viewing")}
             <span className="estate-invitation-note">
               <CalendarDays size={15} />A day that works for you. A home that

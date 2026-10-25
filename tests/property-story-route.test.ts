@@ -100,7 +100,9 @@ test("story route authenticates, rejects inaccessible listings, and never calls 
   assert.equal((await POST(request())).status, 401);
   validUser = true;
   delete process.env.OPENAI_API_KEY;
-  assert.equal((await POST(request())).status, 503);
+  const disabled = await POST(request());
+  assert.equal(disabled.status, 503);
+  assert.equal((await disabled.json()).code, "AI_NOT_CONFIGURED");
   process.env.OPENAI_API_KEY = "test-only-key";
   assert.equal(
     (await POST(request("test-user-token", "x".repeat(1025)))).status,

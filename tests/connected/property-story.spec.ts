@@ -1,20 +1,23 @@
 import { test, expect, type Page } from "@playwright/test";
+import type { Property } from "../../src/lib/model";
 import { demoWorkspace } from "../../src/lib/demo";
 import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
 
 const owner = "11111111-1111-4111-8111-111111111111";
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-async function workspace(page: Page) {
+async function workspace(page: Page, overrides: Partial<Property> = {}) {
   const data = demoWorkspace();
   const profile = { ...data.profile, id: owner };
-  let property = {
+  let property: Property = {
     ...data.properties[1],
     id,
     owner_id: owner,
+    status: "draft",
     images: [
       `https://browser-test.supabase.co/storage/v1/object/public/property-images/${owner}/${id}/photo.webp`,
     ],
+    ...overrides,
   };
   const expires = Math.floor(Date.now() / 1000) + 3600;
   const token = `${Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url")}.${Buffer.from(JSON.stringify({ sub: owner, exp: expires, role: "authenticated", aud: "authenticated" })).toString("base64url")}.test-signature`;
@@ -67,15 +70,122 @@ async function workspace(page: Page) {
   };
 }
 
-test("authenticated generation shows copy, applies it, saves it, and updates the real preview route", async ({
+test("save prepares separate section text, preserves notes, and reuses saved copy", async ({
   page,
 }) => {
   const state = await workspace(page);
+  const notes = state.property.description;
+  const draft = storyFixture(state.property);
+  let requests = 0;
   await page.route("**/api/property-story", async (route) => {
+    requests++;
     expect(route.request().headers().authorization).toBe(
       `Bearer ${state.token}`,
     );
     expect(route.request().postDataJSON()).toEqual({ propertyId: id });
+    await route.fulfill({
+      json: { draft, source: propertyStorySource(state.property) },
+    });
+  });
+  await page.goto(`/dashboard/properties/${id}`);
+  await expect(
+    page.getByText("A story of its own.", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByText("Your changes are saved.", { exact: true }),
+  ).toBeVisible();
+  expect(state.property.description).toBe(notes);
+  expect(state.property.website_copy?.description).toBe(draft.description);
+  expect(state.property.website_copy?.content.introBody).toBe(
+    draft.content.introBody,
+  );
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Save changes", exact: true }),
+  ).toBeEnabled();
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+    draft.description,
+  );
+  await expect(
+    page.locator(".heritage-story .heritage-section-heading > p"),
+  ).toHaveText(draft.content.introBody);
+  await expect(
+    page.locator(".heritage-gallery .heritage-section-heading > p"),
+  ).toHaveText(draft.content.galleryBody);
+  await expect(page.locator(".heritage-invitation-copy")).toHaveText(
+    draft.content.closingBody,
+  );
+  expect(requests).toBe(1);
+  await page.getByRole("button", { name: "Edit on page" }).click();
+  const custom =
+    "Your personal introduction belongs right here. Visit to explore this home for yourself.";
+  await page
+    .getByRole("textbox", { name: "Edit Introduction text", exact: true })
+    .fill(custom);
+  await page.getByRole("button", { name: "Save website" }).click();
+  await expect(
+    page.getByText("Your website changes are saved.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.locator(".heritage-story .heritage-section-heading > p"),
+  ).toHaveText(custom);
+  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+    draft.description,
+  );
+  expect(requests).toBe(1);
+  expect(state.property.description).toBe(notes);
+  await page.getByRole("button", { name: "Edit on page" }).click();
+  await page
+    .getByRole("textbox", { name: "Edit property location", exact: true })
+    .fill("Portland, OR");
+  await page.getByRole("button", { name: "Save website" }).click();
+  await expect(
+    page.getByText("Your website changes are saved.", { exact: true }),
+  ).toBeVisible();
+  expect(state.property.location).toBe("Portland, OR");
+  expect(requests).toBe(2);
+});
+
+test("private preview prepares text in place but only saves it on request", async ({
+  page,
+}) => {
+  const state = await workspace(page);
+  const draft = storyFixture(state.property);
+  const original = JSON.stringify(state.property);
+  let requests = 0;
+  await page.route("**/api/property-story", async (route) => {
+    requests++;
+    await route.fulfill({
+      json: { draft, source: propertyStorySource(state.property) },
+    });
+  });
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+    draft.description,
+  );
+  await expect(
+    page.getByRole("button", { name: "Save website" }),
+  ).toBeEnabled();
+  expect(JSON.stringify(state.property)).toBe(original);
+  await page.getByRole("button", { name: "Save website" }).click();
+  await expect(
+    page.getByText("Your website changes are saved.", { exact: true }),
+  ).toBeVisible();
+  expect(state.property.website_copy?.description).toBe(draft.description);
+  expect(state.property.status).toBe("draft");
+  expect(requests).toBe(1);
+});
+
+test("choosing a design saves photos and prepares the page without a separate AI button", async ({
+  page,
+}) => {
+  const state = await workspace(page);
+  let requests = 0;
+  await page.route("**/api/property-story", async (route) => {
+    requests++;
     await route.fulfill({
       json: {
         draft: storyFixture(state.property),
@@ -84,118 +194,127 @@ test("authenticated generation shows copy, applies it, saves it, and updates the
     });
   });
   await page.goto(`/dashboard/properties/${id}`);
-  const composer = page.getByRole("region", { name: "A story of its own." });
-  await composer
-    .getByRole("button", { name: "Create my property story" })
-    .click();
-  await expect(
-    composer.getByRole("heading", { name: "Your property, in a few words." }),
-  ).toBeVisible();
-  await expect(composer.locator(".story-feedback")).toBeFocused();
-  await expect(
-    composer.getByRole("textbox", {
-      name: "Property description",
-      exact: true,
-    }),
-  ).toHaveValue(storyFixture(state.property).description);
-  await expect(
-    composer.getByRole("button", { name: "Create my property story" }),
-  ).toBeEnabled();
-  await composer.getByRole("button", { name: "Use this story" }).click();
-  await composer
-    .getByRole("button", { name: "Save changes", exact: true })
-    .click();
-  await expect(
-    composer.getByRole("link", { name: "Preview updated website" }),
-  ).toBeVisible();
-  expect(state.property.website_copy?.content.galleryBody).toBe(
-    storyFixture(state.property).content.galleryBody,
-  );
-  await page.goto(`/preview/${id}`);
-  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+  await page.getByRole("button", { name: "Add your photos" }).click();
+  await page.getByRole("button", { name: "Choose your design" }).click();
+  await expect(page.locator(".template-choices")).toBeVisible();
+  expect(state.property.website_copy?.description).toBe(
     storyFixture(state.property).description,
   );
-  await expect(
-    page.locator(".heritage-gallery .heritage-section-heading > p"),
-  ).toHaveText(storyFixture(state.property).content.galleryBody);
-  await expect(page.locator(".heritage-invitation-copy")).toHaveText(
-    storyFixture(state.property).content.closingBody,
-  );
+  expect(requests).toBe(1);
 });
 
-test("billing errors are visible, include a safe reference, stop loading, and allow retry", async ({
+test("missing configuration keeps the draft saved, shows a useful error, and allows manual continuation", async ({
   page,
 }) => {
-  await workspace(page);
+  const state = await workspace(page);
   await page.route("**/api/property-story", (route) =>
     route.fulfill({
       status: 503,
       json: {
-        error: "AI writing has no available API credit.",
-        code: "AI_CREDITS",
-        reference: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        error: "Automatic website descriptions are not enabled yet.",
+        code: "AI_NOT_CONFIGURED",
       },
     }),
   );
   await page.goto(`/dashboard/properties/${id}`);
-  const composer = page.getByRole("region", { name: "A story of its own." });
-  await composer
-    .getByRole("button", { name: "Create my property story" })
-    .click();
-  await expect(composer.getByRole("alert")).toContainText(
-    "AI writing has no available API credit.",
+  await page.getByLabel(/^Location/).fill("Austin, TX");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.locator(".editor-error")).toContainText(
+    "AI_NOT_CONFIGURED",
   );
-  await expect(composer.getByRole("alert")).toContainText("AI_CREDITS");
-  await expect(composer.locator(".story-feedback")).toBeFocused();
   await expect(
-    composer.getByRole("button", { name: "Create my property story" }),
+    page.getByRole("button", { name: "Save changes", exact: true }),
   ).toBeEnabled();
-  await expect(composer.locator(".story-review")).toHaveCount(0);
+  expect(state.property.location).toBe("Austin, TX");
+  expect(state.property.status).toBe("draft");
+  expect(state.property.website_copy).toBeUndefined();
+  await page.getByRole("button", { name: "Continue with my own text" }).click();
+  await expect(
+    page.getByText("Your changes are saved.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add your photos" }).click();
+  await page.getByRole("button", { name: "Choose your design" }).click();
+  await expect(page.locator(".template-choices")).toBeVisible();
+  await page
+    .getByRole("button", { name: "Publish website", exact: true })
+    .click();
+  await expect(page.locator(".published-card")).toBeVisible();
+  expect(state.property.status).toBe("published");
 });
 
-test("a platform timeout page ends loading with an actionable message instead of a JSON parsing error", async ({
+test("private preview reports a platform timeout and lets the agent retry in place", async ({
   page,
 }) => {
-  await workspace(page);
-  await page.route("**/api/property-story", (route) =>
-    route.fulfill({
-      status: 504,
-      contentType: "text/html",
-      body: "<h1>Function timed out</h1>",
-    }),
+  const state = await workspace(page);
+  let requests = 0;
+  await page.route("**/api/property-story", (route) => {
+    requests++;
+    return requests === 1
+      ? route.fulfill({
+          status: 504,
+          contentType: "text/html",
+          body: "<h1>Function timed out</h1>",
+        })
+      : route.fulfill({
+          json: {
+            draft: storyFixture(state.property),
+            source: propertyStorySource(state.property),
+          },
+        });
+  });
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".inline-edit-error")).toContainText(
+    "Preparing the website took too long.",
   );
-  await page.goto(`/dashboard/properties/${id}`);
-  const composer = page.getByRole("region", { name: "A story of its own." });
-  await composer
-    .getByRole("button", { name: "Create my property story" })
-    .click();
-  await expect(composer.getByRole("alert")).toHaveText(
-    "The writing service took too long to respond. Please try again shortly.",
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+    storyFixture(state.property).description,
   );
-  await expect(
-    composer.getByRole("button", { name: "Create my property story" }),
-  ).toBeEnabled();
-  await expect(composer.getByRole("alert")).not.toContainText(
-    "Unexpected token",
-  );
+  expect(requests).toBe(2);
 });
 
-test("a network failure stops loading and leaves the saved property unchanged", async ({
+test("a network failure ends loading and preserves the saved listing", async ({
   page,
 }) => {
   const state = await workspace(page);
   const original = JSON.stringify(state.property);
   await page.route("**/api/property-story", (route) => route.abort());
-  await page.goto(`/dashboard/properties/${id}`);
-  const composer = page.getByRole("region", { name: "A story of its own." });
-  await composer
-    .getByRole("button", { name: "Create my property story" })
-    .click();
-  await expect(composer.getByRole("alert")).toHaveText(
-    "We could not reach the writing service. Check your connection and try again.",
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".inline-edit-error")).toContainText(
+    "We could not reach the writing service.",
   );
   await expect(
-    composer.getByRole("button", { name: "Create my property story" }),
+    page.getByRole("button", { name: "Edit on page" }),
   ).toBeEnabled();
   expect(JSON.stringify(state.property)).toBe(original);
+});
+
+test("Editorial displays independent introduction, main story and invitation paragraphs", async ({
+  page,
+}) => {
+  const state = await workspace(page, { template: "editorial" });
+  const draft = storyFixture(state.property);
+  await page.route("**/api/property-story", (route) =>
+    route.fulfill({
+      json: { draft, source: propertyStorySource(state.property) },
+    }),
+  );
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".estate-story-copy > p")).toHaveText(
+    draft.content.introBody,
+  );
+  await expect(page.locator(".estate-details-copy > p")).toHaveText(
+    draft.description,
+  );
+  await expect(page.locator(".estate-invitation-copy")).toHaveText(
+    draft.content.closingBody,
+  );
+  await page.getByRole("button", { name: "Save website" }).click();
+  await expect(
+    page.getByText("Your website changes are saved.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".estate-details-copy > p")).toHaveText(
+    draft.description,
+  );
 });

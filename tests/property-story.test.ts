@@ -5,6 +5,9 @@ import { storyFixture } from "./story-fixture";
 import { PropertyStoryError } from "../src/lib/property-story-error";
 import {
   propertyStory,
+  applyPropertyStory,
+  editWebsiteCopy,
+  hasWebsiteDescriptions,
   propertyStorySource,
   parseStoryDraft,
   savedPropertyStory,
@@ -104,6 +107,10 @@ test("vision request sends each image in order, excludes agent data, and validat
     assert.equal(url, "https://api.openai.com/v1/responses");
     const request = JSON.parse(String(init?.body));
     assert.equal(request.store, false);
+    const context = JSON.parse(request.input[0].content[0].text);
+    assert.deepEqual(context.section_photographs.introBody, [1]);
+    assert.deepEqual(context.section_photographs.description, [2]);
+    assert.deepEqual(context.section_photographs.detailsBody, [3]);
     assert.deepEqual(
       request.input[0].content
         .slice(1)
@@ -239,4 +246,44 @@ test("provider failures identify credit, key, format, photo, model, and timeout 
     (error: unknown) =>
       error instanceof PropertyStoryError && error.code === "AI_TIMEOUT",
   );
+});
+
+test("section copy preserves agent notes, edits independently, and rejects stale results", () => {
+  const property = demoWorkspace().properties[0];
+  const draft = storyFixture(property);
+  const prepared = applyPropertyStory(
+    property,
+    draft,
+    propertyStorySource(property),
+  );
+  assert.equal(prepared.description, property.description);
+  assert.equal(propertyStory(prepared).storyBody, draft.description);
+  assert.ok(hasWebsiteDescriptions(prepared));
+  const edited = editWebsiteCopy(
+    prepared,
+    "introBody",
+    "A personal introduction. A reason to explore this home.",
+  );
+  assert.notEqual(propertyStory(edited).introBody, draft.content.introBody);
+  assert.equal(propertyStory(edited).storyBody, draft.description);
+  assert.equal(propertyStory(edited).detailsBody, draft.content.detailsBody);
+  assert.equal(edited.description, property.description);
+  assert.throws(() =>
+    applyPropertyStory(
+      { ...property, location: "Changed" },
+      draft,
+      propertyStorySource(property),
+    ),
+  );
+  assert.equal(
+    hasWebsiteDescriptions({
+      ...prepared,
+      images: [...prepared.images].reverse(),
+    }),
+    false,
+  );
+  const empty = { ...property, description: "" };
+  const filled = applyPropertyStory(empty, draft, propertyStorySource(empty));
+  assert.equal(filled.description, draft.description);
+  assert.ok(hasWebsiteDescriptions(filled));
 });

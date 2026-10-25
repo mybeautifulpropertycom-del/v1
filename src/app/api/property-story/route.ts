@@ -46,7 +46,8 @@ export async function POST(request: Request) {
       return json(
         {
           error:
-            "Photo-based writing is not enabled yet. You can continue writing and publishing manually.",
+            "Automatic website descriptions are not enabled yet. Your property details are saved. Please contact support.",
+          code: "AI_NOT_CONFIGURED",
         },
         503,
       );

@@ -20,7 +20,7 @@ The app uses port 3000. Without Supabase configuration it runs in clearly labele
 - Property creation and editing: headline, location, price/currency, area/unit, bedrooms, bathrooms, description, and amenities.
 - Photo upload, browser-side WebP compression, cover selection, and gallery management. Up to 20 photos, 10 MB per input file.
 - Three distinct responsive websites: **The Editorial**, **The Heritage**, and **The Panorama**.
-- Property-specific Heritage headings and a text-only looping amenity ribbon. Optional photo-based writing with editable suggestions: [activation and limits](docs/PROPERTY-STORIES.md).
+- Property-specific Heritage headings and a text-only looping amenity ribbon. Automatic photo-based descriptions, independently editable in each page section: [activation and limits](docs/PROPERTY-STORIES.md).
 - Direct on-page editing of the headline, location, and description, with explicit saving.
 - Drafts, saved previews, publication validation, unpublishing, and stable public URLs.
 - Supabase email/password signup, login, email confirmation, and password reset when configured.

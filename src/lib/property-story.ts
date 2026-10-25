@@ -28,6 +28,7 @@ export type SavedPropertyStory = {
   version: 1;
   source: string;
   content: StoryContent;
+  description?: string;
 };
 type Listing = Property | PublicProperty;
 
@@ -108,11 +109,26 @@ export function savedPropertyStory(p: Listing): StoryContent | null {
   return parseStoryContent(saved.content, p.images.length);
 }
 
+export function hasWebsiteDescriptions(p: Listing): boolean {
+  return Boolean(
+    savedPropertyStory(p) && validText(p.website_copy?.description, 12000),
+  );
+}
+
 // Factual copy works before AI is configured and when older generated copy is
 // invalidated. It never claims to have inspected a photograph.
-export function propertyStory(p: Listing): StoryContent {
+export function propertyStory(
+  p: Listing,
+): StoryContent & { storyBody: string } {
   const saved = savedPropertyStory(p);
-  if (saved) return saved;
+  if (saved)
+    return {
+      ...saved,
+      storyBody:
+        typeof p.website_copy?.description === "string"
+          ? p.website_copy.description
+          : p.description,
+    };
   const location = p.location.trim() || "your chosen location";
   const type = p.type.toLowerCase();
   const size = `${p.area.toLocaleString("en-US")} ${p.area_unit === "sqm" ? "m²" : "sq ft"}`;
@@ -125,6 +141,7 @@ export function propertyStory(p: Listing): StoryContent {
     p.description.trim().split(/\n\s*\n/)[0] ||
     `${p.type} ${p.transaction === "rent" ? "for rent" : "for sale"} in ${location}.`;
   return {
+    storyBody: p.description,
     heroLine:
       p.transaction === "rent" ? "Your next address." : "Your next chapter.",
     heroIntro: `${rooms}${p.area > 0 ? ` · ${size}` : ""}\n${location}`,
@@ -157,5 +174,56 @@ export function propertyStory(p: Listing): StoryContent {
     captions: p.images.map(
       (_, i) => `${p.title || p.type} · Photograph ${i + 1}`,
     ),
+  };
+}
+
+export type WebsiteCopyField = StoryField | "storyBody";
+
+export function applyPropertyStory(
+  property: Property,
+  draft: StoryDraft,
+  source: string,
+): Property {
+  if (source !== propertyStorySource(property))
+    throw new Error(
+      "The property changed while its website was being prepared. Save your changes and try again.",
+    );
+  // Preserve the agent's notes. A new listing with no description can use the
+  // generated main introduction to meet the existing publication requirement.
+  const next = {
+    ...property,
+    description: property.description.trim()
+      ? property.description
+      : draft.description,
+  };
+  return {
+    ...next,
+    website_copy: {
+      version: 1,
+      source: propertyStorySource(next),
+      description: draft.description,
+      content: draft.content,
+    },
+  };
+}
+
+export function editWebsiteCopy(
+  property: Property,
+  field: WebsiteCopyField,
+  value: string,
+): Property {
+  const { storyBody, ...content } = propertyStory(property);
+  const max = field === "storyBody" ? 12000 : storyFields[field].max;
+  if (!value.trim() || value.length > max)
+    throw new Error(`Use between 1 and ${max} characters for this section.`);
+  return {
+    ...property,
+    website_copy: {
+      version: 1,
+      source: propertyStorySource(property),
+      description: field === "storyBody" ? value.trim() : storyBody,
+      content:
+        field === "storyBody" ? content : { ...content, [field]: value.trim() },
+    },
   };
 }

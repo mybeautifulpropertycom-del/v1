@@ -119,24 +119,13 @@ test("reviewed property copy persists, captions match images, and changed facts 
   await expect(
     page.getByLabel("Property highlights").locator("ul").first(),
   ).not.toContainText("Private garden");
-  await page.goto("/dashboard/properties/demo-apartment");
-  const composer = page.getByRole("region", { name: "A story of its own." });
-  await expect(
-    composer.getByRole("button", { name: "Generate a fresh story" }),
-  ).toBeDisabled();
-  await composer.getByRole("button", { name: "Edit website story" }).click();
-  await composer
-    .getByText("Website headings and introductions", { exact: true })
-    .click();
-  await composer
-    .getByLabel("Introduction heading", { exact: true })
+  await page.getByRole("button", { name: "Edit on page" }).click();
+  await page
+    .getByRole("textbox", { name: "Edit Introduction heading", exact: true })
     .fill("Your Austin story.");
-  await composer.getByRole("button", { name: "Use this story" }).click();
-  await composer
-    .getByRole("button", { name: "Save changes", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save website" }).click();
   await expect(
-    page.getByText("Your changes are saved.", { exact: true }),
+    page.getByText("Your website changes are saved.", { exact: true }),
   ).toBeVisible();
   await page.goto("/preview/demo-apartment");
   await expect(
@@ -144,9 +133,6 @@ test("reviewed property copy persists, captions match images, and changed facts 
   ).toContainText("Your Austin story.");
   await page.goto("/dashboard/properties/demo-apartment");
   await page.getByLabel(/^Location/).fill("Portland, OR");
-  await expect(composer).toContainText(
-    "The property details or photos have changed.",
-  );
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await expect(
     page.getByText("Your changes are saved.", { exact: true }),

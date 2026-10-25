@@ -160,7 +160,7 @@ test("inline editing saves the property headline and survives reload", async ({
   );
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "The Garden Residence" }),
+    page.getByRole("heading", { name: "The Garden Residence", level: 1 }),
   ).toBeVisible();
 });
 

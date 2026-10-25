@@ -29,8 +29,8 @@ The typography revision centers the introduction seal and increases the contrast
 and size of the small introduction/location labels. The amenities loop as plain
 property-sourced text, with pause controls and reduced-motion support.
 
-Headings and introductions adapt to the saved property. Optional photo-based
-writing can provide reviewed headings, descriptions, and captions; see
+Headings and introductions adapt to the saved property. Automatic photo-based
+writing provides separate section descriptions with inline editing; see
 [PROPERTY-STORIES.md](PROPERTY-STORIES.md) for the additive database update and
 server-only OpenAI configuration. Without it, factual property copy still works.
 

@@ -212,8 +212,20 @@ export function HeritageWebsite({
                   onEdit={onEdit}
                 />
               </h1>
-              <p className="heritage-hero-script">{copy.heroLine}</p>
-              <p className="heritage-hero-intro">{copy.heroIntro}</p>
+              <p className="heritage-hero-script">
+                <EditableText
+                  field="copy.heroLine"
+                  value={copy.heroLine}
+                  onEdit={onEdit}
+                />
+              </p>
+              <p className="heritage-hero-intro">
+                <EditableText
+                  field="copy.heroIntro"
+                  value={copy.heroIntro}
+                  onEdit={onEdit}
+                />
+              </p>
               {tourButton("heritage-link heritage-hero-tour")}
             </div>
             <div className="heritage-hero-bottom heritage-pad">
@@ -267,11 +279,27 @@ export function HeritageWebsite({
           </div>
           <div className="heritage-section-heading">
             <h2>
-              {copy.introTitle}
+              <EditableText
+                field="copy.introTitle"
+                value={copy.introTitle}
+                onEdit={onEdit}
+              />
               <br />
-              <em>{copy.introAccent}</em>
+              <em>
+                <EditableText
+                  field="copy.introAccent"
+                  value={copy.introAccent}
+                  onEdit={onEdit}
+                />
+              </em>
             </h2>
-            <p>{copy.introBody}</p>
+            <p>
+              <EditableText
+                field="copy.introBody"
+                value={copy.introBody}
+                onEdit={onEdit}
+              />
+            </p>
           </div>
           <div className="heritage-story-layout">
             <figure className="heritage-album-photo">
@@ -304,15 +332,25 @@ export function HeritageWebsite({
             <div className="heritage-story-copy">
               <span className="heritage-kicker">A fresh perspective</span>
               <h2>
-                {copy.storyTitle}
+                <EditableText
+                  field="copy.storyTitle"
+                  value={copy.storyTitle}
+                  onEdit={onEdit}
+                />
                 <br />
-                <em>{copy.storyAccent}</em>
+                <em>
+                  <EditableText
+                    field="copy.storyAccent"
+                    value={copy.storyAccent}
+                    onEdit={onEdit}
+                  />
+                </em>
               </h2>
               <p>
                 <EditableText
-                  field="description"
+                  field="copy.storyBody"
                   value={
-                    property.description ||
+                    copy.storyBody ||
                     "Your property’s story will appear here. Add a description in the editor to share what makes it special."
                   }
                   onEdit={onEdit}
@@ -358,13 +396,29 @@ export function HeritageWebsite({
           </div>
           <div className="heritage-section-heading">
             <h2>
-              {copy.galleryTitle}
+              <EditableText
+                field="copy.galleryTitle"
+                value={copy.galleryTitle}
+                onEdit={onEdit}
+              />
               <br />
-              <em>{copy.galleryAccent}</em>
+              <em>
+                <EditableText
+                  field="copy.galleryAccent"
+                  value={copy.galleryAccent}
+                  onEdit={onEdit}
+                />
+              </em>
             </h2>
             <p>
-              {copy.galleryBody ||
-                "Take a look around. Arrange a tour to see the details in person."}
+              <EditableText
+                field="copy.galleryBody"
+                value={
+                  copy.galleryBody ||
+                  "Take a look around. Arrange a tour to see the details in person."
+                }
+                onEdit={onEdit}
+              />
             </p>
           </div>
           <div className="heritage-gallery-tools">
@@ -449,11 +503,27 @@ export function HeritageWebsite({
           <div className="heritage-details-copy">
             <span className="heritage-kicker">Thoughtfully yours</span>
             <h2 id="heritage-details-title">
-              {copy.detailsTitle}
+              <EditableText
+                field="copy.detailsTitle"
+                value={copy.detailsTitle}
+                onEdit={onEdit}
+              />
               <br />
-              <em>{copy.detailsAccent}</em>
+              <em>
+                <EditableText
+                  field="copy.detailsAccent"
+                  value={copy.detailsAccent}
+                  onEdit={onEdit}
+                />
+              </em>
             </h2>
-            <p>{copy.detailsBody}</p>
+            <p>
+              <EditableText
+                field="copy.detailsBody"
+                value={copy.detailsBody}
+                onEdit={onEdit}
+              />
+            </p>
             <ul>
               {features.slice(0, 6).map((feature) => (
                 <li key={feature}>{feature}</li>
@@ -587,11 +657,27 @@ export function HeritageWebsite({
             <div>
               <span className="heritage-kicker">More than an address</span>
               <h2>
-                {copy.settingTitle}
+                <EditableText
+                  field="copy.settingTitle"
+                  value={copy.settingTitle}
+                  onEdit={onEdit}
+                />
                 <br />
-                <em>{copy.settingAccent}</em>
+                <em>
+                  <EditableText
+                    field="copy.settingAccent"
+                    value={copy.settingAccent}
+                    onEdit={onEdit}
+                  />
+                </em>
               </h2>
-              <p>{copy.settingBody}</p>
+              <p>
+                <EditableText
+                  field="copy.settingBody"
+                  value={copy.settingBody}
+                  onEdit={onEdit}
+                />
+              </p>
               <dl>
                 <div>
                   <dt>Living space</dt>
@@ -635,12 +721,28 @@ export function HeritageWebsite({
               Some things are better in person
             </span>
             <h2>
-              {copy.closingTitle}
+              <EditableText
+                field="copy.closingTitle"
+                value={copy.closingTitle}
+                onEdit={onEdit}
+              />
               <br />
-              <em>{copy.closingAccent}</em>
+              <em>
+                <EditableText
+                  field="copy.closingAccent"
+                  value={copy.closingAccent}
+                  onEdit={onEdit}
+                />
+              </em>
             </h2>
             {copy.closingBody && (
-              <p className="heritage-invitation-copy">{copy.closingBody}</p>
+              <p className="heritage-invitation-copy">
+                <EditableText
+                  field="copy.closingBody"
+                  value={copy.closingBody}
+                  onEdit={onEdit}
+                />
+              </p>
             )}
             {tourButton("heritage-button heritage-button-paper")}
           </div>

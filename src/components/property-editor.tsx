@@ -31,7 +31,8 @@ import {
 } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { TemplateMiniature } from "./template-miniature";
-import { PropertyStoryComposer } from "./property-story-composer";
+import { editWebsiteCopy, hasWebsiteDescriptions } from "@/lib/property-story";
+import { preparePropertyWebsite } from "@/lib/request-property-story";
 
 export function PropertyEditor({
   id,
@@ -53,8 +54,19 @@ export function PropertyEditor({
   );
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const saving = useRef(false);
+  const pendingPublish = useRef(false);
+  const [writingFailed, setWritingFailed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const errorBox = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) {
+      errorBox.current?.focus({ preventScroll: true });
+      errorBox.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [error]);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(Boolean(existing));
   const [published, setPublished] = useState(false);
@@ -70,18 +82,53 @@ export function PropertyEditor({
   }, [dirty]);
 
   function update<K extends keyof Property>(key: K, value: Property[K]) {
+    if (saving.current) return;
     setProperty((p) => ({ ...p, [key]: value }));
     setDirty(true);
     setPublished(false);
   }
-  async function persist(publish = false, unpublish = false) {
+  async function persist(
+    publish = false,
+    unpublish = false,
+    redirect = true,
+    manual = false,
+  ) {
+    if (saving.current || uploading) return null;
+    saving.current = true;
     setBusy(true);
     setError("");
+    setWritingFailed(false);
     try {
-      const value = await saveProperty(
+      // Save the inputs first so the server reads the owned listing, not client
+      // supplied facts or image URLs. A failed generation never publishes a draft.
+      let value = await saveProperty(
         unpublish ? { ...property, status: "draft" } : property,
-        publish,
       );
+      setProperty(value);
+      setDirty(false);
+      setSaved(true);
+      if (manual && value.description.trim()) {
+        value = editWebsiteCopy(value, "storyBody", value.description);
+        value = await saveProperty(value, publish);
+      } else if (
+        !manual &&
+        !unpublish &&
+        !demo &&
+        value.images.length &&
+        !hasWebsiteDescriptions(value)
+      ) {
+        setPreparing(true);
+        try {
+          value = await preparePropertyWebsite(value);
+        } catch (error) {
+          setWritingFailed(true);
+          pendingPublish.current = publish;
+          throw error;
+        }
+        setProperty(value);
+        setDirty(true);
+        value = await saveProperty(value, publish);
+      } else if (publish) value = await saveProperty(value, true);
       setProperty(value);
       setDirty(false);
       setSaved(true);
@@ -95,7 +142,7 @@ export function PropertyEditor({
             : t.saved,
       );
       if (publish) setPublished(true);
-      if (!id) router.replace(`/dashboard/properties/${value.id}`);
+      if (!id && redirect) router.replace(`/dashboard/properties/${value.id}`);
       return value;
     } catch (e) {
       setError(
@@ -104,7 +151,14 @@ export function PropertyEditor({
       return null;
     } finally {
       setBusy(false);
+      setPreparing(false);
+      saving.current = false;
     }
+  }
+  async function goToStep(next: number) {
+    if (busy || uploading) return;
+    if (next === 2 && !(await persist(false, false, false))) return;
+    setStep(next);
   }
   async function addFiles(files: FileList | File[] | null) {
     if (!files || uploading || busy) return;
@@ -214,7 +268,7 @@ export function PropertyEditor({
           <p>{t.intro}</p>
         </div>
         <div className="editor-header-actions">
-          {saved && (
+          {saved && !busy && (
             <Link
               className="button secondary"
               href={`/preview/${property.id}`}
@@ -230,7 +284,11 @@ export function PropertyEditor({
             onClick={() => persist()}
           >
             <Save size={16} />
-            {busy ? en.common.saving : en.common.save}
+            {preparing
+              ? "Preparing website…"
+              : busy
+                ? en.common.saving
+                : en.common.save}
           </button>
         </div>
       </div>
@@ -238,7 +296,8 @@ export function PropertyEditor({
         {t.steps.map((label, index) => (
           <button
             key={label}
-            onClick={() => setStep(index)}
+            disabled={busy || uploading}
+            onClick={() => goToStep(index)}
             className={step === index ? "active" : ""}
           >
             <span>{index + 1}</span>
@@ -248,8 +307,22 @@ export function PropertyEditor({
         ))}
       </div>
       {error && (
-        <div className="form-error editor-error" role="alert">
+        <div
+          className="form-error editor-error"
+          role="alert"
+          ref={errorBox}
+          tabIndex={-1}
+        >
           {error}
+          {writingFailed && (
+            <button
+              className="text-button"
+              disabled={busy}
+              onClick={() => persist(pendingPublish.current, false, true, true)}
+            >
+              Continue with my own text
+            </button>
+          )}
           <button
             className="icon-button"
             aria-label="Dismiss error"
@@ -266,7 +339,7 @@ export function PropertyEditor({
         </div>
       )}
       <div className="editor-layout">
-        <div className="editor-content">
+        <fieldset className="editor-content" disabled={busy || uploading}>
           {step === 0 && (
             <>
               <section className="form-card">
@@ -420,7 +493,10 @@ export function PropertyEditor({
                   />
                   <small>
                     {property.description.length.toLocaleString("en-US")} /
-                    12,000 characters · At least 30 to publish
+                    12,000 characters. Add details you want buyers to know. When
+                    you save, your photos and property details are shared with
+                    our AI writing service to prepare separate website
+                    descriptions. You can edit them directly on your page.
                   </small>
                 </label>
                 <label className="amenity-label">The little extras</label>
@@ -592,21 +668,6 @@ export function PropertyEditor({
               </div>
             </section>
           )}
-          {step < 2 && (
-            <PropertyStoryComposer
-              property={property}
-              demo={demo}
-              saved={saved}
-              dirty={dirty}
-              locked={busy || uploading}
-              onSave={() => persist()}
-              onApply={(next) => {
-                setProperty(next);
-                setDirty(true);
-                setPublished(false);
-              }}
-            />
-          )}
           <div className="editor-step-actions">
             {step > 0 ? (
               <button
@@ -620,8 +681,15 @@ export function PropertyEditor({
               <span />
             )}
             {step < 2 ? (
-              <button className="button dark" onClick={() => setStep(step + 1)}>
-                {step === 0 ? "Add your photos" : "Choose your design"}
+              <button
+                className="button dark"
+                onClick={() => goToStep(step + 1)}
+              >
+                {preparing
+                  ? "Preparing website…"
+                  : step === 0
+                    ? "Add your photos"
+                    : "Choose your design"}
                 <ArrowRight size={17} />
               </button>
             ) : (
@@ -631,11 +699,15 @@ export function PropertyEditor({
                 onClick={() => persist(true)}
               >
                 <Globe2 size={16} />
-                {demo ? "Publish in demo" : en.common.publish}
+                {preparing
+                  ? "Preparing website…"
+                  : demo
+                    ? "Publish in demo"
+                    : en.common.publish}
               </button>
             )}
           </div>
-        </div>
+        </fieldset>
         <aside className="editor-aside">
           <div className="editor-preview-card">
             <span className="eyebrow">YOUR WEBSITE, TAKING SHAPE</span>
@@ -649,7 +721,7 @@ export function PropertyEditor({
               <Globe2 size={14} />
               <span>mybeautifulproperty.com/p/…</span>
             </div>
-            {saved && (
+            {saved && !busy && (
               <Link
                 href={`/preview/${property.id}`}
                 target="_blank"
