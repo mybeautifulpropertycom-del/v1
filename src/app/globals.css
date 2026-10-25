@@ -4314,3 +4314,47 @@ fieldset.editor-content {
     height: 60px;
   }
 }
+
+.property-checkout-card {
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f6f7f3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+.property-checkout-card h3 {
+  font: 26px var(--serif);
+  margin: 10px 0;
+}
+.property-checkout-card p,
+.property-checkout-price > span {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #66715e;
+}
+.property-checkout-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+}
+.property-checkout-price strong {
+  font-size: 32px;
+  color: var(--ink);
+}
+.property-checkout-price small {
+  font-size: 12px;
+  font-weight: 500;
+}
+.property-checkout-card .property-checkout-note {
+  font-size: 12px;
+}
+.property-checkout-confirmed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

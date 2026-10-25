@@ -23,7 +23,7 @@ async function asAnon() {
 async function createTestDatabase() {
   const database = new PGlite();
   await database.exec(`
-    create role anon; create role authenticated;
+    create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create schema storage;
     create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}');
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('app.user_id', true), '')::uuid $$;

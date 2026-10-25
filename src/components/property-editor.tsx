@@ -34,6 +34,7 @@ import { useWorkspace } from "./workspace-provider";
 import { TemplateMiniature } from "./template-miniature";
 import { editWebsiteCopy, hasWebsiteDescriptions } from "@/lib/property-story";
 import { preparePropertyWebsite } from "@/lib/request-property-story";
+import { PropertyTestCheckout } from "./property-test-checkout";
 
 export function PropertyEditor({
   id,
@@ -74,6 +75,9 @@ export function PropertyEditor({
   const [customAmenity, setCustomAmenity] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const t = en.editor;
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("checkout")) setStep(2);
+  }, []);
   useEffect(() => {
     function beforeUnload(e: BeforeUnloadEvent) {
       if (dirty) e.preventDefault();
@@ -668,6 +672,13 @@ export function PropertyEditor({
                 ))}
               </div>
             </section>
+          )}
+          {!demo && step === 2 && (
+            <PropertyTestCheckout
+              propertyId={property.id}
+              prepare={() => persist(false, false, false)}
+              disabled={busy || uploading}
+            />
           )}
           <div className="editor-step-actions">
             {step > 0 ? (

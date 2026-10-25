@@ -43,7 +43,7 @@ For the step-by-step Romanian connection guide, see [CONNECT-SUPABASE.md](docs/C
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
 
-   Use the **public anon/publishable key**, never a service-role or secret key. Access control lives in PostgreSQL RLS. No service-role key is needed by this app.
+   Use the **public anon/publishable key**, never a service-role or secret key. Access control lives in PostgreSQL RLS. The core workspace needs no service-role key. Optional Stripe test checkout uses a separate server-only key; see [Stripe setup](docs/STRIPE-SETUP.md).
 
 4. In Supabase Auth, enable email/password accounts and email confirmation. Set your Site URL and add exact redirect URLs for `/dashboard/profile` and `/reset-password` on development and production origins. Configure a production SMTP provider before inviting customers; Supabase’s default test email service is limited.
 5. Restart the dev server. For a production deployment, configure the variables **before building**: `NEXT_PUBLIC_*` values are embedded at build time.
@@ -104,3 +104,7 @@ For future cloud tasks, use this existing isolated checkout. Do not create a Git
 The third design is now **The Atelier**, replacing Panorama: a gallery opening, independently editable section copy, visible property details and amenities, photograph strip, film slot and agent contact with tour scheduling. See [template details](docs/ATELIER-TEMPLATE.md). Existing `panorama` listings and URLs keep working.
 
 Agent profile photos and property/lead deletion are available in the workspace. Existing Supabase installations need the additive [account tools update](supabase/sql-editor-account-tools.sql); see [activation instructions](docs/ACCOUNT-TOOLS.md).
+
+### Stripe checkout (test only)
+
+The $97 USD website + presentation-video package now has an isolated Stripe test checkout. See [Stripe setup](docs/STRIPE-SETUP.md) for the additive SQL installer, Vercel variables, webhook URL, and test-card walkthrough. Live payments remain disabled until video integration and paid-publication access are ready.

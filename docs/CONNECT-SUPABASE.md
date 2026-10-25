@@ -44,7 +44,7 @@ Pentru dezvoltatori: instalarea manuală nu înregistrează migrarea în istoric
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cheia publică `sb_publishable_…` sau cheia legacy `anon`                  |
    | `NEXT_PUBLIC_SITE_URL`          | Originea pe care rulează aplicația; domeniul de producție după deployment |
 
-   În Supabase, informațiile sunt în dialogul **Connect** sau în setările proiectului, la **API / API Keys**. Denumirile pot varia între versiuni. Cheia publică se pune în setările mediului; nu este necesară cheia `service_role`, o cheie `sb_secret_…`, parola bazei de date sau un personal access token pentru rularea aplicației.
+   În Supabase, informațiile sunt în dialogul **Connect** sau în setările proiectului, la **API / API Keys**. Denumirile pot varia între versiuni. Cheia publică se pune în setările mediului; nu este necesară cheia `service_role`, o cheie `sb_secret_…`, parola bazei de date sau un personal access token pentru funcțiile de bază ale aplicației. Integrarea opțională Stripe folosește separat o cheie Supabase de server; vezi [configurarea Stripe](STRIPE-SETUP.md).
 
 4. **Schema.** Folosește `supabase/sql-editor-setup.sql` pentru instalarea manuală inițială. Într-un flux administrat prin CLI, sursa este `supabase/migrations/202610230001_initial.sql`. Alege o singură metodă de instalare. Nu rerula migrarea peste o instalare existentă.
 5. **Rețea.** Mediul cloud folosește o listă de domenii permise. După identificarea proiectului, trebuie permis hostname-ul său exact, `<project-reference>.supabase.co`, păstrând celelalte reguli. Salvarea unei modificări în draft nu dovedește că accesul este deja activ; conexiunea trebuie retestată.

@@ -60,3 +60,18 @@ commit;
 select 'MBP_ACCOUNT_TOOLS_OK' as status;
 `,
 );
+
+const stripeTest = await readFile(
+  new URL("202610250002_stripe_test_checkout.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-stripe-test.sql", import.meta.url),
+  `-- Existing installations: run this ENTIRE file in Supabase SQL Editor.
+-- Adds isolated Stripe test orders only. No live payments or publication changes.
+begin;
+${stripeTest.trim()}
+commit;
+select 'MBP_STRIPE_TEST_OK' as status;
+`,
+);

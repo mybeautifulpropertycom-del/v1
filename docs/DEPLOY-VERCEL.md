@@ -41,7 +41,7 @@ Selectează mediile în care testezi aplicația, de exemplu Production și Previ
 
 `NEXT_PUBLIC_SITE_URL` poate rămâne nesetat la primul deployment. Linkurile de confirmare, resetare și distribuire sunt construite de aplicație din originea deschisă în browser. După activarea domeniului, poți seta variabila la `https://mybeautifulproperty.com` în mediul Production. Nu copia `http://localhost:3000` în configurația Vercel.
 
-Cheile `service_role`, `sb_secret_…`, parola bazei și tokenurile personale nu sunt necesare. Nu încărca `.env.local` în GitHub; fișierele locale de mediu și `.vercel/` sunt excluse. Valorile publice sunt incluse în browser la build, de aceea schimbarea lor cere **Redeploy**.
+Pentru aplicația de bază nu sunt necesare cheile `service_role`, `sb_secret_…`, parola bazei sau tokenurile personale. Integrarea opțională Stripe are nevoie de o cheie Supabase de server separată, în `SUPABASE_SERVICE_ROLE_KEY`; vezi [configurarea Stripe](STRIPE-SETUP.md). Nu o pune în variabilele `NEXT_PUBLIC_`. Nu încărca `.env.local` în GitHub; fișierele locale de mediu și `.vercel/` sunt excluse. Valorile publice sunt incluse în browser la build, de aceea schimbarea lor cere **Redeploy**.
 
 ## 4. Primul deployment și autentificarea
 
