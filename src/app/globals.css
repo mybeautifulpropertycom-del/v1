@@ -4223,6 +4223,33 @@ fieldset.editor-content {
   border: 0;
   background: transparent;
 }
+.profile-photo-control input::file-selector-button {
+  margin-right: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f6f7f3;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+.profile-photo-control input:not(:disabled):hover::file-selector-button {
+  background: #ecefe7;
+  border-color: #aab39e;
+}
+.profile-photo-control input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.profile-photo-control input:disabled::file-selector-button {
+  opacity: 0.6;
+  cursor: wait;
+}
 .profile-photo-control small {
   display: block;
   font-size: 11px;
@@ -4262,6 +4289,20 @@ fieldset.editor-content {
 .property-card-footer {
   gap: 12px;
   flex-wrap: wrap;
+}
+.property-card-footer > .delete-action-wrap {
+  margin-left: auto;
+}
+.list-layout .property-card-footer {
+  display: flex;
+  flex-direction: row;
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  border-left: 0;
+  border-top: 1px solid var(--line);
+}
+.list-layout .property-card {
+  grid-template-columns: minmax(140px, 30%) 1fr;
 }
 @media (max-width: 480px) {
   .profile-photo-control {

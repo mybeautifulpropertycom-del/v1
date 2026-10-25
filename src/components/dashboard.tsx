@@ -110,22 +110,24 @@ function PropertyCard({
         </div>
       </div>
       <div className="property-card-footer">
-        <DeleteAction
-          label={`Delete ${property.title || "property"}`}
-          confirmation={`Delete “${property.title || "Untitled property"}”? This permanently removes the property and its published page. Your leads will remain in your inbox. This cannot be undone.`}
-          onDelete={() => deleteProperty(property)}
-        />
-
         <Link href={`/dashboard/properties/${property.id}`}>
           <FilePenLine size={15} />
           Edit website
         </Link>
         <Link
           href={`/preview/${property.id}`}
-          aria-label={`Preview ${property.title}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Preview ${property.title} (opens in a new tab)`}
+          title="Open preview in a new tab"
         >
           <ExternalLink size={15} />
         </Link>
+        <DeleteAction
+          label={`Delete ${property.title || "property"}`}
+          confirmation={`Delete “${property.title || "Untitled property"}”? This permanently removes the property and its published page. Your leads will remain in your inbox. This cannot be undone.`}
+          onDelete={() => deleteProperty(property)}
+        />
       </div>
     </article>
   );
