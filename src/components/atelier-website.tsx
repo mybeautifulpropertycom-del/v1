@@ -339,52 +339,50 @@ export function AtelierWebsite({
               <em>{text("detailsAccent")}</em>
             </h2>
             <p>{text("detailsBody")}</p>
-            <div className="atelier-accordions">
-              <details open>
-                <summary>
-                  The essentials <Plus size={18} />
-                </summary>
-                <dl>
-                  <div>
-                    <dt>Location</dt>
-                    <dd>{property.location}</dd>
-                  </div>
-                  <div>
-                    <dt>Living area</dt>
-                    <dd>
-                      {property.area.toLocaleString("en-US")} {unit}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Configuration</dt>
-                    <dd>
-                      {property.bedrooms} beds · {property.bathrooms} baths
-                    </dd>
-                  </div>
-                </dl>
-              </details>
-              {property.amenities.length > 0 && (
-                <details>
-                  <summary>
-                    Thoughtful extras <Plus size={18} />
-                  </summary>
-                  <ul>
-                    {property.amenities.map((amenity) => (
-                      <li key={amenity}>{amenity}</li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-              <details>
-                <summary>
-                  See it for yourself <Plus size={18} />
-                </summary>
-                <p>
-                  Choose your preferred date. {profile.name || "Your agent"}{" "}
-                  will contact you to confirm the time and availability.
-                </p>
-                {tour("atelier-text-link")}
-              </details>
+            <dl className="atelier-spec-grid">
+              <div>
+                <dt>Living area</dt>
+                <dd>
+                  {property.area.toLocaleString("en-US")} <small>{unit}</small>
+                </dd>
+              </div>
+              <div>
+                <dt>Property type</dt>
+                <dd>{property.type}</dd>
+              </div>
+              <div>
+                <dt>Bedrooms</dt>
+                <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
+              </div>
+              <div>
+                <dt>Bathrooms</dt>
+                <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
+              </div>
+              <div className="atelier-spec-wide">
+                <dt>Location</dt>
+                <dd>{property.location}</dd>
+              </div>
+              <div className="atelier-spec-wide">
+                <dt>
+                  {property.transaction === "rent"
+                    ? "Monthly rent"
+                    : "Offered at"}
+                </dt>
+                <dd>{formatPrice(property)}</dd>
+              </div>
+            </dl>
+            {property.amenities.length > 0 && (
+              <div className="atelier-extras">
+                <h3>Thoughtful extras</h3>
+                <ul>
+                  {property.amenities.map((amenity) => (
+                    <li key={amenity}>{amenity}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="atelier-details-tour">
+              {tour("atelier-text-link")}
             </div>
           </div>
           <div className="atelier-detail-image">
@@ -640,6 +638,15 @@ export function AtelierWebsite({
           </form>
         </section>
         <section className="atelier-invitation atelier-pad">
+          {property.images[0] && (
+            <img
+              className="atelier-invitation-background"
+              src={property.images[0]}
+              alt=""
+              loading="lazy"
+              aria-hidden="true"
+            />
+          )}
           <span className="atelier-kicker">YOUR NEXT CHAPTER, IN PERSON</span>
           <h2>
             {text("closingTitle")}

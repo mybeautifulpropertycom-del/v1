@@ -101,4 +101,4 @@ Before a commercial launch, connect and validate Supabase Auth/Storage/SMTP on a
 
 For future cloud tasks, use this existing isolated checkout. Do not create a Git worktree unless the user explicitly requests one.
 
-The third design is now **The Atelier**, replacing Panorama: a gallery opening, independently editable section copy, property detail accordions, photograph strip, film slot and agent contact with tour scheduling. See [template details](docs/ATELIER-TEMPLATE.md). Existing `panorama` listings and URLs keep working.
+The third design is now **The Atelier**, replacing Panorama: a gallery opening, independently editable section copy, visible property details and amenities, photograph strip, film slot and agent contact with tour scheduling. See [template details](docs/ATELIER-TEMPLATE.md). Existing `panorama` listings and URLs keep working.

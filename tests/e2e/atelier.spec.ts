@@ -42,9 +42,19 @@ test("Atelier navigation, feature details, tour popup and honest film preview wo
     .getByRole("link", { name: "The details" })
     .click();
   await expect(page.locator("#atelier-menu")).toHaveCount(0);
-  await page.getByText("Thoughtful extras", { exact: true }).click();
-  await expect(page.locator(".atelier-accordions ul")).toContainText(
+  await expect(page.locator(".atelier-extras ul")).toContainText(
     "Private garden",
+  );
+  await expect(page.locator(".atelier-extras li").first()).toBeVisible();
+  await expect(page.locator("#details details")).toHaveCount(0);
+  await expect(page.locator(".atelier-spec-grid")).toContainText("3,250");
+  await expect(page.locator(".atelier-invitation-background")).toHaveCSS(
+    "opacity",
+    "0.15",
+  );
+  await expect(page.locator(".atelier-invitation-background")).toHaveAttribute(
+    "src",
+    (await page.locator(".atelier-cover img").getAttribute("src")) as string,
   );
   await page
     .locator(".atelier-intro")

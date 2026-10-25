@@ -9,7 +9,7 @@ inventing or duplicating listing photos. Mobile presents the cover and up to
 three thumbnails; every photo remains available in the full gallery dialog.
 
 The page continues with the title and facts, a secondary-photo story, a dark
-features spread with accessible native accordions, a scrolling photo album,
+features spread with always-visible property facts and amenities, a scrolling photo album,
 a film slot, agent information and inquiry form, and the final tour invitation.
 The film is shown publicly only when a playable film is supplied; private/sample
 previews show an explicitly labeled placeholder. No video integration is enabled
@@ -23,5 +23,5 @@ data. Agent biography remains the agent's own words.
 Schedule a tour opens the existing viewing calendar and contact dialog. Inquiries
 use the existing authenticated/validated server flow and agent inbox. Sample and
 private previews do not submit requests. The gallery supports keyboard navigation,
-Escape, focus trapping and restoration through the shared photo dialog. Mobile
+Escape, focus trapping and restoration through the shared photo dialog. The final invitation uses the cover photograph at 15% opacity behind the text. Mobile
 has a persistent tour action; gallery motion honors reduced-motion preferences.
