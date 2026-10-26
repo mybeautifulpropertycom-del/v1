@@ -201,3 +201,76 @@ test("media import rejects private/special addresses and HTML masquerading as vi
     "mp4",
   );
 });
+
+test("single dashboard key is sent verbatim for submission and status without an invented secret", async () => {
+  process.env.HF_KEY = "opaque-dashboard-key-for-tests";
+  // An old variable must not override the explicitly installed current key.
+  process.env.HF_CREDENTIALS = "old-id:old-secret";
+  let calls = 0;
+  globalThis.fetch = async (input, init) => {
+    calls++;
+    assert.equal(
+      new Headers(init?.headers).get("authorization"),
+      "Key opaque-dashboard-key-for-tests",
+    );
+    assert.equal(init?.redirect, "error");
+    const url = new URL(String(input));
+    assert.equal(url.origin, "https://api.higgsfield.ai");
+    if (init?.method === "POST") {
+      assert.equal(url.pathname, "/vendor/model/video");
+      assert.equal(
+        url.searchParams.get("hf_webhook"),
+        "https://app.example/callback",
+      );
+      assert.deepEqual(JSON.parse(String(init.body)), { prompt: "A property" });
+    } else assert.equal(url.pathname, "/requests/single-key-request/status");
+    return Response.json({
+      request_id: "single-key-request",
+      status: "queued",
+    });
+  };
+  try {
+    assert.equal(higgsfieldCredentials(), process.env.HF_KEY);
+    await submitGeneration(
+      "vendor/model/video",
+      { prompt: "A property" },
+      "https://app.example/callback",
+    );
+    await generationStatus("single-key-request");
+    assert.equal(calls, 2);
+    process.env.HF_KEY = "unsafe\r\nheader";
+    assert.throws(higgsfieldCredentials, /not configured/);
+  } finally {
+    delete process.env.HF_KEY;
+  }
+});
+
+test("single-key submissions never retry ambiguous errors and classify definite input rejections", async () => {
+  process.env.HF_KEY = "opaque-test-key";
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response("provider failure", { status: 500 });
+  };
+  try {
+    await assert.rejects(
+      submitGeneration("vendor/model", {}, "https://app.example/callback"),
+      /confirmation is unavailable/,
+    );
+    assert.equal(calls, 1);
+    globalThis.fetch = async () =>
+      new Response("private provider details", { status: 422 });
+    await assert.rejects(
+      submitGeneration("vendor/model", {}, "https://app.example/callback"),
+      (error) => {
+        assert.equal((error as Error).constructor.name, "ValidationError");
+        assert.ok(
+          !(error as Error).message.includes("private provider details"),
+        );
+        return true;
+      },
+    );
+  } finally {
+    delete process.env.HF_KEY;
+  }
+});

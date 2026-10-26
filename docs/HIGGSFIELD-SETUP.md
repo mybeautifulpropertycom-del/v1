@@ -1,6 +1,6 @@
 # Higgsfield: configurable models and asynchronous property video delivery
 
-The integration uses the official `@higgsfield/client/v2` SDK for non-blocking submissions and its documented authenticated `/requests/{id}/status` endpoint for resuming requests. Model endpoints and input/output shapes are configuration, not branches in the worker. Credentials are loaded only on the server, at runtime. Building/deploying without credentials is supported.
+The integration supports the current single API key and legacy key/secret pairs. It uses the official `@higgsfield/client/v2` SDK for legacy submissions, the equivalent REST contract for opaque single keys, and the documented authenticated `/requests/{id}/status` endpoint for resuming requests. Model endpoints and input/output shapes are configuration, not branches in the worker. Credentials are loaded only on the server, at runtime. Building/deploying without credentials is supported.
 
 Sources: [requested official SDK guide](https://docs.higgsfield.ai/docs/how-to/sdk), [official SDK repository](https://github.com/higgsfield-ai/higgsfield-js), and published `@higgsfield/client` version **0.2.6**. The requested documentation host returned a proxy 403 in this workspace; the implementation was checked against the official published README, types and executable source. That source returns raw V2 responses, despite an outdated README section describing `JobSet` objects. Its V2 webhook implementation forwards the callback URL but does **not** send the `secret` option; we therefore use per-attempt callback tokens and verify results through the authenticated API.
 
@@ -14,14 +14,15 @@ Project **v1 → Settings → Environment Variables → Production**:
 
 | Name | Value | Vercel type |
 | --- | --- | --- |
-| `HF_API_KEY` | Higgsfield API Key ID | Secret |
-| `HF_API_SECRET` | Matching API Key Secret | Secret |
+| `HF_KEY` | Entire API key copied from the Higgsfield dashboard | Secret |
 | `CRON_SECRET` | A random secret, at least 32 characters | Secret |
 | `HIGGSFIELD_MODEL` | A configured profile name | Config |
 | `HIGGSFIELD_MODELS_JSON` | Optional JSON profiles overriding/adding file profiles | Config |
 | `HIGGSFIELD_ENABLED` | `false` during setup; `true` to submit paid video requests | Config |
 
-Alternatively, use **one** `HF_CREDENTIALS` secret in `KEY_ID:KEY_SECRET` format instead of the two separate values. `HF_KEY` is also accepted for compatibility with the Python SDK naming. Do not set multiple credential formats. Never use a `NEXT_PUBLIC_` prefix for credentials. Add them in Vercel, not in chat or GitHub.
+For the current **Save your API key** screen, copy the entire key into `HF_KEY` exactly as supplied. Do not split it or invent/append a secret. `HF_KEY` takes precedence if older variables still exist. Do not send the real key in chat.
+
+Legacy accounts may instead use `HF_CREDENTIALS=KEY_ID:KEY_SECRET` or separate `HF_API_KEY` and `HF_API_SECRET`. Never use a `NEXT_PUBLIC_` prefix. The [official Python SDK](https://github.com/higgsfield-ai/higgsfield-client) version 0.2.0 reads `HF_KEY` verbatim and sends `Authorization: Key <value>` (`auth.py` and `http/client.py`). The published JS SDK 0.2.6 requires a colon-delimited pair, so opaque keys use a bounded REST submission with exactly the same model, webhook and response handling. No fake secret is added and no automatic paid retry is made. This update requires no new SQL migration.
 
 Existing `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SITE_URL=https://www.mybeautifulproperty.com` are reused. Generate the worker secret locally with `openssl rand -hex 32`; use the same value in the scheduler below. Redeploy after environment changes.
 
