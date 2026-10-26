@@ -25,6 +25,7 @@ type PublicationStatus = {
   videoNeedsReview?: boolean;
   videoAttempts?: number;
   videoError?: string | null;
+  videoProgress?: { completed: number; total: number } | null;
   canRetryVideo?: boolean;
   film?: { src: string; poster?: string } | null;
 };
@@ -350,6 +351,13 @@ export function usePropertyPublication(options: {
                   ? "Your completed presentation video will appear here when it is available."
                   : "Publish your property to generate a presentation video from your photos. Your video will appear here and on your property website when it’s ready."}
       </p>
+      {status.videoStatus === "processing" && status.videoProgress && (
+        <p role="status">
+          {status.videoProgress.completed < status.videoProgress.total
+            ? `${status.videoProgress.completed} of ${status.videoProgress.total} scenes ready. You can leave this page; your video will keep processing.`
+            : "Your scenes are ready. We’re adding the music and finishing your film."}
+        </p>
+      )}
       {status.videoStatus === "failed" && status.canRetryVideo !== false && (
         <button
           type="button"

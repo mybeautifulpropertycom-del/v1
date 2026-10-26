@@ -1,5 +1,7 @@
 # Higgsfield: configurable models and asynchronous property video delivery
 
+For the user's selected **original-photo animated film**, follow [PROPERTY-FILMS.md](PROPERTY-FILMS.md). That workflow uses the shared queue/scheduler but does not generate Hailuo clips. The rest of this document describes the alternative Higgsfield generation workflow.
+
 The integration supports the current single API key and legacy key/secret pairs. It uses the official `@higgsfield/client/v2` SDK for legacy submissions, the equivalent REST contract for opaque single keys, and the documented authenticated `/requests/{id}/status` endpoint for resuming requests. Model endpoints and input/output shapes are configuration, not branches in the worker. Credentials are loaded only on the server, at runtime. Building/deploying without credentials is supported.
 
 Sources: [requested official SDK guide](https://docs.higgsfield.ai/docs/how-to/sdk), [official SDK repository](https://github.com/higgsfield-ai/higgsfield-js), and published `@higgsfield/client` version **0.2.6**. The requested documentation host returned a proxy 403 in this workspace; the implementation was checked against the official published README, types and executable source. That source returns raw V2 responses, despite an outdated README section describing `JobSet` objects. Its V2 webhook implementation forwards the callback URL but does **not** send the `secret` option; we therefore use per-attempt callback tokens and verify results through the authenticated API.

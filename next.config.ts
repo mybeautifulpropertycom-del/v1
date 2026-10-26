@@ -4,6 +4,14 @@ const config: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   devIndicators: false,
   poweredByHeader: false,
+  serverExternalPackages: ["@ffmpeg-installer/linux-x64"],
+  outputFileTracingIncludes: {
+    "/api/video/*": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
+    "/api/stripe/webhook": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
+    "/api/higgsfield/webhook": [
+      "./node_modules/@ffmpeg-installer/linux-x64/**",
+    ],
+  },
   async headers() {
     return [
       {

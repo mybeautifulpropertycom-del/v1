@@ -26,6 +26,8 @@ type VideoBillingState = {
   updated_at: string;
   provider_phase?: string;
   last_error?: string | null;
+  montage_plan?: { shots?: unknown[] } | null;
+  montage_next_shot?: number;
 };
 
 export async function GET(request: Request) {
@@ -56,7 +58,10 @@ export async function GET(request: Request) {
           .from("property_video_jobs")
           .select(
             process.env.HIGGSFIELD_ENABLED === "true"
-              ? "status,video_url,poster_url,provider_phase,attempts,updated_at,last_error"
+              ? "status,video_url,poster_url,provider_phase,attempts,updated_at,last_error" +
+                  (process.env.PROPERTY_VIDEO_MODE === "photo-montage"
+                    ? ",montage_plan,montage_next_shot"
+                    : "")
               : "status,video_url,poster_url,attempts,updated_at",
           )
           .eq("property_id", id)
@@ -84,6 +89,12 @@ export async function GET(request: Request) {
         videoNeedsReview: job?.provider_phase === "uncertain",
         videoAttempts: job?.attempts ?? 0,
         videoError: job?.last_error ?? null,
+        videoProgress: job?.montage_plan?.shots?.length
+          ? {
+              completed: job.montage_next_shot ?? 0,
+              total: job.montage_plan.shots.length,
+            }
+          : null,
         canRetryVideo:
           job?.status === "failed" &&
           job.attempts < 3 &&

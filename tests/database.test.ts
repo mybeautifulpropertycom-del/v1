@@ -65,6 +65,155 @@ after(async () => {
   await db?.close();
 });
 
+test("photo films resume shots after crashes and disputes, enforce paid leases, and deliver only complete films", async () => {
+  const database = await createTestDatabase();
+  try {
+    await database.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-setup.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const installer = await readFile(
+      new URL("../supabase/sql-editor-property-films.sql", import.meta.url),
+      "utf8",
+    );
+    await database.exec(installer);
+    await database.exec(installer);
+    await database.query(
+      "insert into auth.users(id,email) values($1,'filmmaker@example.com')",
+      [agentA],
+    );
+    await database.exec(
+      "update profiles set name='Agent Name',phone='+1 555 123 4567'",
+    );
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$2,'film-home','A lovely home','A long and meaningful description of this lovely home.','Austin, TX',500000,1500,array['https://example.com/front.jpg','https://example.com/living.jpg'])",
+      [propertyA, agentA],
+    );
+    await database.exec("select activate_property_billing()");
+    const purchase = await database.query<{
+      request_property_publication: { order: { id: string } };
+    }>("select request_property_publication($1,$2)", [propertyA, agentA]);
+    const order = purchase.rows[0].request_property_publication.order.id;
+    const leaseA = "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      leaseB = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const claim = async (lease: string) =>
+      (
+        await database.query<{
+          claim_property_montage: {
+            attempts: number;
+            montage_next_shot: number;
+          } | null;
+        }>("select claim_property_montage($1,$2)", [order, lease])
+      ).rows[0].claim_property_montage;
+    const checkpoint = async (
+      lease: string,
+      plan: unknown = null,
+      next: number | null = null,
+      url: string | null = null,
+      error: string | null = null,
+    ) =>
+      (
+        await database.query<{ checkpoint_property_montage: boolean }>(
+          "select checkpoint_property_montage($1,$2,1,$3,$4,$5,$6)",
+          [order, lease, plan ? JSON.stringify(plan) : null, next, url, error],
+        )
+      ).rows[0].checkpoint_property_montage;
+    const due = () =>
+      database.exec(
+        "update property_video_jobs set next_poll_at=now()-interval '1 second',lease_until=now()-interval '1 second'",
+      );
+    await database.exec("set role authenticated");
+    await assert.rejects(claim(leaseA), /permission denied/i);
+    await assert.rejects(checkpoint(leaseA), /permission denied/i);
+    await database.exec("reset role; set role service_role");
+    assert.equal(await claim(leaseA), null);
+    await database.query(
+      "select apply_property_payment($1,'pi_film','paid',100)",
+      [order],
+    );
+    assert.equal((await claim(leaseA))?.attempts, 1);
+    assert.equal(await claim(leaseB), null);
+    const plan = {
+      engine: "photo-montage-v1",
+      shots: [
+        { image: "https://example.com/front.jpg" },
+        { image: "https://example.com/living.jpg" },
+      ],
+    };
+    assert.equal(await checkpoint(leaseA, plan), true);
+    await due();
+    assert.equal((await claim(leaseB))?.attempts, 1);
+    assert.equal(
+      await checkpoint(leaseA, null, 1),
+      false,
+      "Stale lease cannot advance progress",
+    );
+    assert.equal(
+      await checkpoint(leaseB, null, null, "https://example.com/premature.mp4"),
+      false,
+    );
+    assert.equal(
+      await checkpoint(leaseB, null, 2),
+      false,
+      "Cannot skip a shot",
+    );
+    assert.equal(await checkpoint(leaseB, null, 1), true);
+    await due();
+    assert.equal((await claim(leaseA))?.montage_next_shot, 1);
+    // A renderer crash has no paid-provider ambiguity; resume the same shot.
+    await due();
+    assert.equal((await claim(leaseB))?.montage_next_shot, 1);
+    assert.equal(await checkpoint(leaseA, null, 2), false);
+    await database.query(
+      "select apply_property_payment($1,'pi_film','disputed',200)",
+      [order],
+    );
+    assert.equal(await checkpoint(leaseB, null, 2), false);
+    await database.query(
+      "select apply_property_payment($1,'pi_film','paid',300)",
+      [order],
+    );
+    await database.query("select request_property_publication($1,$2)", [
+      propertyA,
+      agentA,
+    ]);
+    await due();
+    const restored = await claim(leaseA);
+    assert.equal(restored?.attempts, 1);
+    assert.equal(restored?.montage_next_shot, 1);
+    assert.equal(await checkpoint(leaseA, null, 2), true);
+    await due();
+    await claim(leaseB);
+    assert.equal(
+      await checkpoint(leaseB, null, null, "https://example.com/film.mp4"),
+      true,
+    );
+    assert.equal(
+      await checkpoint(leaseB, null, null, "https://example.com/film.mp4"),
+      false,
+    );
+    const state = await database.query<{
+      status: string;
+      video_status: string;
+    }>(
+      "select v.status,o.video_status from property_video_jobs v join property_orders o on o.id=v.order_id",
+    );
+    assert.deepEqual(state.rows[0], {
+      status: "completed",
+      video_status: "delivered",
+    });
+    await database.exec("reset role");
+    const bucket = await database.query<{ public: boolean }>(
+      "select public from storage.buckets where id='property-video-work'",
+    );
+    assert.equal(bucket.rows[0].public, false);
+  } finally {
+    await database.close();
+  }
+});
+
 test("signup creates a private profile and agents see only their own data", async () => {
   await asAgent(agentA);
   const profiles = await db.query<{ id: string }>(

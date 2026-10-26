@@ -30,6 +30,14 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const propertyFilms = await readFile(
+  new URL("202610260002_property_films.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-property-films.sql", import.meta.url),
+  `-- Existing installations: run this ENTIRE file after MBP_HIGGSFIELD_READY.\n-- Adds private original-photo film progress. Does not start rendering or make payments.\nbegin;\n${propertyFilms.trim()}\ncommit;\nselect 'MBP_PROPERTY_FILMS_READY' as status;\n`,
+);
 const stories = await readFile(
   new URL("202610240001_property_stories.sql", directory),
   "utf8",

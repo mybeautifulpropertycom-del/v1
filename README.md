@@ -27,7 +27,7 @@ The app uses port 3000. Without Supabase configuration it runs in clearly labele
 - Public contact forms and a private agent inbox when configured. Replies use the agent’s email/phone app; automatic notification emails are not implemented.
 - Public property metadata for social sharing, generated only for published properties.
 
-The video studio is explicitly a planned feature. No Higgsfield service, video generation, editor, billing, or subscription enforcement is connected.
+The standalone Video Studio screen remains a planned feature. Paid property-page video delivery is implemented through the background workflows described below; it requires server configuration and the relevant database upgrades.
 
 ## Connect Supabase
 
@@ -108,5 +108,7 @@ Agent profile photos and property/lead deletion are available in the workspace. 
 ### Stripe checkout (test and live)
 
 Model-configurable Higgsfield generation, paid-job processing, callbacks and durable video storage are implemented. See [Higgsfield API setup](docs/HIGGSFIELD-SETUP.md) for the migration, model profiles, credentials, scheduler and activation flag. Generation remains disabled until configured.
+
+For the selected fidelity-first workflow, use [original-photo property films](docs/PROPERTY-FILMS.md): 3.4-second animated photographs, adaptive ordering, no repeated images, an original instrumental score and a maximum 78.2-second montage. This mode does not generate Hailuo clips. It requires `PROPERTY_VIDEO_MODE=photo-montage`, the film migration and the shared scheduler. `npm run film:preview` creates a local sample without external API calls.
 
 The $97 USD website + presentation-video package supports test and live Checkout, database-enforced publication access, and refund/dispute handling. See [Stripe setup](docs/STRIPE-SETUP.md) for the additive installer, keys, webhook and launch switch. Agents can preview and edit before opening the embedded **Publish Property** payment modal. Verified payments automatically publish and queue a video; Higgsfield rendering uses the configured background worker once activated. Existing installations must apply the [publish workflow upgrade](docs/PUBLISH-WORKFLOW.md).

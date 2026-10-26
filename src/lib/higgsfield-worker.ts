@@ -20,6 +20,7 @@ import {
 } from "./higgsfield-server";
 import { callbackUrl, workerSecret } from "./higgsfield-security";
 import { downloadVideo } from "./video-download";
+import { runPropertyFilm } from "./property-film-worker";
 
 export type VideoJob = {
   order_id: string;
@@ -46,9 +47,18 @@ export function videoDatabase() {
   });
 }
 export function videoConfiguration() {
-  higgsfieldCredentials();
   workerSecret();
   callbackUrl("configuration-check", 1);
+  if (process.env.PROPERTY_VIDEO_MODE === "photo-montage") {
+    if (!process.env.OPENAI_API_KEY?.trim())
+      throw new Error("Photo ordering needs OPENAI_API_KEY.");
+    return {
+      endpoint: "local/photo-montage-v1",
+      input: {},
+      output: { kind: "video" as const, path: "film.mp4" },
+    };
+  }
+  higgsfieldCredentials();
   return configuredModel();
 }
 export async function bindVideoRequest(
@@ -169,7 +179,6 @@ async function processJob(job: VideoJob) {
 export async function runVideoWorker(orderId?: string) {
   if (process.env.HIGGSFIELD_ENABLED !== "true")
     return { enabled: false, processed: 0 };
-  higgsfieldCredentials();
   workerSecret();
   callbackUrl("configuration-check", 1);
   const admin = videoDatabase();
@@ -188,6 +197,15 @@ export async function runVideoWorker(orderId?: string) {
     throw new Error("The Higgsfield database migration is not installed.");
   const results: string[] = [];
   for (const candidate of candidates || []) {
+    if (
+      candidate.model_config?.engine === "photo-montage-v1" ||
+      (candidate.status === "queued" &&
+        process.env.PROPERTY_VIDEO_MODE === "photo-montage")
+    ) {
+      results.push(await runPropertyFilm(admin, candidate.order_id));
+      continue;
+    }
+    higgsfieldCredentials();
     let model: ModelProfile | null = null;
     let input: Record<string, unknown> | null = null;
     if (candidate.status === "queued") {
