@@ -769,12 +769,34 @@
   font-size: 10px;
   color: #786f5d;
 }
+.atelier-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  padding-block: 35px;
+}
+.atelier-footer > a {
+  font-size: 11px;
+}
+.atelier-footer > a:first-child {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.atelier-footer p {
+  font-size: 9px;
+}
+.atelier-footer strong {
+  font-size: 12px;
+}
 .atelier-mobile-tour {
   display: none;
 }
 @media (min-width: 1700px) {
   .atelier-website main,
-  .atelier-nav {
+  .atelier-nav,
+  .atelier-footer {
     max-width: 1920px;
     margin-inline: auto;
   }
@@ -983,6 +1005,12 @@
   }
   .atelier-invitation h2 {
     font-size: 43px;
+  }
+  .atelier-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding-block: 30px;
   }
   .atelier-mobile-tour {
     display: flex;

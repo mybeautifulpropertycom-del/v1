@@ -316,7 +316,7 @@ export function AtelierWebsite({
               <div className="atelier-no-photo">A closer perspective</div>
             )}
             <figcaption>
-              <span>01 / A CLOSER PERSPECTIVE</span>
+              <span>A CLOSER PERSPECTIVE</span>
               <span>{property.location}</span>
             </figcaption>
           </figure>
@@ -638,6 +638,22 @@ export function AtelierWebsite({
           </span>
         </section>
       </main>
+      <footer className="atelier-footer atelier-pad">
+        <a href="#home">
+          {profile.agency || profile.name}
+          <ArrowUpRight size={16} />
+        </a>
+        <p>
+          Property information supplied by the listing agent.
+          <br />
+          Details are subject to verification.
+        </p>
+        <a href="/">
+          Made beautiful with
+          <br />
+          <strong>my beautiful property.</strong>
+        </a>
+      </footer>
       <div className="atelier-mobile-tour">
         <span>
           {formatPrice(property)}

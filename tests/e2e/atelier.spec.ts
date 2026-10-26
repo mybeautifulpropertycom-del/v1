@@ -112,7 +112,7 @@ test("Atelier fits phones and keeps the tour action available without blocking i
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
-  await page.locator(".atelier-invitation").scrollIntoViewIfNeeded();
-  await expect(page.locator(".atelier-footer")).toHaveCount(0);
+  await page.locator(".atelier-footer").scrollIntoViewIfNeeded();
+  await expect(page.locator(".atelier-footer")).toBeVisible();
   await expect(page.locator(".atelier-mobile-tour")).toBeInViewport();
 });
