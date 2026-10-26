@@ -37,7 +37,7 @@ test("Heritage cover zooms on scroll, keeps the heading stable, and honors reduc
   await expect.poll(() => coverScale(page)).toBe(1);
 });
 
-test("Heritage highlights loop as text, can pause, and remain fully readable with reduced motion", async ({
+test("Heritage highlights loop as text, pause on hover, and remain fully readable with reduced motion", async ({
   page,
 }) => {
   await page.goto("/templates/minimal");
@@ -54,7 +54,8 @@ test("Heritage highlights loop as text, can pause, and remain fully readable wit
     "animation-iteration-count",
     "infinite",
   );
-  await strip.getByRole("button", { name: "Pause highlights" }).click();
+  await expect(strip.getByRole("button")).toHaveCount(0);
+  await strip.hover();
   await expect(strip.locator(".heritage-amenity-track")).toHaveCSS(
     "animation-play-state",
     "paused",

@@ -97,7 +97,6 @@ export function HeritageWebsite({
   const [viewing, setViewing] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [highlights, setHighlights] = useState(false);
-  const [amenitiesPaused, setAmenitiesPaused] = useState(false);
   const copy = propertyStory(property);
   const isPreview = preview || sample;
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
@@ -320,7 +319,7 @@ export function HeritageWebsite({
                 </div>
               )}
               <figcaption>
-                {copy.captions[property.images[1] ? 1 : 0] || property.title}
+                {property.title}
               </figcaption>
               <span className="heritage-seal">
                 <Asterisk size={18} strokeWidth={1} />
@@ -362,7 +361,6 @@ export function HeritageWebsite({
         <div
           className="heritage-amenity-strip"
           aria-label="Property highlights"
-          data-paused={amenitiesPaused}
         >
           <div className="heritage-amenity-window">
             <div className="heritage-amenity-track">
@@ -375,13 +373,6 @@ export function HeritageWebsite({
               ))}
             </div>
           </div>
-          <button
-            type="button"
-            aria-pressed={amenitiesPaused}
-            onClick={() => setAmenitiesPaused((paused) => !paused)}
-          >
-            {amenitiesPaused ? "Resume highlights" : "Pause highlights"}
-          </button>
         </div>
         <section
           className="heritage-gallery heritage-section heritage-pad"
@@ -439,9 +430,6 @@ export function HeritageWebsite({
                 </button>
               )}
             </div>
-            <span>
-              {visiblePhotographs.length} / {photographs.length} PHOTOGRAPHS
-            </span>
           </div>
           <div className="heritage-photo-grid">
             {visiblePhotographs.map(({ src, index }) => (

@@ -409,7 +409,7 @@
   background: #e9eddd;
   border-block: 1px solid #dce2cd;
   position: relative;
-  padding: 22px 0 12px;
+  padding: 22px 0;
 }
 .heritage-amenity-window {
   overflow: hidden;
@@ -435,17 +435,7 @@
   font: 400 17px/1.6 var(--serif);
   white-space: nowrap;
 }
-.heritage-amenity-strip > button {
-  display: block;
-  margin: 8px auto 0;
-  padding: 4px 8px;
-  background: transparent;
-  color: #526247;
-  font: 10px/1.5 var(--sans);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.heritage-amenity-strip:is(:hover, :focus-within, [data-paused="true"])
+.heritage-amenity-strip:is(:hover, :focus-within)
   .heritage-amenity-track {
   animation-play-state: paused;
 }
@@ -481,11 +471,6 @@
   background: #304b38;
   border-color: #304b38;
   color: #f5f6e9;
-}
-.heritage-gallery-tools > span {
-  font-size: 7px;
-  letter-spacing: 1.3px;
-  color: #7d886e;
 }
 .heritage-photo-grid {
   display: grid;
@@ -788,9 +773,15 @@
 }
 .heritage-setting-layout {
   display: grid;
-  grid-template-columns: 1fr 0.95fr;
-  gap: 9%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "copy photograph";
+  gap: clamp(32px, 6vw, 88px);
   align-items: center;
+}
+.heritage-setting-layout > div {
+  grid-area: copy;
+  min-width: 0;
+  max-width: 480px;
 }
 .heritage-setting-layout h2 {
   font-size: clamp(32px, 3.2vw, 47px);
@@ -817,6 +808,8 @@
   color: #7c8a68;
 }
 .heritage-setting-layout figure {
+  grid-area: photograph;
+  min-width: 0;
   margin: 0;
 }
 .heritage-setting-layout figure > img {
@@ -1181,11 +1174,11 @@
   }
   .heritage-setting-layout {
     grid-template-columns: 1fr;
+    grid-template-areas: "copy" "photograph";
     gap: 35px;
   }
-  .heritage-setting-layout figure {
-    max-width: 92%;
-    margin-left: 6%;
+  .heritage-setting-layout > div {
+    max-width: none;
   }
   .heritage-setting-layout figure > img {
     aspect-ratio: 1;
@@ -1237,8 +1230,7 @@
     overflow-wrap: anywhere;
     max-width: 100%;
   }
-  .heritage-amenity-strip ul[aria-hidden],
-  .heritage-amenity-strip > button {
+  .heritage-amenity-strip ul[aria-hidden] {
     display: none;
   }
   html:has(.heritage-website) {
