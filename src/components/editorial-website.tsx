@@ -390,18 +390,18 @@ export function EditorialWebsite({
             </div>
             <div>
               <dt>
+                <Bath size={17} />
+                Bathrooms
+              </dt>
+              <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
+            </div>
+            <div>
+              <dt>
                 {property.transaction === "rent"
                   ? "Monthly rent"
                   : "Offered at"}
               </dt>
               <dd>{formatPrice(property)}</dd>
-            </div>
-            <div>
-              <dt>
-                <Bath size={17} />
-                Bathrooms
-              </dt>
-              <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
             </div>
           </dl>
         </section>
@@ -487,11 +487,13 @@ export function EditorialWebsite({
               </div>
             </dl>
             {property.amenities.length > 0 && (
-              <ul>
+              <ul className="estate-amenities" aria-label="Property amenities">
                 {property.amenities.map((amenity) => (
                   <li key={amenity}>
-                    <Check size={14} />
-                    {amenity}
+                    <span className="estate-amenity-mark" aria-hidden="true">
+                      <Check size={14} />
+                    </span>
+                    <span>{amenity}</span>
                   </li>
                 ))}
               </ul>
@@ -522,17 +524,7 @@ export function EditorialWebsite({
                 </em>
               </h2>
             </div>
-            <p>
-              {String(property.images.length).padStart(2, "0")} PHOTOGRAPHS
-              <br />
-              <span>
-                <EditableText
-                  field="copy.galleryBody"
-                  value={copy.galleryBody}
-                  onEdit={onEdit}
-                />
-              </span>
-            </p>
+            <p>Explore the photographs of this house.</p>
           </div>
           <div className="estate-gallery-grid">
             {property.images.map((image, index) => (

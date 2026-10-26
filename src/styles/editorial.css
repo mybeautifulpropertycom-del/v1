@@ -267,7 +267,7 @@
 }
 .estate-facts {
   display: grid;
-  grid-template-columns: 1fr 0.7fr 1.2fr 0.7fr;
+  grid-template-columns: 1fr 0.7fr 0.7fr 1.2fr;
   grid-column: 1/-1;
   margin: 10px 0 0;
   padding-top: 32px;
@@ -474,24 +474,40 @@
   max-width: 60%;
   overflow-wrap: anywhere;
 }
-.estate-details ul {
+.estate-amenities {
   list-style: none;
   padding: 0;
-  margin: 20px 0 0;
+  margin: 26px 0 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 13px 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
-.estate-details li {
+.estate-amenities li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 11px;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 14px;
+  border: 1px solid #dce4d9;
+  border-radius: 5px;
+  background: #eef2eb;
+  color: #304d40;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.estate-amenities li > span:last-child {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
-.estate-details li svg {
-  color: var(--estate-sage);
-  flex-shrink: 0;
+.estate-amenity-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #dce6d7;
+  color: #476348;
 }
 .estate-details .estate-button {
   margin-top: 28px;
@@ -751,13 +767,12 @@
   background: #e9eee6;
 }
 .estate-gallery .estate-section-heading > p {
-  font-size: 10px;
-  letter-spacing: 1.2px;
-  text-align: right;
-}
-.estate-gallery .estate-section-heading > p > span {
-  font-size: 12px;
+  max-width: 260px;
+  font-size: 13px;
+  line-height: 1.8;
   letter-spacing: 0;
+  color: var(--estate-muted);
+  text-align: right;
 }
 .estate-gallery-grid {
   display: grid;
@@ -1140,12 +1155,6 @@
   .estate-details {
     gap: 5%;
   }
-  .estate-details ul {
-    column-gap: 15px;
-  }
-  .estate-details li {
-    font-size: 10px;
-  }
   .viewing-dialog {
     padding: 35px;
   }
@@ -1302,11 +1311,13 @@
   .estate-details-copy {
     padding-top: 8px;
   }
-  .estate-details ul {
-    gap: 13px;
+  .estate-amenities {
+    gap: 8px;
   }
-  .estate-details li {
-    font-size: 11px;
+  .estate-amenities li {
+    padding: 13px 10px;
+    gap: 8px;
+    font-size: 12px;
   }
   .estate-film {
     padding-block: 60px;
