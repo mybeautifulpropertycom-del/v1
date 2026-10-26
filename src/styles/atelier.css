@@ -509,9 +509,24 @@
   border-top: 1px solid #ffffff30;
   padding-top: 20px;
 }
-.atelier-details-tour .atelier-text-link {
+.atelier-details-tour .atelier-button {
   width: 100%;
+  min-height: 56px;
   justify-content: space-between;
+  padding: 18px 24px;
+  background: #f2f1e8;
+  border-color: #f2f1e8;
+  color: #292e29;
+  font-size: 14px;
+  font-weight: 600;
+}
+.atelier-details-tour .atelier-button:hover {
+  background: #dce4d2;
+  border-color: #dce4d2;
+}
+.atelier-details-tour .atelier-button:focus-visible {
+  outline: 2px solid #f2f1e8;
+  outline-offset: 4px;
 }
 .atelier-detail-image {
   position: relative;

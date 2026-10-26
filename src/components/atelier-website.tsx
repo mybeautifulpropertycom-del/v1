@@ -387,7 +387,7 @@ export function AtelierWebsite({
               </div>
             )}
             <div className="atelier-details-tour">
-              {tour("atelier-text-link")}
+              {tour()}
             </div>
           </div>
           <div className="atelier-detail-image">
