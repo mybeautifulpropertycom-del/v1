@@ -30,6 +30,14 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const platformAdmin = await readFile(
+  new URL("202610260003_platform_admin.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-platform-admin.sql", import.meta.url),
+  `-- Existing installations: run this ENTIRE file after MBP_PROPERTY_FILMS_READY.\n-- Adds protected admin roles and complimentary publication. Does not grant a role automatically.\nbegin;\n${platformAdmin.trim()}\ncommit;\nselect 'MBP_ADMIN_READY' as status;\n`,
+);
 const propertyFilms = await readFile(
   new URL("202610260002_property_films.sql", directory),
   "utf8",

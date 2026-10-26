@@ -17,6 +17,7 @@ import { getSupabase, supabaseConfigured } from "@/lib/supabase";
 
 type WorkspaceContext = Workspace & {
   demo: boolean;
+  isAdmin: boolean;
   saveProfile: (profile: Profile) => Promise<void>;
   saveProperty: (property: Property, publish?: boolean) => Promise<Property>;
   uploadImage: (file: File, propertyId: string) => Promise<string>;
@@ -64,6 +65,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<Workspace | null>(null);
   const stateRef = useRef<Workspace | null>(null);
   const [error, setError] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [toast, setToast] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const notify = useCallback((message: string) => {
@@ -94,23 +96,26 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           router.replace("/login");
           return;
         }
-        const [profileResult, propertyResult] = await Promise.all([
+        const [profileResult, propertyResult, adminResult] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase
             .from("properties")
             .select("*")
             .eq("owner_id", user.id)
             .order("created_at", { ascending: false }),
+          supabase.rpc("is_platform_admin"),
         ]);
         if (profileResult.error || propertyResult.error)
           throw new Error(
             "We could not load your workspace. Check your Supabase migration and connection.",
           );
-        if (active)
+        if (active) {
+          setIsAdmin(!adminResult.error && adminResult.data === true);
           commit({
             profile: profileResult.data as Profile,
             properties: propertyResult.data as Property[],
           });
+        }
       } catch (e) {
         if (active)
           setError(
@@ -375,6 +380,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         demo: !supabaseConfigured,
+        isAdmin,
         saveProfile,
         saveProperty,
         uploadImage,

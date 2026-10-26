@@ -1,0 +1,143 @@
+.admin-console {
+  max-width: 1300px;
+  margin: auto;
+  padding: 48px 40px;
+}
+.admin-console h1 {
+  font-family: var(--serif);
+  font-size: clamp(30px, 3.1vw, 48px);
+  font-weight: 400;
+  margin: 14px 0;
+}
+.admin-console header p {
+  color: #77847c;
+  max-width: 750px;
+  line-height: 1.7;
+}
+.admin-controls {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 34px 0 22px;
+  flex-wrap: wrap;
+}
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+}
+.admin-tabs button[aria-pressed="true"] {
+  background: #203c31;
+  color: #fff;
+  border-color: #203c31;
+}
+.admin-controls label,
+.admin-property-toolbar label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.admin-controls input,
+.admin-property-toolbar input {
+  min-width: 280px;
+  max-width: 100%;
+  border: 1px solid #dce2da;
+  border-radius: 8px;
+  background: white;
+  padding: 13px 16px;
+  font: inherit;
+  color: #263d32;
+}
+.admin-table-wrap {
+  overflow: auto;
+  border: 1px solid #e1e5dd;
+  border-radius: 12px;
+  background: #fff;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+.admin-table th {
+  font-weight: 500;
+  color: #768177;
+  background: #f3f5ef;
+  padding: 17px 20px;
+}
+.admin-table td {
+  padding: 20px;
+  border-top: 1px solid #e8ebe4;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+.admin-table small {
+  display: block;
+  color: #7a857c;
+  font-size: 12px;
+}
+.admin-table .text-button {
+  white-space: nowrap;
+}
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+  font-size: 13px;
+}
+.admin-pagination > span:first-child {
+  margin-right: auto;
+}
+.admin-property-toolbar {
+  padding: 24px clamp(20px, 5vw, 80px);
+  background: #f5f6f0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #dce2da;
+}
+.admin-property-toolbar h1 {
+  font-size: 25px;
+  margin: 7px 0;
+}
+.admin-property-toolbar p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.admin-property-toolbar > p[role],
+.admin-property-toolbar > div[role] {
+  width: 100%;
+}
+.admin-property-toolbar [role="alert"] {
+  color: #a43c24;
+}
+.admin-property-toolbar .eyebrow {
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .admin-console {
+    padding: 28px 18px;
+  }
+  .admin-controls label,
+  .admin-controls input {
+    width: 100%;
+    min-width: 0;
+  }
+  .admin-table th,
+  .admin-table td {
+    padding: 14px;
+  }
+  .admin-property-toolbar label {
+    width: 100%;
+  }
+  .admin-property-toolbar input {
+    min-width: 0;
+  }
+  .admin-pagination {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}

@@ -25,7 +25,7 @@ async function createTestDatabase() {
   await database.exec(`
     create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create schema storage;
-    create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}');
+    create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}',created_at timestamptz default now(),last_sign_in_at timestamptz);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('app.user_id', true), '')::uuid $$;
     grant usage on schema auth, public, storage to anon, authenticated;
     grant execute on function auth.uid() to anon, authenticated;
@@ -63,6 +63,310 @@ before(async () => {
 });
 after(async () => {
   await db?.close();
+});
+
+test("protected administrators grant publication and video without faking payment or opening agent privileges", async () => {
+  const database = await createTestDatabase();
+  try {
+    await database.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-setup.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const upgrade = await readFile(
+      new URL("../supabase/sql-editor-platform-admin.sql", import.meta.url),
+      "utf8",
+    );
+    await database.exec(upgrade);
+    await database.exec(upgrade);
+    await database.query(
+      "insert into auth.users(id,email,raw_user_meta_data) values($1,'admin@example.com','{}'),($2,'agent@example.com','{\"role\":\"admin\"}')",
+      [agentA, agentB],
+    );
+    await database.exec(
+      "update profiles set name='Agent Name',phone='+1 555 123 4567'",
+    );
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$2,'admin-test-home','A lovely home','A meaningful description of a beautiful home with room to live.','Austin, TX',500000,1500,array['https://example.com/home.jpg'])",
+      [propertyB, agentB],
+    );
+    await database.exec("select activate_property_billing()");
+    await database.exec(`set role authenticated; set app.user_id='${agentB}'`);
+    assert.equal(
+      (
+        await database.query<{ is_platform_admin: boolean }>(
+          "select is_platform_admin()",
+        )
+      ).rows[0].is_platform_admin,
+      false,
+      "Editable metadata cannot grant administrator access",
+    );
+    await assert.rejects(
+      database.query("select grant_platform_admin('agent@example.com')"),
+      /permission denied/i,
+    );
+    await assert.rejects(
+      database.query("insert into platform_admins(user_id) values($1)", [
+        agentB,
+      ]),
+      /permission denied/i,
+    );
+    await assert.rejects(
+      database.query("select * from platform_account_directory"),
+      /permission denied/i,
+    );
+    await assert.rejects(
+      database.query("update properties set status='published' where id=$1", [
+        propertyB,
+      ]),
+      /PAYMENT_REQUIRED/,
+    );
+    await assert.rejects(
+      database.query("select admin_publish_property($1,$2,'free')", [
+        propertyB,
+        agentB,
+      ]),
+      /permission denied/i,
+    );
+    await database.exec("reset role; set role service_role");
+    await assert.rejects(
+      database.query("select grant_platform_admin('admin@example.com')"),
+      /permission denied/i,
+    );
+    await assert.rejects(
+      database.query("select admin_publish_property($1,$2,'free')", [
+        propertyB,
+        agentB,
+      ]),
+      /Administrator access required/i,
+    );
+    await database.exec("reset role");
+    assert.equal(
+      (
+        await database.query<{ grant_platform_admin: string }>(
+          "select grant_platform_admin('ADMIN@example.com')",
+        )
+      ).rows[0].grant_platform_admin,
+      "MBP_ADMIN_GRANTED",
+    );
+    await database.exec(`set role authenticated; set app.user_id='${agentA}'`);
+    assert.equal(
+      (
+        await database.query<{ is_platform_admin: boolean }>(
+          "select is_platform_admin()",
+        )
+      ).rows[0].is_platform_admin,
+      true,
+    );
+    assert.equal(
+      (
+        await database.query("select * from properties where id=$1", [
+          propertyB,
+        ])
+      ).rows.length,
+      0,
+      "Client RLS still scopes direct access to the owner; admin reads use verified server routes",
+    );
+    await database.exec("reset role; set role service_role");
+    const publish = async (
+      attempt: number | null = null,
+      session: string | null = null,
+    ) =>
+      (
+        await database.query<{
+          admin_publish_property: {
+            published: boolean;
+            complimentary: boolean;
+            paid: boolean;
+          };
+        }>(
+          "select admin_publish_property($1,$2,'Owner complimentary showcase',$3,$4)",
+          [propertyB, agentA, session, attempt],
+        )
+      ).rows[0].admin_publish_property;
+    // Validation failure rolls back the grant, order, audit and queued work.
+    await database.exec("reset role");
+    await database.query(
+      "insert into properties(id,owner_id,slug) values($1,$2,'incomplete-admin-home')",
+      [propertyA, agentB],
+    );
+    await database.exec("set role service_role");
+    await assert.rejects(
+      database.query(
+        "select admin_publish_property($1,$2,'Incomplete draft')",
+        [propertyA, agentA],
+      ),
+      /Complete the property/,
+    );
+    assert.equal(
+      (
+        await database.query(
+          "select * from property_orders where property_id=$1",
+          [propertyA],
+        )
+      ).rows.length,
+      0,
+    );
+    assert.equal(
+      (
+        await database.query(
+          "select * from property_admin_grants where property_id=$1",
+          [propertyA],
+        )
+      ).rows.length,
+      0,
+    );
+    assert.equal(
+      (
+        await database.query(
+          "select * from platform_admin_audit where property_id=$1",
+          [propertyA],
+        )
+      ).rows.length,
+      0,
+    );
+    const result = await publish();
+    assert.equal(result.published, true);
+    assert.equal(result.complimentary, true);
+    assert.equal(result.paid, false);
+    const order = (
+      await database.query<{
+        id: string;
+        status: string;
+        paid_at: string | null;
+        attempt: number;
+        payment_intent_id: string | null;
+      }>(
+        "select id,status,paid_at,attempt,payment_intent_id from property_orders where property_id=$1",
+        [propertyB],
+      )
+    ).rows[0];
+    assert.equal(order.status, "pending");
+    assert.equal(order.paid_at, null);
+    assert.equal(order.payment_intent_id, null);
+    assert.equal(
+      (await database.query("select * from property_video_jobs")).rows.length,
+      1,
+    );
+    await publish(order.attempt);
+    assert.equal(
+      (await database.query("select * from property_video_jobs")).rows.length,
+      1,
+      "Repeated admin publication cannot create another video job",
+    );
+    await assert.rejects(publish(order.attempt), /Checkout changed/);
+    const lease = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    assert.ok(
+      (
+        await database.query<{ claim_property_montage: unknown }>(
+          "select claim_property_montage($1,$2)",
+          [order.id, lease],
+        )
+      ).rows[0].claim_property_montage,
+      "Complimentary access starts the actual film worker",
+    );
+    const plan = {
+      engine: "photo-montage-v1",
+      shots: [{ image: "https://example.com/home.jpg" }],
+    };
+    await database.query("select checkpoint_property_montage($1,$2,1,$3)", [
+      order.id,
+      lease,
+      JSON.stringify(plan),
+    ]);
+    await database.exec(
+      "update property_video_jobs set next_poll_at=now()-interval '1 second'",
+    );
+    await database.query("select claim_property_montage($1,$2)", [
+      order.id,
+      lease,
+    ]);
+    await database.query("select checkpoint_property_montage($1,$2,1,null,1)", [
+      order.id,
+      lease,
+    ]);
+    await database.exec(
+      "update property_video_jobs set next_poll_at=now()-interval '1 second'",
+    );
+    await database.query("select claim_property_montage($1,$2)", [
+      order.id,
+      lease,
+    ]);
+    assert.equal(
+      (
+        await database.query<{ checkpoint_property_montage: boolean }>(
+          "select checkpoint_property_montage($1,$2,1,null,null,'https://example.com/film.mp4')",
+          [order.id, lease],
+        )
+      ).rows[0].checkpoint_property_montage,
+      true,
+    );
+    await database.exec("reset role; set role anon");
+    const publicPage = (
+      await database.query<{ get_public_property: { film: { src: string } } }>(
+        "select get_public_property('admin-test-home')",
+      )
+    ).rows[0].get_public_property;
+    assert.equal(publicPage.film.src, "https://example.com/film.mp4");
+    await assert.rejects(
+      database.query("select * from property_admin_grants"),
+      /permission denied/i,
+    );
+    await database.exec("reset role; set role service_role");
+    // Real payment events remain truthful and cannot revoke independent admin access.
+    await database.query(
+      "select apply_property_payment($1,'pi_late_real_payment','paid',100)",
+      [order.id],
+    );
+    await database.query(
+      "select apply_property_payment($1,'pi_late_real_payment','refunded',200)",
+      [order.id],
+    );
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from property_orders where id=$1",
+          [order.id],
+        )
+      ).rows[0].status,
+      "refunded",
+    );
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from properties where id=$1",
+          [propertyB],
+        )
+      ).rows[0].status,
+      "published",
+    );
+    assert.equal(
+      (
+        await database.query<{ status: string }>(
+          "select status from property_video_jobs",
+        )
+      ).rows[0].status,
+      "completed",
+    );
+    const accounts = await database.query<Record<string, unknown>>(
+      "select * from platform_account_directory",
+    );
+    assert.equal(accounts.rows.length, 2);
+    assert.ok(!("encrypted_password" in accounts.rows[0]));
+    const audit = await database.query<{ actor_id: string }>(
+      "select actor_id from platform_admin_audit",
+    );
+    assert.ok(audit.rows.every((row) => row.actor_id === agentA));
+    await database.exec("reset role");
+    await database.query("delete from platform_admins where user_id=$1", [
+      agentA,
+    ]);
+    await database.exec("set role service_role");
+    await assert.rejects(publish(), /Administrator access required/i);
+  } finally {
+    await database.close();
+  }
 });
 
 test("photo films resume shots after crashes and disputes, enforce paid leases, and deliver only complete films", async () => {

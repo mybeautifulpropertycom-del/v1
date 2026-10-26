@@ -166,6 +166,7 @@ export function EditorialWebsite({
   onEdit,
   film,
   videoPanel,
+  previewBackLink,
 }: PropertyWebsiteProps) {
   const [viewing, setViewing] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
@@ -238,13 +239,15 @@ export function EditorialWebsite({
         <div className="preview-bar">
           <Link
             href={
-              sample
+              previewBackLink?.href ||
+              (sample
                 ? "/dashboard/templates"
-                : `/dashboard/properties/${property.id}`
+                : `/dashboard/properties/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
-            {sample ? "Back to collection" : "Back to editor"}
+            {previewBackLink?.label ||
+              (sample ? "Back to collection" : "Back to editor")}
           </Link>
           <span>
             {sample

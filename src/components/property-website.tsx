@@ -9,6 +9,7 @@ export type PropertyWebsiteProps = {
   property: PublicProperty;
   profile: PublicProfile;
   preview?: boolean;
+  previewBackLink?: { href: string; label: string };
   sample?: boolean;
   onEdit?: (field: EditableField, value: string) => void;
   film?: PropertyFilm;

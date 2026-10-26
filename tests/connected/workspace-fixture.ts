@@ -17,6 +17,7 @@ export async function workspace(
   page: Page,
   overrides: Partial<Property> = {},
   initialLeads: TestLead[] = [],
+  isAdmin = false,
 ) {
   const data = demoWorkspace();
   let profile = { ...data.profile, id: owner };
@@ -75,6 +76,8 @@ export async function workspace(
         contentType: "image/jpeg",
       });
     }
+    if (url.pathname === "/rest/v1/rpc/is_platform_admin")
+      return route.fulfill({ json: isAdmin });
     if (url.pathname === "/auth/v1/user") return route.fulfill({ json: user });
     if (url.pathname === "/rest/v1/profiles") {
       if (route.request().method() === "PATCH") {

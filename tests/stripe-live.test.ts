@@ -17,6 +17,8 @@ let order: Record<string, unknown>,
   available = true,
   activationCalls = 0,
   failSave = false,
+  fenceCheckout = false,
+  expiredSessions = 0,
   disputed = false,
   refunded = 0,
   disputeStatus = "needs_response";
@@ -45,7 +47,8 @@ beforeEach(() => {
     last_event_created: 0,
     expires_at: new Date(Date.now() + 3600000).toISOString(),
   };
-  active = allowed = failSave = disputed = false;
+  active = allowed = failSave = disputed = fenceCheckout = false;
+  expiredSessions = 0;
   available = true;
   activationCalls = refunded = 0;
   disputeStatus = "needs_response";
@@ -84,6 +87,14 @@ globalThis.fetch = async (input, init) => {
         livemode: true,
         status: "open",
         url: "https://checkout.stripe.com/c/pay/cs_live_one",
+      });
+    }
+    if (url.pathname === "/v1/checkout/sessions/cs_live_one/expire") {
+      expiredSessions++;
+      return Response.json({
+        id: "cs_live_one",
+        status: "expired",
+        livemode: true,
       });
     }
     if (url.pathname === "/v1/payment_intents/pi_live_one")
@@ -179,8 +190,9 @@ globalThis.fetch = async (input, init) => {
   }
   assert.equal(url.pathname, "/rest/v1/property_orders");
   if (method === "PATCH") {
+    if (fenceCheckout) return Response.json([]);
     order = { ...order, ...JSON.parse(String(init?.body)) };
-    return new Response(null, { status: 204 });
+    return Response.json([order]);
   }
   return Response.json(order);
 };
@@ -263,10 +275,13 @@ test("live launch checks persisted access, and paid or legacy properties are not
   assert.equal(state.requiresPayment, true);
   assert.equal(state.allowed, false);
   allowed = true;
-  assert.deepEqual(await (await POST(req())).json(), {
-    paid: true,
-    allowed: true,
-  });
+  const included = await (await POST(req())).json();
+  assert.equal(included.allowed, true);
+  assert.equal(
+    included.paid,
+    false,
+    "An included publication is not a paid Stripe receipt",
+  );
   assert.equal(stripePosts.length, 0);
 });
 test("mismatched test keys and test payment events cannot unlock live purchases", async () => {
@@ -403,3 +418,20 @@ test("publication status keeps working before optional Higgsfield activation and
   assert.equal(enabled.status, 200);
   assert.equal((await enabled.json()).videoNeedsReview, true);
 });
+
+for (const embedded of [false, true]) {
+  test(`a complimentary publication fences an in-flight ${embedded ? "embedded" : "hosted"} checkout`, async () => {
+    fenceCheckout = true;
+    const request = embedded
+      ? new Request("https://app.example/api/billing/checkout", {
+          method: "POST",
+          headers: { authorization: "Bearer user-token" },
+          body: JSON.stringify({ propertyId: id, embedded: true }),
+        })
+      : req();
+    const result = await POST(request);
+    assert.equal(result.status, 200);
+    assert.deepEqual(await result.json(), { processing: true });
+    assert.equal(expiredSessions, 1);
+  });
+}

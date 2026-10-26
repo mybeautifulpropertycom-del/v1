@@ -82,7 +82,7 @@ export async function createLiveCheckout(
   );
   if (accessError)
     throw new BillingError("The live billing database setup is incomplete.");
-  if (allowed) return billingJson({ paid: true, allowed: true });
+  if (allowed) return liveBillingStatus(config, propertyId, ownerId);
   const { data: order, error } = await admin.rpc("reserve_property_order", {
     listing_id: propertyId,
     agent_id: ownerId,
@@ -91,6 +91,19 @@ export async function createLiveCheckout(
     throw new BillingError(
       "Your purchase could not be prepared. Please try again.",
     );
+  // The complimentary grant may have committed between the initial access
+  // read and the reservation lock. Recheck after reserving; a later grant
+  // rotates the attempt and is caught by the session-save fence below.
+  const { data: nowAllowed, error: recheckError } = await admin.rpc(
+    "property_has_live_access",
+    {
+      listing_id: propertyId,
+      agent_id: ownerId,
+    },
+  );
+  if (recheckError)
+    throw new BillingError("Publication access could not be checked.");
+  if (nowAllowed) return liveBillingStatus(config, propertyId, ownerId);
   if (order.status === "refunded" || order.status === "disputed")
     throw new BillingError(
       "Please contact support about this property's payment before purchasing again.",
@@ -161,16 +174,25 @@ export async function createLiveCheckout(
     new URL(session.url).origin !== "https://checkout.stripe.com"
   )
     throw new BillingError("A secure checkout address could not be created.");
-  const { error: saveError } = await admin
+  const { data: saved, error: saveError } = await admin
     .from("property_orders")
     .update({ checkout_session_id: session.id })
     .eq("id", order.id)
     .eq("attempt", order.attempt)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
   if (saveError)
     throw new BillingError(
       "Your checkout could not be saved. Please try again.",
     );
+  if (!saved) {
+    // An administrator may have granted publication while Stripe was creating
+    // this session. Never return a payable URL after the attempt was fenced.
+    if (session.status === "open")
+      await stripe.checkout.sessions.expire(session.id);
+    return billingJson({ processing: true });
+  }
   return billingJson({ url: session.url });
 }
 

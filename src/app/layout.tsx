@@ -3,6 +3,7 @@ import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/playfair-display";
 import "./globals.css";
 import "@/styles/atelier.css";
+import "@/styles/admin.css";
 import { htmlLanguage } from "@/i18n/config";
 
 export const metadata: Metadata = {

@@ -100,7 +100,7 @@ export async function GET(request: Request) {
           job.attempts < 3 &&
           Date.now() - Date.parse(job.updated_at) >= 60000,
         film:
-          state.paid && job?.status === "completed" && job.video_url
+          state.allowed && job?.status === "completed" && job.video_url
             ? { src: job.video_url, poster: job.poster_url }
             : null,
       });

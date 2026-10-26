@@ -16,6 +16,7 @@ import {
   Menu,
   Plus,
   Sparkles,
+  ShieldCheck,
   UserRound,
   Video,
   X,
@@ -50,7 +51,7 @@ export function Brand({ light = false }: { light?: boolean }) {
 }
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { profile, demo, signOut } = useWorkspace();
+  const { profile, demo, isAdmin, signOut } = useWorkspace();
   const [menu, setMenu] = useState(false);
   const [help, setHelp] = useState(false);
   return (
@@ -75,12 +76,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Building2 size={17} />
           </span>
           <span>
-            My workspace<small>{demo ? "Demo account" : "Agent account"}</small>
+            My workspace
+            <small>
+              {demo
+                ? "Demo account"
+                : isAdmin
+                  ? "Administrator"
+                  : "Agent account"}
+            </small>
           </span>
           <ChevronDown size={14} />
         </div>
         <span className="nav-caption">YOUR WORKSPACE</span>
         <nav aria-label="Main navigation">
+          {isAdmin && (
+            <Link
+              href="/dashboard/admin"
+              className={`nav-link ${path.startsWith("/dashboard/admin") ? "active" : ""}`}
+              onClick={() => setMenu(false)}
+            >
+              <ShieldCheck size={19} />
+              <span>Administration</span>
+            </Link>
+          )}
           {nav.map(({ href, label, icon: Icon, soon }) => (
             <Link
               key={href}
@@ -146,7 +164,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span className="topbar-breadcrumb">
               Your workspace <span>/</span>{" "}
               <strong>
-                {nav.find((n) => n.href === path)?.label || "Property editor"}
+                {path.startsWith("/dashboard/admin")
+                  ? "Administration"
+                  : nav.find((n) => n.href === path)?.label ||
+                    "Property editor"}
               </strong>
             </span>
           </div>

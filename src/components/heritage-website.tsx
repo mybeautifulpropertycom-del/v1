@@ -91,6 +91,7 @@ export function HeritageWebsite({
   onEdit,
   film,
   videoPanel,
+  previewBackLink,
 }: PropertyWebsiteProps) {
   const { stage, cover } = useCoverZoom();
   const [viewing, setViewing] = useState(false);
@@ -140,13 +141,15 @@ export function HeritageWebsite({
         <div className="preview-bar">
           <Link
             href={
-              sample
+              previewBackLink?.href ||
+              (sample
                 ? "/dashboard/templates"
-                : `/dashboard/properties/${property.id}`
+                : `/dashboard/properties/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
-            {sample ? "Back to collection" : "Back to editor"}
+            {previewBackLink?.label ||
+              (sample ? "Back to collection" : "Back to editor")}
           </Link>
           <span>
             {sample

@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { publicPath, type Property } from "@/lib/model";
+import { useWorkspace } from "./workspace-provider";
+import { adminRequest } from "@/lib/admin-client";
 
 type PublicationStatus = {
   enabled?: boolean;
@@ -158,6 +160,9 @@ export function usePropertyPublication(options: {
   onPublished: () => Promise<void>;
   publishDemo?: () => Promise<void>;
 }) {
+  const { isAdmin } = useWorkspace();
+  const administrator = useRef(isAdmin);
+  administrator.current = isAdmin;
   const current = useRef(options);
   current.current = options;
   const [open, setOpen] = useState(false),
@@ -282,7 +287,12 @@ export function usePropertyPublication(options: {
         setPhase("demo");
         return;
       }
-      const result = await request(property.id, "POST");
+      const result = administrator.current
+        ? await adminRequest("publish", {
+            propertyId: property.id,
+            reason: "Administrator publication from the property editor",
+          })
+        : await request(property.id, "POST");
       if (attempt !== generation.current) return;
       if (result.publicationError) throw new Error(result.publicationError);
       if (result.published) {
@@ -292,6 +302,13 @@ export function usePropertyPublication(options: {
           ...s,
           published: true,
           publicPath: publicPath(property),
+          ...(administrator.current
+            ? {
+                allowed: true,
+                paid: result.paid === true,
+                videoStatus: s.videoStatus || "queued",
+              }
+            : {}),
         }));
         setPhase("success");
       } else if (result.processing) {
@@ -415,9 +432,21 @@ export function usePropertyPublication(options: {
         <div className="publish-offer">
           <div>
             <strong>
-              $97 <small>USD</small>
+              {isAdmin || status.allowed ? (
+                "Included"
+              ) : (
+                <>
+                  $97 <small>USD</small>
+                </>
+              )}
             </strong>
-            <span>One-time payment · No subscription</span>
+            <span>
+              {isAdmin
+                ? "Administrator publication · No charge"
+                : status.allowed
+                  ? "No additional publication payment"
+                  : "One-time payment · No subscription"}
+            </span>
           </div>
           <ul>
             <li>
@@ -434,14 +463,17 @@ export function usePropertyPublication(options: {
             </li>
           </ul>
           <p>
-            Your website publishes after payment is confirmed. Your video will
-            be added when it’s ready.
+            {isAdmin || status.allowed
+              ? "Your website will publish at no charge. Your included video will be added when it’s ready."
+              : "Your website publishes after payment is confirmed. Your video will be added when it’s ready."}
           </p>
         </div>
       )}
       {phase === "loading" && (
         <p className="publish-status" role="status">
-          Saving your website and preparing secure checkout…
+          {isAdmin
+            ? "Saving and publishing your property at no charge…"
+            : "Saving your website and preparing publication…"}
         </p>
       )}
       {phase === "payment" && payment && (

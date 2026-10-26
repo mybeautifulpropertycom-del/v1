@@ -135,16 +135,23 @@ export async function embeddedCheckout(
   if (session.status === "complete") return billingJson({ processing: true });
   if (!session.client_secret)
     throw new BillingError("The secure payment form could not be opened.");
-  const { error: saveError } = await admin
+  const { data: saved, error: saveError } = await admin
     .from(table)
     .update({ checkout_session_id: session.id })
     .eq("id", order.id)
     .eq("attempt", order.attempt)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
   if (saveError)
     throw new BillingError(
       "Your payment session could not be saved. Please try again.",
     );
+  if (!saved) {
+    if (session.status === "open")
+      await stripe.checkout.sessions.expire(session.id);
+    return billingJson({ processing: true });
+  }
   return billingJson({
     clientSecret: session.client_secret,
     publishableKey,

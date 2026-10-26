@@ -30,6 +30,7 @@ export function AtelierWebsite({
   onEdit,
   film,
   videoPanel,
+  previewBackLink,
 }: PropertyWebsiteProps) {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [viewing, setViewing] = useState(false);
@@ -125,13 +126,15 @@ export function AtelierWebsite({
         <div className="preview-bar">
           <Link
             href={
-              sample
+              previewBackLink?.href ||
+              (sample
                 ? "/dashboard/templates"
-                : `/dashboard/properties/${property.id}`
+                : `/dashboard/properties/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
-            {sample ? "Back to collection" : "Back to editor"}
+            {previewBackLink?.label ||
+              (sample ? "Back to collection" : "Back to editor")}
           </Link>
           <span>
             {sample
