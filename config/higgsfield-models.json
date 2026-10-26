@@ -1,4 +1,14 @@
 {
+  "hailuo-2.3-standard": {
+    "endpoint": "minimax/hailuo-2.3/standard/image-to-video",
+    "input": {
+      "prompt": { "$ref": "prompt" },
+      "duration": 6,
+      "image_url": { "$ref": "images.0" },
+      "prompt_optimizer": false
+    },
+    "output": { "kind": "video", "path": "video.url" }
+  },
   "dop-turbo-example": {
     "endpoint": "v1/image2video/dop",
     "input": {

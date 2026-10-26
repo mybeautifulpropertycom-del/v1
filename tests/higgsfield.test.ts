@@ -24,6 +24,40 @@ after(() => {
   globalThis.fetch = originalFetch;
 });
 
+test("Hailuo preset resolves the owned first photo into the documented six-second input", () => {
+  const previousModel = process.env.HIGGSFIELD_MODEL;
+  const previousRegistry = process.env.HIGGSFIELD_MODELS_JSON;
+  const previousSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  try {
+    process.env.HIGGSFIELD_MODEL = "hailuo-2.3-standard";
+    delete process.env.HIGGSFIELD_MODELS_JSON;
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://hf-test.supabase.co";
+    const profile = configuredModel();
+    const images = ["front.jpg", "living.jpg"].map(
+      (name) => `https://hf-test.supabase.co/storage/v1/object/public/property-images/${owner}/${property}/${name}`,
+    );
+    const input = propertyVideoInput(profile, { images, title: "Garden House" }, owner, property);
+    assert.equal(profile.endpoint, "minimax/hailuo-2.3/standard/image-to-video");
+    assert.deepEqual(profile.output, { kind: "video", path: "video.url" });
+    assert.deepEqual(Object.keys(input).sort(), ["duration", "image_url", "prompt", "prompt_optimizer"]);
+    assert.equal(input.image_url, images[0]);
+    assert.equal(input.duration, 6);
+    assert.equal(input.prompt_optimizer, false);
+    assert.match(String(input.prompt), /Garden House/);
+    assert.match(String(input.prompt), /Preserve the exact architecture/);
+    assert.ok(!JSON.stringify(input).includes(images[1]), "This model takes one photo, not a multi-room montage");
+  } finally {
+    for (const [key, value] of Object.entries({
+      HIGGSFIELD_MODEL: previousModel,
+      HIGGSFIELD_MODELS_JSON: previousRegistry,
+      NEXT_PUBLIC_SUPABASE_URL: previousSupabase,
+    })) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
 test("model profiles accept different schemas and preserve arrays/numbers without core model branches", () => {
   process.env.HIGGSFIELD_MODEL = "custom-model";
   process.env.HIGGSFIELD_MODELS_JSON = JSON.stringify({

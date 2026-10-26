@@ -32,7 +32,16 @@ Existing `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLI
 
 Profiles live in [config/higgsfield-models.json](../config/higgsfield-models.json), or in the `HIGGSFIELD_MODELS_JSON` environment variable. Set `HIGGSFIELD_MODEL` to a profile name and redeploy. New jobs use the selected profile; existing jobs retain their original endpoint, inputs and output path.
 
-The file contains **one explicitly named example**, `dop-turbo-example`, copied from the SDK's documented DoP input shape. It uses only the first photograph and is **not selected automatically**. Confirm current account access, availability, accepted fields and API pricing before using any model. There is no invented universal price or automatic model fallback.
+The file contains these profiles; neither is selected automatically:
+
+- **`hailuo-2.3-standard`**: `minimax/hailuo-2.3/standard/image-to-video`, using the input fields in the user's Higgsfield dashboard example. Sends the **first saved property photograph**, the property's preservation prompt, and `duration: 6`. `prompt_optimizer` is deliberately `false` so the provider is not asked to rewrite that prompt. This does not guarantee architectural fidelity; review the first real output. The output mapping is `video.url`, matching the installed official SDK's raw V2 video response; it still needs verification against a real Hailuo result. No audio, resolution or additional image parameters are invented.
+- **`dop-turbo-example`**: copied from the SDK's documented DoP input shape, also using only the first photograph.
+
+For Hailuo, set `HIGGSFIELD_MODEL=hailuo-2.3-standard` in Vercel Production as **Config**. Keep the existing `HF_KEY` unchanged. No new SQL migration, SDK installation or `HIGGSFIELD_MODELS_JSON` is needed for this preset. Complete the scheduler instructions below before enabling the worker.
+
+The supplied dashboard screenshot advertises **from $0.0397/second**, including a displayed promotion: at that rate one six-second clip is approximately **$0.24**, before any applicable extras or retries. This is an estimate from that screenshot, not a verified account quote or guaranteed future price. A six-second single-photo clip is **not a complete multi-room property film**; generating and assembling multiple shots remains a separate workflow. Compare architecture, windows, furniture and camera motion on real outputs before choosing a model based on perceived quality. No live Hailuo request has been made during setup.
+
+Confirm current account access, availability, accepted fields and API pricing before using any model. There is no automatic paid model fallback.
 
 A profile has this structure (replace the illustrative endpoint/fields with those documented for the model you select):
 
