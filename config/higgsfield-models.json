@@ -1,0 +1,11 @@
+{
+  "dop-turbo-example": {
+    "endpoint": "v1/image2video/dop",
+    "input": {
+      "model": "dop-turbo",
+      "prompt": { "$ref": "prompt" },
+      "input_images": [{ "type": "image_url", "image_url": { "$ref": "images.0" } }]
+    },
+    "output": { "kind": "video", "path": "video.url" }
+  }
+}

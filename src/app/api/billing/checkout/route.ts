@@ -18,6 +18,15 @@ import {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+type VideoBillingState = {
+  status: string;
+  video_url: string | null;
+  poster_url: string | null;
+  attempts: number;
+  updated_at: string;
+  provider_phase?: string;
+  last_error?: string | null;
+};
 
 export async function GET(request: Request) {
   try {
@@ -45,10 +54,15 @@ export async function GET(request: Request) {
       ] = await Promise.all([
         admin
           .from("property_video_jobs")
-          .select("status,video_url,poster_url")
+          .select(
+            process.env.HIGGSFIELD_ENABLED === "true"
+              ? "status,video_url,poster_url,provider_phase,attempts,updated_at,last_error"
+              : "status,video_url,poster_url,attempts,updated_at",
+          )
           .eq("property_id", id)
           .eq("owner_id", user.id)
-          .maybeSingle(),
+          .maybeSingle()
+          .overrideTypes<VideoBillingState | null, { merge: false }>(),
         admin
           .from("property_orders")
           .select("publication_error")
@@ -67,6 +81,13 @@ export async function GET(request: Request) {
         publicPath: property ? `/p/${property.slug}` : null,
         publicationError: order?.publication_error ?? null,
         videoStatus: job?.status ?? null,
+        videoNeedsReview: job?.provider_phase === "uncertain",
+        videoAttempts: job?.attempts ?? 0,
+        videoError: job?.last_error ?? null,
+        canRetryVideo:
+          job?.status === "failed" &&
+          job.attempts < 3 &&
+          Date.now() - Date.parse(job.updated_at) >= 60000,
         film:
           state.paid && job?.status === "completed" && job.video_url
             ? { src: job.video_url, poster: job.poster_url }

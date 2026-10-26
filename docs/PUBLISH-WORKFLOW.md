@@ -18,9 +18,9 @@ If the property becomes invalid while payment is open, the paid receipt is retai
 
 ## Video delivery boundary
 
-**This release queues video requests; it does not call Higgsfield or render videos yet.** The private `property_video_jobs` table is the delivery queue. Pending videos appear only in the agent's editor. The public website displays a player only when a paid job has `status='completed'` and an HTTPS `video_url`. A failed job can be requeued by its owner without a new charge.
+**Video delivery is implemented by the optional [Higgsfield worker](HIGGSFIELD-SETUP.md). Apply that upgrade and configure its credentials, model and scheduler to activate generation.** The private `property_video_jobs` table is the delivery queue. Pending videos appear only in the agent's editor. The public website displays a player only when a paid job has `status='completed'` and an HTTPS `video_url`. A failed job can be requeued by its owner without a new charge.
 
-The next integration must atomically claim queued jobs, recheck the active paid purchase before spending or delivering, submit the saved photo snapshot, track the provider job, and write the completed HTTPS video/poster URLs. Use the order ID as the provider idempotency key. Failed/revoked jobs must not deliver stale results. Keep the legacy `property_orders.video_status` entitlement consistent with successful fulfilment. No provider worker is included in this change.
+The Higgsfield worker claims paid jobs, submits once, tracks the provider request, saves completed media in Supabase Storage and updates the film URL. A model can be changed through configuration. See its setup guide for retries, uncertain submissions and remaining live-service verification.
 
 Legacy properties receive publication access but no paid video order. They should not be reported as rendering a video.
 

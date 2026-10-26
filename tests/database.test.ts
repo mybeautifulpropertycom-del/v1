@@ -811,3 +811,229 @@ test("paid publication intent publishes once, preserves payment on invalid draft
     await database.close();
   }
 });
+
+test("Higgsfield jobs lease one submission, recover callbacks without a second charge, pin the model, and reject refunded delivery", async () => {
+  const database = await createTestDatabase();
+  try {
+    await database.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-setup.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    await database.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-higgsfield.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    await database.query(
+      "insert into auth.users(id,email) values($1,'agent@example.com')",
+      [agentA],
+    );
+    await database.exec(
+      "update profiles set name='Agent Name',phone='+1 555 123 4567'",
+    );
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$3,'video-home-one','A lovely home','A long, meaningful description of this lovely property.','Austin, TX',500000,1500,array['https://example.com/home.jpg']),($2,$3,'video-home-two','Another home','Another long, meaningful description of this lovely property.','Austin, TX',600000,1800,array['https://example.com/home2.jpg'])",
+      [propertyA, propertyB, agentA],
+    );
+    await database.exec("select activate_property_billing()");
+    const reserve = async (id: string) =>
+      (
+        await database.query<{
+          request_property_publication: { order: { id: string } };
+        }>("select request_property_publication($1,$2)", [id, agentA])
+      ).rows[0].request_property_publication.order.id;
+    const order = await reserve(propertyA),
+      second = await reserve(propertyB);
+    const model = {
+      endpoint: "vendor/model-a",
+      input: {},
+      output: { kind: "video", path: "video.url" },
+    };
+    const leaseA = "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      leaseB = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const claim = async (id: string, lease: string, config = model) =>
+      (
+        await database.query<{
+          claim_property_video: {
+            attempts: number;
+            provider_request_id: string;
+            model_config: typeof model;
+          } | null;
+        }>("select claim_property_video($1,$2,$3,$4)", [
+          id,
+          lease,
+          JSON.stringify(config),
+          JSON.stringify({ image: "saved-image" }),
+        ])
+      ).rows[0].claim_property_video;
+    await database.exec("set role authenticated");
+    await assert.rejects(claim(order, leaseA), /permission denied/i);
+    await database.exec("reset role; set role service_role");
+    assert.equal(await claim(order, leaseA), null, "Unpaid jobs cannot start");
+    await database.query(
+      "select apply_property_payment($1,'pi_video_one','paid',100)",
+      [order],
+    );
+    assert.equal((await claim(order, leaseA))?.attempts, 1);
+    assert.equal(
+      await claim(order, leaseB),
+      null,
+      "Concurrent workers cannot submit the same job",
+    );
+    await database.query(
+      "update property_video_jobs set lease_until=now()-interval '1 second' where order_id=$1",
+      [order],
+    );
+    assert.equal(
+      await claim(order, leaseB),
+      null,
+      "Expired submissions without an ID are not retried",
+    );
+    assert.equal(
+      (
+        await database.query<{ provider_phase: string }>(
+          "select provider_phase from property_video_jobs where order_id=$1",
+          [order],
+        )
+      ).rows[0].provider_phase,
+      "uncertain",
+    );
+    const bind = async (attempt: number, requestId: string) =>
+      (
+        await database.query<{ bind_property_video_request: boolean }>(
+          "select bind_property_video_request($1,$2,$3)",
+          [order, attempt, requestId],
+        )
+      ).rows[0].bind_property_video_request;
+    assert.equal(await bind(2, "request-wrong-attempt"), false);
+    assert.equal(
+      await bind(1, "request-original"),
+      true,
+      "A verified late callback recovers the request",
+    );
+    assert.equal(await bind(1, "request-other"), false);
+    const resumed = await claim(order, leaseB, {
+      ...model,
+      endpoint: "vendor/model-b",
+    });
+    assert.equal(resumed?.provider_request_id, "request-original");
+    assert.equal(
+      resumed?.model_config.endpoint,
+      "vendor/model-a",
+      "Changing models never changes a running job",
+    );
+    const finish = async (id: string, lease: string) =>
+      (
+        await database.query<{ advance_property_video: boolean }>(
+          "select advance_property_video($1,$2,1,'completed','https://storage.example/video.mp4',null)",
+          [id, lease],
+        )
+      ).rows[0].advance_property_video;
+    assert.equal(
+      await finish(order, leaseA),
+      false,
+      "A stale lease cannot deliver",
+    );
+    assert.equal(await finish(order, leaseB), true);
+    assert.equal(
+      await finish(order, leaseB),
+      false,
+      "Duplicate completion does not mutate finished jobs",
+    );
+    assert.equal(
+      (
+        await database.query<{ video_status: string }>(
+          "select video_status from property_orders where id=$1",
+          [order],
+        )
+      ).rows[0].video_status,
+      "delivered",
+    );
+    await database.query(
+      "select apply_property_payment($1,'pi_video_two','paid',100)",
+      [second],
+    );
+    assert.equal((await claim(second, leaseA))?.attempts, 1);
+    await database.query(
+      "select bind_property_video_request($1,1,'request-second')",
+      [second],
+    );
+    await database.query(
+      "select advance_property_video($1,$2,1,'failed',null,'Provider failed')",
+      [second, leaseA],
+    );
+    const retry = async () =>
+      (
+        await database.query<{ retry_property_video: boolean }>(
+          "select retry_property_video($1,$2)",
+          [propertyB, agentA],
+        )
+      ).rows[0].retry_property_video;
+    assert.equal(await retry(), false, "Retries have a cooldown");
+    await database.query(
+      "update property_video_jobs set updated_at=now()-interval '2 minutes' where order_id=$1",
+      [second],
+    );
+    assert.equal(await retry(), true);
+    assert.equal((await claim(second, leaseB))?.attempts, 2);
+    await database.query(
+      "select bind_property_video_request($1,2,'request-second-attempt')",
+      [second],
+    );
+    await database.query(
+      "select apply_property_payment($1,'pi_video_two','disputed',150)",
+      [second],
+    );
+    await database.query(
+      "select apply_property_payment($1,'pi_video_two','paid',160)",
+      [second],
+    );
+    await database.query("select request_property_publication($1,$2)", [
+      propertyB,
+      agentA,
+    ]);
+    const restored = await claim(second, leaseA);
+    assert.equal(
+      restored?.attempts,
+      2,
+      "A won dispute does not create another generation",
+    );
+    assert.equal(restored?.provider_request_id, "request-second-attempt");
+    await database.query(
+      "select apply_property_payment($1,'pi_video_two','refunded',200)",
+      [second],
+    );
+    assert.equal(
+      (
+        await database.query<{ bind_property_video_request: boolean }>(
+          "select bind_property_video_request($1,2,'request-new')",
+          [second],
+        )
+      ).rows[0].bind_property_video_request,
+      false,
+    );
+    assert.equal(
+      await finish(second, leaseB),
+      false,
+      "A refunded job cannot publish media",
+    );
+    assert.equal(await retry(), false);
+    await database.exec("reset role; set role anon");
+    await assert.rejects(
+      database.exec("select * from property_video_jobs"),
+      /permission denied/i,
+    );
+    const publicData = await database.query<{
+      get_public_property: { film: { src: string } };
+    }>("select get_public_property('video-home-one')");
+    assert.equal(
+      publicData.rows[0].get_public_property.film.src,
+      "https://storage.example/video.mp4",
+    );
+  } finally {
+    await database.close();
+  }
+});

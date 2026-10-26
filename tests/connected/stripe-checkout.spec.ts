@@ -210,3 +210,60 @@ test("publication modal fits a mobile viewport and Escape returns to the saved e
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(setup.state.property.status).toBe("draft");
 });
+
+test("completed provider video replaces the pending panel in every property design", async ({
+  page,
+}) => {
+  const { state } = await fixture(page);
+  state.property.status = "published";
+  const src =
+    "https://browser-test.supabase.co/storage/v1/object/public/property-videos/finished.mp4";
+  await page.route("**/api/billing/checkout**", (route) =>
+    route.fulfill({
+      json: {
+        enabled: true,
+        mode: "live",
+        paid: true,
+        published: true,
+        videoStatus: "completed",
+        film: { src },
+      },
+    }),
+  );
+  for (const template of ["editorial", "minimal", "panorama"] as const) {
+    state.property.template = template;
+    await page.goto(`/preview/${id}`);
+    await expect(page.locator("#film video source")).toHaveAttribute(
+      "src",
+      src,
+    );
+    await expect(page.locator(".property-video-prompt")).toHaveCount(0);
+  }
+});
+
+test("an uncertain generation explains the delay without offering another paid submission", async ({
+  page,
+}) => {
+  const { state } = await fixture(page);
+  state.property.status = "published";
+  await page.route("**/api/billing/checkout**", (route) =>
+    route.fulfill({
+      json: {
+        enabled: true,
+        mode: "live",
+        paid: true,
+        published: true,
+        videoStatus: "processing",
+        videoNeedsReview: true,
+      },
+    }),
+  );
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".property-video-prompt")).toContainText(
+    "needs a status check",
+  );
+  await expect(page.locator(".property-video-prompt")).toContainText(
+    "contact support",
+  );
+  await expect(page.locator(".property-video-prompt button")).toHaveCount(0);
+});

@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { wakeVideoWorker } from "@/lib/higgsfield-worker";
 import {
   billingDatabase,
   billingFailure,
@@ -10,6 +12,7 @@ import {
 } from "@/lib/stripe-server";
 
 export const runtime = "nodejs";
+export const maxDuration = 180;
 
 export async function POST(request: Request) {
   try {
@@ -38,9 +41,10 @@ export async function POST(request: Request) {
       );
     if (!data)
       throw new BillingError(
-        "This video is not available for retry. Refresh to see its current status.",
+        "Retry is unavailable. Wait one minute after a failure; after three attempts, please contact support.",
         409,
       );
+    if (process.env.HIGGSFIELD_ENABLED === "true") after(wakeVideoWorker);
     return billingJson({ videoStatus: "queued" });
   } catch (error) {
     return billingFailure(error);

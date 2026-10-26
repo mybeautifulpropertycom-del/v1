@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { wakeVideoWorker } from "@/lib/higgsfield-worker";
 import type Stripe from "stripe";
 import { handleLiveWebhook } from "@/lib/stripe-live";
 import {
@@ -14,7 +16,7 @@ import {
 } from "@/lib/stripe-server";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 180;
 export async function POST(request: Request) {
   try {
     const config = stripeConfiguration();
@@ -36,7 +38,11 @@ export async function POST(request: Request) {
         "The Stripe event does not match the configured payment mode.",
         400,
       );
-    if (config.live) return await handleLiveWebhook(config, event);
+    if (config.live) {
+      const response = await handleLiveWebhook(config, event);
+      if (process.env.HIGGSFIELD_ENABLED === "true") after(wakeVideoWorker);
+      return response;
+    }
     if (
       event.type !== "checkout.session.completed" &&
       event.type !== "checkout.session.async_payment_succeeded"

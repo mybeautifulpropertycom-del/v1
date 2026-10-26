@@ -30,6 +30,7 @@ before(async () => {
   ({ POST: WEBHOOK } = await import("../src/app/api/stripe/webhook/route"));
 });
 beforeEach(() => {
+  delete process.env.HIGGSFIELD_ENABLED;
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_live_fake";
   process.env.STRIPE_CHECKOUT_MODE = "live";
   process.env.STRIPE_SECRET_KEY = "sk_live_fake";
@@ -161,6 +162,20 @@ globalThis.fetch = async (input, init) => {
     order.status = update.new_status;
     allowed = update.new_status === "paid";
     return Response.json(update.new_status);
+  }
+  if (url.pathname === "/rest/v1/property_video_jobs") {
+    const enabled = process.env.HIGGSFIELD_ENABLED === "true";
+    assert.equal(
+      url.searchParams.get("select")?.includes("provider_phase"),
+      enabled,
+      "The existing checkout must work before the optional video migration is applied",
+    );
+    return Response.json({
+      status: "processing",
+      attempts: 1,
+      updated_at: new Date().toISOString(),
+      ...(enabled ? { provider_phase: "uncertain" } : {}),
+    });
   }
   assert.equal(url.pathname, "/rest/v1/property_orders");
   if (method === "PATCH") {
@@ -368,4 +383,23 @@ test("paid publication skips checkout and a missing public key cannot create an 
     paid: true,
   });
   assert.equal(stripePosts.length, 0);
+});
+
+test("publication status keeps working before optional Higgsfield activation and exposes recovery state after activation", async () => {
+  const status = () =>
+    GET(
+      new Request(
+        `https://app.example/api/billing/checkout?propertyId=${id}&workflow=publish`,
+        {
+          headers: { authorization: "Bearer user-token" },
+        },
+      ),
+    );
+  const before = await status();
+  assert.equal(before.status, 200);
+  assert.equal((await before.json()).videoNeedsReview, false);
+  process.env.HIGGSFIELD_ENABLED = "true";
+  const enabled = await status();
+  assert.equal(enabled.status, 200);
+  assert.equal((await enabled.json()).videoNeedsReview, true);
 });

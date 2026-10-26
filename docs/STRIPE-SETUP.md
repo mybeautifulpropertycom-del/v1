@@ -2,7 +2,7 @@
 
 The package is **one property website + one presentation video**, a **one-time $97 USD payment**, not a subscription. Both Stripe modes are implemented; changing mode needs configuration and a redeploy, not a Stripe code change.
 
-The current flow is **preview and edit → Publish Property → embedded Stripe payment → automatic publication**. Live payments have been enabled by the project owner; Higgsfield integration is the next task. The current code queues video delivery but does not generate a video yet. See [publish workflow setup](PUBLISH-WORKFLOW.md) for the required upgrade.
+The current flow is **preview and edit → Publish Property → embedded Stripe payment → automatic publication**. Live payments have been enabled by the project owner; Higgsfield delivery is available through the optional model-configurable worker; see [Higgsfield setup](HIGGSFIELD-SETUP.md) to activate it. See [publish workflow setup](PUBLISH-WORKFLOW.md) for the required upgrade.
 
 ## 1. Supabase: one additive installer
 
@@ -56,7 +56,7 @@ The first authenticated request to the billing status/checkout API activates the
 - Other properties require their own confirmed live payment to publish.
 - The gate applies to direct Supabase writes as well as the UI. Sandbox receipts cannot unlock it.
 
-The agent flow is **Save → Open website editor → Edit and review → Publish Property → Pay $97 in the modal → Automatic publication**. Only verified payment grants access. The database atomically publishes the property and queues its video job; see [delivery state and integration boundary](PUBLISH-WORKFLOW.md). The current change does not itself generate a video.
+The agent flow is **Save → Open website editor → Edit and review → Publish Property → Pay $97 in the modal → Automatic publication**. Only verified payment grants access. The database atomically publishes the property and queues its video job; see [delivery state and integration boundary](PUBLISH-WORKFLOW.md). Generation starts only when the separately configured Higgsfield worker is enabled.
 
 A paid property can be edited, unpublished and republished without another publication charge. Paid and already-published legacy properties do not get another checkout offer. The price is for one saved property/page; it does not cover a second property.
 

@@ -107,3 +107,18 @@ commit;
 select 'MBP_PUBLISH_WORKFLOW_OK' as status;
 `,
 );
+
+const higgsfield = await readFile(
+  new URL("202610260001_higgsfield_jobs.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-higgsfield.sql", import.meta.url),
+  `-- Existing installations: run the ENTIRE file after MBP_PUBLISH_WORKFLOW_OK.
+-- Adds private job leases and durable video storage. Does not submit generations.
+begin;
+${higgsfield.trim()}
+commit;
+select 'MBP_HIGGSFIELD_READY' as status;
+`,
+);

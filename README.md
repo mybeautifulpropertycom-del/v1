@@ -107,6 +107,6 @@ Agent profile photos and property/lead deletion are available in the workspace. 
 
 ### Stripe checkout (test and live)
 
-Higgsfield SDK and server credential preparation: [Higgsfield API setup](docs/HIGGSFIELD-SETUP.md). Video generation is not activated by installing the SDK.
+Model-configurable Higgsfield generation, paid-job processing, callbacks and durable video storage are implemented. See [Higgsfield API setup](docs/HIGGSFIELD-SETUP.md) for the migration, model profiles, credentials, scheduler and activation flag. Generation remains disabled until configured.
 
-The $97 USD website + presentation-video package supports test and live Checkout, database-enforced publication access, and refund/dispute handling. See [Stripe setup](docs/STRIPE-SETUP.md) for the additive installer, keys, webhook and launch switch. Agents can preview and edit before opening the embedded **Publish Property** payment modal. Verified payments automatically publish and queue a video; Higgsfield rendering remains the next integration. Existing installations must apply the [publish workflow upgrade](docs/PUBLISH-WORKFLOW.md).
+The $97 USD website + presentation-video package supports test and live Checkout, database-enforced publication access, and refund/dispute handling. See [Stripe setup](docs/STRIPE-SETUP.md) for the additive installer, keys, webhook and launch switch. Agents can preview and edit before opening the embedded **Publish Property** payment modal. Verified payments automatically publish and queue a video; Higgsfield rendering uses the configured background worker once activated. Existing installations must apply the [publish workflow upgrade](docs/PUBLISH-WORKFLOW.md).

@@ -22,6 +22,10 @@ type PublicationStatus = {
   publicPath?: string;
   publicationError?: string | null;
   videoStatus?: string | null;
+  videoNeedsReview?: boolean;
+  videoAttempts?: number;
+  videoError?: string | null;
+  canRetryVideo?: boolean;
   film?: { src: string; poster?: string } | null;
 };
 async function request(id: string, method: "GET" | "POST", retryVideo = false) {
@@ -245,6 +249,19 @@ export function usePropertyPublication(options: {
       clearTimeout(timer);
     };
   }, [open, phase, refresh]);
+  useEffect(() => {
+    if (
+      !id ||
+      options.demo ||
+      !["queued", "processing", "failed"].includes(status.videoStatus || "")
+    )
+      return;
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible")
+        void refresh().catch(() => {});
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [id, options.demo, status.videoStatus, refresh]);
   const publish = useCallback(async () => {
     if (pending.current || current.current.disabled) return;
     pending.current = true;
@@ -308,26 +325,32 @@ export function usePropertyPublication(options: {
     <div className="property-video-prompt">
       <Film size={30} strokeWidth={1.3} />
       <h3>
-        {status.videoStatus === "processing"
-          ? "Your property, coming to life."
-          : status.videoStatus === "queued"
-            ? "Your video is queued."
-            : status.videoStatus === "failed"
-              ? "Your video needs another moment."
-              : "Bring your property to life."}
+        {status.videoNeedsReview
+          ? "Your video needs a status check."
+          : status.videoStatus === "processing"
+            ? "Your property, coming to life."
+            : status.videoStatus === "queued"
+              ? "Your video is queued."
+              : status.videoStatus === "failed"
+                ? "Your video needs another moment."
+                : "Bring your property to life."}
       </h3>
       <p>
-        {status.videoStatus === "queued"
-          ? "Your website is live. Your included video is awaiting generation and will appear here when it is ready."
-          : status.videoStatus === "processing"
-            ? "We’re creating your presentation video. It will appear here and on your property website when it’s ready."
-            : status.videoStatus === "failed"
-              ? "Your website remains live. Your video can be retried without another payment."
-              : options.property?.status === "published"
-                ? "Your completed presentation video will appear here when it is available."
-                : "Publish your property to generate a presentation video from your photos. Your video will appear here and on your property website when it’s ready."}
+        {status.videoNeedsReview
+          ? "Your website remains live. We are checking the generation confirmation. Please contact support; another video will not be charged automatically."
+          : status.videoStatus === "queued"
+            ? "Your website is live. Your included video is awaiting generation and will appear here when it is ready."
+            : status.videoStatus === "processing"
+              ? "We’re creating your presentation video. It will appear here and on your property website when it’s ready."
+              : status.videoStatus === "failed"
+                ? (status.videoAttempts ?? 0) >= 3
+                  ? "Your website remains live. Please contact support to finish your included video; no new property payment is needed."
+                  : "Your website remains live. You can retry your video after a short pause, without another payment."
+                : options.property?.status === "published"
+                  ? "Your completed presentation video will appear here when it is available."
+                  : "Publish your property to generate a presentation video from your photos. Your video will appear here and on your property website when it’s ready."}
       </p>
-      {status.videoStatus === "failed" && (
+      {status.videoStatus === "failed" && status.canRetryVideo !== false && (
         <button
           type="button"
           className="button secondary"

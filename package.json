@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "test:e2e:connected": "playwright test --config playwright.connected.config.ts",
     "supabase:prepare-sql": "node scripts/prepare-supabase-sql.mjs",
-    "supabase:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/check-supabase.mjs"
+    "supabase:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/check-supabase.mjs",
+    "higgsfield:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --import tsx scripts/check-higgsfield.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.2.8",
