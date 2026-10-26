@@ -23,12 +23,11 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
       exact: true,
     }),
   ).toBeFocused();
-  await page.getByRole("button", { name: "Scroll photographs right" }).click();
-  await expect
-    .poll(() =>
-      page.locator(".atelier-photo-strip").evaluate((node) => node.scrollLeft),
-    )
-    .toBeGreaterThan(0);
+  const gallery = page.locator(".atelier-photo-grid");
+  await expect(gallery.locator("figure")).toHaveCount(4);
+  await gallery.getByRole("button", { name: "Enlarge property photo 4", exact: true }).click();
+  await expect(page.locator(".lightbox>span")).toHaveText("4 / 4");
+  await page.keyboard.press("Escape");
 });
 
 test("Atelier navigation, feature details, tour popup and honest film preview work", async ({
@@ -113,6 +112,7 @@ test("Atelier fits phones and keeps the tour action available without blocking i
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
-  await page.locator(".atelier-footer").scrollIntoViewIfNeeded();
+  await page.locator(".atelier-invitation").scrollIntoViewIfNeeded();
+  await expect(page.locator(".atelier-footer")).toHaveCount(0);
   await expect(page.locator(".atelier-mobile-tour")).toBeInViewport();
 });

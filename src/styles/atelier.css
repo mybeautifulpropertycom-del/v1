@@ -322,26 +322,35 @@
 }
 .atelier-facts {
   display: grid;
-  grid-template-columns: 1.45fr 0.7fr 0.7fr 1.15fr 1fr;
-  border-block: 1px solid var(--at-line);
-  padding: 28px 0;
+  grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
 }
 .atelier-facts > div {
-  padding: 0 24px;
-  border-left: 1px solid var(--at-line);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 24px 20px;
   min-width: 0;
+  border: 1px solid var(--at-line);
+  background: #efefe7;
 }
 .atelier-facts > div:first-child {
-  padding-left: 0;
-  border: 0;
+  background: #292e29;
+  border-color: #292e29;
+  color: #f2f1e8;
 }
 .atelier-facts dt {
   font-size: 10px;
+  letter-spacing: 0.04em;
   color: var(--at-muted);
-  margin-bottom: 12px;
+}
+.atelier-facts > div:first-child dt {
+  color: #c5caba;
 }
 .atelier-facts dd {
-  font: clamp(23px, 2.7vw, 40px) var(--serif);
+  font: clamp(24px, 2.5vw, 36px)/1.15 var(--serif);
   margin: 0;
   letter-spacing: -0.035em;
   overflow-wrap: anywhere;
@@ -351,8 +360,7 @@
   letter-spacing: 0;
 }
 .atelier-facts .atelier-type {
-  font-size: 23px;
-  padding-top: 8px;
+  font-size: clamp(22px, 2vw, 28px);
 }
 .atelier-story {
   display: grid;
@@ -412,16 +420,22 @@
 }
 .atelier-details {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 42px 6%;
+  padding-block: 80px;
   background: #292e29;
   color: #f2f1e8;
 }
+.atelier-details-heading {
+  grid-column: 1 / -1;
+  max-width: 900px;
+}
 .atelier-details-copy {
-  padding: 75px clamp(24px, 6vw, 95px);
+  min-width: 0;
 }
 .atelier-details h2 {
   font-size: clamp(35px, 4vw, 60px);
-  margin-top: 30px;
+  margin-top: 20px;
 }
 .atelier-details h2 em {
   color: #b7baa3;
@@ -432,13 +446,14 @@
 }
 .atelier-spec-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 30px;
-  margin-top: 32px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 28px;
+  margin: 0 !important;
 }
 .atelier-spec-grid > div {
   border-top: 1px solid #ffffff30;
-  padding: 18px 0;
+  padding: 22px 0;
+  min-height: 108px;
   min-width: 0;
 }
 .atelier-spec-grid dt {
@@ -458,20 +473,9 @@
   font: 12px var(--sans);
   color: #c1c4b8;
 }
-.atelier-spec-grid .atelier-spec-wide {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 20px;
-}
-.atelier-spec-wide dt {
-  margin: 0;
-  flex-shrink: 0;
-}
-.atelier-spec-wide dd {
+.atelier-spec-location dd {
   font-size: 22px;
-  text-align: right;
+  line-height: 1.4;
 }
 .atelier-extras {
   padding: 24px 0;
@@ -482,15 +486,19 @@
   margin-bottom: 18px;
 }
 .atelier-extras ul {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 .atelier-extras li {
-  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 12px;
   border: 1px solid #ffffff30;
   color: #e0e4d6;
   font-size: 11px;
@@ -507,7 +515,8 @@
 }
 .atelier-detail-image {
   position: relative;
-  min-height: 600px;
+  min-width: 0;
+  min-height: 520px;
 }
 .atelier-detail-image > button {
   position: absolute;
@@ -552,72 +561,54 @@
 .atelier-section-heading h2 {
   margin-top: 20px;
 }
-.atelier-gallery-controls {
-  display: flex;
-  gap: 8px;
-  margin-top: 18px;
-}
-.atelier-gallery-controls button {
-  border: 1px solid var(--at-line);
-  border-radius: 50%;
+.atelier-photo-grid {
   display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  background: transparent;
-  color: var(--at-ink);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 32px 22px;
 }
-.atelier-gallery-controls button:hover {
-  background: #e9e9df;
-}
-.atelier-photo-strip {
-  display: flex;
-  gap: 22px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 24px;
-  scrollbar-width: thin;
-  scrollbar-color: #aeb1a2 #e7e8e0;
-}
-.atelier-photo-strip figure {
-  flex: 0 0 44%;
+.atelier-photo-grid figure {
+  grid-column: span 7;
   min-width: 0;
-  scroll-snap-align: start;
 }
-.atelier-photo-strip figure:nth-child(even) {
-  flex-basis: 33%;
+.atelier-photo-grid figure:nth-child(4n + 2),
+.atelier-photo-grid figure:nth-child(4n + 3) {
+  grid-column: span 5;
 }
-.atelier-photo-strip button {
+.atelier-photo-grid figure:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.atelier-photo-grid button {
+  display: block;
   width: 100%;
-  height: 350px;
+  height: clamp(260px, 30vw, 460px);
   position: relative;
   border: 0;
   padding: 0;
   overflow: hidden;
   background: #e7e8de;
 }
-.atelier-photo-strip img {
+.atelier-photo-grid img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s;
 }
-.atelier-photo-strip button:hover img {
+.atelier-photo-grid button:hover img {
   transform: scale(1.035);
 }
-.atelier-photo-strip figcaption {
+.atelier-photo-grid figcaption {
   display: flex;
-  align-items: start;
+  align-items: baseline;
   gap: 15px;
   color: var(--at-muted);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
   margin-top: 14px;
 }
-.atelier-photo-strip figcaption > span {
-  font-size: 9px;
-  border: 1px solid var(--at-line);
-  padding: 2px 7px;
+.atelier-photo-grid figcaption > span {
+  font-size: 10px;
+  color: #8b8f7c;
+  flex-shrink: 0;
 }
 .atelier-film {
   padding-block: 70px 90px;
@@ -778,34 +769,12 @@
   font-size: 10px;
   color: #786f5d;
 }
-.atelier-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 30px;
-  padding-block: 35px;
-}
-.atelier-footer > a {
-  font-size: 11px;
-}
-.atelier-footer > a:first-child {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.atelier-footer p {
-  font-size: 9px;
-}
-.atelier-footer strong {
-  font-size: 12px;
-}
 .atelier-mobile-tour {
   display: none;
 }
 @media (min-width: 1700px) {
   .atelier-website main,
-  .atelier-nav,
-  .atelier-footer {
+  .atelier-nav {
     max-width: 1920px;
     margin-inline: auto;
   }
@@ -831,8 +800,8 @@
     gap: 6%;
     padding-block: 70px;
   }
-  .atelier-details-copy {
-    padding: 45px 25px;
+  .atelier-details {
+    gap: 32px 4%;
   }
   .atelier-detail-image {
     min-height: 500px;
@@ -843,9 +812,6 @@
   }
   .atelier-contact .landing-inquiry {
     padding: 24px;
-  }
-  .atelier-photo-strip button {
-    height: 290px;
   }
   .atelier-section-heading {
     gap: 6%;
@@ -938,30 +904,18 @@
     justify-self: stretch;
   }
   .atelier-facts {
-    grid-template-columns: 1fr 1fr;
-    padding: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
   .atelier-facts > div {
-    padding: 20px 0 !important;
-    border-left: 0;
-    border-bottom: 1px solid var(--at-line);
+    padding: 20px;
+    gap: 16px;
   }
   .atelier-facts > div:first-child {
-    grid-column: 1/-1;
-    border-bottom: 1px solid var(--at-line);
-  }
-  .atelier-facts > div:nth-child(2n + 3) {
-    padding-left: 20px !important;
-    border-left: 1px solid var(--at-line);
-  }
-  .atelier-facts > div:nth-last-child(-n + 2) {
-    border-bottom: 0;
+    grid-column: 1 / -1;
   }
   .atelier-facts dd {
     font-size: 30px;
-  }
-  .atelier-facts .atelier-type {
-    padding-top: 0;
   }
   .atelier-story {
     grid-template-columns: 1fr;
@@ -979,9 +933,7 @@
   }
   .atelier-details {
     grid-template-columns: 1fr;
-  }
-  .atelier-details-copy {
-    padding: 45px 24px;
+    padding-block: 50px;
   }
   .atelier-detail-image {
     min-height: 380px;
@@ -994,15 +946,16 @@
   .atelier-gallery {
     padding-block: 55px;
   }
-  .atelier-photo-strip {
-    gap: 15px;
+  .atelier-photo-grid {
+    grid-template-columns: 1fr;
+    gap: 26px;
   }
-  .atelier-photo-strip figure,
-  .atelier-photo-strip figure:nth-child(even) {
-    flex-basis: 85%;
+  .atelier-photo-grid figure:nth-child(n) {
+    grid-column: 1;
   }
-  .atelier-photo-strip button {
-    height: 310px;
+  .atelier-photo-grid button {
+    height: auto;
+    aspect-ratio: 4 / 3;
   }
   .atelier-film {
     padding-block: 45px;
@@ -1030,12 +983,6 @@
   }
   .atelier-invitation h2 {
     font-size: 43px;
-  }
-  .atelier-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-    padding-block: 30px;
   }
   .atelier-mobile-tour {
     display: flex;

@@ -1,7 +1,7 @@
 "use client";
 import { AgentAvatar } from "./agent-avatar";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -45,7 +45,6 @@ export function AtelierWebsite({
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-  const gallery = useRef<HTMLDivElement>(null);
   const copy = propertyStory(property);
   const isPreview = preview || sample;
   const side = property.images.slice(1, 7);
@@ -334,8 +333,8 @@ export function AtelierWebsite({
             </a>
           </div>
         </section>
-        <section className="atelier-details" id="details">
-          <div className="atelier-details-copy">
+        <section className="atelier-details atelier-pad" id="details">
+          <div className="atelier-details-heading">
             <span className="atelier-kicker">
               GOOD DESIGN. EVERYDAY POSSIBILITY.
             </span>
@@ -343,6 +342,8 @@ export function AtelierWebsite({
               {text("detailsTitle")}
               <em>{text("detailsAccent")}</em>
             </h2>
+          </div>
+          <div className="atelier-details-copy">
             <dl className="atelier-spec-grid">
               <div>
                 <dt>Living area</dt>
@@ -362,11 +363,11 @@ export function AtelierWebsite({
                 <dt>Bathrooms</dt>
                 <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
               </div>
-              <div className="atelier-spec-wide">
+              <div className="atelier-spec-location">
                 <dt>Location</dt>
                 <dd>{property.location}</dd>
               </div>
-              <div className="atelier-spec-wide">
+              <div>
                 <dt>
                   {property.transaction === "rent"
                     ? "Monthly rent"
@@ -415,39 +416,9 @@ export function AtelierWebsite({
             </div>
             <div>
               <p>{text("galleryBody")}</p>
-              <div className="atelier-gallery-controls">
-                <button
-                  aria-label="Scroll photographs left"
-                  onClick={() =>
-                    gallery.current?.scrollBy({
-                      left: -gallery.current.clientWidth * 0.8,
-                      behavior: matchMedia("(prefers-reduced-motion: reduce)")
-                        .matches
-                        ? "instant"
-                        : "smooth",
-                    })
-                  }
-                >
-                  <ArrowLeft size={19} />
-                </button>
-                <button
-                  aria-label="Scroll photographs right"
-                  onClick={() =>
-                    gallery.current?.scrollBy({
-                      left: gallery.current.clientWidth * 0.8,
-                      behavior: matchMedia("(prefers-reduced-motion: reduce)")
-                        .matches
-                        ? "instant"
-                        : "smooth",
-                    })
-                  }
-                >
-                  <ArrowRight size={19} />
-                </button>
-              </div>
             </div>
           </div>
-          <div className="atelier-photo-strip" ref={gallery}>
+          <div className="atelier-photo-grid">
             {property.images.map((src, index) => (
               <figure key={`${src}-${index}`}>
                 {photo(src, index)}
@@ -667,22 +638,6 @@ export function AtelierWebsite({
           </span>
         </section>
       </main>
-      <footer className="atelier-footer atelier-pad">
-        <a href="#home">
-          {profile.agency || profile.name}
-          <ArrowUpRight size={16} />
-        </a>
-        <p>
-          Property information supplied by the listing agent.
-          <br />
-          Details are subject to verification.
-        </p>
-        <a href="/">
-          Made beautiful with
-          <br />
-          <strong>my beautiful property.</strong>
-        </a>
-      </footer>
       <div className="atelier-mobile-tour">
         <span>
           {formatPrice(property)}
