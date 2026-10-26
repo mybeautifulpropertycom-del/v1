@@ -774,7 +774,7 @@
 .heritage-setting-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas: "copy photograph";
+  grid-template-areas: "photograph copy";
   gap: clamp(32px, 6vw, 88px);
   align-items: center;
 }
