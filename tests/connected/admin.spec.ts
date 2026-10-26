@@ -182,3 +182,48 @@ test("admin directory remains usable on a narrow screen", async ({ page }) => {
     quality: 65,
   });
 });
+
+test("admin rebuild keeps the current public film while the replacement is queued", async ({
+  page,
+}) => {
+  const { state } = await admin(page);
+  state.property.status = "published";
+  let rebuilt = false;
+  const src =
+    "https://browser-test.supabase.co/storage/v1/object/public/property-videos/current.mp4";
+  await page.route("**/api/admin/properties?**", (route) =>
+    route.fulfill({
+      json: {
+        property: state.property,
+        profile: state.profile,
+        grant: null,
+        video: {
+          status: rebuilt ? "queued" : "completed",
+          canRebuild: !rebuilt,
+          rebuildUsesCredits: true,
+          film: { src },
+          completed: 0,
+          total: 0,
+        },
+      },
+    }),
+  );
+  await page.route("**/api/admin/rebuild-film", (route) => {
+    expect(route.request().postDataJSON()).toEqual({ propertyId: id });
+    rebuilt = true;
+    return route.fulfill({
+      json: { videoStatus: "queued", previousVideoRetained: true },
+    });
+  });
+  await page.goto(`/admin/properties/${id}`);
+  await expect(page.locator("#film video source")).toHaveAttribute("src", src);
+  await page
+    .getByRole("button", { name: "Rebuild video · Uses API credits" })
+    .click();
+  await expect(page.getByText("Video: queued.", { exact: true })).toBeVisible();
+  await expect(page.locator("#film video source")).toHaveAttribute("src", src);
+  await expect(
+    page.getByRole("button", { name: "Rebuild video · Uses API credits" }),
+  ).toHaveCount(0);
+  await expect(page.getByText(/current video stays available/)).toBeVisible();
+});

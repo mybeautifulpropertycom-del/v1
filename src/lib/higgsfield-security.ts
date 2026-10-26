@@ -34,3 +34,27 @@ export function callbackUrl(order: string, attempt: number) {
   url.searchParams.set("token", callbackToken(order, attempt));
   return url.toString();
 }
+
+export function filmCallbackToken(
+  order: string,
+  generation: string,
+  index: number,
+) {
+  return createHmac("sha256", workerSecret())
+    .update(`higgsfield-film:${order}:${generation}:${index}`)
+    .digest("hex");
+}
+export function filmCallbackUrl(
+  order: string,
+  generation: string,
+  index: number,
+) {
+  const url = new URL(callbackUrl(order, 1));
+  url.pathname = "/api/higgsfield/film-webhook";
+  url.search = "";
+  url.searchParams.set("order", order);
+  url.searchParams.set("generation", generation);
+  url.searchParams.set("index", String(index));
+  url.searchParams.set("token", filmCallbackToken(order, generation, index));
+  return url.toString();
+}

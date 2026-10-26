@@ -8,6 +8,7 @@ try {
   console.log(
     `Higgsfield configuration is valid. Model endpoint: ${profile.endpoint}. Output: ${profile.output.kind} at ${profile.output.path}.`,
   );
+  console.log(`Workflow: ${process.env.PROPERTY_VIDEO_MODE || "single-clip"}.`);
   console.log(
     `Worker activation: ${process.env.HIGGSFIELD_ENABLED === "true" ? "enabled" : "disabled"}. No request was sent and no credits were used.`,
   );

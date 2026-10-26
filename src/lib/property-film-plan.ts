@@ -1,4 +1,4 @@
-// Shared film specification. No generative image/video operations are used.
+// Shared ordering and timing for original-photo and Higgsfield presentation films.
 export const SHOT_SECONDS = 3.4;
 export const FILM_FPS = 30;
 export const SHOT_FRAMES = 102;
@@ -27,12 +27,12 @@ export type FilmShot = PhotoAnalysis & {
   motion: "push" | "pull" | "glide-left" | "glide-right" | "aerial-glide";
 };
 export type FilmPlan = {
-  version: 1;
-  engine: "photo-montage-v1";
+  version: 1 | 2;
+  engine: "photo-montage-v1" | "higgsfield-montage-v1";
   secondsPerShot: 3.4;
   duration: number;
   shots: FilmShot[];
-  music: "original-instrumental-v1";
+  music: "original-instrumental-v1" | "modern-instrumental-v2";
 };
 
 export function parsePhotoAnalysis(
@@ -124,11 +124,11 @@ export function makeFilmPlan(
     ...(closing ? [closing] : []),
   ];
   return {
-    version: 1,
+    version: 2,
     engine: "photo-montage-v1",
     secondsPerShot: SHOT_SECONDS,
     duration: Number((ordered.length * SHOT_SECONDS).toFixed(1)),
-    music: "original-instrumental-v1",
+    music: "modern-instrumental-v2",
     shots: ordered.map((item, i) => ({
       ...item,
       image: images[item.index],
@@ -144,10 +144,13 @@ export function validateFilmPlan(value: unknown): FilmPlan {
   const plan = value as FilmPlan;
   if (
     !plan ||
-    plan.version !== 1 ||
-    plan.engine !== "photo-montage-v1" ||
+    ![1, 2].includes(plan.version) ||
+    !["photo-montage-v1", "higgsfield-montage-v1"].includes(plan.engine) ||
     plan.secondsPerShot !== SHOT_SECONDS ||
-    plan.music !== "original-instrumental-v1" ||
+    plan.music !==
+      (plan.version === 1
+        ? "original-instrumental-v1"
+        : "modern-instrumental-v2") ||
     !Array.isArray(plan.shots) ||
     !plan.shots.length ||
     plan.shots.length > MAX_FILM_SHOTS ||

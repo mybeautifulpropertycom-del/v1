@@ -35,8 +35,20 @@ async function main() {
     await Promise.all(bytes.map(photoFingerprint)),
   );
   const segments: Buffer[] = [];
-  for (const shot of plan.shots)
-    segments.push(await renderFilmShot(bytes[shot.index], shot));
+  for (let i = 0; i < plan.shots.length; i++) {
+    const shot = plan.shots[i],
+      previous = plan.shots[i - 1],
+      next = plan.shots[i + 1];
+    segments.push(
+      await renderFilmShot(bytes[shot.index], shot, {
+        version: plan.version,
+        previous: previous
+          ? { bytes: bytes[previous.index], shot: previous }
+          : undefined,
+        next: next ? { bytes: bytes[next.index], shot: next } : undefined,
+      }),
+    );
+  }
   const output =
     process.argv[2] || join(tmpdir(), "mbp-property-film-preview.mp4");
   await writeFile(output, await assembleFilm(segments));

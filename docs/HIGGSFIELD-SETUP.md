@@ -1,6 +1,6 @@
 # Higgsfield: configurable models and asynchronous property video delivery
 
-For the user's selected **original-photo animated film**, follow [PROPERTY-FILMS.md](PROPERTY-FILMS.md). That workflow uses the shared queue/scheduler but does not generate Hailuo clips. The rest of this document describes the alternative Higgsfield generation workflow.
+For the current **multi-photo MiniMax film**, follow [HIGGSFIELD-FILMS.md](HIGGSFIELD-FILMS.md). The optional [original-photo animation](PROPERTY-FILMS.md) uses no Higgsfield generations. The rest of this document describes the earlier single-clip API workflow.
 
 The integration supports the current single API key and legacy key/secret pairs. It uses the official `@higgsfield/client/v2` SDK for legacy submissions, the equivalent REST contract for opaque single keys, and the documented authenticated `/requests/{id}/status` endpoint for resuming requests. Model endpoints and input/output shapes are configuration, not branches in the worker. Credentials are loaded only on the server, at runtime. Building/deploying without credentials is supported.
 
@@ -41,7 +41,7 @@ The file contains these profiles; neither is selected automatically:
 
 For Hailuo, set `HIGGSFIELD_MODEL=hailuo-2.3-standard` in Vercel Production as **Config**. Keep the existing `HF_KEY` unchanged. No new SQL migration, SDK installation or `HIGGSFIELD_MODELS_JSON` is needed for this preset. Complete the scheduler instructions below before enabling the worker.
 
-The supplied dashboard screenshot advertises **from $0.0397/second**, including a displayed promotion: at that rate one six-second clip is approximately **$0.24**, before any applicable extras or retries. This is an estimate from that screenshot, not a verified account quote or guaranteed future price. A six-second single-photo clip is **not a complete multi-room property film**; generating and assembling multiple shots remains a separate workflow. Compare architecture, windows, furniture and camera motion on real outputs before choosing a model based on perceived quality. No live Hailuo request has been made during setup.
+The supplied dashboard screenshot advertises **from $0.0397/second**, including a displayed promotion: at that rate one six-second clip is approximately **$0.24**, before any applicable extras or retries. This is an estimate from that screenshot, not a verified account quote or guaranteed future price. A six-second single-photo clip is **not a complete multi-room property film**; generating and assembling multiple shots is implemented in the [multi-photo film workflow](HIGGSFIELD-FILMS.md). Compare architecture, windows, furniture and camera motion on real outputs before choosing a model based on perceived quality. No live Hailuo request has been made during setup.
 
 Confirm current account access, availability, accepted fields and API pricing before using any model. There is no automatic paid model fallback.
 

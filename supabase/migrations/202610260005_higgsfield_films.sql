@@ -1,0 +1,287 @@
+-- Multi-photo provider films. A scene submission is durably reserved BEFORE
+-- making a billable request; ambiguous submissions are never sent twice.
+alter table public.property_video_jobs add column if not exists montage_edited_shots integer not null default 0;
+create table if not exists public.property_film_scenes (
+  order_id uuid not null references public.property_orders(id) on delete cascade,
+  generation uuid not null,
+  shot_index integer not null check(shot_index between 0 and 22),
+  status text not null check(status in ('submitting','submitted','completed','uncertain','failed')),
+  request_id text unique,
+  model_config jsonb not null,
+  model_input jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key(order_id,generation,shot_index)
+);
+alter table public.property_film_scenes enable row level security;
+revoke all on public.property_film_scenes from public,anon,authenticated,service_role;
+grant select on public.property_film_scenes to service_role;
+
+create or replace function public.claim_property_ai_film(p_order uuid,p_lease uuid,p_model jsonb default null)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare purchase public.property_orders; job public.property_video_jobs;
+begin
+  select * into purchase from public.property_orders where id=p_order;
+  if not found or purchase.property_id is null then return null; end if;
+  perform 1 from public.properties where id=purchase.property_id for update;
+  select * into purchase from public.property_orders where id=p_order for update;
+  select * into job from public.property_video_jobs where order_id=p_order for update;
+  if not found or not public.property_order_fulfilled(p_order) or job.status not in ('queued','processing')
+    or job.provider_phase='uncertain' or job.next_poll_at>now() or job.lease_until>now() then return null; end if;
+  if job.status='queued' then
+    if job.attempts>=3 or jsonb_typeof(p_model) is distinct from 'object' or octet_length(p_model::text)>64000 then return null; end if;
+    update public.property_video_jobs set status='processing',provider_phase='planning',attempts=attempts+1,
+      model_config=jsonb_build_object('engine','higgsfield-montage-v1','profile',p_model),model_input=null,provider_request_id=null,
+      montage_generation=coalesce(montage_generation,gen_random_uuid()),montage_plan=null,montage_next_shot=0,montage_edited_shots=0,montage_failures=0,
+      lease_token=p_lease,lease_until=now()+interval '4 minutes',last_error=null,updated_at=now()
+      where order_id=p_order returning * into job;
+  else
+    if job.model_config->>'engine' is distinct from 'higgsfield-montage-v1' then return null; end if;
+    update public.property_video_jobs set lease_token=p_lease,lease_until=now()+interval '4 minutes',updated_at=now()
+      where order_id=p_order returning * into job;
+  end if;
+  return to_jsonb(job);
+end;
+$$;
+revoke all on function public.claim_property_ai_film(uuid,uuid,jsonb) from public,anon,authenticated;
+grant execute on function public.claim_property_ai_film(uuid,uuid,jsonb) to service_role;
+
+create or replace function public.reserve_property_film_scene(p_order uuid,p_lease uuid,p_attempt integer,p_input jsonb)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare purchase public.property_orders; job public.property_video_jobs; scene public.property_film_scenes;
+begin
+  select * into purchase from public.property_orders where id=p_order;
+  if not found or purchase.property_id is null then return null; end if;
+  perform 1 from public.properties where id=purchase.property_id for update;
+  select * into purchase from public.property_orders where id=p_order for update;
+  select * into job from public.property_video_jobs where order_id=p_order for update;
+  if not found or not public.property_order_fulfilled(p_order) or job.status<>'processing' or job.lease_token is distinct from p_lease
+    or job.attempts<>p_attempt or job.model_config->>'engine' is distinct from 'higgsfield-montage-v1'
+    or job.montage_plan is null or job.montage_next_shot>=jsonb_array_length(job.montage_plan->'shots') then return null; end if;
+  select * into scene from public.property_film_scenes where order_id=p_order and generation=job.montage_generation and shot_index=job.montage_next_shot for update;
+  if found then
+    if scene.request_id is null then
+      update public.property_film_scenes set status='uncertain',updated_at=now() where order_id=p_order and generation=scene.generation and shot_index=scene.shot_index;
+      update public.property_video_jobs set provider_phase='uncertain',lease_token=null,lease_until=null,
+        last_error='A scene submission needs reconciliation. No additional generation will be submitted automatically.',updated_at=now() where order_id=p_order;
+      return null;
+    end if;
+    return to_jsonb(scene)||jsonb_build_object('submit',false);
+  end if;
+  if jsonb_typeof(p_input) is distinct from 'object' or octet_length(p_input::text)>128000 then return null; end if;
+  insert into public.property_film_scenes(order_id,generation,shot_index,status,model_config,model_input)
+    values(p_order,job.montage_generation,job.montage_next_shot,'submitting',job.model_config->'profile',p_input) returning * into scene;
+  update public.property_video_jobs set provider_phase='submitting',updated_at=now() where order_id=p_order;
+  return to_jsonb(scene)||jsonb_build_object('submit',true);
+end;
+$$;
+revoke all on function public.reserve_property_film_scene(uuid,uuid,integer,jsonb) from public,anon,authenticated;
+grant execute on function public.reserve_property_film_scene(uuid,uuid,integer,jsonb) to service_role;
+
+create or replace function public.bind_property_film_scene(p_order uuid,p_generation uuid,p_index integer,p_request text)
+returns boolean language plpgsql security definer set search_path='' as $$
+declare purchase public.property_orders; job public.property_video_jobs; scene public.property_film_scenes;
+begin
+  if p_request !~ '^[a-zA-Z0-9_-]{1,160}$' then return false; end if;
+  select * into purchase from public.property_orders where id=p_order;
+  if not found or purchase.property_id is null then return false; end if;
+  perform 1 from public.properties where id=purchase.property_id for update;
+  select * into purchase from public.property_orders where id=p_order for update;
+  select * into job from public.property_video_jobs where order_id=p_order for update;
+  if not found or not public.property_order_fulfilled(p_order) or job.status<>'processing'
+    or job.montage_generation is distinct from p_generation or job.montage_next_shot<>p_index
+    or job.model_config->>'engine' is distinct from 'higgsfield-montage-v1' then return false; end if;
+  select * into scene from public.property_film_scenes where order_id=p_order and generation=p_generation and shot_index=p_index for update;
+  if not found or scene.status not in ('submitting','submitted','uncertain') or (scene.request_id is not null and scene.request_id<>p_request) then return false; end if;
+  update public.property_film_scenes set request_id=p_request,status='submitted',updated_at=now() where order_id=p_order and generation=p_generation and shot_index=p_index;
+  update public.property_video_jobs set provider_phase='generating',last_error=null,next_poll_at=now(),updated_at=now() where order_id=p_order;
+  return true;
+end;
+$$;
+revoke all on function public.bind_property_film_scene(uuid,uuid,integer,text) from public,anon,authenticated;
+grant execute on function public.bind_property_film_scene(uuid,uuid,integer,text) to service_role;
+
+create or replace function public.checkpoint_property_ai_film(p_order uuid,p_lease uuid,p_attempt integer,
+  p_plan jsonb default null,p_scene integer default null,p_edit integer default null,p_url text default null,
+  p_error text default null,p_failure text default 'delayed')
+returns boolean language plpgsql security definer set search_path='' as $$
+declare purchase public.property_orders; job public.property_video_jobs; total integer; known boolean;
+begin
+  if num_nonnulls(p_plan,p_scene,p_edit,p_url,p_error)>1 then return false; end if;
+  select * into purchase from public.property_orders where id=p_order;
+  if not found or purchase.property_id is null then return false; end if;
+  perform 1 from public.properties where id=purchase.property_id for update;
+  select * into purchase from public.property_orders where id=p_order for update;
+  select * into job from public.property_video_jobs where order_id=p_order for update;
+  if not found or not public.property_order_fulfilled(p_order) or job.status<>'processing' or job.lease_token is distinct from p_lease
+    or job.attempts<>p_attempt or job.model_config->>'engine' is distinct from 'higgsfield-montage-v1' then return false; end if;
+  if p_error is not null then
+    select exists(select 1 from public.property_film_scenes where order_id=p_order and generation=job.montage_generation and shot_index=job.montage_next_shot and request_id is not null) into known;
+    if p_failure='uncertain' and not known then
+      update public.property_film_scenes set status='uncertain',updated_at=now() where order_id=p_order and generation=job.montage_generation and shot_index=job.montage_next_shot;
+    end if;
+    update public.property_video_jobs set montage_failures=montage_failures+1,
+      status=case when p_failure='failed' or (p_failure='delayed' and montage_failures>=2) then 'failed' else 'processing' end,
+      provider_phase=case when p_failure='uncertain' and not known then 'uncertain' when p_failure='failed' then 'provider_failed' when p_failure='delayed' and montage_failures>=2 then 'failed' else 'generating' end,
+      last_error=left(p_error,500),lease_token=null,lease_until=null,next_poll_at=now()+interval '2 minutes',updated_at=now() where order_id=p_order;
+    return true;
+  end if;
+  if p_plan is not null then
+    if job.montage_plan is not null or p_plan->>'engine' is distinct from 'higgsfield-montage-v1'
+      or jsonb_typeof(p_plan->'shots') is distinct from 'array' or octet_length(p_plan::text)>128000 then return false; end if;
+    total:=jsonb_array_length(p_plan->'shots');
+    if total<1 or total>23 then return false; end if;
+    update public.property_video_jobs set montage_plan=p_plan where order_id=p_order returning * into job;
+  end if;
+  total:=jsonb_array_length(job.montage_plan->'shots');
+  if p_scene is not null then
+    if total is null or p_scene<>job.montage_next_shot or p_scene>=total then return false; end if;
+    update public.property_film_scenes set status='completed',updated_at=now()
+      where order_id=p_order and generation=job.montage_generation and shot_index=p_scene and request_id is not null and status='submitted';
+    if not found then return false; end if;
+    update public.property_video_jobs set montage_next_shot=montage_next_shot+1 where order_id=p_order returning * into job;
+  end if;
+  if p_edit is not null then
+    if total is null or job.montage_next_shot<>total or p_edit<>job.montage_edited_shots or p_edit>=total then return false; end if;
+    update public.property_video_jobs set montage_edited_shots=montage_edited_shots+1 where order_id=p_order returning * into job;
+  end if;
+  if p_url is not null then
+    if total is null or job.montage_next_shot<>total or job.montage_edited_shots<>total or p_url !~ '^https://' then return false; end if;
+    update public.property_video_jobs set status='completed',provider_phase='completed',video_url=p_url,replacement_pending=false,
+      poster_url=montage_plan->'shots'->0->>'image' where order_id=p_order;
+    update public.property_orders set video_status='delivered' where id=p_order;
+  end if;
+  update public.property_video_jobs set montage_failures=0,last_error=null,lease_token=null,lease_until=null,
+    next_poll_at=case when num_nonnulls(p_plan,p_scene,p_edit,p_url)>0 then now() else now()+interval '30 seconds' end,updated_at=now() where order_id=p_order;
+  return true;
+end;
+$$;
+revoke all on function public.checkpoint_property_ai_film(uuid,uuid,integer,jsonb,integer,integer,text,text,text) from public,anon,authenticated;
+grant execute on function public.checkpoint_property_ai_film(uuid,uuid,integer,jsonb,integer,integer,text,text,text) to service_role;
+
+create or replace function public.admin_rebuild_property_film(listing_id uuid,actor_id uuid,target_engine text)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare listing public.properties; purchase public.property_orders; job public.property_video_jobs;
+begin
+  if target_engine not in ('photo-montage-v1','higgsfield-montage-v1') then raise exception 'Choose a supported film mode'; end if;
+  perform 1 from public.platform_admins where user_id=actor_id for share;
+  if not found then raise exception 'Administrator access required' using errcode='42501'; end if;
+  select * into listing from public.properties where id=listing_id for update;
+  if not found then raise exception 'Property not available'; end if;
+  select * into purchase from public.property_orders where property_id=listing_id for update;
+  if not found or not public.property_order_fulfilled(purchase.id) then
+    raise exception 'Publish this property before rebuilding its film' using errcode='P0409';
+  end if;
+  select * into job from public.property_video_jobs where order_id=purchase.id for update;
+  if not found or job.status not in ('completed','failed') or job.lease_until>now() then
+    raise exception 'A film is already processing or is not ready to rebuild' using errcode='P0409';
+  end if;
+  if job.provider_phase='uncertain' then raise exception 'Reconcile the existing generation before rebuilding' using errcode='P0409'; end if;
+  if coalesce(cardinality(listing.images),0)<1 then raise exception 'Add property photographs first'; end if;
+  update public.property_video_jobs set
+    status='queued',provider_phase='ready',attempts=0,replacement_pending=true,
+    model_config=jsonb_build_object('engine',target_engine),model_input=null,provider_request_id=null,
+    source=to_jsonb(listing)-array['owner_id','created_at','updated_at'],
+    montage_generation=gen_random_uuid(),montage_plan=null,montage_next_shot=0,montage_failures=0,montage_edited_shots=0,
+    lease_token=null,lease_until=null,next_poll_at=now(),last_error=null,updated_at=now()
+    where order_id=purchase.id;
+  -- Keep the previous public asset until checkpoint_property_montage atomically
+  -- replaces it. No Stripe status, entitlement or publication changes here.
+  update public.property_orders set video_status='pending' where id=purchase.id;
+  insert into public.platform_admin_audit(actor_id,property_id,action,details)
+    values(actor_id,listing_id,'rebuild_film',jsonb_build_object('previous_video',job.video_url,'renderer',target_engine,'previous_provider_request',job.provider_request_id));
+  return jsonb_build_object('videoStatus','queued','previousVideoRetained',job.video_url is not null);
+end;
+$$;
+revoke all on function public.admin_rebuild_property_film(uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.admin_rebuild_property_film(uuid,uuid,text) to service_role;
+
+
+create or replace function public.retry_property_video(listing_id uuid,agent_id uuid) returns boolean
+language plpgsql security definer set search_path='' as $$
+declare purchase public.property_orders;
+begin
+  perform 1 from public.properties where id=listing_id and owner_id=agent_id for update;
+  if not found then return false; end if;
+  select * into purchase from public.property_orders where property_id=listing_id and owner_id=agent_id for update;
+  if not found or not public.property_order_fulfilled(purchase.id) then return false; end if;
+  if exists(select 1 from public.property_video_jobs where order_id=purchase.id and model_config->>'engine'='higgsfield-montage-v1') then
+    update public.property_video_jobs set status='processing',provider_phase='generating',attempts=attempts+1,
+      lease_token=null,lease_until=null,next_poll_at=now(),last_error=null,montage_failures=0,updated_at=now()
+      where order_id=purchase.id and status='failed' and provider_phase not in ('uncertain','provider_failed')
+      and attempts<3 and updated_at<now()-interval '1 minute';
+    return found;
+  end if;
+  update public.property_video_jobs set status='queued',provider_phase='ready',provider_request_id=null,
+    model_config=null,model_input=null,lease_token=null,lease_until=null,next_poll_at=now(),last_error=null,updated_at=now()
+    where order_id=purchase.id and owner_id=agent_id and status='failed' and attempts<3
+    and updated_at<now()-interval '1 minute';
+  return found;
+end;
+$$;
+
+
+
+notify pgrst,'reload schema';
+
+-- Preserve pinned provider requests and montage progress when a won dispute is republished.
+create or replace function public.finish_property_publication(purchase_id uuid) returns boolean
+language plpgsql security definer set search_path='' as $$
+declare purchase public.property_orders;
+declare listing public.properties;
+begin
+  select * into purchase from public.property_orders where id=purchase_id;
+  if not found or purchase.property_id is null then return false; end if;
+  select * into listing from public.properties where id=purchase.property_id and owner_id=purchase.owner_id for update;
+  if not found then return false; end if;
+  select * into purchase from public.property_orders where id=purchase_id for update;
+  if not public.property_order_fulfilled(purchase.id) or purchase.publication_requested_at is null then return false; end if;
+  if purchase.publication_completed_at is not null then return listing.status='published'; end if;
+  begin
+    update public.properties set status='published' where id=listing.id;
+  exception when check_violation or raise_exception then
+    update public.property_orders set publication_error='Your payment is confirmed. Review your property and contact details, then publish again at no extra charge.' where id=purchase_id;
+    return false;
+  end;
+  insert into public.property_video_jobs(order_id,property_id,owner_id,source)
+    values(purchase.id,listing.id,listing.owner_id,to_jsonb(listing)-array['owner_id','created_at','updated_at'])
+    on conflict(order_id) do update set
+      status=case when public.property_video_jobs.status='cancelled' then
+        case when public.property_video_jobs.replacement_pending then
+          case when public.property_video_jobs.provider_phase in ('failed','provider_failed') then 'failed'
+            when (public.property_video_jobs.model_config->>'engine'='higgsfield-montage-v1' and public.property_video_jobs.model_config ? 'profile')
+              or (public.property_video_jobs.model_config->>'engine'='photo-montage-v1' and public.property_video_jobs.attempts>0) then 'processing'
+            else 'queued' end
+          when public.property_video_jobs.video_url is not null then 'completed'
+          when public.property_video_jobs.provider_phase in ('failed','provider_failed') then 'failed'
+          when public.property_video_jobs.provider_request_id is not null or public.property_video_jobs.provider_phase in ('submitting','submitted','uncertain') or public.property_video_jobs.model_config->>'engine'='photo-montage-v1' or (public.property_video_jobs.model_config->>'engine'='higgsfield-montage-v1' and public.property_video_jobs.model_config ? 'profile') then 'processing'
+          else 'queued' end
+        else public.property_video_jobs.status end,
+      next_poll_at=now(),
+      lease_token=case when public.property_video_jobs.status='cancelled' then null else public.property_video_jobs.lease_token end,
+      lease_until=case when public.property_video_jobs.status='cancelled' then null else public.property_video_jobs.lease_until end,
+      updated_at=now();
+  update public.property_orders set publication_completed_at=now(),publication_error=null where id=purchase_id;
+  return true;
+end;
+$$;
+
+
+
+-- Late single-clip callbacks must never attach to a new multi-scene generation.
+create or replace function public.bind_property_video_request(p_order uuid,p_attempt integer,p_request text)
+returns boolean language plpgsql security definer set search_path='' as $$
+declare purchase public.property_orders; job public.property_video_jobs;
+begin
+  if p_request !~ '^[a-zA-Z0-9_-]{1,160}$' then return false; end if;
+  select * into purchase from public.property_orders where id=p_order;
+  if not found or purchase.property_id is null then return false; end if;
+  perform 1 from public.properties where id=purchase.property_id for update;
+  select * into purchase from public.property_orders where id=p_order for update;
+  select * into job from public.property_video_jobs where order_id=p_order for update;
+  if not found or job.model_config->>'engine' in ('photo-montage-v1','higgsfield-montage-v1') or not public.property_order_fulfilled(purchase.id) or job.status<>'processing' or job.attempts<>p_attempt
+      or (job.provider_request_id is not null and job.provider_request_id<>p_request) then return false; end if;
+  update public.property_video_jobs set provider_request_id=p_request,provider_phase='submitted',last_error=null,next_poll_at=now(),updated_at=now() where order_id=p_order;
+  return true;
+end;
+$$;

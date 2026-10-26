@@ -138,3 +138,21 @@ commit;
 select 'MBP_HIGGSFIELD_READY' as status;
 `,
 );
+
+const cinematic = await readFile(
+  new URL("202610260004_cinematic_films.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-cinematic-films.sql", import.meta.url),
+  `-- Run this ENTIRE file after MBP_ADMIN_READY. Existing films remain available.\nbegin;\n${cinematic.trim()}\ncommit;\nselect 'MBP_CINEMATIC_FILMS_READY' as status;\n`,
+);
+
+const aiFilms = await readFile(
+  new URL("202610260005_higgsfield_films.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-higgsfield-films.sql", import.meta.url),
+  `-- Run this ENTIRE file after MBP_ADMIN_READY. Preserves existing published films.\nbegin;\n${cinematic.trim()}\n${aiFilms.trim()}\ncommit;\nselect 'MBP_HIGGSFIELD_FILMS_READY' as status;\n`,
+);

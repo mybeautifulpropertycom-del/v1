@@ -20,6 +20,7 @@ import {
 } from "./higgsfield-server";
 import { callbackUrl, workerSecret } from "./higgsfield-security";
 import { downloadVideo } from "./video-download";
+import { runHiggsfieldFilm } from "./higgsfield-film-worker";
 import { runPropertyFilm } from "./property-film-worker";
 
 export type VideoJob = {
@@ -59,6 +60,11 @@ export function videoConfiguration() {
     };
   }
   higgsfieldCredentials();
+  if (
+    process.env.PROPERTY_VIDEO_MODE === "higgsfield-montage" &&
+    !process.env.OPENAI_API_KEY?.trim()
+  )
+    throw new Error("Photo ordering needs OPENAI_API_KEY.");
   return configuredModel();
 }
 export async function bindVideoRequest(
@@ -197,6 +203,48 @@ export async function runVideoWorker(orderId?: string) {
     throw new Error("The Higgsfield database migration is not installed.");
   const results: string[] = [];
   for (const candidate of candidates || []) {
+    if (
+      candidate.model_config?.engine === "higgsfield-montage-v1" ||
+      (!candidate.model_config?.engine &&
+        candidate.status === "queued" &&
+        process.env.PROPERTY_VIDEO_MODE === "higgsfield-montage")
+    ) {
+      const started = Date.now();
+      let model: ModelProfile | null;
+      try {
+        higgsfieldCredentials();
+        model = candidate.status === "queued" ? configuredModel() : null;
+      } catch {
+        await admin
+          .from("property_video_jobs")
+          .update({
+            last_error:
+              "Higgsfield API configuration is incomplete. Check HF_KEY and HIGGSFIELD_MODEL.",
+            next_poll_at: new Date(Date.now() + 300000).toISOString(),
+          })
+          .eq("order_id", candidate.order_id)
+          .eq("status", candidate.status);
+        results.push("configuration_required");
+        continue;
+      }
+      for (let step = 0; step < 3; step++) {
+        const result = await runHiggsfieldFilm(
+          admin,
+          candidate.order_id,
+          model,
+        );
+        results.push(result);
+        model = null;
+        if (
+          !["ai_film_planned", "ai_scene_saved", "ai_scene_edited"].includes(
+            result,
+          ) ||
+          Date.now() - started > 20000
+        )
+          break;
+      }
+      continue;
+    }
     if (
       candidate.model_config?.engine === "photo-montage-v1" ||
       (candidate.status === "queued" &&

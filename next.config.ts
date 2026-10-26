@@ -6,10 +6,10 @@ const config: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["@ffmpeg-installer/linux-x64"],
   outputFileTracingIncludes: {
-    "/api/admin/publish": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
+    "/api/admin/*": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
     "/api/video/*": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
     "/api/stripe/webhook": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
-    "/api/higgsfield/webhook": [
+    "/api/higgsfield/*": [
       "./node_modules/@ffmpeg-installer/linux-x64/**",
     ],
   },

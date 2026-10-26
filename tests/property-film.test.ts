@@ -16,6 +16,9 @@ import {
   assembleFilm,
   photoFingerprint,
   originalFilmScore,
+  filmBinary,
+  normalizeGeneratedClip,
+  editGeneratedClip,
 } from "../src/lib/property-film-render";
 import { ownedFilmImages } from "../src/lib/property-film-worker";
 
@@ -170,8 +173,269 @@ test(
       assert.ok(Number(probe(final).format.duration) <= 80);
       assert.ok(longest.length < 50 * 1024 * 1024);
       const score = originalFilmScore(23);
-      assert.equal(score.readUInt32LE(40), 78.2 * 24000 * 2);
+      assert.equal(score.readUInt32LE(40), 78.2 * 48000 * 4);
       assert.throws(() => originalFilmScore(24));
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "fractional glides advance continuously without integer-crop jitter",
+  { timeout: 120000 },
+  async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mbp-motion-test-"));
+    try {
+      const bytes = await sharp({
+        create: { width: 1280, height: 720, channels: 3, background: "black" },
+      })
+        .composite([
+          {
+            input: await sharp({
+              create: {
+                width: 300,
+                height: 720,
+                channels: 3,
+                background: "white",
+              },
+            })
+              .png()
+              .toBuffer(),
+            left: 490,
+            top: 0,
+          },
+        ])
+        .png()
+        .toBuffer();
+      const plan = makeFilmPlan(
+        ["photo"],
+        [photo(0)],
+        [await photoFingerprint(bytes)],
+      );
+      const shot = { ...plan.shots[0], motion: "glide-right" as const };
+      const file = join(directory, "glide.mp4");
+      await writeFile(file, await renderFilmShot(bytes, shot));
+      const pixels = execFileSync(
+        filmBinary(),
+        [
+          "-v",
+          "error",
+          "-i",
+          file,
+          "-vf",
+          "crop=1280:2:0:360,format=gray",
+          "-f",
+          "rawvideo",
+          "-",
+        ],
+        { maxBuffer: 2 * 1024 * 1024 },
+      );
+      const centers: number[] = [];
+      for (let frame = 0; frame < 102; frame++) {
+        let mass = 0,
+          weighted = 0;
+        for (let x = 0; x < 1280; x++) {
+          const value = pixels[frame * 2560 + x];
+          mass += value;
+          weighted += value * x;
+        }
+        centers.push(weighted / mass);
+      }
+      const expected = (frame: number) => {
+        const t = (frame + 3) / 107;
+        const p = 0.35 * t + 0.65 * (4 * (t - 0.5) ** 3 + 0.5);
+        return -204.8 * (0.08 + 0.84 * p);
+      };
+      let worst = 0;
+      for (let frame = 1; frame < 102; frame++) {
+        assert.ok(
+          centers[frame] < centers[frame - 1] - 0.1,
+          "No stuck or reversing frames",
+        );
+        worst = Math.max(
+          worst,
+          Math.abs(
+            centers[frame] - centers[0] - (expected(frame) - expected(0)),
+          ),
+        );
+      }
+      assert.ok(worst < 0.25, `Subpixel trajectory error ${worst}`);
+      assert.ok(centers[0] - centers[101] > 145, "Motion is clearly visible");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "six-frame transitions have no black dip and preserve exact shot slots",
+  { timeout: 120000 },
+  async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mbp-transition-test-"));
+    try {
+      const red = await sharp({
+        create: {
+          width: 1280,
+          height: 720,
+          channels: 3,
+          background: "#e84a38",
+        },
+      })
+        .png()
+        .toBuffer();
+      const blue = await sharp({
+        create: {
+          width: 1280,
+          height: 720,
+          channels: 3,
+          background: "#2846e8",
+        },
+      })
+        .png()
+        .toBuffer();
+      const plan = makeFilmPlan(
+        ["red", "blue"],
+        [photo(0), photo(1)],
+        [await photoFingerprint(red), await photoFingerprint(blue)],
+      );
+      const a = await renderFilmShot(red, plan.shots[0], {
+        next: { bytes: blue, shot: plan.shots[1] },
+      });
+      const b = await renderFilmShot(blue, plan.shots[1], {
+        previous: { bytes: red, shot: plan.shots[0] },
+      });
+      const file = join(directory, "transition.mp4");
+      await writeFile(file, await assembleFilm([a, b]));
+      const rgb = execFileSync(
+        filmBinary(),
+        [
+          "-v",
+          "error",
+          "-i",
+          file,
+          "-vf",
+          "scale=1:1,format=rgb24",
+          "-f",
+          "rawvideo",
+          "-",
+        ],
+        { maxBuffer: 10000 },
+      );
+      assert.equal(rgb.length, 204 * 3);
+      for (let f = 99; f <= 104; f++) {
+        assert.ok(
+          rgb[f * 3] + rgb[f * 3 + 2] > 180,
+          "Transition never fades to black",
+        );
+        if (f > 99) {
+          assert.ok(
+            rgb[f * 3] < rgb[(f - 1) * 3],
+            "Red fades continuously across the scene boundary",
+          );
+          assert.ok(
+            rgb[f * 3 + 2] > rgb[(f - 1) * 3 + 2],
+            "Blue enters continuously",
+          );
+        }
+      }
+      const score = originalFilmScore(2);
+      assert.equal(score.readUInt16LE(22), 2);
+      assert.equal(score.readUInt32LE(24), 48000);
+      let peak = 0,
+        energy = 0,
+        stereo = 0;
+      for (let i = 44; i < score.length; i += 4) {
+        const l = score.readInt16LE(i) / 32768,
+          r = score.readInt16LE(i + 2) / 32768;
+        peak = Math.max(peak, Math.abs(l), Math.abs(r));
+        energy += l * l + r * r;
+        stereo += Math.abs(l - r);
+      }
+      assert.ok(peak < 0.9);
+      assert.ok(Math.sqrt(energy / ((score.length - 44) / 2)) > 0.06);
+      assert.ok(stereo > 100, "Real stereo arrangement");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "six-second generated footage retains movement and becomes exact 3.4-second edited slots",
+  { timeout: 120000 },
+  async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mbp-provider-edit-test-"));
+    try {
+      const input = join(directory, "generated.mp4");
+      execFileSync(filmBinary(), [
+        "-v",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=320x180:rate=30:duration=6",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "2",
+        "-pix_fmt",
+        "yuv420p",
+        input,
+      ]);
+      const { readFile } = await import("node:fs/promises");
+      const normalized = await normalizeGeneratedClip(await readFile(input), 6);
+      const normalPath = join(directory, "normal.mp4");
+      await writeFile(normalPath, normalized);
+      const probe = (file: string) =>
+        JSON.parse(
+          execFileSync(
+            "ffprobe",
+            ["-v", "error", "-show_streams", "-of", "json", file],
+            { encoding: "utf8" },
+          ),
+        ).streams;
+      assert.equal(Number(probe(normalPath)[0].nb_frames), 108);
+      const edited = await editGeneratedClip(
+        normalized,
+        normalized,
+        normalized,
+      );
+      const output = join(directory, "edited.mp4");
+      await writeFile(output, edited);
+      assert.equal(Number(probe(output)[0].nb_frames), 102);
+      assert.equal(Number(probe(output)[0].duration), 3.4);
+      assert.equal(probe(output).length, 1, "Provider audio is removed");
+      // Moving source produces changing frames, not a first-frame photo animation.
+      const hashes = execFileSync(
+        filmBinary(),
+        ["-v", "error", "-i", output, "-f", "framemd5", "-"],
+        { encoding: "utf8" },
+      );
+      assert.ok(
+        new Set(
+          hashes
+            .split("\n")
+            .filter((l) => l && !l.startsWith("#"))
+            .map((l) => l.split(",").at(-1)),
+        ).size > 98,
+      );
+      const short = join(directory, "short.mp4");
+      execFileSync(filmBinary(), [
+        "-v",
+        "error",
+        "-i",
+        input,
+        "-t",
+        "2",
+        "-c",
+        "copy",
+        short,
+      ]);
+      await assert.rejects(
+        normalizeGeneratedClip(await readFile(short), 6),
+        /shorter/,
+      );
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

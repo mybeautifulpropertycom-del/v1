@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         admin
           .from("property_video_jobs")
           .select(
-            "status,video_url,poster_url,montage_plan,montage_next_shot,attempts,last_error",
+            "status,video_url,poster_url,model_config,provider_request_id,montage_plan,montage_next_shot,attempts,last_error",
           )
           .eq("property_id", id)
           .maybeSingle(),
@@ -45,13 +45,15 @@ export async function GET(request: Request) {
           ? {
               status: job.status,
               attempts: job.attempts,
+              canRebuild: ["completed", "failed"].includes(job.status),
+              rebuildUsesCredits:
+                process.env.PROPERTY_VIDEO_MODE === "higgsfield-montage",
               completed: job.montage_next_shot,
               total: job.montage_plan?.shots?.length || 0,
               error: job.last_error,
-              film:
-                job.status === "completed" && job.video_url
-                  ? { src: job.video_url, poster: job.poster_url }
-                  : null,
+              film: job.video_url
+                ? { src: job.video_url, poster: job.poster_url }
+                : null,
             }
           : null,
       });

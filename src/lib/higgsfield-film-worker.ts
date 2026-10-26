@@ -1,0 +1,339 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
+import {
+  AuthenticationError,
+  BadInputError,
+  NotEnoughCreditsError,
+  ValidationError,
+} from "@higgsfield/client";
+import {
+  resolveModelInput,
+  validateModel,
+  readPath,
+  type ModelProfile,
+} from "./higgsfield-models";
+import { submitGeneration, generationStatus } from "./higgsfield-server";
+import { filmCallbackUrl } from "./higgsfield-security";
+import {
+  makeFilmPlan,
+  validateFilmPlan,
+  type FilmPlan,
+  type FilmShot,
+} from "./property-film-plan";
+import { filmDependencies, ownedFilmImages } from "./property-film-worker";
+import {
+  normalizeGeneratedClip,
+  editGeneratedClip,
+  assembleFilm,
+} from "./property-film-render";
+import { downloadVideo } from "./video-download";
+
+type Job = {
+  order_id: string;
+  property_id: string;
+  owner_id: string;
+  attempts: number;
+  lease_token: string;
+  source: Record<string, unknown>;
+  montage_generation: string;
+  montage_plan: FilmPlan | null;
+  montage_next_shot: number;
+  montage_edited_shots: number;
+  model_config: { engine: "higgsfield-montage-v1"; profile: ModelProfile };
+};
+type Scene = {
+  submit: boolean;
+  request_id: string | null;
+  model_config: ModelProfile;
+  model_input: Record<string, unknown>;
+};
+export const aiFilmDependencies = {
+  submitGeneration,
+  generationStatus,
+  downloadVideo,
+  normalizeGeneratedClip,
+  editGeneratedClip,
+  assembleFilm,
+};
+export function sceneGenerationInput(model: ModelProfile, shot: FilmShot) {
+  const motion = shot.aerial
+    ? "A stable, cinematic aerial glide, staying within the elevated viewpoint and visible surroundings of this supplied aerial photograph."
+    : shot.motion === "pull"
+      ? "A controlled, cinematic pull-back along the existing camera axis, keeping the original view and composition."
+      : shot.motion.includes("glide")
+        ? `A steady, small lateral camera glide ${shot.motion === "glide-left" ? "left" : "right"}, keeping the photographed space and original composition.`
+        : "A smooth, cinematic forward camera push along the existing camera axis, with visible but controlled movement.";
+  const prompt = [
+    "Animate this ONE supplied property photograph into a realistic real-estate cinematography shot.",
+    motion,
+    "Stable gimbal camera, continuous natural movement, no shake, no jitter, no wobble, no jump cuts. The editor will add speed ramps and transitions later.",
+    "Preserve the original geometry, proportions, architecture, materials, furnishings, windows, fixtures, landscaping and actual view. No morphing, object movement, invented rooms, windows, amenities, horizons or room connections.",
+    "Do not fly through walls, doors or windows. Do not reveal unseen areas or simulate travel into another room. Do not add people, vehicles, voice, music, text, prices, addresses, logos or slogans.",
+    shot.evening
+      ? "Preserve the existing evening lighting in the supplied photo."
+      : "Preserve the existing daylight and lighting; do not turn this scene into dusk or night.",
+  ].join(" ");
+  const input = resolveModelInput(model, {
+    prompt,
+    images: [shot.image],
+    image_objects: [{ type: "image_url", image_url: shot.image }],
+    property: {},
+  });
+  if (!JSON.stringify(input).includes(shot.image))
+    throw new Error("The model must accept the selected property photograph.");
+  const duration = Number(input.duration);
+  if (!Number.isFinite(duration) || duration < 3.6 || duration > 15)
+    throw new Error(
+      "Configure the model's duration between 3.6 and 15 seconds.",
+    );
+  return input;
+}
+const path = (job: Job, index: number, kind: "raw" | "shot") =>
+  `${job.owner_id}/${job.order_id}/generation-${job.montage_generation}/${kind}-${index}.mp4`;
+async function checkpoint(
+  admin: SupabaseClient,
+  job: Job,
+  fields: Record<string, unknown> = {},
+) {
+  const { data, error } = await admin.rpc("checkpoint_property_ai_film", {
+    p_order: job.order_id,
+    p_lease: job.lease_token,
+    p_attempt: job.attempts,
+    ...fields,
+  });
+  if (error) throw new Error("Film progress could not be saved.");
+  return Boolean(data);
+}
+async function savedClip(
+  admin: SupabaseClient,
+  job: Job,
+  index: number,
+  kind: "raw" | "shot",
+) {
+  const { data, error } = await admin.storage
+    .from("property-video-work")
+    .download(path(job, index, kind));
+  if (error || !data || data.size > 12 * 1024 * 1024)
+    throw new Error("A saved scene is unavailable.");
+  return Buffer.from(await data.arrayBuffer());
+}
+async function storeClip(
+  admin: SupabaseClient,
+  job: Job,
+  index: number,
+  kind: "raw" | "shot",
+  bytes: Buffer,
+) {
+  const { error } = await admin.storage
+    .from("property-video-work")
+    .upload(path(job, index, kind), bytes, {
+      upsert: true,
+      contentType: "video/mp4",
+    });
+  if (error) throw new Error("A scene could not be saved.");
+}
+export async function runHiggsfieldFilm(
+  admin: SupabaseClient,
+  order: string,
+  model: ModelProfile | null = null,
+): Promise<string> {
+  const { data, error } = await admin.rpc("claim_property_ai_film", {
+    p_order: order,
+    p_lease: crypto.randomUUID(),
+    p_model: model,
+  });
+  if (error) throw new Error("The Higgsfield film upgrade is not installed.");
+  if (!data) return "not_claimed";
+  const job = data as Job;
+  let stage = "planning",
+    unboundSubmission = false,
+    submitting = false;
+  try {
+    const images = ownedFilmImages(job);
+    if (!job.montage_generation) throw new Error("Missing film generation.");
+    if (!job.montage_plan) {
+      const signal = AbortSignal.timeout(60000),
+        fingerprints: string[] = [];
+      for (const image of images) {
+        fingerprints.push(
+          await filmDependencies.photoFingerprint(
+            await filmDependencies.downloadPhoto(image, signal),
+          ),
+        );
+        if (signal.aborted) throw new Error("Photo preparation timed out.");
+      }
+      const observations = await filmDependencies.analyzeFilmPhotos(images);
+      const plan: FilmPlan = {
+        ...makeFilmPlan(images, observations, fingerprints),
+        engine: "higgsfield-montage-v1",
+      };
+      const profile = validateModel(job.model_config.profile);
+      for (const shot of plan.shots) sceneGenerationInput(profile, shot);
+      return (await checkpoint(admin, job, { p_plan: plan }))
+        ? "ai_film_planned"
+        : "revoked";
+    }
+    const plan = validateFilmPlan(job.montage_plan);
+    if (
+      plan.engine !== "higgsfield-montage-v1" ||
+      plan.shots.some((shot) => !images.includes(shot.image))
+    )
+      throw new Error("Film photographs do not match.");
+    if (job.montage_next_shot < plan.shots.length) {
+      const index = job.montage_next_shot,
+        shot = plan.shots[index];
+      const input = sceneGenerationInput(
+        validateModel(job.model_config.profile),
+        shot,
+      );
+      stage = "scene_reservation";
+      // Verify current photo bytes before reserving/submitting any new scene.
+      const photo = await filmDependencies.downloadPhoto(shot.image);
+      if ((await filmDependencies.photoFingerprint(photo)) !== shot.fingerprint)
+        throw new Error("A photograph changed after planning.");
+      const reserved = await admin.rpc("reserve_property_film_scene", {
+        p_order: order,
+        p_lease: job.lease_token,
+        p_attempt: job.attempts,
+        p_input: input,
+      });
+      if (reserved.error) throw new Error("Scene reservation failed.");
+      if (!reserved.data) return "scene_unavailable";
+      const scene = reserved.data as Scene;
+      let result;
+      if (scene.submit) {
+        stage = "scene_submission";
+        submitting = true;
+        unboundSubmission = true;
+        result = await aiFilmDependencies.submitGeneration(
+          scene.model_config.endpoint,
+          scene.model_input,
+          filmCallbackUrl(order, job.montage_generation, index),
+        );
+        submitting = false;
+        const bound = await admin.rpc("bind_property_film_scene", {
+          p_order: order,
+          p_generation: job.montage_generation,
+          p_index: index,
+          p_request: result.request_id,
+        });
+        if (bound.error) throw new Error("Scene request could not be bound.");
+        if (!bound.data) return "revoked";
+        unboundSubmission = false;
+      } else {
+        stage = "scene_status";
+        if (!scene.request_id)
+          throw new Error("Scene request needs reconciliation.");
+        result = await aiFilmDependencies.generationStatus(scene.request_id);
+      }
+      if (["failed", "nsfw", "cancelled", "canceled"].includes(result.status)) {
+        await checkpoint(admin, job, {
+          p_error:
+            "Higgsfield could not generate this scene. Review the request in your API dashboard before requesting a new film.",
+          p_failure: "failed",
+        });
+        return "provider_failed";
+      }
+      if (result.status !== "completed") {
+        await checkpoint(admin, job);
+        return "generating";
+      }
+      stage = "scene_delivery";
+      const url = readPath(
+        result,
+        validateModel(scene.model_config).output.path,
+      );
+      if (typeof url !== "string")
+        throw new Error("Missing configured scene output.");
+      const media = await aiFilmDependencies.downloadVideo(url);
+      const clip = await aiFilmDependencies.normalizeGeneratedClip(
+        media.bytes,
+        Number(scene.model_input.duration),
+      );
+      await storeClip(admin, job, index, "raw", clip);
+      return (await checkpoint(admin, job, { p_scene: index }))
+        ? "ai_scene_saved"
+        : "revoked";
+    }
+    if (job.montage_edited_shots < plan.shots.length) {
+      stage = "scene_editing";
+      const index = job.montage_edited_shots;
+      const current = await savedClip(admin, job, index, "raw");
+      const previous =
+        index > 0 ? await savedClip(admin, job, index - 1, "raw") : undefined;
+      const next =
+        index + 1 < plan.shots.length
+          ? await savedClip(admin, job, index + 1, "raw")
+          : undefined;
+      await storeClip(
+        admin,
+        job,
+        index,
+        "shot",
+        await aiFilmDependencies.editGeneratedClip(current, previous, next),
+      );
+      return (await checkpoint(admin, job, { p_edit: index }))
+        ? "ai_scene_edited"
+        : "revoked";
+    }
+    stage = "film_assembly";
+    const clips: Buffer[] = [];
+    for (let i = 0; i < plan.shots.length; i++)
+      clips.push(await savedClip(admin, job, i, "shot"));
+    const film = await aiFilmDependencies.assembleFilm(clips, 2);
+    const digest = createHash("sha256").update(film).digest("hex").slice(0, 24);
+    const publicPath = `${job.owner_id}/${order}/higgsfield-${job.montage_generation}-${digest}.mp4`;
+    const upload = await admin.storage
+      .from("property-videos")
+      .upload(publicPath, film, {
+        upsert: true,
+        contentType: "video/mp4",
+        cacheControl: "31536000",
+      });
+    if (upload.error) throw new Error("Film delivery failed.");
+    const url = admin.storage.from("property-videos").getPublicUrl(publicPath)
+      .data.publicUrl;
+    if (!(await checkpoint(admin, job, { p_url: url }))) return "revoked";
+    try {
+      await admin.storage
+        .from("property-video-work")
+        .remove(
+          plan.shots.flatMap((_, i) => [
+            path(job, i, "raw"),
+            path(job, i, "shot"),
+          ]),
+        );
+    } catch {
+      /* delivered film remains valid */
+    }
+    return "completed";
+  } catch (error) {
+    const rejected =
+      submitting &&
+      (error instanceof AuthenticationError ||
+        error instanceof BadInputError ||
+        error instanceof NotEnoughCreditsError ||
+        error instanceof ValidationError);
+    const failure = rejected
+      ? "failed"
+      : unboundSubmission
+        ? "uncertain"
+        : "delayed";
+    console.warn(
+      JSON.stringify({
+        event: "higgsfield_film_step_deferred",
+        stage,
+        failure,
+      }),
+    );
+    await checkpoint(admin, job, {
+      p_failure: failure,
+      p_error: rejected
+        ? "Higgsfield rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
+        : unboundSubmission
+          ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in Higgsfield or wait for its callback."
+          : "Film processing is delayed. Saved generation requests and scenes will be reused without another automatic generation charge.",
+    });
+    return failure;
+  }
+}

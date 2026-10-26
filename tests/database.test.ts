@@ -314,6 +314,103 @@ test("protected administrators grant publication and video without faking paymen
       /permission denied/i,
     );
     await database.exec("reset role; set role service_role");
+    // Rebuild is an admin-only operation, preserves the old public film and
+    // creates a new private generation so stale workers cannot overwrite clips.
+    await database.exec("reset role");
+    const cinemaUpgrade = await readFile(
+      new URL("../supabase/sql-editor-cinematic-films.sql", import.meta.url),
+      "utf8",
+    );
+    await database.exec(cinemaUpgrade);
+    await database.exec(cinemaUpgrade);
+    await database.exec("set role authenticated");
+    await assert.rejects(
+      database.query("select admin_rebuild_property_film($1,$2)", [
+        propertyB,
+        agentA,
+      ]),
+      /permission denied/,
+    );
+    await database.exec("reset role; set role service_role");
+    await assert.rejects(
+      database.query("select admin_rebuild_property_film($1,$2)", [
+        propertyB,
+        agentB,
+      ]),
+      /Administrator access/,
+    );
+    await database.query("select admin_rebuild_property_film($1,$2)", [
+      propertyB,
+      agentA,
+    ]);
+    const rebuilt = (
+      await database.query<{
+        montage_generation: string;
+        video_url: string;
+        status: string;
+      }>("select montage_generation,video_url,status from property_video_jobs")
+    ).rows[0];
+    assert.ok(rebuilt.montage_generation);
+    assert.equal(rebuilt.video_url, "https://example.com/film.mp4");
+    assert.equal(rebuilt.status, "queued");
+    await assert.rejects(
+      database.query("select admin_rebuild_property_film($1,$2)", [
+        propertyB,
+        agentA,
+      ]),
+      /already processing/,
+    );
+    await database.exec("reset role; set role anon");
+    assert.equal(
+      (
+        await database.query<{
+          get_public_property: { film: { src: string } };
+        }>("select get_public_property('admin-test-home')")
+      ).rows[0].get_public_property.film.src,
+      "https://example.com/film.mp4",
+    );
+    await database.exec("reset role; set role service_role");
+    assert.equal(
+      (
+        await database.query<{ checkpoint_property_montage: boolean }>(
+          "select checkpoint_property_montage($1,$2,1,null,null,'https://example.com/stale.mp4')",
+          [order.id, lease],
+        )
+      ).rows[0].checkpoint_property_montage,
+      false,
+    );
+    const nextLease = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    await database.query("select claim_property_montage($1,$2)", [
+      order.id,
+      nextLease,
+    ]);
+    await database.query("select checkpoint_property_montage($1,$2,1,$3)", [
+      order.id,
+      nextLease,
+      JSON.stringify(plan),
+    ]);
+    await database.exec(
+      "update property_video_jobs set next_poll_at=now()-interval '1 second'",
+    );
+    await database.query("select claim_property_montage($1,$2)", [
+      order.id,
+      nextLease,
+    ]);
+    await database.query("select checkpoint_property_montage($1,$2,1,null,1)", [
+      order.id,
+      nextLease,
+    ]);
+    await database.exec(
+      "update property_video_jobs set next_poll_at=now()-interval '1 second'",
+    );
+    await database.query("select claim_property_montage($1,$2)", [
+      order.id,
+      nextLease,
+    ]);
+    await database.query(
+      "select checkpoint_property_montage($1,$2,1,null,null,'https://example.com/new-film.mp4')",
+      [order.id, nextLease],
+    );
     // Real payment events remain truthful and cannot revoke independent admin access.
     await database.query(
       "select apply_property_payment($1,'pi_late_real_payment','paid',100)",
@@ -1486,6 +1583,273 @@ test("Higgsfield jobs lease one submission, recover callbacks without a second c
       publicData.rows[0].get_public_property.film.src,
       "https://storage.example/video.mp4",
     );
+  } finally {
+    await database.close();
+  }
+});
+
+test("multi-photo Higgsfield requests are reserved once, recover by callback, keep leases and reject refunded work", async () => {
+  const database = await createTestDatabase();
+  try {
+    await database.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-setup.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const upgrade = await readFile(
+      new URL("../supabase/sql-editor-higgsfield-films.sql", import.meta.url),
+      "utf8",
+    );
+    await database.exec(upgrade);
+    await database.exec(upgrade);
+    await database.query(
+      "insert into auth.users(id,email) values($1,'admin@example.com'),($2,'agent@example.com')",
+      [agentA, agentB],
+    );
+    await database.exec(
+      "update profiles set name='Agent Name',phone='+1 555 123 4567'; select grant_platform_admin('admin@example.com'); select activate_property_billing()",
+    );
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$2,'ai-film-home','A lovely home','A detailed property description for our cinematic film.','Austin',500000,1500,array['https://example.com/front.jpg','https://example.com/back.jpg'])",
+      [propertyB, agentB],
+    );
+    await database.exec("set role service_role");
+    await database.query("select admin_publish_property($1,$2,'Showcase')", [
+      propertyB,
+      agentA,
+    ]);
+    const order = (
+      await database.query<{ id: string }>(
+        "select id from property_orders where property_id=$1",
+        [propertyB],
+      )
+    ).rows[0].id;
+    const a = "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      b = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const model = {
+      endpoint: "minimax/hailuo-2.3/standard/image-to-video",
+      input: { duration: 6 },
+      output: { kind: "video", path: "video.url" },
+    };
+    const claim = async (lease: string) =>
+      (
+        await database.query<{
+          claim_property_ai_film: { montage_generation: string } | null;
+        }>("select claim_property_ai_film($1,$2,$3)", [
+          order,
+          lease,
+          JSON.stringify(model),
+        ])
+      ).rows[0].claim_property_ai_film;
+    const reserve = async (lease: string) =>
+      (
+        await database.query<{
+          reserve_property_film_scene: {
+            submit: boolean;
+            request_id: string;
+          } | null;
+        }>("select reserve_property_film_scene($1,$2,1,'{\"duration\":6}')", [
+          order,
+          lease,
+        ])
+      ).rows[0].reserve_property_film_scene;
+    const due = () =>
+      database.exec(
+        "update property_video_jobs set next_poll_at=now()-interval '1 second',lease_until=now()-interval '1 second'",
+      );
+    const first = await claim(a);
+    assert.ok(first);
+    assert.equal(await claim(b), null);
+    const generation = first.montage_generation;
+    assert.equal(
+      (
+        await database.query<{ bind_property_video_request: boolean }>(
+          "select bind_property_video_request($1,1,'legacy_late_callback')",
+          [order],
+        )
+      ).rows[0].bind_property_video_request,
+      false,
+      "Legacy callbacks cannot attach to a new film generation",
+    );
+    const plan = {
+      engine: "higgsfield-montage-v1",
+      shots: [
+        { image: "https://example.com/front.jpg" },
+        { image: "https://example.com/back.jpg" },
+      ],
+    };
+    await database.query("select checkpoint_property_ai_film($1,$2,1,$3)", [
+      order,
+      a,
+      JSON.stringify(plan),
+    ]);
+    await due();
+    await claim(a);
+    assert.equal((await reserve(a))?.submit, true);
+    // Process dies after sending POST, before saving its request ID.
+    await due();
+    await claim(b);
+    assert.equal(await reserve(b), null);
+    assert.equal(
+      (
+        await database.query<{ provider_phase: string }>(
+          "select provider_phase from property_video_jobs",
+        )
+      ).rows[0].provider_phase,
+      "uncertain",
+    );
+    assert.equal(
+      await claim(a),
+      null,
+      "Uncertain submissions are not automatically retried",
+    );
+    assert.equal(
+      (
+        await database.query<{ bind_property_film_scene: boolean }>(
+          "select bind_property_film_scene($1,$2,0,'hf_first')",
+          [order, generation],
+        )
+      ).rows[0].bind_property_film_scene,
+      true,
+    );
+    await claim(b);
+    assert.deepEqual((await reserve(b))?.submit, false);
+    assert.equal((await reserve(b))?.request_id, "hf_first");
+    assert.equal(
+      (
+        await database.query<{ checkpoint_property_ai_film: boolean }>(
+          "select checkpoint_property_ai_film($1,$2,1,null,0)",
+          [order, a],
+        )
+      ).rows[0].checkpoint_property_ai_film,
+      false,
+      "Stale lease rejected",
+    );
+    assert.equal(
+      (
+        await database.query<{ checkpoint_property_ai_film: boolean }>(
+          "select checkpoint_property_ai_film($1,$2,1,null,null,0)",
+          [order, b],
+        )
+      ).rows[0].checkpoint_property_ai_film,
+      false,
+      "Cannot edit before generation finishes",
+    );
+    await database.query("select checkpoint_property_ai_film($1,$2,1,null,0)", [
+      order,
+      b,
+    ]);
+    await due();
+    await claim(a);
+    assert.equal((await reserve(a))?.submit, true);
+    await database.query(
+      "select bind_property_film_scene($1,$2,1,'hf_second')",
+      [order, generation],
+    );
+    await database.query("select checkpoint_property_ai_film($1,$2,1,null,1)", [
+      order,
+      a,
+    ]);
+    for (let i = 0; i < 2; i++) {
+      await due();
+      await claim(a);
+      await database.query(
+        "select checkpoint_property_ai_film($1,$2,1,null,null,$3)",
+        [order, a, i],
+      );
+    }
+    await due();
+    await claim(a);
+    await database.query(
+      "select checkpoint_property_ai_film($1,$2,1,null,null,null,'https://example.com/ai-film.mp4')",
+      [order, a],
+    );
+    assert.equal(
+      (await database.query("select * from property_film_scenes")).rows.length,
+      2,
+    );
+    await database.query(
+      "select admin_rebuild_property_film($1,$2,'higgsfield-montage-v1')",
+      [propertyB, agentA],
+    );
+    const rebuilt = await claim(a);
+    assert.ok(rebuilt);
+    assert.notEqual(rebuilt.montage_generation, generation);
+    assert.equal(
+      (
+        await database.query<{ bind_property_film_scene: boolean }>(
+          "select bind_property_film_scene($1,$2,0,'hf_stale')",
+          [order, generation],
+        )
+      ).rows[0].bind_property_film_scene,
+      false,
+    );
+    await database.exec("reset role; set role authenticated");
+    await assert.rejects(
+      database.query("select * from property_film_scenes"),
+      /permission denied/,
+    );
+    await assert.rejects(claim(a), /permission denied/);
+    // An ordinary paid order loses generation/delivery eligibility on refund.
+    await database.exec("reset role");
+    await database.query(
+      "delete from property_admin_grants where order_id=$1",
+      [order],
+    );
+    await database.exec("set role service_role");
+    await database.query(
+      "select apply_property_payment($1,'pi_ai_film','paid',100)",
+      [order],
+    );
+    await database.query("select checkpoint_property_ai_film($1,$2,1,$3)", [
+      order,
+      a,
+      JSON.stringify(plan),
+    ]);
+    await database.query(
+      "select apply_property_payment($1,'pi_ai_film','disputed',150)",
+      [order],
+    );
+    await database.query(
+      "select apply_property_payment($1,'pi_ai_film','paid',200)",
+      [order],
+    );
+    await database.query("select request_property_publication($1,$2)", [
+      propertyB,
+      agentB,
+    ]);
+    const resumed = (
+      await database.query<{
+        status: string;
+        montage_generation: string;
+        montage_plan: unknown;
+      }>(
+        "select status,montage_generation,montage_plan from property_video_jobs",
+      )
+    ).rows[0];
+    assert.equal(resumed.status, "processing");
+    assert.equal(resumed.montage_generation, rebuilt.montage_generation);
+    assert.ok(
+      resumed.montage_plan,
+      "Won disputes preserve the existing provider film plan",
+    );
+    await database.query(
+      "select apply_property_payment($1,'pi_ai_film','refunded',300)",
+      [order],
+    );
+    assert.equal(await reserve(a), null);
+    assert.equal(
+      (
+        await database.query<{ checkpoint_property_ai_film: boolean }>(
+          "select checkpoint_property_ai_film($1,$2,1,$3)",
+          [order, a, JSON.stringify(plan)],
+        )
+      ).rows[0].checkpoint_property_ai_film,
+      false,
+    );
+    await due();
+    assert.equal(await claim(a), null);
   } finally {
     await database.close();
   }

@@ -13,6 +13,8 @@ type Detail = {
   video: {
     status: string;
     attempts: number;
+    canRebuild?: boolean;
+    rebuildUsesCredits?: boolean;
     completed: number;
     total: number;
     error: string | null;
@@ -64,6 +66,25 @@ export function AdminProperty({ id }: { id: string }) {
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Publication unavailable.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function rebuildFilm() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await adminRequest("rebuild-film", { propertyId: id });
+      await refresh();
+      setNotice(
+        "Your new film is queued. The current video stays available until its replacement is ready. No new property payment is required.",
+      );
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "The film could not be queued.",
+      );
     } finally {
       setBusy(false);
     }
@@ -120,6 +141,26 @@ export function AdminProperty({ id }: { id: string }) {
                 {data.grant.reason}
               </p>
             )}
+            {data.video?.canRebuild && data.video.rebuildUsesCredits && (
+              <p>
+                Rebuilding generates up to{" "}
+                {Math.min(data.property.images.length, 23)} new scenes through
+                Higgsfield and uses your API credits. There is no new $97
+                property payment.
+              </p>
+            )}
+            {data.video?.canRebuild && (
+              <button
+                className="button secondary"
+                disabled={busy}
+                onClick={() => void rebuildFilm()}
+              >
+                {data.video.rebuildUsesCredits
+                  ? "Rebuild video · Uses API credits"
+                  : "Rebuild video · No property fee"}
+              </button>
+            )}
+            {data.video?.error && <p role="status">{data.video.error}</p>}
             {data.video && (
               <p role="status">
                 Video: {data.video.status}

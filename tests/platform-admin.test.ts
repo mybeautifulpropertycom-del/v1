@@ -22,10 +22,12 @@ let serviceReads = 0,
   publicationError = "";
 let actions: string[] = [],
   payload: Record<string, unknown> | null = null;
+let REBUILD: typeof import("../src/app/api/admin/rebuild-film/route").POST;
 let PUBLISH: typeof import("../src/app/api/admin/publish/route").POST;
 let ACCOUNTS: typeof import("../src/app/api/admin/accounts/route").GET;
 let PROPERTIES: typeof import("../src/app/api/admin/properties/route").GET;
 before(async () => {
+  ({ POST: REBUILD } = await import("../src/app/api/admin/rebuild-film/route"));
   ({ POST: PUBLISH } = await import("../src/app/api/admin/publish/route"));
   ({ GET: ACCOUNTS } = await import("../src/app/api/admin/accounts/route"));
   ({ GET: PROPERTIES } = await import("../src/app/api/admin/properties/route"));
@@ -126,7 +128,12 @@ globalThis.fetch = async (input, init) => {
     url.pathname === "/rest/v1/property_admin_grants"
   )
     return Response.json(null);
-  if (url.pathname === "/rest/v1/rpc/admin_publish_property") {
+  if (
+    [
+      "/rest/v1/rpc/admin_publish_property",
+      "/rest/v1/rpc/admin_rebuild_property_film",
+    ].includes(url.pathname)
+  ) {
     actions.push("publish");
     payload = JSON.parse(String(init?.body));
     if (publicationError)
@@ -228,4 +235,34 @@ test("in-flight payments and concurrent checkout or role changes do not receive 
   assert.equal((await PUBLISH(request())).status, 409);
   publicationError = "42501";
   assert.equal((await PUBLISH(request())).status, 403);
+});
+
+test("film rebuild verifies admin identity, enabled photo mode and transactional conflict responses", async () => {
+  process.env.PROPERTY_VIDEO_MODE = "photo-montage";
+  assert.equal((await REBUILD(request({}, false))).status, 401);
+  assert.equal((await REBUILD(request())).status, 403);
+  authorized = true;
+  assert.equal(
+    (await REBUILD(request())).status,
+    409,
+    "Disabled worker never silently queues a rebuild",
+  );
+  process.env.HIGGSFIELD_ENABLED = "true";
+  publicationError = "P0409";
+  assert.equal(
+    (await REBUILD(request({ propertyId: id, actor_id: agent }))).status,
+    409,
+  );
+  assert.deepEqual(payload, {
+    listing_id: id,
+    actor_id: actor,
+    target_engine: "photo-montage-v1",
+  });
+  publicationError = "42501";
+  assert.equal(
+    (await REBUILD(request())).status,
+    403,
+    "Database rechecks revoked administrator rights",
+  );
+  delete process.env.HIGGSFIELD_ENABLED;
 });

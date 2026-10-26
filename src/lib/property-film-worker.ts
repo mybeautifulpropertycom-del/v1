@@ -5,6 +5,7 @@ import {
   makeFilmPlan,
   validateFilmPlan,
   type FilmPlan,
+  type FilmShot,
 } from "./property-film-plan";
 import {
   assembleFilm,
@@ -17,6 +18,7 @@ type MontageJob = {
   owner_id: string;
   property_id: string;
   attempts: number;
+  montage_generation?: string;
   lease_token: string;
   source: Record<string, unknown>;
   montage_plan: FilmPlan | null;
@@ -88,7 +90,7 @@ export const filmDependencies = {
   assembleFilm,
 };
 const workPath = (job: MontageJob, shot: number) =>
-  `${job.owner_id}/${job.order_id}/film-${job.attempts}/shot-${shot}.mp4`;
+  `${job.owner_id}/${job.order_id}/${job.montage_generation ? `generation-${job.montage_generation}/` : ""}film-${job.attempts}/shot-${shot}.mp4`;
 
 async function checkpoint(
   admin: SupabaseClient,
@@ -148,7 +150,22 @@ export async function runPropertyFilm(
       if ((await filmDependencies.photoFingerprint(bytes)) !== shot.fingerprint)
         throw new Error("A film photograph changed after planning.");
       stage = "scene_rendering";
-      const segment = await filmDependencies.renderFilmShot(bytes, shot);
+      const neighbour = async (item?: FilmShot) => {
+        if (!item || plan.version === 1) return undefined;
+        const image = await filmDependencies.downloadPhoto(item.image);
+        if (
+          (await filmDependencies.photoFingerprint(image)) !== item.fingerprint
+        )
+          throw new Error("A transition photograph changed after planning.");
+        return { bytes: image, shot: item };
+      };
+      const previous = await neighbour(plan.shots[index - 1]);
+      const next = await neighbour(plan.shots[index + 1]);
+      const segment = await filmDependencies.renderFilmShot(bytes, shot, {
+        version: plan.version,
+        previous,
+        next,
+      });
       stage = "scene_storage";
       const { error: uploadError } = await admin.storage
         .from("property-video-work")
@@ -177,7 +194,7 @@ export async function runPropertyFilm(
       segments.push(...batch);
     }
     stage = "film_assembly";
-    const film = await filmDependencies.assembleFilm(segments);
+    const film = await filmDependencies.assembleFilm(segments, plan.version);
     // Content-addressed public name prevents a stale/refunded worker from
     // overwriting a different completed film at the same object path.
     const digest = createHash("sha256").update(film).digest("hex").slice(0, 24);

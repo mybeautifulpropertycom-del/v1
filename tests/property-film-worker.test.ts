@@ -13,6 +13,7 @@ let job: {
   owner_id: string;
   property_id: string;
   attempts: number;
+  montage_generation?: string;
   lease_token: string;
   source: { images: string[] };
   montage_plan: FilmPlan | null;
@@ -152,4 +153,39 @@ test("a stale completion cannot delete a film potentially delivered by another l
   revoked = true;
   assert.equal(await runPropertyFilm(admin, "order"), "revoked");
   assert.equal(removals.length, 0);
+});
+
+test("rebuilding isolates private scene files and preserves pinned legacy rendering", async () => {
+  job.montage_generation = "fresh-generation";
+  await runPropertyFilm(admin, "order");
+  let renderVersion: number | undefined, assemblyVersion: number | undefined;
+  filmDependencies.renderFilmShot = async (_bytes, _shot, options) => {
+    renderVersion = options?.version;
+    return Buffer.from("scene");
+  };
+  filmDependencies.assembleFilm = async (_segments, version) => {
+    assemblyVersion = version;
+    return Buffer.from("new-film");
+  };
+  await runPropertyFilm(admin, "order");
+  assert.equal(renderVersion, 2);
+  assert.ok(
+    uploads[0].includes("generation-fresh-generation/film-1/shot-0.mp4"),
+  );
+  await runPropertyFilm(admin, "order");
+  await runPropertyFilm(admin, "order");
+  assert.equal(assemblyVersion, 2);
+  job.montage_next_shot = 0;
+  job.montage_generation = undefined;
+  job.montage_plan = {
+    ...job.montage_plan!,
+    version: 1,
+    music: "original-instrumental-v1",
+  };
+  await runPropertyFilm(admin, "order");
+  assert.equal(
+    renderVersion,
+    1,
+    "An in-flight legacy plan is not mixed with new-renderer segments",
+  );
 });

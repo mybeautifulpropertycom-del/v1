@@ -59,7 +59,9 @@ export async function GET(request: Request) {
           .select(
             process.env.HIGGSFIELD_ENABLED === "true"
               ? "status,video_url,poster_url,provider_phase,attempts,updated_at,last_error" +
-                  (process.env.PROPERTY_VIDEO_MODE === "photo-montage"
+                  (["photo-montage", "higgsfield-montage"].includes(
+                    process.env.PROPERTY_VIDEO_MODE || "",
+                  )
                     ? ",montage_plan,montage_next_shot"
                     : "")
               : "status,video_url,poster_url,attempts,updated_at",
@@ -86,7 +88,9 @@ export async function GET(request: Request) {
         publicPath: property ? `/p/${property.slug}` : null,
         publicationError: order?.publication_error ?? null,
         videoStatus: job?.status ?? null,
-        videoNeedsReview: job?.provider_phase === "uncertain",
+        videoNeedsReview: ["uncertain", "provider_failed"].includes(
+          job?.provider_phase || "",
+        ),
         videoAttempts: job?.attempts ?? 0,
         videoError: job?.last_error ?? null,
         videoProgress: job?.montage_plan?.shots?.length
@@ -97,10 +101,13 @@ export async function GET(request: Request) {
           : null,
         canRetryVideo:
           job?.status === "failed" &&
+          !["uncertain", "provider_failed"].includes(
+            job?.provider_phase || "",
+          ) &&
           job.attempts < 3 &&
           Date.now() - Date.parse(job.updated_at) >= 60000,
         film:
-          state.allowed && job?.status === "completed" && job.video_url
+          state.allowed && job?.video_url
             ? { src: job.video_url, poster: job.poster_url }
             : null,
       });
