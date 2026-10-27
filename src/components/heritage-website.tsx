@@ -1,6 +1,7 @@
 "use client";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
+import { FooterBrand } from "./footer-brand";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -742,9 +743,12 @@ export function HeritageWebsite({
           </div>
         </section>
       </main>
-      <footer className="heritage-footer heritage-pad">
-        <a href="#home">
-          {profile.agency || profile.name}
+      <footer className="heritage-footer heritage-pad property-footer">
+        <a href="#home" className="footer-identity">
+          <span className="footer-agent-details">
+            <span>{profile.agency || profile.name}</span>
+            <span className="footer-mobile-address">{property.location}</span>
+          </span>
           <Asterisk size={18} strokeWidth={1} />
         </a>
         <p>
@@ -752,9 +756,9 @@ export function HeritageWebsite({
           <br />
           Details are subject to verification.
         </p>
-        <a href="/">
+        <FooterBrand>
           Made with my beautiful property. <ArrowUpRight size={12} />
-        </a>
+        </FooterBrand>
       </footer>
       {viewing && (
         <ViewingDialog

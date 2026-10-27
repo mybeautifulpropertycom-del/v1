@@ -1,6 +1,7 @@
 "use client";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
+import { FooterBrand } from "./footer-brand";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -637,9 +638,12 @@ export function AtelierWebsite({
           </span>
         </section>
       </main>
-      <footer className="atelier-footer atelier-pad">
-        <a href="#home">
-          {profile.agency || profile.name}
+      <footer className="atelier-footer atelier-pad property-footer">
+        <a href="#home" className="footer-identity">
+          <span className="footer-agent-details">
+            <span>{profile.agency || profile.name}</span>
+            <span className="footer-mobile-address">{property.location}</span>
+          </span>
           <ArrowUpRight size={16} />
         </a>
         <p>
@@ -647,11 +651,11 @@ export function AtelierWebsite({
           <br />
           Details are subject to verification.
         </p>
-        <a href="/">
+        <FooterBrand>
           Made beautiful with
           <br />
           <strong>my beautiful property.</strong>
-        </a>
+        </FooterBrand>
       </footer>
       <div className="atelier-mobile-tour">
         <span>
