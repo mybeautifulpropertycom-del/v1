@@ -1,4 +1,9 @@
-import { publicationErrors, type Profile, type Property } from "@/lib/model";
+import {
+  publicPath,
+  publicationErrors,
+  type Profile,
+  type Property,
+} from "@/lib/model";
 import { embeddedCheckout } from "@/lib/embedded-checkout";
 import { createLiveCheckout, liveBillingStatus } from "@/lib/stripe-live";
 import {
@@ -40,7 +45,7 @@ export async function GET(request: Request) {
       throw new BillingError("Choose a property.", 400);
     const { data: property, error } = await db
       .from("properties")
-      .select("id,status,slug")
+      .select("*")
       .eq("id", id)
       .eq("owner_id", user.id)
       .maybeSingle();
@@ -85,7 +90,7 @@ export async function GET(request: Request) {
       return billingJson({
         ...state,
         published: property?.status === "published",
-        publicPath: property ? `/p/${property.slug}` : null,
+        publicPath: property ? publicPath(property) : null,
         publicationError: order?.publication_error ?? null,
         videoStatus: job?.status ?? null,
         videoNeedsReview: ["uncertain", "provider_failed"].includes(

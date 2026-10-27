@@ -156,3 +156,18 @@ await writeFile(
   new URL("../supabase/sql-editor-higgsfield-films.sql", import.meta.url),
   `-- Run this ENTIRE file after MBP_ADMIN_READY. Preserves existing published films.\nbegin;\n${cinematic.trim()}\n${aiFilms.trim()}\ncommit;\nselect 'MBP_HIGGSFIELD_FILMS_READY' as status;\n`,
 );
+
+const addressUrls = await readFile(
+  new URL("202610270001_address_urls.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-address-urls.sql", import.meta.url),
+  `-- Run this ENTIRE file after MBP_ADMIN_READY.
+-- Adds address URLs for published properties, preserving existing links. No payments or video generations.
+begin;
+${addressUrls.trim()}
+commit;
+select 'MBP_ADDRESS_URLS_READY' as status;
+`,
+);

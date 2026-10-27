@@ -40,7 +40,7 @@ async function fixture(page: Page) {
         paid,
         allowed: paid,
         published: paid,
-        publicPath: "/p/published-browser-home",
+        publicPath: "/123-palm-drive",
         videoStatus: paid ? "queued" : null,
       },
     });
@@ -126,7 +126,7 @@ test("completed embedded checkout waits for server publication, shows the live l
   );
   await expect(
     page.getByRole("dialog").getByRole("link", { name: "View live website" }),
-  ).toHaveAttribute("href", "/p/published-browser-home");
+  ).toHaveAttribute("href", "/123-palm-drive");
   expect(setup.state.property.status).toBe("published");
   await page.getByRole("button", { name: "Back to editing" }).click();
   await expect(page.locator(".property-video-prompt")).toContainText(

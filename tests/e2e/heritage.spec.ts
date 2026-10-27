@@ -133,7 +133,7 @@ test("reviewed property copy persists, captions match images, and changed facts 
     page.locator(".heritage-story .heritage-section-heading h2"),
   ).toContainText("Your Austin story.");
   await page.goto("/dashboard/properties/demo-apartment");
-  await page.getByLabel(/^Location/).fill("Portland, OR");
+  await page.getByLabel(/^Address/).fill("Portland, OR");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await expect(
     page.getByText("Your changes are saved.", { exact: true }),

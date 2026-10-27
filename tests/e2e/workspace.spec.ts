@@ -28,7 +28,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
 }) => {
   await page.goto("/dashboard/properties/new");
   await page.getByLabel("Property headline").fill("A new chapter in Austin");
-  await page.getByLabel("Location", { exact: false }).fill("Austin, TX");
+  await page.getByLabel("Address", { exact: false }).fill("Austin, TX");
   await page.getByLabel("Price", { exact: true }).fill("695000");
   await page.getByLabel("Property size").fill("2100");
   await page

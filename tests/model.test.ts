@@ -7,6 +7,7 @@ import {
   propertyErrors,
   publicationErrors,
   slugify,
+  publicPath,
 } from "../src/lib/model";
 import { demoWorkspace } from "../src/lib/demo";
 import { validateInquiry } from "../src/lib/validation";
@@ -83,4 +84,12 @@ test("inquiries normalize contact details and reject invalid or oversized inputs
     { ...valid, name: 123 },
   ])
     assert.equal(validateInquiry(invalid).ok, false);
+});
+
+test("public links use allocated addresses and retain legacy fallback until migration", () => {
+  assert.equal(
+    publicPath({ slug: "property-123", address_slug: "123-palm-drive" }),
+    "/123-palm-drive",
+  );
+  assert.equal(publicPath({ slug: "property-123" }), "/p/property-123");
 });

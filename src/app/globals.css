@@ -1830,6 +1830,13 @@ label small {
   font-size: 9px;
   color: #a3ac92;
 }
+.editor-site-link > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.editor-site-link > svg {
+  flex-shrink: 0;
+}
 .editor-preview-card .button {
   font-size: 10px;
   min-height: 38px;

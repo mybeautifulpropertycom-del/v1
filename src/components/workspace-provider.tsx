@@ -208,10 +208,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       nextProperty.slug = `${slugify(property.title)}-${property.id}`;
     const supabase = getSupabase();
     if (supabase) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("properties")
         .upsert(nextProperty)
-        .select("id")
+        .select("*")
         .single();
       if (error)
         throw new Error(
@@ -219,6 +219,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
             ? "Complete the $97 payment in Website design before publishing this property."
             : "Your property was not saved. Check the details and your connection, then try again.",
         );
+      Object.assign(nextProperty, data);
     }
     const next = {
       ...stateRef.current!,

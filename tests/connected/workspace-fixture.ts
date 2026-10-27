@@ -108,7 +108,7 @@ export async function workspace(
     if (url.pathname === "/rest/v1/properties") {
       if (route.request().method() === "POST") {
         property = route.request().postDataJSON();
-        return route.fulfill({ json: { id: property.id } });
+        return route.fulfill({ json: property });
       }
       return route.fulfill({
         json: deleted ? [] : url.searchParams.has("id") ? property : [property],

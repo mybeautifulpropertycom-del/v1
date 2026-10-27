@@ -150,7 +150,7 @@ test("missing configuration keeps the draft saved, shows a useful error, and all
     }),
   );
   await page.goto(`/dashboard/properties/${id}`);
-  await page.getByLabel(/^Location/).fill("Austin, TX");
+  await page.getByLabel(/^Address/).fill("Austin, TX");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await expect(page.locator(".editor-error")).toContainText(
     "AI_NOT_CONFIGURED",

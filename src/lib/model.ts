@@ -14,6 +14,7 @@ export type Property = {
   id: string;
   owner_id: string;
   slug: string;
+  address_slug?: string | null;
   title: string;
   description: string;
   location: string;
@@ -122,7 +123,7 @@ export function publicationErrors(
   const errors = profileErrors(profile);
   if (property.title.trim().length < 5)
     errors.push("The headline needs at least 5 characters.");
-  if (!property.location.trim()) errors.push("Add the property location.");
+  if (!property.location.trim()) errors.push("Add the property address.");
   if (property.description.trim().length < 30)
     errors.push("Add a description of at least 30 characters.");
   if (!Number.isFinite(property.price) || property.price <= 0)
@@ -167,7 +168,7 @@ export function propertyErrors(property: Property): string[] {
     property.location.length > 200 ||
     property.description.length > 12000
   )
-    errors.push("The headline, location, or description is too long.");
+    errors.push("The headline, address, or description is too long.");
   if (property.images.length > 20 || property.amenities.length > 30)
     errors.push("Use up to 20 photos and 30 amenities.");
   return errors;
@@ -179,8 +180,12 @@ export function formatPrice(
   return `${new Intl.NumberFormat(locale, { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}${p.transaction === "rent" ? " / mo" : ""}`;
 }
 
-export function publicPath(property: Property): string {
-  return `/p/${property.slug}`;
+export function publicPath(
+  property: Pick<Property, "slug" | "address_slug">,
+): string {
+  return property.address_slug
+    ? `/${property.address_slug}`
+    : `/p/${property.slug}`;
 }
 
 export function safePhone(phone: string): string {

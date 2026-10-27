@@ -2,7 +2,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { adminRequest } from "@/lib/admin-client";
-import { type Property, type Profile, publicationErrors } from "@/lib/model";
+import {
+  type Property,
+  type Profile,
+  publicationErrors,
+  publicPath,
+} from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { PropertyWebsite } from "./property-website";
 
@@ -127,7 +132,7 @@ export function AdminProperty({ id }: { id: string }) {
             {data.property.status === "published" && (
               <Link
                 className="button secondary"
-                href={`/p/${data.property.slug}`}
+                href={publicPath(data.property)}
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -362,16 +362,16 @@ export function PropertyEditor({
                     />
                   </label>
                   <label className="full-width">
-                    Location
+                    Address
                     <input
                       value={property.location}
                       maxLength={200}
-                      placeholder="Beverly Hills, CA"
+                      placeholder="123 Palm Drive, Beverly Hills, CA"
                       onChange={(e) => update("location", e.target.value)}
                     />
                     <small>
-                      Use a full address or a neighborhood and city. This
-                      appears publicly.
+                      Enter the property’s address. It appears on the website
+                      and becomes its public link when you publish.
                     </small>
                   </label>
                   <label>
@@ -722,7 +722,12 @@ export function PropertyEditor({
             <p>{property.location || "Somewhere worth calling home"}</p>
             <div className="editor-site-link">
               <Globe2 size={14} />
-              <span>mybeautifulproperty.com/p/…</span>
+              <span>
+                mybeautifulproperty.com
+                {property.address_slug
+                  ? publicPath(property)
+                  : "/your-property-address"}
+              </span>
             </div>
             {saved && !busy && (
               <Link
