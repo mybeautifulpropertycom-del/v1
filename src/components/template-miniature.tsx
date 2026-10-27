@@ -1,8 +1,9 @@
-import { photos } from "@/lib/demo";
+import { templatePhotos } from "@/lib/template-photos";
+import { PropertyImage } from "./property-image";
 import type { TemplateId } from "@/lib/model";
 export function TemplateMiniature({
   template,
-  image = photos.villa,
+  image = templatePhotos[0],
 }: {
   template: TemplateId;
   image?: string;
@@ -15,15 +16,10 @@ export function TemplateMiniature({
           <span>MENU +</span>
         </div>
         <div className="mini-atelier-gallery">
-          <img src={image} alt="" loading="lazy" />
+          <PropertyImage src={image} alt="" sizes="320px" />
           <div>
-            {[
-              photos.interior,
-              photos.bedroom,
-              photos.kitchen,
-              photos.apartment,
-            ].map((src, i) => (
-              <img src={src || image} alt="" key={i} loading="lazy" />
+            {templatePhotos.slice(1, 5).map((src) => (
+              <PropertyImage src={src} alt="" key={src} sizes="160px" />
             ))}
           </div>
         </div>
@@ -69,7 +65,7 @@ export function TemplateMiniature({
           </strong>
           <i>EXPLORE THE PROPERTY ↗</i>
         </div>
-        <img src={image} alt="" loading="lazy" />
+        <PropertyImage src={image} alt="" sizes="480px" />
       </div>
       <div className="mini-bottom">
         <span>DESIGNED FOR LIVING</span>

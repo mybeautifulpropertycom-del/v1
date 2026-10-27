@@ -192,7 +192,7 @@ test("Heritage gallery filters real photographs and opens the right image", asyn
   page,
 }) => {
   await page.goto("/templates/minimal");
-  await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(4);
+  await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(40);
   await page
     .getByRole("button", { name: "First impressions", exact: true })
     .click();
@@ -208,7 +208,7 @@ test("Heritage gallery filters real photographs and opens the right image", asyn
   await page
     .getByRole("button", { name: "All photographs", exact: true })
     .click();
-  await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(4);
+  await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(40);
   const ids = await page
     .locator("main > section[id]")
     .evaluateAll((nodes) => nodes.map((node) => node.id));

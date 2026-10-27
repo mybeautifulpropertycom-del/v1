@@ -134,7 +134,7 @@ test("the pinned photographs change on scroll and remain separate from the compl
   await expect(scroll.locator("button, a, svg")).toHaveCount(0);
   await expect(scroll).not.toContainText("Take a closer look");
   await expect(scroll).not.toContainText("SCROLL TO DISCOVER");
-  await expect(page.locator(".estate-gallery-grid > button")).toHaveCount(4);
+  await expect(page.locator(".estate-gallery-grid > button")).toHaveCount(40);
   const photo = page.getByRole("button", {
     name: "Enlarge property photo 3",
     exact: true,
@@ -143,7 +143,7 @@ test("the pinned photographs change on scroll and remain separate from the compl
   await expect(
     page.getByRole("dialog", { name: "Property photo gallery" }),
   ).toBeVisible();
-  await expect(page.locator(".lightbox > span")).toHaveText("3 / 4");
+  await expect(page.locator(".lightbox > span")).toHaveText("3 / 40");
   await page.keyboard.press("Escape");
   await expect(photo).toBeFocused();
   const sections = await page

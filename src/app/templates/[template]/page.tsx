@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PropertyWebsite } from "@/components/property-website";
 import { demoWorkspace } from "@/lib/demo";
+import { templatePhotos } from "@/lib/template-photos";
 import { templates, type TemplateId } from "@/lib/model";
 export const metadata = { robots: { index: false, follow: false } };
 export default async function Page({
@@ -13,7 +14,11 @@ export default async function Page({
   const data = demoWorkspace();
   return (
     <PropertyWebsite
-      property={{ ...data.properties[0], template: template as TemplateId }}
+      property={{
+        ...data.properties[0],
+        images: templatePhotos,
+        template: template as TemplateId,
+      }}
       profile={data.profile}
       sample
     />

@@ -5,16 +5,16 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
 }) => {
   await page.goto("/templates/panorama");
   const mosaic = page.locator(".atelier-mosaic");
-  await expect(mosaic.locator("img")).toHaveCount(4);
+  await expect(mosaic.locator("img")).toHaveCount(7);
   expect(
     await mosaic.evaluate((node) => node.getBoundingClientRect().top),
   ).toBeLessThan(200);
   await mosaic
     .getByRole("button", { name: "Enlarge property photo 3", exact: true })
     .click();
-  await expect(page.locator(".lightbox>span")).toHaveText("3 / 4");
+  await expect(page.locator(".lightbox>span")).toHaveText("3 / 40");
   await page.keyboard.press("ArrowRight");
-  await expect(page.locator(".lightbox>span")).toHaveText("4 / 4");
+  await expect(page.locator(".lightbox>span")).toHaveText("4 / 40");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
@@ -24,9 +24,9 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
     }),
   ).toBeFocused();
   const gallery = page.locator(".atelier-photo-grid");
-  await expect(gallery.locator("figure")).toHaveCount(4);
+  await expect(gallery.locator("figure")).toHaveCount(40);
   await gallery.getByRole("button", { name: "Enlarge property photo 4", exact: true }).click();
-  await expect(page.locator(".lightbox>span")).toHaveText("4 / 4");
+  await expect(page.locator(".lightbox>span")).toHaveText("4 / 40");
   await page.keyboard.press("Escape");
 });
 
