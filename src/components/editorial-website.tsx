@@ -45,9 +45,7 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
   useEffect(() => {
     const root = stage.current;
     if (!root) return;
-    const media = matchMedia(
-      "(min-width: 900px) and (min-height: 650px) and (prefers-reduced-motion: no-preference)",
-    );
+    const media = matchMedia("(prefers-reduced-motion: no-preference)");
     let frame = 0;
     function update() {
       frame = 0;
@@ -414,7 +412,10 @@ export function EditorialWebsite({
             </div>
           </dl>
         </section>
-        <ScrollGallery images={property.images} title={property.title} />
+        <ScrollGallery
+          images={property.images.slice(0, 20)}
+          title={property.title}
+        />
         <section className="estate-details estate-pad estate-space">
           <div className="estate-details-photo">
             {property.images[1] || property.images[0] ? (
@@ -815,11 +816,6 @@ export function EditorialWebsite({
           <a href="#home">{profile.agency || profile.name}</a>
           <span>{property.location}</span>
         </div>
-        <p>
-          Property information supplied by the listing agent.
-          <br />
-          Details are subject to verification.
-        </p>
         <a href="/">
           Made beautiful with
           <br />

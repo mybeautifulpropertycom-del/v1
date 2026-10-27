@@ -105,6 +105,13 @@ test("the pinned photographs change on scroll and remain separate from the compl
   await page.goto("/templates/editorial");
   const scroll = page.locator(".estate-scroll-stage");
   await expect(scroll).toHaveAttribute("data-pinned", "true");
+  await expect(scroll.locator(".estate-scene")).toHaveCount(20);
+  await expect(page.locator(".estate-footer")).not.toContainText(
+    "Property information supplied by the listing agent.",
+  );
+  await expect(page.locator(".estate-footer")).not.toContainText(
+    "Details are subject to verification.",
+  );
   await page.evaluate(() => {
     const root = document.querySelector(".estate-scroll-stage")!;
     window.scrollTo({
@@ -152,7 +159,7 @@ test("the pinned photographs change on scroll and remain separate from the compl
   expect(sections.indexOf("contact")).toBe(sections.indexOf("film") + 1);
 });
 
-test("reduced motion and mobile show every featured photo through normal scrolling", async ({
+test("mobile pins 20 photographs while reduced motion keeps normal scrolling", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -160,6 +167,7 @@ test("reduced motion and mobile show every featured photo through normal scrolli
   await expect(page.locator(".estate-scroll-stage")).not.toHaveAttribute(
     "data-pinned",
   );
+  await expect(page.locator(".estate-scene")).toHaveCount(20);
   for (const scene of await page.locator(".estate-scene").all()) {
     await scene.scrollIntoViewIfNeeded();
     await expect(scene).not.toHaveAttribute("aria-hidden", "true");
@@ -168,13 +176,43 @@ test("reduced motion and mobile show every featured photo through normal scrolli
   }
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator(".estate-scroll-stage")).not.toHaveAttribute(
+  await expect(page.locator(".estate-scroll-stage")).toHaveAttribute(
     "data-pinned",
+    "true",
   );
-  for (const scene of await page.locator(".estate-scene").all()) {
-    await scene.scrollIntoViewIfNeeded();
-    await expect(scene.locator("img")).toBeInViewport();
+  for (const index of [1, 19]) {
+    await page.locator(".estate-scroll-stage").evaluate((root, index) => {
+      window.scrollTo({
+        top:
+          root.getBoundingClientRect().top +
+          scrollY +
+          innerHeight * 0.85 * index,
+        behavior: "instant",
+      });
+    }, index);
+    await expect(page.locator(".estate-scene.is-active img")).toHaveAttribute(
+      "alt",
+      new RegExp(`view ${index + 1}$`),
+    );
+    await expect(page.locator(".estate-scroll-sticky")).toHaveCSS(
+      "position",
+      "sticky",
+    );
+    const bounds = await page.locator(".estate-scenes").boundingBox();
+    expect(bounds?.y).toBeCloseTo(0, 0);
+    expect(bounds?.height).toBe(844);
   }
+  await expect(page.locator(".estate-scroll-stage img")).toHaveCount(2);
+  await expect(page.locator(".estate-gallery-grid > button")).toHaveCount(40);
+  await page.locator(".estate-scroll-stage").evaluate((root) => {
+    window.scrollTo({
+      top: root.getBoundingClientRect().bottom + scrollY,
+      behavior: "instant",
+    });
+  });
+  expect(
+    (await page.locator(".estate-scroll-sticky").boundingBox())!.y,
+  ).toBeLessThan(0);
   await page
     .getByRole("button", { name: "Arrange a viewing", exact: true })
     .click();
