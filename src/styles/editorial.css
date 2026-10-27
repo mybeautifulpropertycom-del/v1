@@ -313,7 +313,9 @@
 .estate-scroll-stage[data-pinned] .estate-scroll-sticky {
   position: sticky;
   top: 0;
-  height: 100svh;
+  /* Follow the visible viewport as the mobile browser toolbar retracts. */
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }

@@ -145,6 +145,9 @@
 .heritage-hero-stage[data-zoom-pinned] .heritage-hero {
   position: sticky;
   top: 0;
+  /* Cover the scroll runway instead of revealing its green background. */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 .heritage-cover {
   position: absolute;

@@ -32,6 +32,9 @@ test("Heritage cover zooms on scroll, keeps the heading stable, and honors reduc
   );
   const hero = await page.locator(".heritage-hero").boundingBox();
   expect(hero!.y).toBeCloseTo(0, 0);
+  expect(hero!.height).toBe(page.viewportSize()!.height);
+  const cover = await page.locator(".heritage-cover").boundingBox();
+  expect(cover!.y + cover!.height).toBeCloseTo(page.viewportSize()!.height, 0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(stage).not.toHaveAttribute("data-zoom-pinned");
   await expect.poll(() => coverScale(page)).toBe(1);
