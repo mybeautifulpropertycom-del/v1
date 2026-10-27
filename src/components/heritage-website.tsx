@@ -449,7 +449,6 @@ export function HeritageWebsite({
                   </span>
                 </button>
                 <figcaption>
-                  <span>{String(index + 1).padStart(2, "0")}.</span>
                   {copy.captions[index]}
                 </figcaption>
               </figure>

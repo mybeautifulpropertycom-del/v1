@@ -788,7 +788,8 @@
   overflow: hidden;
   aspect-ratio: 1.35;
 }
-.estate-gallery-grid > button:nth-child(7n + 1) {
+/* One wide + four regular photos fill two complete rows, in source order. */
+.estate-gallery-grid > button:nth-child(5n + 1) {
   grid-column: span 2;
   aspect-ratio: 2.7;
 }
@@ -805,7 +806,7 @@
   inset: auto 0 0;
   display: flex;
   align-items: end;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 25px 18px 16px;
   background: linear-gradient(transparent, #14241b8a);
   color: white;
@@ -1381,7 +1382,7 @@
   .estate-gallery-grid > button {
     aspect-ratio: 1;
   }
-  .estate-gallery-grid > button:nth-child(7n + 1) {
+  .estate-gallery-grid > button:nth-child(5n + 1) {
     aspect-ratio: 1.8;
   }
   .estate-gallery-grid > button > span {

@@ -620,11 +620,6 @@
   line-height: 1.6;
   margin-top: 14px;
 }
-.atelier-photo-grid figcaption > span {
-  font-size: 10px;
-  color: #8b8f7c;
-  flex-shrink: 0;
-}
 .atelier-film {
   padding-block: 70px 90px;
   background: #eaece3;

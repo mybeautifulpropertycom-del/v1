@@ -124,6 +124,17 @@ export function propertyStory(
   if (saved)
     return {
       ...saved,
+      // Remove the old automatic labels without changing custom gallery copy.
+      galleryAccent: /^\d+ photographs\. A closer look\.$/.test(
+        saved.galleryAccent,
+      )
+        ? "A different perspective."
+        : saved.galleryAccent,
+      captions: saved.captions.map((caption, index) =>
+        caption === `${p.title || p.type} · Photograph ${index + 1}`
+          ? p.title || p.type
+          : caption,
+      ),
       storyBody:
         typeof p.website_copy?.description === "string"
           ? p.website_copy.description
@@ -158,8 +169,8 @@ export function propertyStory(
     storyAccent:
       p.transaction === "rent" ? "A place to settle in." : "A new beginning.",
     galleryTitle: `Explore this ${type}.`,
-    galleryAccent: `${p.images.length} photographs. A closer look.`,
-    galleryBody: `Explore ${p.images.length} photographs of this ${type}. Arrange a tour to see the details in person.`,
+    galleryAccent: "A different perspective.",
+    galleryBody: `Explore the photographs of this ${type}. Arrange a tour to see the details in person.`,
     detailsTitle: p.amenities[0] || `Discover the ${type}.`,
     detailsAccent: "The details, considered.",
     detailsBody:
@@ -171,9 +182,7 @@ export function propertyStory(
     closingTitle: p.title || `Discover this ${type}.`,
     closingAccent: "Experience it in person.",
     closingBody: `Take the next step with this ${type} in ${location}. Schedule a tour with the listing agent and see how it feels in person.`,
-    captions: p.images.map(
-      (_, i) => `${p.title || p.type} · Photograph ${i + 1}`,
-    ),
+    captions: p.images.map(() => p.title || p.type),
   };
 }
 

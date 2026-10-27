@@ -423,7 +423,6 @@ export function AtelierWebsite({
               <figure key={`${src}-${index}`}>
                 {photo(src, index)}
                 <figcaption>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
                   {copy.captions[index]}
                 </figcaption>
               </figure>

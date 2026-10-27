@@ -549,7 +549,6 @@ export function EditorialWebsite({
                   loading="lazy"
                 />
                 <span>
-                  {String(index + 1).padStart(2, "0")}
                   <Expand size={17} />
                 </span>
               </button>
