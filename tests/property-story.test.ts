@@ -79,6 +79,23 @@ test("analysis accepts only this owner's saved property image paths in the confi
     approvedStoryImages(property, "https://project.supabase.co"),
     property.images,
   );
+  const forty = {
+    ...property,
+    images: Array.from({ length: 40 }, (_, i) =>
+      property.images[0].replace("photo.webp", `photo-${i}.webp`),
+    ),
+  };
+  assert.equal(
+    approvedStoryImages(forty, "https://project.supabase.co")?.length,
+    40,
+  );
+  assert.equal(
+    approvedStoryImages(
+      { ...forty, images: [...forty.images, property.images[0]] },
+      "https://project.supabase.co",
+    ),
+    null,
+  );
   for (const image of [
     "http://127.0.0.1/private",
     "https://other.supabase.co/storage/v1/object/public/property-images/owner/property/photo.webp",

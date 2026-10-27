@@ -1,4 +1,5 @@
 "use client";
+import { PropertyImage } from "./property-image";
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -69,7 +70,12 @@ export function PropertyPhotoDialog({
       >
         <ChevronLeft size={30} />
       </button>
-      <img src={images[index]} alt={`${title} — view ${index + 1}`} />
+      <PropertyImage
+        sizes="100vw"
+        loading="eager"
+        src={images[index]}
+        alt={`${title} — view ${index + 1}`}
+      />
       <button
         type="button"
         className="lightbox-next"

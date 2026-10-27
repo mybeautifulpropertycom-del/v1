@@ -1,4 +1,5 @@
 "use client";
+import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 
 import Link from "next/link";
@@ -30,7 +31,10 @@ export type PropertyFilm = { src: string; poster?: string; captions?: string };
 
 function ScrollGallery({ images, title }: { images: string[]; title: string }) {
   const stage = useRef<HTMLDivElement>(null);
-  const [scrollState, setScrollState] = useState({ pinned: false, active: 0 });
+  const [scrollState, setScrollState] = useState<{
+    pinned: boolean | null;
+    active: number;
+  }>({ pinned: null, active: 0 });
   const captions = [
     ["Start with a", "breath of fresh air."],
     ["A little more", "to fall in love with."],
@@ -128,11 +132,15 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
                       : undefined
                   }
                 >
-                  <img
-                    src={image}
-                    alt={`${title} — view ${index + 1}`}
-                    loading="lazy"
-                  />
+                  {(scrollState.pinned === false ||
+                    Math.abs(index - scrollState.active) <= 1) && (
+                    <PropertyImage
+                      src={image}
+                      alt={`${title} — view ${index + 1}`}
+                      loading="lazy"
+                      sizes="100vw"
+                    />
+                  )}
                   <div className="estate-scene-copy">
                     <span className="estate-eyebrow">
                       A different perspective
@@ -267,10 +275,11 @@ export function EditorialWebsite({
         <section className="estate-hero" id="home">
           <div className="estate-hero-background">
             {property.images[0] ? (
-              <img
+              <PropertyImage
                 src={property.images[0]}
                 alt={`${property.title} — main view`}
                 fetchPriority="high"
+                sizes="100vw"
               />
             ) : (
               <div className="estate-photo-empty">
@@ -410,7 +419,7 @@ export function EditorialWebsite({
           <div className="estate-details-photo">
             {property.images[1] || property.images[0] ? (
               <>
-                <img
+                <PropertyImage
                   src={property.images[1] || property.images[0]}
                   alt={`${property.title} — a closer perspective`}
                   loading="lazy"
@@ -534,7 +543,7 @@ export function EditorialWebsite({
                 aria-label={`Enlarge property photo ${index + 1}`}
                 onClick={() => setLightbox(index)}
               >
-                <img
+                <PropertyImage
                   src={image}
                   alt={`${property.title} — view ${index + 1}`}
                   loading="lazy"
@@ -597,7 +606,7 @@ export function EditorialWebsite({
             ) : (
               <div className="estate-film-preview">
                 {property.images[1] || property.images[0] ? (
-                  <img
+                  <PropertyImage
                     src={property.images[1] || property.images[0]}
                     alt=""
                     loading="lazy"
@@ -762,7 +771,7 @@ export function EditorialWebsite({
         </section>
         <section className="estate-invitation estate-pad">
           {property.images[0] && (
-            <img
+            <PropertyImage
               className="estate-invitation-image"
               src={property.images[0]}
               alt=""

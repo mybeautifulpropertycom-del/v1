@@ -1854,3 +1854,15 @@ test("multi-photo Higgsfield requests are reserved once, recover by callback, ke
     await database.close();
   }
 });
+
+test("forty-photo migration accepts 40 saved images, rejects 41, and can be reapplied", async () => {
+  await db.exec("reset role");
+  const upgrade=await readFile(new URL("../supabase/sql-editor-forty-photos.sql",import.meta.url),"utf8");
+  await db.exec(upgrade);
+  await db.exec(upgrade);
+  const listing="cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  await asAgent(agentA);
+  await db.query("insert into properties(id,owner_id,slug,images) values($1,$2,'forty-photographs',$3)",[listing,agentA,Array.from({length:40},(_,i)=>`https://example.com/${i}.webp`)]);
+  await assert.rejects(db.query("update properties set images=array_append(images,'https://example.com/extra.webp') where id=$1",[listing]), /properties_images_check/);
+  await db.query("delete from properties where id=$1",[listing]);
+});

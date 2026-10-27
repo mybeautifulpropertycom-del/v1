@@ -1,3 +1,4 @@
+import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
 import { analyzeFilmPhotos } from "./property-film-analysis";
@@ -28,7 +29,11 @@ export function ownedFilmImages(
   job: Pick<MontageJob, "source" | "owner_id" | "property_id">,
 ): string[] {
   const images = job.source.images;
-  if (!Array.isArray(images) || !images.length || images.length > 30)
+  if (
+    !Array.isArray(images) ||
+    !images.length ||
+    images.length > MAX_PROPERTY_PHOTOS
+  )
     throw new Error("The film needs saved photographs.");
   const origin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin;
   const prefix = `/storage/v1/object/public/property-images/${job.owner_id}/${job.property_id}/`;

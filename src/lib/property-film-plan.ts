@@ -1,3 +1,4 @@
+import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 // Shared ordering and timing for original-photo and Higgsfield presentation films.
 export const SHOT_SECONDS = 3.4;
 export const FILM_FPS = 30;
@@ -75,7 +76,7 @@ export function makeFilmPlan(
 ): FilmPlan {
   if (
     !images.length ||
-    images.length > 30 ||
+    images.length > MAX_PROPERTY_PHOTOS ||
     fingerprints.length !== images.length
   )
     throw new Error("Invalid film photographs.");

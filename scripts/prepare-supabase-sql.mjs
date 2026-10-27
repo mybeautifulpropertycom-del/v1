@@ -171,3 +171,12 @@ commit;
 select 'MBP_ADDRESS_URLS_READY' as status;
 `,
 );
+
+const fortyPhotos = await readFile(
+  new URL("202610270002_forty_photos.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-forty-photos.sql", import.meta.url),
+  `-- Run the ENTIRE file. Raises the property photo limit to 40; existing photos are preserved.\nbegin;\n${fortyPhotos.trim()}\ncommit;\nselect 'MBP_40_PHOTOS_READY' as status;\n`,
+);

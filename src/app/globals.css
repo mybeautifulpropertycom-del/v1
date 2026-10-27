@@ -4516,3 +4516,17 @@ fieldset.editor-content {
   line-height: 1.8;
   margin-bottom: 24px;
 }
+
+.upload-area.uploading { border-style: solid; border-color: #a3b28b; }
+.photo-upload-progress { position: relative; width: 88px; height: 88px; margin-bottom: 18px; }
+.photo-upload-progress svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+.photo-upload-progress circle { fill: none; stroke-width: 5; }
+.photo-upload-track { stroke: #e1e7d9; }
+.photo-upload-value { stroke: #647c4e; stroke-linecap: round; transition: stroke-dashoffset 0.3s ease; }
+.photo-upload-progress strong { position: absolute; inset: 0; display: grid; place-items: center; color: #34492b; font-size: 20px; font-weight: 600; }
+.upload-area.uploading > strong { animation: photo-upload-pulse 1.8s ease-in-out infinite; text-align: center; }
+@keyframes photo-upload-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) {
+  .photo-upload-value { transition: none; }
+  .upload-area.uploading > strong { animation: none; }
+}

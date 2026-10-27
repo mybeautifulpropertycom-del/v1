@@ -13,6 +13,7 @@ import { Check, LoaderCircle, X } from "lucide-react";
 import type { Profile, Property, Workspace } from "@/lib/model";
 import { propertyErrors, publicationErrors, slugify } from "@/lib/model";
 import { readDemo, writeDemo } from "@/lib/demo-storage";
+import { uploadPropertyPhoto } from "@/lib/photo-upload";
 import { getSupabase, supabaseConfigured } from "@/lib/supabase";
 
 type WorkspaceContext = Workspace & {
@@ -20,7 +21,11 @@ type WorkspaceContext = Workspace & {
   isAdmin: boolean;
   saveProfile: (profile: Profile) => Promise<void>;
   saveProperty: (property: Property, publish?: boolean) => Promise<Property>;
-  uploadImage: (file: File, propertyId: string) => Promise<string>;
+  uploadImage: (
+    file: File,
+    propertyId: string,
+    onProgress?: (fraction: number) => void,
+  ) => Promise<string>;
   uploadAvatar: (file: File) => Promise<string>;
   deleteProperty: (property: Property) => Promise<void>;
   refreshProperty: (id: string) => Promise<Property | null>;
@@ -45,13 +50,16 @@ async function optimizeImage(file: File, maxSide = 2000): Promise<Blob> {
   canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
   canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("This browser could not process the image.");
+  if (!context) {
+    bitmap.close();
+    throw new Error("This browser could not process the image.");
+  }
   context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
   return new Promise((resolve, reject) =>
     canvas.toBlob(
       (blob) =>
-        blob
+        blob?.type === "image/webp"
           ? resolve(blob)
           : reject(new Error("The image could not be processed.")),
       "image/webp",
@@ -234,25 +242,26 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     return nextProperty;
   }
 
-  async function uploadImage(file: File, propertyId: string) {
+  async function uploadImage(
+    file: File,
+    propertyId: string,
+    onProgress?: (fraction: number) => void,
+  ) {
     const blob = await optimizeImage(file);
     const supabase = getSupabase();
     if (!supabase)
       return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
+        reader.onload = () => {
+          onProgress?.(1);
+          resolve(reader.result as string);
+        };
         reader.onerror = () =>
           reject(new Error("We could not read this image."));
         reader.readAsDataURL(blob);
       });
     const path = `${stateRef.current!.profile.id}/${propertyId}/${crypto.randomUUID()}.webp`;
-    const { error } = await supabase.storage
-      .from("property-images")
-      .upload(path, blob, { contentType: "image/webp", upsert: false });
-    if (error)
-      throw new Error(
-        "Your image could not be uploaded. Check the property-images bucket and connection.",
-      );
+    await uploadPropertyPhoto(supabase, path, blob, onProgress);
     return supabase.storage.from("property-images").getPublicUrl(path).data
       .publicUrl;
   }

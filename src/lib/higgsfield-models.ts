@@ -1,3 +1,4 @@
+import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 import presets from "../../config/higgsfield-models.json";
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
@@ -116,8 +117,12 @@ export function propertyVideoInput(
   propertyId: string,
 ) {
   const images = source.images;
-  if (!Array.isArray(images) || !images.length || images.length > 30)
-    throw new Error("The saved property needs between 1 and 30 photographs.");
+  if (
+    !Array.isArray(images) ||
+    !images.length ||
+    images.length > MAX_PROPERTY_PHOTOS
+  )
+    throw new Error("The saved property needs between 1 and 40 photographs.");
   const base = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
   for (const image of images) {
     const url = new URL(String(image));

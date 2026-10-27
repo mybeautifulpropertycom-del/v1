@@ -1,4 +1,5 @@
 "use client";
+import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import Link from "next/link";
 import { useState } from "react";
@@ -76,7 +77,7 @@ export function AtelierWebsite({
       onClick={() => setLightbox(index)}
       aria-label={`Enlarge property photo ${index + 1}`}
     >
-      <img
+      <PropertyImage
         src={src}
         alt={copy.captions[index] || `${property.title} — view ${index + 1}`}
         loading="lazy"
@@ -205,10 +206,11 @@ export function AtelierWebsite({
               onClick={() => setLightbox(0)}
               aria-label="Enlarge property photo 1"
             >
-              <img
+              <PropertyImage
                 src={property.images[0]}
                 alt={`${property.title} — cover photograph`}
                 fetchPriority="high"
+                sizes="100vw"
               />
               <span className="atelier-cover-label">
                 {property.type}
@@ -386,9 +388,7 @@ export function AtelierWebsite({
                 </ul>
               </div>
             )}
-            <div className="atelier-details-tour">
-              {tour()}
-            </div>
+            <div className="atelier-details-tour">{tour()}</div>
           </div>
           <div className="atelier-detail-image">
             {detail ? (
@@ -618,7 +618,7 @@ export function AtelierWebsite({
         </section>
         <section className="atelier-invitation atelier-pad">
           {property.images[0] && (
-            <img
+            <PropertyImage
               className="atelier-invitation-background"
               src={property.images[0]}
               alt=""

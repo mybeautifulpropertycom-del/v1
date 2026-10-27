@@ -1,3 +1,4 @@
+import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 import { locale, defaultCurrency, defaultAreaUnit } from "@/i18n/config";
 import type { SavedPropertyStory } from "./property-story";
 export type TemplateId = "editorial" | "minimal" | "panorama";
@@ -169,8 +170,11 @@ export function propertyErrors(property: Property): string[] {
     property.description.length > 12000
   )
     errors.push("The headline, address, or description is too long.");
-  if (property.images.length > 20 || property.amenities.length > 30)
-    errors.push("Use up to 20 photos and 30 amenities.");
+  if (
+    property.images.length > MAX_PROPERTY_PHOTOS ||
+    property.amenities.length > 30
+  )
+    errors.push("Use up to 40 photos and 30 amenities.");
   return errors;
 }
 

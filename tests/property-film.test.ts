@@ -36,10 +36,10 @@ const photo = (
 });
 
 test("film respects 3.4-second slots, 80-second cap, distinct exteriors and room coverage", () => {
-  const images = Array.from({ length: 30 }, (_, i) => `photo-${i}`);
+  const images = Array.from({ length: 40 }, (_, i) => `photo-${i}`);
   const analysis = images.map((_, i) => photo(i));
   analysis[0] = photo(0, "exterior", 5);
-  analysis[29] = { ...photo(29, "exterior", 4), aerial: true, evening: true };
+  analysis[39] = { ...photo(39, "exterior", 4), aerial: true, evening: true };
   analysis[25] = photo(25, "bathroom", 1);
   analysis[26] = photo(26, "kitchen", 1);
   const plan = makeFilmPlan(
@@ -50,7 +50,7 @@ test("film respects 3.4-second slots, 80-second cap, distinct exteriors and room
   assert.equal(plan.shots.length, 23);
   assert.equal(plan.duration, 78.2);
   assert.equal(plan.shots[0].index, 0);
-  assert.equal(plan.shots.at(-1)?.index, 29);
+  assert.equal(plan.shots.at(-1)?.index, 39);
   assert.equal(new Set(plan.shots.map((shot) => shot.image)).size, 23);
   assert.ok(plan.shots.some((shot) => shot.category === "bathroom"));
   assert.ok(plan.shots.some((shot) => shot.category === "kitchen"));

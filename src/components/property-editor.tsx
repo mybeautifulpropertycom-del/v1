@@ -1,4 +1,6 @@
 "use client";
+import { PropertyImage } from "./property-image";
+import { MAX_PROPERTY_PHOTOS } from "@/lib/photo-limits";
 import { AgentAvatar } from "./agent-avatar";
 
 import { useEffect, useRef, useState } from "react";
@@ -60,6 +62,12 @@ export function PropertyEditor({
   const pendingPublish = useRef(false);
   const [writingFailed, setWritingFailed] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const uploadLock = useRef(false);
+  const [uploadProgress, setUploadProgress] = useState({
+    percent: 0,
+    completed: 0,
+    total: 0,
+  });
   const [error, setError] = useState("");
   const errorBox = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -165,17 +173,39 @@ export function PropertyEditor({
     setStep(next);
   }
   async function addFiles(files: FileList | File[] | null) {
-    if (!files || uploading || busy) return;
-    if (property.images.length + files.length > 20) {
-      setError("You can add up to 20 photos per property.");
+    if (!files?.length || uploadLock.current || busy) return;
+    if (property.images.length + files.length > MAX_PROPERTY_PHOTOS) {
+      setError("You can add up to 40 photos per property.");
       return;
     }
+    uploadLock.current = true;
+    setUploadProgress({ percent: 0, completed: 0, total: files.length });
     setUploading(true);
     setError("");
     const added: string[] = [];
     try {
-      for (const file of Array.from(files))
-        added.push(await uploadImage(file, property.id));
+      for (const file of Array.from(files)) {
+        const completed = added.length;
+        added.push(
+          await uploadImage(file, property.id, (fraction) => {
+            setUploadProgress({
+              percent: Math.floor(
+                ((completed + fraction) / files.length) * 100,
+              ),
+              completed,
+              total: files.length,
+            });
+          }),
+        );
+        setUploadProgress({
+          percent: Math.floor((added.length / files.length) * 100),
+          completed: added.length,
+          total: files.length,
+        });
+      }
+      notify(
+        `${added.length} ${added.length === 1 ? "photo" : "photos"} uploaded and optimized. Save changes to keep them.`,
+      );
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "A photo could not be uploaded.",
@@ -185,6 +215,7 @@ export function PropertyEditor({
         setProperty((p) => ({ ...p, images: [...p.images, ...added] }));
         setDirty(true);
       }
+      uploadLock.current = false;
       setUploading(false);
       if (fileInput.current) fileInput.current.value = "";
     }
@@ -557,30 +588,64 @@ export function PropertyEditor({
                 Great photographs make the introduction. Your first photo
                 becomes the cover.
               </p>
-              <button
-                className={`upload-area ${uploading ? "uploading" : ""}`}
-                disabled={uploading || busy}
-                onClick={() => fileInput.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  void addFiles(e.dataTransfer.files);
-                }}
-              >
-                <span>
-                  <Upload size={26} />
-                </span>
-                <strong>
-                  {uploading
-                    ? "Giving your photos a little polish…"
-                    : "Drop your photos here"}
-                </strong>
-                <p>or click to browse your files</p>
-                <small>
-                  JPG, PNG, WebP · Up to 10 MB each · {property.images.length}
-                  /20 photos
-                </small>
-              </button>
+              {uploading ? (
+                <div className="upload-area uploading" aria-busy="true">
+                  <div
+                    className="photo-upload-progress"
+                    role="progressbar"
+                    aria-label="Uploading photographs"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={uploadProgress.percent}
+                  >
+                    <svg viewBox="0 0 88 88" aria-hidden="true">
+                      <circle
+                        className="photo-upload-track"
+                        cx="44"
+                        cy="44"
+                        r="38"
+                      />
+                      <circle
+                        className="photo-upload-value"
+                        cx="44"
+                        cy="44"
+                        r="38"
+                        pathLength="100"
+                        strokeDasharray="100"
+                        strokeDashoffset={100 - uploadProgress.percent}
+                      />
+                    </svg>
+                    <strong>{uploadProgress.percent}%</strong>
+                  </div>
+                  <strong>Preparing and uploading your photographs…</strong>
+                  <p role="status">
+                    {uploadProgress.completed} of {uploadProgress.total} photos
+                    uploaded
+                  </p>
+                  <small>Optimizing as WebP. Please keep this page open.</small>
+                </div>
+              ) : (
+                <button
+                  className="upload-area"
+                  disabled={uploading || busy}
+                  onClick={() => fileInput.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    void addFiles(e.dataTransfer.files);
+                  }}
+                >
+                  <span>
+                    <Upload size={26} />
+                  </span>
+                  <strong>Drop your photos here</strong>
+                  <p>or click to browse your files</p>
+                  <small>
+                    JPG / JPEG, PNG, WebP · Up to 10 MB each ·{" "}
+                    {property.images.length}/{MAX_PROPERTY_PHOTOS} photos
+                  </small>
+                </button>
+              )}
               <input
                 ref={fileInput}
                 type="file"
@@ -592,7 +657,11 @@ export function PropertyEditor({
               <div className="image-editor-grid">
                 {property.images.map((image, i) => (
                   <div className="image-editor-card" key={image}>
-                    <img src={image} alt={`Property photo ${i + 1}`} />
+                    <PropertyImage
+                      src={image}
+                      alt={`Property photo ${i + 1}`}
+                      sizes="(max-width: 640px) 45vw, 240px"
+                    />
                     <span className="image-order">
                       {i === 0 ? "Cover photo" : String(i + 1).padStart(2, "0")}
                     </span>

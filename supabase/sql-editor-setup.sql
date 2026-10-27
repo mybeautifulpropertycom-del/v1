@@ -1838,6 +1838,12 @@ revoke all on function public.admin_publish_property(uuid,uuid,text,text,integer
 grant execute on function public.admin_publish_property(uuid,uuid,text,text,integer) to service_role;
 notify pgrst,'reload schema';
 
+
+-- Extend the existing photo limit without changing ownership or publication checks.
+alter table public.properties drop constraint if exists properties_images_check;
+alter table public.properties add constraint properties_images_check check (cardinality(images) <= 40);
+notify pgrst,'reload schema';
+
 notify pgrst, 'reload schema';
 commit;
 

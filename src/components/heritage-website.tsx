@@ -1,4 +1,5 @@
 "use client";
+import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 
 import Link from "next/link";
@@ -186,11 +187,12 @@ export function HeritageWebsite({
           <div className="heritage-hero" ref={cover}>
             <div className="heritage-cover">
               {property.images[0] ? (
-                <img
+                <PropertyImage
                   className="heritage-cover-image"
                   src={property.images[0]}
                   alt={`${property.title} — main view`}
                   fetchPriority="high"
+                  sizes="100vw"
                 />
               ) : (
                 <div className="heritage-image-empty">
@@ -307,7 +309,7 @@ export function HeritageWebsite({
                   onClick={() => setLightbox(property.images[1] ? 1 : 0)}
                   aria-label="Explore the home photograph"
                 >
-                  <img
+                  <PropertyImage
                     src={secondaryPhoto}
                     alt={`${property.title} — a closer perspective`}
                     loading="lazy"
@@ -318,9 +320,7 @@ export function HeritageWebsite({
                   Add a photograph to tell your story.
                 </div>
               )}
-              <figcaption>
-                {property.title}
-              </figcaption>
+              <figcaption>{property.title}</figcaption>
               <span className="heritage-seal">
                 <Asterisk size={18} strokeWidth={1} />
                 <strong>Your next</strong>
@@ -439,7 +439,7 @@ export function HeritageWebsite({
                   onClick={() => setLightbox(index)}
                   aria-label={`Enlarge property photo ${index + 1}`}
                 >
-                  <img
+                  <PropertyImage
                     src={src}
                     alt={`${property.title} — view ${index + 1}`}
                     loading="lazy"
@@ -475,7 +475,7 @@ export function HeritageWebsite({
         >
           <div className="heritage-details-image">
             {detailPhoto ? (
-              <img
+              <PropertyImage
                 src={detailPhoto}
                 alt={`${property.title} — property detail`}
                 loading="lazy"
@@ -562,7 +562,11 @@ export function HeritageWebsite({
             ) : (
               <div className="heritage-film-preview">
                 {property.images[0] && (
-                  <img src={property.images[0]} alt="" loading="lazy" />
+                  <PropertyImage
+                    src={property.images[0]}
+                    alt=""
+                    loading="lazy"
+                  />
                 )}
                 <div>
                   <span className="heritage-kicker">There’s a story here</span>
@@ -683,7 +687,7 @@ export function HeritageWebsite({
             </div>
             <figure>
               {property.images[0] ? (
-                <img
+                <PropertyImage
                   src={property.images[0]}
                   alt={`${property.title} — the property`}
                   loading="lazy"
@@ -705,7 +709,7 @@ export function HeritageWebsite({
         </section>
         <section className="heritage-invitation">
           {property.images[0] && (
-            <img src={property.images[0]} alt="" loading="lazy" />
+            <PropertyImage src={property.images[0]} alt="" loading="lazy" />
           )}
           <div>
             <span className="heritage-kicker">

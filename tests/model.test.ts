@@ -93,3 +93,14 @@ test("public links use allocated addresses and retain legacy fallback until migr
   );
   assert.equal(publicPath({ slug: "property-123" }), "/p/property-123");
 });
+
+test("a property accepts 40 photos and rejects a 41st", () => {
+  const property = createProperty("agent");
+  property.images = Array.from(
+    { length: 40 },
+    (_, i) => `https://example.com/${i}.webp`,
+  );
+  assert.deepEqual(propertyErrors(property), []);
+  property.images.push("https://example.com/41.webp");
+  assert.match(propertyErrors(property).join(" "), /40 photos/);
+});
