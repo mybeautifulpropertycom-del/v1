@@ -904,6 +904,7 @@
   vertical-align: middle;
 }
 .property-photo-dialog {
+  touch-action: pan-y pinch-zoom;
   padding: 0;
   border: 0;
   margin: auto;
@@ -918,6 +919,7 @@
   background: #0c1514e6;
 }
 .property-photo-dialog > img {
+  user-select: none;
   width: auto;
   max-width: 88vw;
   max-height: 82dvh;
