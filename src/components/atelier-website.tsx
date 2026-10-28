@@ -647,11 +647,6 @@ export function AtelierWebsite({
           </span>
           <ArrowUpRight size={16} />
         </a>
-        <p>
-          Property information supplied by the listing agent.
-          <br />
-          Details are subject to verification.
-        </p>
         <FooterBrand />
       </footer>
       <div className="atelier-mobile-tour">

@@ -752,11 +752,6 @@ export function HeritageWebsite({
           </span>
           <Asterisk size={18} strokeWidth={1} />
         </a>
-        <p>
-          Property information supplied by the listing agent.
-          <br />
-          Details are subject to verification.
-        </p>
         <FooterBrand />
       </footer>
       {viewing && (
