@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { runLeadEmailWorker } from "@/lib/lead-notifications";
 import { serverSupabase } from "@/lib/supabase";
 import { validateInquiry } from "@/lib/validation";
+export const runtime = "nodejs";
+export const maxDuration = 60;
 export async function POST(request: Request) {
   try {
     const body = await request.text();
@@ -46,6 +49,15 @@ export async function POST(request: Request) {
         },
         { status: data === "rate_limited" ? 429 : 404 },
       );
+    after(async () => {
+      try {
+        await runLeadEmailWorker();
+      } catch {
+        console.warn(
+          JSON.stringify({ event: "lead_notification_worker_failed" }),
+        );
+      }
+    });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(

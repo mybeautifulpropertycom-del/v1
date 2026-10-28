@@ -4531,3 +4531,23 @@ fieldset.editor-content {
   .sidebar .sidebar-note a { margin-top: 12px; min-height: 24px; }
   .sidebar .account-row { padding-block: 12px; }
 }
+
+.inbox-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: #ba3636;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1;
+}
+.inquiry-card.inquiry-unread { border-left: 3px solid #ba3636; }
+.lead-new-label { display: inline-block; margin-block: 6px; padding: 2px 7px; border-radius: 5px; color: #a82f2f; background: #fcecec; font-size: 10px; font-weight: 600; }
+.lead-mark-read { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; background: #f2f5ee; color: #3b563d; border-radius: 5px; font-size: 11px; }
+.lead-mark-read:disabled { opacity: .6; cursor: wait; }

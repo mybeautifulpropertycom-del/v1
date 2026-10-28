@@ -1866,3 +1866,52 @@ test("forty-photo migration accepts 40 saved images, rejects 41, and can be reap
   await assert.rejects(db.query("update properties set images=array_append(images,'https://example.com/extra.webp') where id=$1",[listing]), /properties_images_check/);
   await db.query("delete from properties where id=$1",[listing]);
 });
+
+test('lead notifications are private, owner-scoped, durable and fenced against duplicate workers', async () => {
+  const database = await createTestDatabase();
+  try {
+    await database.exec(await readFile(new URL('../supabase/sql-editor-setup.sql',import.meta.url),'utf8'));
+    await database.exec(await readFile(new URL('../supabase/sql-editor-lead-notifications.sql',import.meta.url),'utf8'));
+    await database.query<Record<string, unknown>>("insert into auth.users(id,email) values ($1,'login-a@example.com'),($2,'login-b@example.com')",[agentA,agentB]);
+    await database.query<Record<string, unknown>>("update public.profiles set name='Agent A',phone='+1 202 555 0100',email='public-contact@example.com' where id=$1",[agentA]);
+    await database.query<Record<string, unknown>>("insert into public.properties(id,owner_id,slug,title,description,location,price,area,images,status) values ($1,$2,'lead-notification-test','Notification home','A long and meaningful property description for buyers.','Austin, TX',500000,2000,array['https://example.com/photo.jpg'],'published')",[propertyA,agentA]);
+    await database.exec("set role anon; set app.user_id='';");
+    const submitted = await database.query<Record<string, unknown>>("select public.submit_property_inquiry('lead-notification-test','Test Buyer','lead@example.com','1234567890','Please arrange a private viewing.') as result");
+    assert.equal(submitted.rows[0].result,'received');
+    await assert.rejects(database.query<Record<string, unknown>>('select * from public.lead_email_jobs'),/permission denied/);
+    await assert.rejects(database.query<Record<string, unknown>>('select * from public.claim_lead_emails(2)'),/permission denied/);
+    await database.exec('reset role');
+    const lead = (await database.query<{id:string;read_at:string|null}>('select id,read_at from public.inquiries')).rows[0];
+    assert.equal(lead.read_at,null);
+    const queue = (await database.query<{recipient:string;details:Record<string,string>}>('select recipient,details from public.lead_email_jobs')).rows;
+    assert.equal(queue.length,1);
+    assert.equal(queue[0].recipient,'login-a@example.com');
+    assert.equal(queue[0].details.propertyTitle,'Notification home');
+    await database.exec(`set role authenticated; set app.user_id='${agentB}';`);
+    assert.equal((await database.query<Record<string, unknown>>('select public.mark_inquiries_read($1) as count',[[lead.id]])).rows[0].count,0);
+    await assert.rejects(database.query<Record<string, unknown>>('select * from public.lead_email_jobs'),/permission denied/);
+    await database.exec(`set app.user_id='${agentA}';`);
+    assert.equal((await database.query<Record<string, unknown>>('select public.mark_inquiries_read($1) as count',[[lead.id]])).rows[0].count,1);
+    assert.equal((await database.query<Record<string, unknown>>('select public.mark_inquiries_read($1) as count',[[lead.id]])).rows[0].count,0);
+    await assert.rejects(database.query<Record<string, unknown>>("update public.inquiries set name='Tampered'"),/permission denied/);
+    await database.exec('reset role; set role service_role');
+    const claim = (await database.query<{inquiry_id:string;lease_token:string}>('select * from public.claim_lead_emails(2)')).rows[0];
+    assert.equal(claim.inquiry_id,lead.id);
+    assert.equal((await database.query<Record<string, unknown>>('select * from public.claim_lead_emails(2)')).rows.length,0);
+    assert.equal((await database.query<Record<string, unknown>>('select public.finish_lead_email($1,$2,$3) as ok',[lead.id,agentB,'fake-provider'])).rows[0].ok,false);
+    await database.query<Record<string, unknown>>("select public.finish_lead_email($1,$2,null,'provider_unavailable',true)",[lead.id,claim.lease_token]);
+    await database.query<Record<string, unknown>>("update public.lead_email_jobs set available_at=now()-interval '1 second'");
+    const retry = (await database.query<{lease_token:string}>('select * from public.claim_lead_emails(2)')).rows[0];
+    assert.notEqual(retry.lease_token,claim.lease_token);
+    assert.equal((await database.query<Record<string, unknown>>('select public.finish_lead_email($1,$2,$3) as ok',[lead.id,claim.lease_token,'stale-provider'])).rows[0].ok,false);
+    assert.equal((await database.query<Record<string, unknown>>('select public.finish_lead_email($1,$2,$3) as ok',[lead.id,retry.lease_token,'resend-message'])).rows[0].ok,true);
+    assert.equal((await database.query<Record<string, unknown>>('select * from public.claim_lead_emails(2)')).rows.length,0);
+    await database.query<Record<string, unknown>>("update public.lead_email_jobs set status='processing',locked_until=now()-interval '1 minute',first_attempt_at=now()-interval '21 hours'");
+    assert.equal((await database.query<Record<string, unknown>>('select * from public.claim_lead_emails(2)')).rows.length,0);
+    assert.equal((await database.query<Record<string, unknown>>('select status from public.lead_email_jobs')).rows[0].status,'failed');
+    await database.exec(`reset role; set role authenticated; set app.user_id='${agentA}';`);
+    await database.query<Record<string, unknown>>('delete from public.inquiries where id=$1',[lead.id]);
+    await database.exec('reset role');
+    assert.equal((await database.query<Record<string, unknown>>('select * from public.lead_email_jobs')).rows.length,0);
+  } finally { await database.close(); }
+});

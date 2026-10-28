@@ -9,6 +9,7 @@ export type TestLead = {
   phone: string;
   message: string;
   created_at: string;
+  read_at?: string | null;
 };
 
 export const owner = "11111111-1111-4111-8111-111111111111";
@@ -27,7 +28,7 @@ export async function workspace(
     owner_id: owner,
     status: "draft",
     images: [
-      `https://browser-test.supabase.co/storage/v1/object/public/property-images/${owner}/${id}/photo.webp`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL || "https://browser-test.supabase.co"}/storage/v1/object/public/property-images/${owner}/${id}/photo.webp`,
     ],
     ...overrides,
   };
@@ -44,9 +45,9 @@ export async function workspace(
     role: "authenticated",
   };
   await page.addInitScript(
-    ({ token, user, expires }) => {
+    ({ token, user, expires, storageKey }) => {
       localStorage.setItem(
-        "sb-browser-test-auth-token",
+        storageKey,
         JSON.stringify({
           access_token: token,
           refresh_token: "test-refresh",
@@ -57,7 +58,12 @@ export async function workspace(
         }),
       );
     },
-    { token, user, expires },
+    {
+      token,
+      user,
+      expires,
+      storageKey: `sb-${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "https://browser-test.supabase.co").hostname.split(".")[0]}-auth-token`,
+    },
   );
   await page.route(/https:\/\/[^/]+\.supabase\.co\//, async (route) => {
     const url = new URL(route.request().url());
@@ -96,7 +102,24 @@ export async function workspace(
       }));
       return route.fulfill({ json: result });
     }
+    if (url.pathname === "/rest/v1/rpc/mark_inquiries_read") {
+      const ids = route.request().postDataJSON().inquiry_ids as string[];
+      let changed = 0;
+      leads = leads.map((lead) => {
+        if (!ids.includes(lead.id) || lead.read_at) return lead;
+        changed++;
+        return { ...lead, read_at: new Date().toISOString() };
+      });
+      return route.fulfill({ json: changed });
+    }
     if (url.pathname === "/rest/v1/inquiries") {
+      if (route.request().method() === "HEAD") {
+        const count = leads.filter((lead) => !lead.read_at).length;
+        return route.fulfill({
+          status: 200,
+          headers: { "Content-Range": `*/${count}`, "Access-Control-Expose-Headers": "Content-Range" },
+        });
+      }
       if (route.request().method() === "DELETE") {
         expect(url.searchParams.get("owner_id")).toBe(`eq.${owner}`);
         const leadId = url.searchParams.get("id")?.slice(3);

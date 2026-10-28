@@ -180,3 +180,12 @@ await writeFile(
   new URL("../supabase/sql-editor-forty-photos.sql", import.meta.url),
   `-- Run the ENTIRE file. Raises the property photo limit to 40; existing photos are preserved.\nbegin;\n${fortyPhotos.trim()}\ncommit;\nselect 'MBP_40_PHOTOS_READY' as status;\n`,
 );
+
+const leadNotifications = await readFile(
+  new URL("202610280001_lead_notifications.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-lead-notifications.sql", import.meta.url),
+  `-- Run the ENTIRE file. Adds unread lead state and a private email outbox.\n-- Existing leads remain saved and are marked unread; historical emails are NOT sent.\nbegin;\n${leadNotifications.trim()}\ncommit;\nselect 'MBP_LEAD_NOTIFICATIONS_READY' as status;\n`,
+);

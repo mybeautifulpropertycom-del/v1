@@ -50,7 +50,7 @@ export function Brand({ light = false }: { light?: boolean }) {
 }
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { profile, demo, isAdmin, signOut } = useWorkspace();
+  const { profile, demo, isAdmin, signOut, unreadCount } = useWorkspace();
   const [menu, setMenu] = useState(false);
   const [help, setHelp] = useState(false);
   return (
@@ -102,11 +102,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link
               key={href}
               href={href}
+              aria-label={
+                href === "/dashboard/inquiries" && unreadCount > 0
+                  ? `My inbox, ${unreadCount} unread leads`
+                  : undefined
+              }
               className={`nav-link ${(href === "/dashboard" ? path === href || path.includes("/properties/") : path === href) ? "active" : ""}`}
               onClick={() => setMenu(false)}
             >
               <Icon size={19} />
               <span>{label}</span>
+              {href === "/dashboard/inquiries" && unreadCount > 0 && (
+                <span className="inbox-unread-badge" aria-hidden="true">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
               {soon && <span className="soon-dot" />}
             </Link>
           ))}

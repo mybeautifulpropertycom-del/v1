@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Inbox, Mail, Phone } from "lucide-react";
+import { ArrowUpRight, Check, Inbox, Mail, Phone } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { safePhone } from "@/lib/model";
 import { DeleteAction } from "./delete-action";
@@ -14,35 +14,76 @@ type Inquiry = {
   phone: string;
   message: string;
   created_at: string;
+  read_at: string | null;
 };
 export function Inquiries() {
-  const { demo, profile, properties, notify } = useWorkspace();
+  const { demo, profile, properties, notify, refreshUnread } = useWorkspace();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(!demo);
   const [error, setError] = useState("");
+  const [marking, setMarking] = useState<string | null>(null);
+  const requestVersion = useRef(0);
   useEffect(() => {
     let active = true;
     const supabase = getSupabase();
-    if (supabase)
-      void supabase
+    async function load() {
+      if (!supabase || document.visibilityState !== "visible") return;
+      const version = ++requestVersion.current;
+      const { data, error } = await supabase
         .from("inquiries")
-        .select("id,property_id,name,email,phone,message,created_at")
+        .select("id,property_id,name,email,phone,message,created_at,read_at")
         .eq("owner_id", profile.id)
         .order("created_at", { ascending: false })
-        .limit(100)
-        .then(({ data, error }) => {
-          if (!active) return;
-          if (error)
-            setError(
-              "Your inbox could not be loaded. Please refresh and try again.",
-            );
-          else setInquiries(data as Inquiry[]);
-          setLoading(false);
-        });
+        .limit(100);
+      if (!active || version !== requestVersion.current) return;
+      if (error)
+        setError(
+          "Your inbox could not be loaded. Please refresh and try again.",
+        );
+      else {
+        setInquiries(data as Inquiry[]);
+        setError("");
+      }
+      setLoading(false);
+    }
+    const refresh = () => {
+      void load();
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
       active = false;
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
     };
   }, [profile.id]);
+  async function markRead(id: string) {
+    const db = getSupabase();
+    if (!db || marking) return;
+    setMarking(id);
+    try {
+      const { error } = await db.rpc("mark_inquiries_read", {
+        inquiry_ids: [id],
+      });
+      if (error) throw error;
+      requestVersion.current++;
+      setInquiries((current) =>
+        current.map((item) =>
+          item.id === id
+            ? { ...item, read_at: new Date().toISOString() }
+            : item,
+        ),
+      );
+      await refreshUnread();
+    } catch {
+      notify("This lead could not be marked as read. Please try again.");
+    } finally {
+      setMarking(null);
+    }
+  }
   async function deleteInquiry(id: string) {
     const supabase = getSupabase();
     if (!supabase) return;
@@ -57,7 +98,9 @@ export function Inquiries() {
       throw new Error(
         "This lead could not be deleted. Please check your connection and try again.",
       );
+    requestVersion.current++;
     setInquiries((current) => current.filter((item) => item.id !== id));
+    await refreshUnread();
     notify("Lead deleted.");
   }
   return (
@@ -82,10 +125,14 @@ export function Inquiries() {
       ) : inquiries.length ? (
         <div className="inquiries-list">
           {inquiries.map((item) => (
-            <article className="inquiry-card" key={item.id}>
+            <article
+              className={`inquiry-card${!item.read_at ? " inquiry-unread" : ""}`}
+              key={item.id}
+            >
               <div className="inquiry-card-head">
                 <div>
                   <h3>{item.name}</h3>
+                  {!item.read_at && <span className="lead-new-label">New</span>}
                   <small>
                     {properties.find((p) => p.id === item.property_id)?.title ||
                       (item.property_id
@@ -102,6 +149,18 @@ export function Inquiries() {
               </div>
               <p>{item.message}</p>
               <div className="inquiry-card-links">
+                {!item.read_at && (
+                  <button
+                    type="button"
+                    className="lead-mark-read"
+                    disabled={marking !== null}
+                    onClick={() => void markRead(item.id)}
+                    aria-label={`Mark lead from ${item.name} as read`}
+                  >
+                    <Check size={14} />
+                    {marking === item.id ? "Saving…" : "Mark as read"}
+                  </button>
+                )}
                 <a href={`mailto:${item.email}`}>
                   <Mail size={14} />
                   {item.email}

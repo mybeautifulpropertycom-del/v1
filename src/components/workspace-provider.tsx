@@ -15,10 +15,13 @@ import { propertyErrors, publicationErrors, slugify } from "@/lib/model";
 import { readDemo, writeDemo } from "@/lib/demo-storage";
 import { uploadPropertyPhoto } from "@/lib/photo-upload";
 import { getSupabase, supabaseConfigured } from "@/lib/supabase";
+import { useUnreadInquiries } from "./use-unread-inquiries";
 
 type WorkspaceContext = Workspace & {
   demo: boolean;
   isAdmin: boolean;
+  unreadCount: number;
+  refreshUnread: () => Promise<void>;
   saveProfile: (profile: Profile) => Promise<void>;
   saveProperty: (property: Property, publish?: boolean) => Promise<Property>;
   uploadImage: (
@@ -72,6 +75,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [state, setState] = useState<Workspace | null>(null);
   const stateRef = useRef<Workspace | null>(null);
+  const { unreadCount, refreshUnread } = useUnreadInquiries(state?.profile.id);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [toast, setToast] = useState("");
@@ -391,6 +395,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         ...state,
         demo: !supabaseConfigured,
         isAdmin,
+        unreadCount,
+        refreshUnread,
         saveProfile,
         saveProperty,
         uploadImage,
