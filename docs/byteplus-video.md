@@ -1,6 +1,6 @@
 # Direct BytePlus ModelArk property films
 
-New property films can use BytePlus directly with `dreamina-seedance-2-5-260628`. No Higgsfield request is made for a BytePlus film. Published pages, payments, admin complimentary publication, photo ordering, 3.4-second scenes, the 23-scene/78.2-second limit, original instrumental music and durable storage retain the existing workflow.
+New cinematic walkthroughs can use BytePlus directly with `dreamina-seedance-2-5-260628`. No Higgsfield request is made for a BytePlus film. Published pages, payments, admin complimentary publication, photo ordering, 3.4-second scenes, the 23-scene/78.2-second limit, original instrumental music and durable storage retain the existing workflow.
 
 ## Activate in Vercel
 
@@ -11,7 +11,9 @@ If a key has been shared in chat or a screenshot, revoke it in BytePlus and crea
 | `ARK_API_KEY` | New BytePlus API key with access to the activated model | Secret |
 | `BYTEPLUS_VIDEO_MODEL` | `dreamina-seedance-2-5-260628` | Config |
 | `PROPERTY_VIDEO_MODE` | `byteplus-montage` | Config |
-| `PROPERTY_VIDEO_ENABLED` | `true` | Config |
+| `PROPERTY_VIDEO_ENABLED` | Keep `false` until the tariff below is verified; then `true` | Config |
+| `BYTEPLUS_VIDEO_USD_PER_SECOND` | Verified conservative USD cost per generated second for this model, 720p, one input photo, no audio | Config |
+| `PROPERTY_VIDEO_MAX_COST_USD` | `15` (may be lowered, never above 15) | Config |
 | `HIGGSFIELD_ENABLED` | `false` | Config |
 
 Edit existing variables instead of adding duplicates. Redeploy the latest main commit and wait for Ready. Never use a NEXT_PUBLIC prefix for the API key.
@@ -44,3 +46,16 @@ Scene reservation happens before a billable POST. A timeout, malformed response,
 The job and scene profiles select the provider on every resume, regardless of later environment changes. Missing credentials defer jobs before reservation. Non-success response bodies and credentials are not logged. Media downloads use the existing public-IP validation and do not carry the API key.
 
 Automated tests mock provider calls and verify request shape, status mapping, provider snapshots, no duplicate submission on ambiguous failures, durable resume and worker switches. They do not verify the real account's model access, balance, video quality or delivery. After configuration, generate one small property film (for example 2–3 photographs) from the admin workflow, check its task in ModelArk, and verify the final video on the property page before scaling up. This is a real billable generation.
+
+
+## Adaptive length and estimated budget
+
+The walkthrough uses the strongest unique images rather than every uploaded photo. With sufficient budget, 15 unique images select 9 scenes (30.6 seconds), 30 select 18 (61.2 seconds), and 40 select up to 23 (78.2 seconds). Fewer unique images, duplicates or a tighter budget produce shorter films. Opening/closing exterior photographs are retained when at least two distinct exteriors and two scene slots are available. Middle selections prioritize room coverage and then quality. The existing speed ramps, transitions and modern instrumental score are unchanged.
+
+`BYTEPLUS_VIDEO_USD_PER_SECOND` has **no default**. Until a verified rate is entered, BytePlus jobs are deferred before claiming/planning, including before paid photo analysis. If the provider displays token pricing, obtain its calculator estimate or documented conservative conversion for these exact inputs; do not paste a $/token number into a $/second setting. No real tariff is inferred from a competitor comparison or the development test fixtures.
+
+The application permits at most a $15 planning budget and reserves 20%: at the default budget, the scene-generation estimate must fit within $12, with $3 left outside it. Each whole generated scene is costed at all 6 seconds and rounded up to cents; rendered duration does not reduce that estimate. Selection is reduced to fit the estimate rather than filling a promised runtime. This is **not a provider-enforced invoice cap**. Incorrect/stale prices, input-token charges, taxes or other account fees can affect the bill; the reserve is not a guarantee that they fit. The estimate covers one film generation, not cumulative manual rebuilds; each explicit rebuild can incur another charge. Infrastructure and OpenAI costs are not independently metered by this guard.
+
+The estimate and tariff are snapshotted in the film plan, checked against the current configured budget before every scene reservation, and shown to the administrator with generated and final seconds. A price increase or lower budget that makes the plan unaffordable pauses the normal worker before a new scene. Legacy BytePlus plans without a budget record require review; they are not silently grandfathered into paid requests. Already-generated clips can still be assembled without requesting new scenes.
+
+Before enabling production generation, verify the tariff and evaluate one small real film. The automated checks verify selection, accounting and duplicate prevention, not subjective quality or actual provider charges.

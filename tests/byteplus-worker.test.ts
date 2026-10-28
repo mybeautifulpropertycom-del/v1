@@ -9,6 +9,8 @@ const originalFetch = globalThis.fetch;
 const originalEnv = { ...process.env };
 let candidate: any, claimed: any[], patches: any[];
 beforeEach(() => {
+  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.05";
+  process.env.PROPERTY_VIDEO_MAX_COST_USD = "15";
   process.env.PROPERTY_VIDEO_ENABLED = "true";
   process.env.HIGGSFIELD_ENABLED = "false";
   process.env.PROPERTY_VIDEO_MODE = "byteplus-montage";
@@ -104,4 +106,11 @@ test("disabled shared worker performs no database or provider calls", async () =
     throw new Error("Unexpected request");
   };
   assert.deepEqual(await runVideoWorker(), { enabled: false, processed: 0 });
+});
+
+test("unknown pricing pauses before even claiming a film", async () => {
+  delete process.env.BYTEPLUS_VIDEO_USD_PER_SECOND;
+  await runVideoWorker();
+  assert.equal(claimed.length, 0);
+  assert.match(patches[0].last_error, /verified BytePlus/);
 });

@@ -80,7 +80,7 @@ export function AdminDashboard() {
         <h1>A clear view of every property.</h1>
         <p>
           Review agent accounts and publish selected properties at no charge,
-          including their presentation video.
+          including their cinematic walkthrough.
         </p>
       </header>
       <div className="admin-controls">

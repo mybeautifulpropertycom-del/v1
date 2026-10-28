@@ -359,14 +359,14 @@ export function usePropertyPublication(options: {
           : status.videoStatus === "queued"
             ? "Your website is live. Your included video is awaiting generation and will appear here when it is ready."
             : status.videoStatus === "processing"
-              ? "We’re creating your presentation video. It will appear here and on your property website when it’s ready."
+              ? "We’re creating your cinematic walkthrough. It will appear here and on your property website when it’s ready."
               : status.videoStatus === "failed"
                 ? (status.videoAttempts ?? 0) >= 3
                   ? "Your website remains live. Please contact support to finish your included video; no new property payment is needed."
                   : "Your website remains live. You can retry your video after a short pause, without another payment."
                 : options.property?.status === "published"
-                  ? "Your completed presentation video will appear here when it is available."
-                  : "Publish your property to generate a presentation video from your photos. Your video will appear here and on your property website when it’s ready."}
+                  ? "Your completed cinematic walkthrough will appear here when it is available."
+                  : "Publish your property to generate a cinematic walkthrough from your photos. Your video will appear here and on your property website when it’s ready."}
       </p>
       {status.videoStatus === "processing" && status.videoProgress && (
         <p role="status">
@@ -455,7 +455,7 @@ export function usePropertyPublication(options: {
             </li>
             <li>
               <Check size={16} />
-              One presentation video from your photos
+              One cinematic walkthrough from your photos
             </li>
             <li>
               <Check size={16} />

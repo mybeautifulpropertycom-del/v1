@@ -36,6 +36,8 @@ let downloadFails = false,
 let polls = 0,
   edited = 0;
 beforeEach(() => {
+  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.05";
+  process.env.PROPERTY_VIDEO_MAX_COST_USD = "15";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://film-test.supabase.co";
   process.env.HIGGSFIELD_MODEL = "hailuo-2.3-standard";
   delete process.env.HIGGSFIELD_MODELS_JSON;
@@ -341,3 +343,17 @@ for (const reason of ["timeout", "binding", "rejected"]) {
     assert.equal(submissions.length, 1);
   });
 }
+
+test("BytePlus budget is saved with the plan and blocks new scenes after a price increase", async () => {
+  useBytePlus();
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_film_planned");
+  assert.equal(job.montage_plan.generationBudget.plannedScenes, 2);
+  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "2";
+  assert.equal(await runHiggsfieldFilm(admin, order), "failed");
+  assert.equal(submissions.length, 0);
+  assert.equal(
+    scenes.size,
+    0,
+    "Budget must be checked before a billable reservation",
+  );
+});

@@ -13,8 +13,8 @@ export default function Page() {
             A story worth <em>watching.</em>
           </h1>
           <p>
-            One presentation video, included with each property package. Follow
-            your film from your website editor.
+            One cinematic walkthrough, included with each property package.
+            Follow your film from your website editor.
           </p>
         </div>
       </div>
@@ -38,7 +38,7 @@ export default function Page() {
                 <h2>{property.title || "Your next property"}</h2>
                 <p>
                   {property.status === "published"
-                    ? "Open your website editor to view your presentation video or follow its progress."
+                    ? "Open your website editor to view your cinematic walkthrough or follow its progress."
                     : "Publish property to generate video. Turn your saved photographs into a presentation that helps buyers imagine being there."}
                 </p>
                 <Link

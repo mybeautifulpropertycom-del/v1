@@ -24,6 +24,11 @@ import { runHiggsfieldFilm } from "./higgsfield-film-worker";
 import { runPropertyFilm } from "./property-film-worker";
 import { arkCredentials, bytePlusModel } from "./byteplus-video";
 import { videoEnabled, aiMontageMode } from "./video-service";
+import {
+  bytePlusBudgetSettings,
+  assertFilmBudget,
+  VideoBudgetError,
+} from "./byteplus-budget";
 
 export type VideoJob = {
   order_id: string;
@@ -65,7 +70,9 @@ export function videoConfiguration() {
     arkCredentials();
     if (!process.env.OPENAI_API_KEY?.trim())
       throw new Error("Photo ordering needs OPENAI_API_KEY.");
-    return bytePlusModel();
+    const profile = bytePlusModel();
+    bytePlusBudgetSettings(profile);
+    return profile;
   }
   higgsfieldCredentials();
   if (
@@ -223,8 +230,17 @@ export async function runVideoWorker(orderId?: string) {
         ? savedProfile.provider === "byteplus"
         : process.env.PROPERTY_VIDEO_MODE === "byteplus-montage";
       try {
-        if (byteplus) arkCredentials();
-        else {
+        if (byteplus) {
+          arkCredentials();
+          const profile = savedProfile
+            ? validateModel(savedProfile)
+            : bytePlusModel();
+          if (!candidate.montage_plan) bytePlusBudgetSettings(profile);
+          else if (
+            candidate.montage_next_shot < candidate.montage_plan.shots.length
+          )
+            assertFilmBudget(candidate.montage_plan, profile);
+        } else {
           if (process.env.HIGGSFIELD_ENABLED !== "true")
             throw new Error("Higgsfield is paused.");
           higgsfieldCredentials();
@@ -237,13 +253,16 @@ export async function runVideoWorker(orderId?: string) {
                 ? bytePlusModel()
                 : configuredModel()
             : null;
-      } catch {
+      } catch (error) {
         await admin
           .from("property_video_jobs")
           .update({
-            last_error: byteplus
-              ? "BytePlus API configuration is incomplete. Check ARK_API_KEY and BYTEPLUS_VIDEO_MODEL."
-              : "Higgsfield is paused or its configuration is incomplete. Existing work remains assigned to its original provider.",
+            last_error:
+              error instanceof VideoBudgetError
+                ? error.message
+                : byteplus
+                  ? "BytePlus API configuration is incomplete. Check ARK_API_KEY and BYTEPLUS_VIDEO_MODEL."
+                  : "Higgsfield is paused or its configuration is incomplete. Existing work remains assigned to its original provider.",
             next_poll_at: new Date(Date.now() + 300000).toISOString(),
           })
           .eq("order_id", candidate.order_id)

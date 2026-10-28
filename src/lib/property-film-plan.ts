@@ -1,4 +1,5 @@
 import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
+import type { FilmBudget } from "./byteplus-budget";
 // Shared ordering and timing for original-photo and Higgsfield presentation films.
 export const SHOT_SECONDS = 3.4;
 export const FILM_FPS = 30;
@@ -28,6 +29,7 @@ export type FilmShot = PhotoAnalysis & {
   motion: "push" | "pull" | "glide-left" | "glide-right" | "aerial-glide";
 };
 export type FilmPlan = {
+  generationBudget?: FilmBudget;
   version: 1 | 2;
   engine: "photo-montage-v1" | "higgsfield-montage-v1";
   secondsPerShot: 3.4;
@@ -73,11 +75,15 @@ export function makeFilmPlan(
   images: string[],
   analysis: PhotoAnalysis[],
   fingerprints: string[],
+  maxShots = MAX_FILM_SHOTS,
 ): FilmPlan {
   if (
     !images.length ||
     images.length > MAX_PROPERTY_PHOTOS ||
-    fingerprints.length !== images.length
+    fingerprints.length !== images.length ||
+    !Number.isInteger(maxShots) ||
+    maxShots < 1 ||
+    maxShots > MAX_FILM_SHOTS
   )
     throw new Error("Invalid film photographs.");
   const observations = parsePhotoAnalysis(analysis, images.length);
@@ -97,15 +103,16 @@ export function makeFilmPlan(
   const closingExteriors = remaining.filter(
     (item) => item.category === "exterior",
   );
-  const closing = remaining.length
-    ? [...(closingExteriors.length ? closingExteriors : remaining)].sort(
-        (a, b) => b.strength - a.strength || b.index - a.index,
-      )[0]
-    : undefined;
+  const closing =
+    remaining.length && maxShots > 1
+      ? [...(closingExteriors.length ? closingExteriors : remaining)].sort(
+          (a, b) => b.strength - a.strength || b.index - a.index,
+        )[0]
+      : undefined;
   const middle = remaining.filter((item) => item.index !== closing?.index);
   // Reserve a place for each available kind of room before filling by quality.
   const chosen = new Map<number, PhotoAnalysis>();
-  const capacity = MAX_FILM_SHOTS - 1 - (closing ? 1 : 0);
+  const capacity = maxShots - 1 - (closing ? 1 : 0);
   for (const category of FILM_CATEGORIES) {
     const candidate = best(middle.filter((item) => item.category === category));
     if (candidate && chosen.size < capacity)

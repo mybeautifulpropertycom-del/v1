@@ -22,6 +22,12 @@ type Detail = {
     rebuildUsesCredits?: boolean;
     completed: number;
     total: number;
+    costEstimate?: {
+      usd: number;
+      limitUsd: number;
+      generatedSeconds: number;
+      finalSeconds: number;
+    } | null;
     error: string | null;
     film: { src: string; poster?: string } | null;
   } | null;
@@ -152,6 +158,18 @@ export function AdminProperty({ id }: { id: string }) {
                 {Math.min(data.property.images.length, 23)} new scenes through
                 your selected video provider and uses your API credits. There is
                 no new $97 property payment.
+              </p>
+            )}
+            {data.video?.costEstimate && (
+              <p>
+                Estimated video generation: $
+                {data.video.costEstimate.usd.toFixed(2)} USD
+                {" · "}
+                {data.video.costEstimate.generatedSeconds}s generated
+                {" · "}
+                {data.video.costEstimate.finalSeconds}s cinematic walkthrough.{" "}
+                Planning budget: ${data.video.costEstimate.limitUsd.toFixed(2)}{" "}
+                USD. Actual charges depend on the provider’s pricing.
               </p>
             )}
             {data.video?.canRebuild && (

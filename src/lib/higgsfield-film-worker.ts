@@ -28,6 +28,13 @@ import {
 } from "./property-film-render";
 import { downloadVideo } from "./video-download";
 import {
+  bytePlusBudgetSettings,
+  walkthroughShotLimit,
+  budgetForPlan,
+  assertFilmBudget,
+  VideoBudgetError,
+} from "./byteplus-budget";
+import {
   submitBytePlusGeneration,
   bytePlusGenerationStatus,
   BytePlusRejectedError,
@@ -157,6 +164,9 @@ export async function runHiggsfieldFilm(
     submitting = false;
   try {
     const images = ownedFilmImages(job);
+    const profile = validateModel(job.model_config.profile);
+    if (profile.provider === "byteplus" && !job.montage_plan)
+      bytePlusBudgetSettings(profile);
     if (!job.montage_generation) throw new Error("Missing film generation.");
     if (!job.montage_plan) {
       const signal = AbortSignal.timeout(60000),
@@ -171,10 +181,18 @@ export async function runHiggsfieldFilm(
       }
       const observations = await filmDependencies.analyzeFilmPhotos(images);
       const plan: FilmPlan = {
-        ...makeFilmPlan(images, observations, fingerprints),
+        ...makeFilmPlan(
+          images,
+          observations,
+          fingerprints,
+          profile.provider === "byteplus"
+            ? walkthroughShotLimit(new Set(fingerprints).size, profile)
+            : undefined,
+        ),
         engine: "higgsfield-montage-v1",
       };
-      const profile = validateModel(job.model_config.profile);
+      if (profile.provider === "byteplus")
+        plan.generationBudget = budgetForPlan(plan, profile);
       for (const shot of plan.shots) sceneGenerationInput(profile, shot);
       return (await checkpoint(admin, job, { p_plan: plan }))
         ? "ai_film_planned"
@@ -187,6 +205,7 @@ export async function runHiggsfieldFilm(
     )
       throw new Error("Film photographs do not match.");
     if (job.montage_next_shot < plan.shots.length) {
+      if (profile.provider === "byteplus") assertFilmBudget(plan, profile);
       const index = job.montage_next_shot,
         shot = plan.shots[index];
       const input = sceneGenerationInput(
@@ -333,11 +352,13 @@ export async function runHiggsfieldFilm(
         error instanceof BadInputError ||
         error instanceof NotEnoughCreditsError ||
         error instanceof ValidationError);
-    const failure = rejected
-      ? "failed"
-      : unboundSubmission
-        ? "uncertain"
-        : "delayed";
+    const budgetBlocked = error instanceof VideoBudgetError;
+    const failure =
+      rejected || budgetBlocked
+        ? "failed"
+        : unboundSubmission
+          ? "uncertain"
+          : "delayed";
     console.warn(
       JSON.stringify({
         event: "higgsfield_film_step_deferred",
@@ -347,11 +368,13 @@ export async function runHiggsfieldFilm(
     );
     await checkpoint(admin, job, {
       p_failure: failure,
-      p_error: rejected
-        ? "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
-        : unboundSubmission
-          ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."
-          : "Film processing is delayed. Saved generation requests and scenes will be reused without another automatic generation charge.",
+      p_error: budgetBlocked
+        ? error.message
+        : rejected
+          ? "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
+          : unboundSubmission
+            ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."
+            : "Film processing is delayed. Saved generation requests and scenes will be reused without another automatic generation charge.",
     });
     return failure;
   }

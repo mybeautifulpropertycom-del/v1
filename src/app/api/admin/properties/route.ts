@@ -52,6 +52,17 @@ export async function GET(request: Request) {
               ].includes(process.env.PROPERTY_VIDEO_MODE || ""),
               completed: job.montage_next_shot,
               total: job.montage_plan?.shots?.length || 0,
+              costEstimate: job.montage_plan?.generationBudget
+                ? {
+                    usd: job.montage_plan.generationBudget
+                      .estimatedGenerationUsd,
+                    limitUsd: job.montage_plan.generationBudget.maxUsd,
+                    generatedSeconds:
+                      job.montage_plan.shots.length *
+                      job.montage_plan.generationBudget.sourceSeconds,
+                    finalSeconds: job.montage_plan.duration,
+                  }
+                : null,
               error: job.last_error,
               film: job.video_url
                 ? { src: job.video_url, poster: job.poster_url }
