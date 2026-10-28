@@ -18,8 +18,8 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
-  Sparkles,
   Square,
+  Video,
   X,
 } from "lucide-react";
 import { DeleteAction } from "./delete-action";
@@ -401,7 +401,7 @@ export function Dashboard() {
       </section>
       <div className="video-teaser">
         <span className="video-teaser-icon">
-          <Sparkles size={21} />
+          <Video size={21} />
         </span>
         <div>
           <strong>Your photos. Their next chapter: motion.</strong>
