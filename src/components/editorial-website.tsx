@@ -820,11 +820,7 @@ export function EditorialWebsite({
             <span>{property.location}</span>
           </div>
         </div>
-        <FooterBrand>
-          Made beautiful with
-          <br />
-          <strong>my beautiful property.</strong> <ArrowUpRight size={14} />
-        </FooterBrand>
+        <FooterBrand />
       </footer>
       {viewing && (
         <ViewingDialog

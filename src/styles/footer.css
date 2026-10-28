@@ -1,8 +1,29 @@
 .property-footer > .footer-brand {
   display: inline-flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
   flex-shrink: 0;
+}
+.property-footer .footer-brand-credit {
+  font-size: 9px;
+  line-height: 1.6;
+}
+.property-footer .footer-brand-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.property-footer .footer-brand-name img {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.property-footer .footer-brand-name strong {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .property-footer .footer-identity-logo,
 .property-footer .footer-mobile-address {
@@ -42,8 +63,8 @@
   }
   .property-footer .footer-identity-logo {
     display: block;
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
   }
   .property-footer > p {

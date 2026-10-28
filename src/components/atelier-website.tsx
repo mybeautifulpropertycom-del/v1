@@ -652,11 +652,7 @@ export function AtelierWebsite({
           <br />
           Details are subject to verification.
         </p>
-        <FooterBrand>
-          Made beautiful with
-          <br />
-          <strong>my beautiful property.</strong>
-        </FooterBrand>
+        <FooterBrand />
       </footer>
       <div className="atelier-mobile-tour">
         <span>

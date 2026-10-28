@@ -757,9 +757,7 @@ export function HeritageWebsite({
           <br />
           Details are subject to verification.
         </p>
-        <FooterBrand>
-          Made with my beautiful property. <ArrowUpRight size={12} />
-        </FooterBrand>
+        <FooterBrand />
       </footer>
       {viewing && (
         <ViewingDialog
