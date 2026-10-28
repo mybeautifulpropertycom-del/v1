@@ -1,3 +1,7 @@
+import {
+  bytePlusModel,
+  BytePlusRejectedError,
+} from "../src/lib/byteplus-video";
 import assert from "node:assert/strict";
 import { beforeEach, after, test } from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -273,3 +277,67 @@ test("callback identities are bound to both generation and scene, and prompts pr
   assert.match(String(input.prompt), /existing evening lighting/);
   assert.match(String(input.prompt), /Do not reveal unseen areas/);
 });
+
+function useBytePlus() {
+  job.model_config.profile = bytePlusModel();
+  aiFilmDependencies.submitGeneration = async () => {
+    throw new Error("Unexpected Higgsfield submission");
+  };
+  aiFilmDependencies.generationStatus = async () => {
+    throw new Error("Unexpected Higgsfield poll");
+  };
+  aiFilmDependencies.submitBytePlusGeneration = async (model, input) => {
+    assert.equal(model, "dreamina-seedance-2-5-260628");
+    submissions.push(input);
+    if (timeout) throw new Error("Connection lost after acceptance");
+    if (rejectCredits)
+      throw new BytePlusRejectedError(
+        "BytePlus rejected generation (HTTP 403).",
+      );
+    return { request_id: `cgt-${submissions.length}`, status: "queued" };
+  };
+  aiFilmDependencies.bytePlusGenerationStatus = async (id) => {
+    polls++;
+    return {
+      request_id: id,
+      status: "completed",
+      content: { video_url: "https://cdn.example/byteplus-scene.mp4" },
+    };
+  };
+}
+test("BytePlus films preserve provider snapshots, resume delivery, and assemble without Higgsfield requests", async () => {
+  useBytePlus();
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_film_planned");
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  process.env.PROPERTY_VIDEO_MODE = "higgsfield-montage";
+  downloadFails = true;
+  assert.equal(await runHiggsfieldFilm(admin, order), "delayed");
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_saved");
+  assert.equal(submissions.length, 1);
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_saved");
+  assert.equal(submissions.length, 2);
+  const content = submissions[0].content as any[];
+  assert.equal(content[1].image_url.url, job.source.images[0]);
+  assert.equal(submissions[0].generate_audio, false);
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_edited");
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_edited");
+  assert.equal(await runHiggsfieldFilm(admin, order), "completed");
+  assert.equal(submissions.length, 2);
+  delete process.env.PROPERTY_VIDEO_MODE;
+});
+for (const reason of ["timeout", "binding", "rejected"]) {
+  test(`BytePlus ${reason} does not create duplicate paid scenes`, async () => {
+    useBytePlus();
+    await runHiggsfieldFilm(admin, order);
+    timeout = reason === "timeout";
+    failBinding = reason === "binding";
+    rejectCredits = reason === "rejected";
+    assert.equal(
+      await runHiggsfieldFilm(admin, order),
+      rejectCredits ? "failed" : "uncertain",
+    );
+    assert.equal(await runHiggsfieldFilm(admin, order), "not_claimed");
+    assert.equal(submissions.length, 1);
+  });
+}

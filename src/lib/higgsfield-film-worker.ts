@@ -27,6 +27,11 @@ import {
   assembleFilm,
 } from "./property-film-render";
 import { downloadVideo } from "./video-download";
+import {
+  submitBytePlusGeneration,
+  bytePlusGenerationStatus,
+  BytePlusRejectedError,
+} from "./byteplus-video";
 
 type Job = {
   order_id: string;
@@ -48,6 +53,8 @@ type Scene = {
   model_input: Record<string, unknown>;
 };
 export const aiFilmDependencies = {
+  submitBytePlusGeneration,
+  bytePlusGenerationStatus,
   submitGeneration,
   generationStatus,
   downloadVideo,
@@ -205,11 +212,17 @@ export async function runHiggsfieldFilm(
         stage = "scene_submission";
         submitting = true;
         unboundSubmission = true;
-        result = await aiFilmDependencies.submitGeneration(
-          scene.model_config.endpoint,
-          scene.model_input,
-          filmCallbackUrl(order, job.montage_generation, index),
-        );
+        result =
+          scene.model_config.provider === "byteplus"
+            ? await aiFilmDependencies.submitBytePlusGeneration(
+                scene.model_config.endpoint,
+                scene.model_input,
+              )
+            : await aiFilmDependencies.submitGeneration(
+                scene.model_config.endpoint,
+                scene.model_input,
+                filmCallbackUrl(order, job.montage_generation, index),
+              );
         submitting = false;
         const bound = await admin.rpc("bind_property_film_scene", {
           p_order: order,
@@ -224,12 +237,17 @@ export async function runHiggsfieldFilm(
         stage = "scene_status";
         if (!scene.request_id)
           throw new Error("Scene request needs reconciliation.");
-        result = await aiFilmDependencies.generationStatus(scene.request_id);
+        result =
+          scene.model_config.provider === "byteplus"
+            ? await aiFilmDependencies.bytePlusGenerationStatus(
+                scene.request_id,
+              )
+            : await aiFilmDependencies.generationStatus(scene.request_id);
       }
       if (["failed", "nsfw", "cancelled", "canceled"].includes(result.status)) {
         await checkpoint(admin, job, {
           p_error:
-            "Higgsfield could not generate this scene. Review the request in your API dashboard before requesting a new film.",
+            "The video provider could not generate this scene. Review the request in your API dashboard before requesting a new film.",
           p_failure: "failed",
         });
         return "provider_failed";
@@ -310,7 +328,8 @@ export async function runHiggsfieldFilm(
   } catch (error) {
     const rejected =
       submitting &&
-      (error instanceof AuthenticationError ||
+      (error instanceof BytePlusRejectedError ||
+        error instanceof AuthenticationError ||
         error instanceof BadInputError ||
         error instanceof NotEnoughCreditsError ||
         error instanceof ValidationError);
@@ -329,9 +348,9 @@ export async function runHiggsfieldFilm(
     await checkpoint(admin, job, {
       p_failure: failure,
       p_error: rejected
-        ? "Higgsfield rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
+        ? "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
         : unboundSubmission
-          ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in Higgsfield or wait for its callback."
+          ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."
           : "Film processing is delayed. Saved generation requests and scenes will be reused without another automatic generation charge.",
     });
     return failure;

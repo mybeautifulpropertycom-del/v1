@@ -1,3 +1,4 @@
+import { videoEnabled } from "@/lib/video-service";
 import { after } from "next/server";
 import { wakeVideoWorker } from "@/lib/higgsfield-worker";
 import type Stripe from "stripe";
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
       );
     if (config.live) {
       const response = await handleLiveWebhook(config, event);
-      if (process.env.HIGGSFIELD_ENABLED === "true") after(wakeVideoWorker);
+      if (videoEnabled()) after(wakeVideoWorker);
       return response;
     }
     if (

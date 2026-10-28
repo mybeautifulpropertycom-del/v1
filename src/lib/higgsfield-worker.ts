@@ -22,6 +22,8 @@ import { callbackUrl, workerSecret } from "./higgsfield-security";
 import { downloadVideo } from "./video-download";
 import { runHiggsfieldFilm } from "./higgsfield-film-worker";
 import { runPropertyFilm } from "./property-film-worker";
+import { arkCredentials, bytePlusModel } from "./byteplus-video";
+import { videoEnabled, aiMontageMode } from "./video-service";
 
 export type VideoJob = {
   order_id: string;
@@ -58,6 +60,12 @@ export function videoConfiguration() {
       input: {},
       output: { kind: "video" as const, path: "film.mp4" },
     };
+  }
+  if (process.env.PROPERTY_VIDEO_MODE === "byteplus-montage") {
+    arkCredentials();
+    if (!process.env.OPENAI_API_KEY?.trim())
+      throw new Error("Photo ordering needs OPENAI_API_KEY.");
+    return bytePlusModel();
   }
   higgsfieldCredentials();
   if (
@@ -183,8 +191,7 @@ async function processJob(job: VideoJob) {
 }
 /** One short batch. The scheduler resumes jobs; no function waits for a render. */
 export async function runVideoWorker(orderId?: string) {
-  if (process.env.HIGGSFIELD_ENABLED !== "true")
-    return { enabled: false, processed: 0 };
+  if (!videoEnabled()) return { enabled: false, processed: 0 };
   workerSecret();
   callbackUrl("configuration-check", 1);
   const admin = videoDatabase();
@@ -207,19 +214,36 @@ export async function runVideoWorker(orderId?: string) {
       candidate.model_config?.engine === "higgsfield-montage-v1" ||
       (!candidate.model_config?.engine &&
         candidate.status === "queued" &&
-        process.env.PROPERTY_VIDEO_MODE === "higgsfield-montage")
+        aiMontageMode())
     ) {
       const started = Date.now();
       let model: ModelProfile | null;
+      const savedProfile = candidate.model_config?.profile;
+      const byteplus = savedProfile
+        ? savedProfile.provider === "byteplus"
+        : process.env.PROPERTY_VIDEO_MODE === "byteplus-montage";
       try {
-        higgsfieldCredentials();
-        model = candidate.status === "queued" ? configuredModel() : null;
+        if (byteplus) arkCredentials();
+        else {
+          if (process.env.HIGGSFIELD_ENABLED !== "true")
+            throw new Error("Higgsfield is paused.");
+          higgsfieldCredentials();
+        }
+        model =
+          candidate.status === "queued"
+            ? savedProfile
+              ? validateModel(savedProfile)
+              : byteplus
+                ? bytePlusModel()
+                : configuredModel()
+            : null;
       } catch {
         await admin
           .from("property_video_jobs")
           .update({
-            last_error:
-              "Higgsfield API configuration is incomplete. Check HF_KEY and HIGGSFIELD_MODEL.",
+            last_error: byteplus
+              ? "BytePlus API configuration is incomplete. Check ARK_API_KEY and BYTEPLUS_VIDEO_MODEL."
+              : "Higgsfield is paused or its configuration is incomplete. Existing work remains assigned to its original provider.",
             next_poll_at: new Date(Date.now() + 300000).toISOString(),
           })
           .eq("order_id", candidate.order_id)
@@ -251,6 +275,19 @@ export async function runVideoWorker(orderId?: string) {
         process.env.PROPERTY_VIDEO_MODE === "photo-montage")
     ) {
       results.push(await runPropertyFilm(admin, candidate.order_id));
+      continue;
+    }
+    if (process.env.HIGGSFIELD_ENABLED !== "true") {
+      await admin
+        .from("property_video_jobs")
+        .update({
+          next_poll_at: new Date(Date.now() + 300000).toISOString(),
+          last_error:
+            "Higgsfield is paused. This existing request remains assigned to its original provider.",
+        })
+        .eq("order_id", candidate.order_id)
+        .eq("status", candidate.status);
+      results.push("configuration_required");
       continue;
     }
     higgsfieldCredentials();

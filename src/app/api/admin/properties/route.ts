@@ -46,8 +46,10 @@ export async function GET(request: Request) {
               status: job.status,
               attempts: job.attempts,
               canRebuild: ["completed", "failed"].includes(job.status),
-              rebuildUsesCredits:
-                process.env.PROPERTY_VIDEO_MODE === "higgsfield-montage",
+              rebuildUsesCredits: [
+                "higgsfield-montage",
+                "byteplus-montage",
+              ].includes(process.env.PROPERTY_VIDEO_MODE || ""),
               completed: job.montage_next_shot,
               total: job.montage_plan?.shots?.length || 0,
               error: job.last_error,

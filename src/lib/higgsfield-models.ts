@@ -3,6 +3,7 @@ import presets from "../../config/higgsfield-models.json";
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type ModelProfile = {
+  provider?: "higgsfield" | "byteplus";
   endpoint: string;
   input: Record<string, Json>;
   output: { kind: "video" | "image" | "audio"; path: string };
@@ -36,6 +37,8 @@ export function validateModel(value: unknown): ModelProfile {
   const p = value as ModelProfile;
   if (
     !p ||
+    (p.provider !== undefined &&
+      !["higgsfield", "byteplus"].includes(p.provider)) ||
     !p.input ||
     typeof p.input !== "object" ||
     Array.isArray(p.input) ||
@@ -49,7 +52,12 @@ export function validateModel(value: unknown): ModelProfile {
   readPath({}, p.output.path);
   if (JSON.stringify(p).length > 32000)
     throw new Error("Model configuration is too large.");
-  return { endpoint, input: p.input, output: p.output };
+  return {
+    ...(p.provider ? { provider: p.provider } : {}),
+    endpoint,
+    input: p.input,
+    output: p.output,
+  };
 }
 export function configuredModel(): ModelProfile {
   const id = process.env.HIGGSFIELD_MODEL?.trim();

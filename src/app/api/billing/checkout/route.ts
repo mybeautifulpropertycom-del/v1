@@ -1,3 +1,4 @@
+import { videoEnabled } from "@/lib/video-service";
 import {
   publicPath,
   publicationErrors,
@@ -62,11 +63,13 @@ export async function GET(request: Request) {
         admin
           .from("property_video_jobs")
           .select(
-            process.env.HIGGSFIELD_ENABLED === "true"
+            videoEnabled()
               ? "status,video_url,poster_url,provider_phase,attempts,updated_at,last_error" +
-                  (["photo-montage", "higgsfield-montage"].includes(
-                    process.env.PROPERTY_VIDEO_MODE || "",
-                  )
+                  ([
+                    "photo-montage",
+                    "higgsfield-montage",
+                    "byteplus-montage",
+                  ].includes(process.env.PROPERTY_VIDEO_MODE || "")
                     ? ",montage_plan,montage_next_shot"
                     : "")
               : "status,video_url,poster_url,attempts,updated_at",

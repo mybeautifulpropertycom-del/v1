@@ -1,3 +1,4 @@
+import { videoEnabled } from "@/lib/video-service";
 import { after } from "next/server";
 import { wakeVideoWorker } from "@/lib/higgsfield-worker";
 import {
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
         "Retry is unavailable. Wait one minute after a failure; after three attempts, please contact support.",
         409,
       );
-    if (process.env.HIGGSFIELD_ENABLED === "true") after(wakeVideoWorker);
+    if (videoEnabled()) after(wakeVideoWorker);
     return billingJson({ videoStatus: "queued" });
   } catch (error) {
     return billingFailure(error);

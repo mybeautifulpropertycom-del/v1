@@ -1,3 +1,4 @@
+import { videoEnabled } from "@/lib/video-service";
 import { after } from "next/server";
 import { platformAdmin, adminFailure } from "@/lib/platform-admin";
 import {
@@ -13,10 +14,10 @@ export async function POST(request: Request) {
   try {
     const { user, admin } = await platformAdmin(request);
     if (
-      !["photo-montage", "higgsfield-montage"].includes(
+      !["photo-montage", "higgsfield-montage", "byteplus-montage"].includes(
         process.env.PROPERTY_VIDEO_MODE || "",
       ) ||
-      process.env.HIGGSFIELD_ENABLED !== "true"
+      !videoEnabled()
     )
       throw new BillingError(
         "Enable the video service before rebuilding a film.",
@@ -33,10 +34,11 @@ export async function POST(request: Request) {
     const { data, error } = await admin.rpc("admin_rebuild_property_film", {
       listing_id: body.propertyId,
       actor_id: user.id,
-      target_engine:
-        process.env.PROPERTY_VIDEO_MODE === "higgsfield-montage"
-          ? "higgsfield-montage-v1"
-          : "photo-montage-v1",
+      target_engine: ["higgsfield-montage", "byteplus-montage"].includes(
+        process.env.PROPERTY_VIDEO_MODE || "",
+      )
+        ? "higgsfield-montage-v1"
+        : "photo-montage-v1",
     });
     if (error) {
       if (error.code === "42501")

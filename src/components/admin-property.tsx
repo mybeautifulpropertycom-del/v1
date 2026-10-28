@@ -150,8 +150,8 @@ export function AdminProperty({ id }: { id: string }) {
               <p>
                 Rebuilding generates up to{" "}
                 {Math.min(data.property.images.length, 23)} new scenes through
-                Higgsfield and uses your API credits. There is no new $97
-                property payment.
+                your selected video provider and uses your API credits. There is
+                no new $97 property payment.
               </p>
             )}
             {data.video?.canRebuild && (
