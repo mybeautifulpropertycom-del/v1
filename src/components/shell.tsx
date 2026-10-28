@@ -125,10 +125,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
               Find your style <ArrowUpRight size={16} />
             </Link>
           </div>
-          <button className="sidebar-help" onClick={() => setHelp(true)}>
-            <CircleHelp size={18} />
-            How it works
-          </button>
           <div className="account-row">
             <Link href="/dashboard/profile" className="avatar">
               <AgentAvatar profile={profile} />
