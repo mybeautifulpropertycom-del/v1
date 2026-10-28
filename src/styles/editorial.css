@@ -877,13 +877,13 @@
   gap: 30px;
   padding-block: 35px;
 }
-.estate-footer > div > a {
+.estate-footer .footer-agent-details > a {
   display: block;
   font-family: var(--serif);
   font-size: 22px;
   overflow-wrap: anywhere;
 }
-.estate-footer > div > span {
+.estate-footer .footer-agent-details > span {
   display: block;
   color: var(--estate-muted);
   font-size: 10px;

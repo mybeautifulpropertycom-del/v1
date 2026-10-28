@@ -1,7 +1,7 @@
 "use client";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
-import { FooterBrand } from "./footer-brand";
+import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -745,6 +745,7 @@ export function HeritageWebsite({
       </main>
       <footer className="heritage-footer heritage-pad property-footer">
         <a href="#home" className="footer-identity">
+          <FooterIdentityLogo />
           <span className="footer-agent-details">
             <span>{profile.agency || profile.name}</span>
             <span className="footer-mobile-address">{property.location}</span>

@@ -1,7 +1,7 @@
 "use client";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
-import { FooterBrand } from "./footer-brand";
+import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -814,8 +814,11 @@ export function EditorialWebsite({
       </main>
       <footer className="estate-footer estate-pad property-footer">
         <div className="footer-identity">
-          <a href="#home">{profile.agency || profile.name}</a>
-          <span>{property.location}</span>
+          <FooterIdentityLogo />
+          <div className="footer-agent-details">
+            <a href="#home">{profile.agency || profile.name}</a>
+            <span>{property.location}</span>
+          </div>
         </div>
         <FooterBrand>
           Made beautiful with

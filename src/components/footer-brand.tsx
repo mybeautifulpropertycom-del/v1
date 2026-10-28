@@ -8,13 +8,18 @@ export function FooterBrand({ children }: { children: ReactNode }) {
       aria-label="My Beautiful Property home"
     >
       <span className="footer-brand-copy">{children}</span>
-      <img
-        src="/icon.svg"
-        alt=""
-        width={36}
-        height={36}
-        className="footer-brand-logo"
-      />
     </a>
+  );
+}
+
+export function FooterIdentityLogo() {
+  return (
+    <img
+      src="/icon.svg"
+      alt=""
+      width={28}
+      height={28}
+      className="footer-identity-logo"
+    />
   );
 }
