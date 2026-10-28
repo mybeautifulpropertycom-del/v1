@@ -358,9 +358,22 @@ export function legacyFilmScore(shots: number): Buffer {
 export async function assembleFilm(
   segments: Buffer[],
   version: 1 | 2 = 2,
+  durations?: number[],
 ): Promise<Buffer> {
   if (!segments.length || segments.length > MAX_FILM_SHOTS)
     throw new Error("Invalid film length.");
+  const seconds = durations || segments.map(() => SHOT_SECONDS);
+  const totalSeconds = Number(
+    seconds.reduce((sum, value) => sum + value, 0).toFixed(1),
+  );
+  if (
+    seconds.length !== segments.length ||
+    seconds.some(
+      (value) => !Number.isFinite(value) || value < 2 || value > 5,
+    ) ||
+    totalSeconds > 80
+  )
+    throw new Error("Invalid film timeline.");
   const directory = await mkdtemp(join(tmpdir(), "mbp-film-"));
   try {
     for (let i = 0; i < segments.length; i++)
@@ -376,7 +389,7 @@ export async function assembleFilm(
       music,
       version === 1
         ? legacyFilmScore(segments.length)
-        : originalFilmScore(segments.length),
+        : originalFilmScore(segments.length, durations),
     );
     await executeFilmCommand([
       "-protocol_whitelist",
@@ -400,7 +413,7 @@ export async function assembleFilm(
       "-b:a",
       "128k",
       "-t",
-      String(Number((segments.length * SHOT_SECONDS).toFixed(1))),
+      String(totalSeconds),
       "-movflags",
       "+faststart",
       output,
@@ -414,22 +427,28 @@ export async function assembleFilm(
   }
 }
 
-/** Preserve provider motion; map six seconds onto 3.6s including edit handles.
+/** Preserve provider motion and add six edit-handle frames around the chosen duration.
  * Monotone time mapping accelerates edges and gives the middle more screen time.
  * Provider audio is deliberately removed: the final film uses the chosen score.
  */
 export async function normalizeGeneratedClip(
   bytes: Buffer,
   sourceSeconds: number,
+  targetSeconds: number = SHOT_SECONDS,
 ): Promise<Buffer> {
   if (
     !Number.isFinite(sourceSeconds) ||
-    sourceSeconds < 3.6 ||
-    sourceSeconds > 15
+    sourceSeconds < 2 ||
+    sourceSeconds > 15 ||
+    !Number.isFinite(targetSeconds) ||
+    targetSeconds < 2 ||
+    targetSeconds > 5
   )
     throw new Error(
-      "Configure a generated clip duration between 3.6 and 15 seconds.",
+      "Configure a generated clip duration between 2 and 15 seconds.",
     );
+  const frames = Math.round(targetSeconds * FILM_FPS) + 6;
+  const normalizedSeconds = frames / FILM_FPS;
   const directory = await mkdtemp(join(tmpdir(), "mbp-generated-scene-"));
   try {
     const input = join(directory, "provider.mp4"),
@@ -444,9 +463,9 @@ export async function normalizeGeneratedClip(
       "-i",
       input,
       "-vf",
-      `trim=duration=${sourceSeconds},setpts=PTS-STARTPTS,setpts='3.6*(${t}-0.65*sin(2*PI*${t})/(2*PI))/TB',fps=30,scale=1280:720:force_original_aspect_ratio=decrease:flags=lanczos,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x111916,setsar=1,format=yuv420p`,
+      `trim=duration=${sourceSeconds},setpts=PTS-STARTPTS,setpts='${normalizedSeconds}*(${t}-0.65*sin(2*PI*${t})/(2*PI))/TB',fps=30,scale=1280:720:force_original_aspect_ratio=decrease:flags=lanczos,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x111916,setsar=1,format=yuv420p`,
       "-frames:v",
-      "108",
+      String(frames),
       "-an",
       "-c:v",
       "libx264",
@@ -467,7 +486,7 @@ export async function normalizeGeneratedClip(
       output,
     ]);
     // A truncated provider clip must not be silently padded into a static shot.
-    await verifyFilmFrames(output, 108);
+    await verifyFilmFrames(output, frames);
     return await readFile(output);
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -525,7 +544,18 @@ export async function editGeneratedClip(
   current: Buffer,
   previous?: Buffer,
   next?: Buffer,
+  timing: { seconds?: number; previousSeconds?: number } = {},
 ): Promise<Buffer> {
+  const seconds = timing.seconds ?? SHOT_SECONDS;
+  const previousSeconds = timing.previousSeconds ?? SHOT_SECONDS;
+  if (
+    ![seconds, previousSeconds].every(
+      (value) => Number.isFinite(value) && value >= 2 && value <= 5,
+    )
+  )
+    throw new Error("Invalid scene timing.");
+  const frames = Math.round(seconds * FILM_FPS);
+  const previousFrames = Math.round(previousSeconds * FILM_FPS);
   const directory = await mkdtemp(join(tmpdir(), "mbp-film-edit-"));
   try {
     const inputs = [
@@ -547,13 +577,13 @@ export async function editGeneratedClip(
       );
     }
     const filters = [
-      "[0:v]trim=start_frame=3:end_frame=105,setpts=PTS-STARTPTS,format=yuv444p[main]",
+      `[0:v]trim=start_frame=3:end_frame=${frames + 3},setpts=PTS-STARTPTS,format=yuv444p[main]`,
     ];
     let output = "main",
       index = 1;
     if (previous) {
       filters.push(
-        `[${index++}:v]trim=start_frame=105:end_frame=108,setpts=PTS-STARTPTS,format=yuv444p,tpad=stop=99:stop_mode=clone[previous]`,
+        `[${index++}:v]trim=start_frame=${previousFrames + 3}:end_frame=${previousFrames + 6},setpts=PTS-STARTPTS,format=yuv444p,tpad=stop=${frames - 3}:stop_mode=clone[previous]`,
       );
       filters.push(
         `[${output}][previous]blend=all_expr='if(lt(N,4),A*(N+2.5)/6+B*(3.5-N)/6,A)':shortest=1[incoming]`,
@@ -562,10 +592,10 @@ export async function editGeneratedClip(
     }
     if (next) {
       filters.push(
-        `[${index}:v]trim=end_frame=3,setpts=PTS-STARTPTS,format=yuv444p,tpad=start=99:start_mode=clone[next]`,
+        `[${index}:v]trim=end_frame=3,setpts=PTS-STARTPTS,format=yuv444p,tpad=start=${frames - 3}:start_mode=clone[next]`,
       );
       filters.push(
-        `[${output}][next]blend=all_expr='if(gt(N,99),A*(1-(N-99.5)/6)+B*(N-99.5)/6,A)':shortest=1[outgoing]`,
+        `[${output}][next]blend=all_expr='if(gt(N,${frames - 3}),A*(1-(N-${frames - 2.5})/6)+B*(N-${frames - 2.5})/6,A)':shortest=1[outgoing]`,
       );
       output = "outgoing";
     }
@@ -578,7 +608,7 @@ export async function editGeneratedClip(
       "-map",
       "[video]",
       "-frames:v",
-      "102",
+      String(frames),
       "-an",
       "-c:v",
       "libx264",
@@ -598,7 +628,7 @@ export async function editGeneratedClip(
       "+faststart",
       path,
     ]);
-    await verifyFilmFrames(path, 102);
+    await verifyFilmFrames(path, frames);
     return await readFile(path);
   } finally {
     await rm(directory, { recursive: true, force: true });

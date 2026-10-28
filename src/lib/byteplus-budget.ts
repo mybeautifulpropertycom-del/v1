@@ -4,10 +4,11 @@ import { MAX_FILM_SHOTS } from "./property-film-plan";
 
 export class VideoBudgetError extends Error {}
 export type FilmBudget = {
-  version: 1;
+  version: 2;
   model: string;
   resolution: "720p";
-  sourceSeconds: number;
+  sceneSeconds: number[];
+  generatedSeconds: number;
   usdPerSecond: number;
   maxUsd: number;
   plannedScenes: number;
@@ -36,62 +37,145 @@ export function bytePlusBudgetSettings(model: ModelProfile) {
     throw new VideoBudgetError(
       "Video generation is paused: the saved model or settings do not match the configured BytePlus price.",
     );
-  const seconds = Number(model.input.duration);
-  if (!Number.isInteger(seconds) || seconds < 4 || seconds > 15)
-    throw new VideoBudgetError("The scene duration cannot be costed safely.");
-  const capCents = Math.floor(maxUsd * 100 * 0.8); // Keep 20% outside the generation estimate.
-  const sceneCents = Math.ceil(rate * seconds * 100);
+  const capCents = Math.floor(maxUsd * 100 * 0.8);
   const affordableScenes = Math.min(
     MAX_FILM_SHOTS,
-    Math.floor(capCents / sceneCents),
+    Math.floor(capCents / sceneCostCents(rate, 2)),
   );
   if (affordableScenes < 1)
     throw new VideoBudgetError(
       "The configured budget cannot cover one generated scene.",
     );
-  return { rate, maxUsd, seconds, capCents, sceneCents, affordableScenes };
+  return { rate, maxUsd, capCents, affordableScenes };
 }
+const sceneCostCents = (rate: number, seconds: number) =>
+  Math.ceil(rate * seconds * 100);
+const estimateCents = (rate: number, durations: number[]) =>
+  durations.reduce((sum, seconds) => sum + sceneCostCents(rate, seconds), 0);
 export function walkthroughShotLimit(
   uniquePhotos: number,
   model: ModelProfile,
 ) {
   const { affordableScenes } = bytePlusBudgetSettings(model);
-  // 15 unique photos -> 9 scenes / 30.6s; 30 -> 18 / 61.2s; 40 -> 23 / 78.2s,
-  // provided the estimated budget can cover them. Never repeat photos to fill time.
-  const target = Math.min(
+  return Math.min(
     MAX_FILM_SHOTS,
     uniquePhotos,
-    Math.max(2, Math.round(uniquePhotos * 0.6)),
+    Math.max(2, Math.round(uniquePhotos * 0.7)),
+    affordableScenes,
   );
-  return Math.min(target, affordableScenes);
+}
+/** Give the most important spaces breathing room and use short detail shots.
+ * Generated seconds equal edited seconds; speed ramps use the same footage.
+ */
+export function timeWalkthrough(
+  plan: FilmPlan,
+  uniquePhotos: number,
+  model: ModelProfile,
+): FilmPlan {
+  const settings = bytePlusBudgetSettings(model);
+  const target = Math.min(80, Math.max(2, uniquePhotos * 2));
+  const durations = plan.shots.map(() => 2);
+  const total = () => durations.reduce((sum, seconds) => sum + seconds, 0);
+  const priority = plan.shots
+    .map((shot, i) => ({ shot, i }))
+    .sort((a, b) => {
+      const rank = (i: number) =>
+        i === 0
+          ? 100
+          : i === plan.shots.length - 1
+            ? 90
+            : {
+                exterior: 70,
+                living: 80,
+                dining: 60,
+                kitchen: 65,
+                bedroom: 40,
+                bathroom: 20,
+                detail: 10,
+                other: 30,
+              }[plan.shots[i].category] + plan.shots[i].strength;
+      return rank(b.i) - rank(a.i) || a.i - b.i;
+    });
+  const addSecond = (i: number) => {
+    if (total() >= target || durations[i] >= 5) return false;
+    durations[i]++;
+    if (estimateCents(settings.rate, durations) > settings.capCents) {
+      durations[i]--;
+      return false;
+    }
+    return true;
+  };
+  for (const { shot, i } of priority) {
+    const preferred =
+      i === 0
+        ? 5
+        : i === plan.shots.length - 1
+          ? 4
+          : shot.category === "living"
+            ? 4
+            : ["exterior", "kitchen", "dining"].includes(shot.category)
+              ? 4
+              : ["bathroom", "detail"].includes(shot.category)
+                ? 2
+                : 3;
+    while (durations[i] < preferred && addSecond(i)) {
+      /* Fill within target and budget. */
+    }
+  }
+  while (total() < target) {
+    let changed = false;
+    for (const { i } of priority) if (addSecond(i)) changed = true;
+    if (!changed) break;
+  }
+  return {
+    ...plan,
+    timing: "variable-v1",
+    duration: total(),
+    shots: plan.shots.map((shot, i) => ({ ...shot, seconds: durations[i] })),
+  };
 }
 export function budgetForPlan(plan: FilmPlan, model: ModelProfile): FilmBudget {
   const settings = bytePlusBudgetSettings(model);
-  if (plan.shots.length > settings.affordableScenes)
+  const durations = plan.shots.map((shot) => Number(shot.seconds));
+  if (
+    plan.timing !== "variable-v1" ||
+    durations.some(
+      (seconds) => !Number.isInteger(seconds) || seconds < 2 || seconds > 5,
+    )
+  )
+    throw new VideoBudgetError(
+      "This film needs a reviewed variable-duration plan before generating scenes.",
+    );
+  const cost = estimateCents(settings.rate, durations);
+  if (cost > settings.capCents)
     throw new VideoBudgetError(
       "The film exceeds the configured generation budget.",
     );
   return {
-    version: 1,
+    version: 2,
     model: model.endpoint,
     resolution: "720p",
-    sourceSeconds: settings.seconds,
+    sceneSeconds: durations,
+    generatedSeconds: durations.reduce((sum, seconds) => sum + seconds, 0),
     usdPerSecond: settings.rate,
     maxUsd: settings.maxUsd,
     plannedScenes: plan.shots.length,
-    estimatedGenerationUsd: (plan.shots.length * settings.sceneCents) / 100,
+    estimatedGenerationUsd: cost / 100,
     reserveUsd: settings.maxUsd - settings.capCents / 100,
   };
 }
+
 export function assertFilmBudget(plan: FilmPlan, model: ModelProfile) {
   const saved = plan.generationBudget;
   const current = budgetForPlan(plan, model);
   if (
     !saved ||
-    saved.version !== 1 ||
+    saved.version !== 2 ||
     saved.model !== model.endpoint ||
     saved.resolution !== "720p" ||
-    saved.sourceSeconds !== current.sourceSeconds ||
+    JSON.stringify(saved.sceneSeconds) !==
+      JSON.stringify(current.sceneSeconds) ||
+    saved.generatedSeconds !== current.generatedSeconds ||
     saved.plannedScenes !== plan.shots.length ||
     !Number.isFinite(saved.usdPerSecond) ||
     saved.usdPerSecond <= 0 ||
@@ -103,9 +187,7 @@ export function assertFilmBudget(plan: FilmPlan, model: ModelProfile) {
       "This film has no matching budget approval. Review it before generating more scenes.",
     );
   const savedEstimate =
-    (plan.shots.length *
-      Math.ceil(saved.usdPerSecond * saved.sourceSeconds * 100)) /
-    100;
+    estimateCents(saved.usdPerSecond, current.sceneSeconds) / 100;
   const savedCap = Math.floor(saved.maxUsd * 100 * 0.8) / 100;
   if (
     saved.estimatedGenerationUsd !== savedEstimate ||

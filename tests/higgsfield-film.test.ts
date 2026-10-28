@@ -114,7 +114,9 @@ beforeEach(() => {
   };
   aiFilmDependencies.normalizeGeneratedClip = async (bytes, seconds) => {
     assert.equal(bytes.toString(), "provider-motion");
-    assert.equal(seconds, 6);
+    if (job.model_config.profile.provider === "byteplus")
+      assert.ok(seconds >= 2 && seconds <= 5);
+    else assert.equal(seconds, 6);
     return Buffer.from("normalized-motion");
   };
   aiFilmDependencies.editGeneratedClip = async () => {
@@ -304,6 +306,8 @@ function useBytePlus() {
       request_id: id,
       status: "completed",
       content: { video_url: "https://cdn.example/byteplus-scene.mp4" },
+      duration: Number(submissions[Number(id.split("-").at(-1)) - 1].duration),
+      resolution: "720p",
     };
   };
 }
@@ -348,7 +352,7 @@ test("BytePlus budget is saved with the plan and blocks new scenes after a price
   useBytePlus();
   assert.equal(await runHiggsfieldFilm(admin, order), "ai_film_planned");
   assert.equal(job.montage_plan.generationBudget.plannedScenes, 2);
-  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "2";
+  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "4";
   assert.equal(await runHiggsfieldFilm(admin, order), "failed");
   assert.equal(submissions.length, 0);
   assert.equal(
@@ -356,4 +360,21 @@ test("BytePlus budget is saved with the plan and blocks new scenes after a price
     0,
     "Budget must be checked before a billable reservation",
   );
+});
+
+test("BytePlus returning a longer scene stops the film before further paid requests", async () => {
+  useBytePlus();
+  await runHiggsfieldFilm(admin, order);
+  await runHiggsfieldFilm(admin, order);
+  aiFilmDependencies.bytePlusGenerationStatus = async (id) => ({
+    request_id: id,
+    status: "completed",
+    duration: 6,
+    resolution: "720p",
+    content: { video_url: "https://cdn.example/scene.mp4" },
+  });
+  assert.equal(await runHiggsfieldFilm(admin, order), "failed");
+  assert.equal(submissions.length, 1);
+  assert.equal(await runHiggsfieldFilm(admin, order), "not_claimed");
+  assert.equal(submissions.length, 1);
 });

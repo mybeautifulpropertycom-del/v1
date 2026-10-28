@@ -30,6 +30,7 @@ import { downloadVideo } from "./video-download";
 import {
   bytePlusBudgetSettings,
   walkthroughShotLimit,
+  timeWalkthrough,
   budgetForPlan,
   assertFilmBudget,
   VideoBudgetError,
@@ -93,13 +94,13 @@ export function sceneGenerationInput(model: ModelProfile, shot: FilmShot) {
     image_objects: [{ type: "image_url", image_url: shot.image }],
     property: {},
   });
+  if (model.provider === "byteplus" && shot.seconds !== undefined)
+    input.duration = shot.seconds;
   if (!JSON.stringify(input).includes(shot.image))
     throw new Error("The model must accept the selected property photograph.");
   const duration = Number(input.duration);
-  if (!Number.isFinite(duration) || duration < 3.6 || duration > 15)
-    throw new Error(
-      "Configure the model's duration between 3.6 and 15 seconds.",
-    );
+  if (!Number.isFinite(duration) || duration < 2 || duration > 15)
+    throw new Error("Configure the model's duration between 2 and 15 seconds.");
   return input;
 }
 const path = (job: Job, index: number, kind: "raw" | "shot") =>
@@ -180,7 +181,7 @@ export async function runHiggsfieldFilm(
         if (signal.aborted) throw new Error("Photo preparation timed out.");
       }
       const observations = await filmDependencies.analyzeFilmPhotos(images);
-      const plan: FilmPlan = {
+      let plan: FilmPlan = {
         ...makeFilmPlan(
           images,
           observations,
@@ -191,8 +192,10 @@ export async function runHiggsfieldFilm(
         ),
         engine: "higgsfield-montage-v1",
       };
-      if (profile.provider === "byteplus")
+      if (profile.provider === "byteplus") {
+        plan = timeWalkthrough(plan, new Set(fingerprints).size, profile);
         plan.generationBudget = budgetForPlan(plan, profile);
+      }
       for (const shot of plan.shots) sceneGenerationInput(profile, shot);
       return (await checkpoint(admin, job, { p_plan: plan }))
         ? "ai_film_planned"
@@ -275,6 +278,16 @@ export async function runHiggsfieldFilm(
         await checkpoint(admin, job);
         return "generating";
       }
+      if (
+        scene.model_config.provider === "byteplus" &&
+        (result.duration !== Number(scene.model_input.duration) ||
+          (result.resolution !== undefined &&
+            result.resolution !== scene.model_input.resolution))
+      ) {
+        throw new VideoBudgetError(
+          "BytePlus returned different duration or resolution than requested. Generation is stopped for cost review; no additional scenes will be requested.",
+        );
+      }
       stage = "scene_delivery";
       const url = readPath(
         result,
@@ -286,6 +299,7 @@ export async function runHiggsfieldFilm(
       const clip = await aiFilmDependencies.normalizeGeneratedClip(
         media.bytes,
         Number(scene.model_input.duration),
+        shot.seconds,
       );
       await storeClip(admin, job, index, "raw", clip);
       return (await checkpoint(admin, job, { p_scene: index }))
@@ -307,7 +321,10 @@ export async function runHiggsfieldFilm(
         job,
         index,
         "shot",
-        await aiFilmDependencies.editGeneratedClip(current, previous, next),
+        await aiFilmDependencies.editGeneratedClip(current, previous, next, {
+          seconds: plan.shots[index].seconds,
+          previousSeconds: plan.shots[index - 1]?.seconds,
+        }),
       );
       return (await checkpoint(admin, job, { p_edit: index }))
         ? "ai_scene_edited"
@@ -317,7 +334,13 @@ export async function runHiggsfieldFilm(
     const clips: Buffer[] = [];
     for (let i = 0; i < plan.shots.length; i++)
       clips.push(await savedClip(admin, job, i, "shot"));
-    const film = await aiFilmDependencies.assembleFilm(clips, 2);
+    const film = await aiFilmDependencies.assembleFilm(
+      clips,
+      2,
+      plan.timing === "variable-v1"
+        ? plan.shots.map((shot) => shot.seconds!)
+        : undefined,
+    );
     const digest = createHash("sha256").update(film).digest("hex").slice(0, 24);
     const publicPath = `${job.owner_id}/${order}/higgsfield-${job.montage_generation}-${digest}.mp4`;
     const upload = await admin.storage

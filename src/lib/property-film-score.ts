@@ -5,12 +5,23 @@ import { MAX_FILM_SHOTS, SHOT_SECONDS } from "./property-film-plan";
  * four-on-the-floor drums and syncopated accents. No voice or reference audio.
  * This is a proposed house soundtrack, not a claim of a licensed studio track.
  */
-export function originalFilmScore(shots: number): Buffer {
+export function originalFilmScore(shots: number, durations?: number[]): Buffer {
   if (!Number.isInteger(shots) || shots < 1 || shots > MAX_FILM_SHOTS)
     throw new Error("Invalid score duration.");
+  if (
+    durations &&
+    (durations.length !== shots ||
+      durations.some(
+        (value) => !Number.isFinite(value) || value < 2 || value > 5,
+      ))
+  )
+    throw new Error("Invalid score timeline.");
   const rate = 48000,
-    duration = shots * SHOT_SECONDS,
+    duration = durations
+      ? durations.reduce((sum, value) => sum + value, 0)
+      : shots * SHOT_SECONDS,
     count = Math.round(duration * rate);
+  if (duration > 80) throw new Error("Invalid score duration.");
   const left = new Float32Array(count),
     right = new Float32Array(count);
   const beat = SHOT_SECONDS / 8,
@@ -49,7 +60,7 @@ export function originalFilmScore(shots: number): Buffer {
     }
   }
   const frequency = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
-  for (let bar = 0; bar < shots; bar++) {
+  for (let bar = 0; bar < Math.ceil(duration / SHOT_SECONDS); bar++) {
     const chord = chords[bar % 4],
       root = roots[bar % 4],
       start = bar * SHOT_SECONDS;
@@ -145,6 +156,23 @@ export function originalFilmScore(shots: number): Buffer {
           duck
         );
       });
+    }
+  }
+  // Keep the same continuous melody and tempo. Subtle percussion accents
+  // follow variable scene boundaries without restarting the score at each cut.
+  if (durations) {
+    let cut = 0;
+    for (const length of durations.slice(0, -1)) {
+      cut += length;
+      voice(
+        cut,
+        0.12,
+        0.045,
+        0,
+        (t) =>
+          Math.sin(tau * (70 * t + 1.5 * (1 - Math.exp(-30 * t)))) *
+          Math.exp(-25 * t),
+      );
     }
   }
   // Short stereo room reflections, no long smear across scene accents.

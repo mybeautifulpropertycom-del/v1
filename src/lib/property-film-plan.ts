@@ -4,7 +4,7 @@ import type { FilmBudget } from "./byteplus-budget";
 export const SHOT_SECONDS = 3.4;
 export const FILM_FPS = 30;
 export const SHOT_FRAMES = 102;
-export const MAX_FILM_SHOTS = 23; // 78.2 seconds; 24 shots would exceed 80.
+export const MAX_FILM_SHOTS = 23; // Keep the existing scene storage limit; validate total duration separately.
 export const FILM_CATEGORIES = [
   "exterior",
   "living",
@@ -24,11 +24,13 @@ export type PhotoAnalysis = {
   evening: boolean;
 };
 export type FilmShot = PhotoAnalysis & {
+  seconds?: number;
   image: string;
   fingerprint: string;
   motion: "push" | "pull" | "glide-left" | "glide-right" | "aerial-glide";
 };
 export type FilmPlan = {
+  timing?: "variable-v1";
   generationBudget?: FilmBudget;
   version: 1 | 2;
   engine: "photo-montage-v1" | "higgsfield-montage-v1";
@@ -162,13 +164,26 @@ export function validateFilmPlan(value: unknown): FilmPlan {
     !Array.isArray(plan.shots) ||
     !plan.shots.length ||
     plan.shots.length > MAX_FILM_SHOTS ||
-    plan.duration !== Number((plan.shots.length * SHOT_SECONDS).toFixed(1))
+    (plan.timing !== undefined && plan.timing !== "variable-v1") ||
+    plan.duration > 80 ||
+    plan.duration !==
+      Number(
+        (plan.timing === "variable-v1"
+          ? plan.shots.reduce((sum, shot) => sum + Number(shot.seconds), 0)
+          : plan.shots.length * SHOT_SECONDS
+        ).toFixed(1),
+      )
   )
     throw new Error("Invalid film plan.");
   const seen = new Set<string>();
   for (const shot of plan.shots) {
     if (
       typeof shot.image !== "string" ||
+      (plan.timing === "variable-v1"
+        ? !Number.isInteger(shot.seconds) ||
+          Number(shot.seconds) < 2 ||
+          Number(shot.seconds) > 5
+        : shot.seconds !== undefined) ||
       !/^[a-f0-9]{64}$/.test(shot.fingerprint) ||
       seen.has(shot.image) ||
       !FILM_CATEGORIES.includes(shot.category) ||

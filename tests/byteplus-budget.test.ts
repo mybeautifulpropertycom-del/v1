@@ -4,6 +4,7 @@ import { bytePlusModel } from "../src/lib/byteplus-video";
 import {
   bytePlusBudgetSettings,
   walkthroughShotLimit,
+  timeWalkthrough,
   budgetForPlan,
   assertFilmBudget,
 } from "../src/lib/byteplus-budget";
@@ -41,20 +42,21 @@ function planFor(count: number, duplicate = false) {
     aerial: false,
     evening: false,
   }));
-  const plan = makeFilmPlan(
+  let plan = makeFilmPlan(
     images,
     observations,
     fingerprints,
     walkthroughShotLimit(new Set(fingerprints).size, model),
   );
+  plan = timeWalkthrough(plan, new Set(fingerprints).size, model);
   plan.generationBudget = budgetForPlan(plan, model);
   return plan;
 }
 test("walkthrough duration follows useful photo count and keeps distinct exterior bookends", () => {
   for (const [count, scenes, duration] of [
-    [15, 9, 30.6],
-    [30, 18, 61.2],
-    [40, 23, 78.2],
+    [15, 11, 30],
+    [30, 21, 60],
+    [40, 23, 80],
   ]) {
     const plan = planFor(count);
     assert.equal(plan.shots.length, scenes);
@@ -68,15 +70,19 @@ test("walkthrough duration follows useful photo count and keeps distinct exterio
 test("duplicate photographs cannot inflate duration or paid generation count", () => {
   const plan = planFor(40, true);
   assert.equal(plan.shots.length, 1);
-  assert.equal(plan.duration, 3.4);
+  assert.equal(plan.duration, 2);
 });
-test("cost counts all six generated seconds, reserves 20%, and trims selection to budget", () => {
+test("cost counts actual variable generated seconds, reserves 20%, and trims selection to budget", () => {
   process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.22";
   const plan = planFor(40);
-  assert.equal(plan.shots.length, 9);
-  assert.equal(plan.generationBudget!.estimatedGenerationUsd, 11.88);
+  assert.equal(plan.shots.length, 23);
+  assert.ok(plan.generationBudget!.estimatedGenerationUsd >= 11.88);
+  assert.ok(plan.generationBudget!.estimatedGenerationUsd <= 12);
   assert.equal(plan.generationBudget!.reserveUsd, 3);
-  assert.equal(plan.generationBudget!.sourceSeconds, 6);
+  assert.equal(plan.generationBudget!.generatedSeconds, plan.duration);
+  assert.ok(
+    plan.shots.every((shot) => shot.seconds! >= 2 && shot.seconds! <= 5),
+  );
   assertFilmBudget(plan, bytePlusModel());
 });
 test("missing prices, invalid caps, or mismatched model settings fail closed", () => {

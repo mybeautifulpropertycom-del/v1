@@ -38,7 +38,7 @@ test("BytePlus scenes use saved photo content, no generated audio, and a configu
   assert.equal(model.endpoint, "dreamina-seedance-2-5-260628");
   assert.equal(model.output.path, "content.video_url");
   assert.equal(input.generate_audio, false);
-  assert.equal(input.duration, 6);
+  assert.equal(input.duration, 3);
   assert.equal(input.ratio, "16:9");
   assert.equal(input.resolution, "720p");
   const content = input.content as any[];

@@ -58,8 +58,9 @@ export async function GET(request: Request) {
                       .estimatedGenerationUsd,
                     limitUsd: job.montage_plan.generationBudget.maxUsd,
                     generatedSeconds:
+                      job.montage_plan.generationBudget.generatedSeconds ??
                       job.montage_plan.shots.length *
-                      job.montage_plan.generationBudget.sourceSeconds,
+                        job.montage_plan.generationBudget.sourceSeconds,
                     finalSeconds: job.montage_plan.duration,
                   }
                 : null,

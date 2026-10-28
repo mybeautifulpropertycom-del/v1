@@ -441,3 +441,81 @@ test(
     }
   },
 );
+
+test(
+  "variable 2/3/4/5-second scenes retain motion, exact lengths and continuous stereo music",
+  { timeout: 180000 },
+  async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mbp-variable-film-"));
+    try {
+      const { readFile } = await import("node:fs/promises");
+      const durations = [2, 3, 4, 5];
+      const normalized: Buffer[] = [];
+      const probe = (path: string) =>
+        JSON.parse(
+          execFileSync(
+            "ffprobe",
+            ["-v", "error", "-show_streams", "-of", "json", path],
+            { encoding: "utf8" },
+          ),
+        ).streams;
+      for (const seconds of durations) {
+        const path = join(directory, `source-${seconds}.mp4`);
+        execFileSync(filmBinary(), [
+          "-v",
+          "error",
+          "-f",
+          "lavfi",
+          "-i",
+          `testsrc2=size=320x180:rate=30:duration=${seconds}`,
+          "-c:v",
+          "libx264",
+          "-threads",
+          "2",
+          "-pix_fmt",
+          "yuv420p",
+          path,
+        ]);
+        const clip = await normalizeGeneratedClip(
+          await readFile(path),
+          seconds,
+          seconds,
+        );
+        const resultPath = join(directory, `normalized-${seconds}.mp4`);
+        await writeFile(resultPath, clip);
+        assert.equal(Number(probe(resultPath)[0].nb_frames), seconds * 30 + 6);
+        normalized.push(clip);
+      }
+      const edited: Buffer[] = [];
+      for (let i = 0; i < durations.length; i++) {
+        const clip = await editGeneratedClip(
+          normalized[i],
+          normalized[i - 1],
+          normalized[i + 1],
+          { seconds: durations[i], previousSeconds: durations[i - 1] },
+        );
+        const path = join(directory, `edited-${i}.mp4`);
+        await writeFile(path, clip);
+        const stream = probe(path)[0];
+        assert.equal(Number(stream.nb_frames), durations[i] * 30);
+        assert.equal(Number(stream.duration), durations[i]);
+        edited.push(clip);
+      }
+      const path = join(directory, "walkthrough.mp4");
+      await writeFile(path, await assembleFilm(edited, 2, durations));
+      const streams = probe(path);
+      assert.equal(
+        Number(streams.find((s: any) => s.codec_type === "video").duration),
+        14,
+      );
+      const audio = streams.find((s: any) => s.codec_type === "audio");
+      assert.equal(audio.channels, 2);
+      assert.ok(Math.abs(Number(audio.duration) - 14) < 0.1);
+      const score = originalFilmScore(4, durations);
+      assert.equal(score.readUInt32LE(40), 14 * 48000 * 4);
+      await assert.rejects(() => assembleFilm(edited, 2, [2, 3]), /timeline/);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);

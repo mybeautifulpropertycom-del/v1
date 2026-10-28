@@ -27,7 +27,7 @@ export function bytePlusModel(): ModelProfile {
           role: "reference_image",
         },
       ],
-      duration: 6,
+      duration: 3,
       resolution: "720p",
       ratio: "16:9",
       generate_audio: false,
@@ -85,6 +85,8 @@ export function normalizeArkTask(
     request_id: id,
     status: states[value.status],
     content: value.content,
+    duration: value.duration,
+    resolution: value.resolution,
   };
 }
 export async function submitBytePlusGeneration(
