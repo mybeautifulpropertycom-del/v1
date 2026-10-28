@@ -20,6 +20,10 @@ export default async function Page({
         template: template as TemplateId,
       }}
       profile={data.profile}
+      film={{
+        src: "/videos/template-property-tour.mp4",
+        poster: "/videos/template-property-tour-poster.webp",
+      }}
       sample
     />
   );

@@ -30,7 +30,7 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
   await page.keyboard.press("Escape");
 });
 
-test("Atelier navigation, feature details, tour popup and honest film preview work", async ({
+test("Atelier navigation, feature details, tour popup and sample film work", async ({
   page,
 }) => {
   await page.goto("/templates/panorama");
@@ -81,9 +81,10 @@ test("Atelier navigation, feature details, tour popup and honest film preview wo
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(
-    page.getByText("Video layout preview · No film has been generated yet"),
-  ).toBeVisible();
+  await expect(page.locator(".atelier-film video")).toBeVisible();
+  await expect(page.locator(".atelier-film video source")).toHaveAttribute(
+    "src", "/videos/template-property-tour.mp4",
+  );
   expect(
     await page
       .locator(".atelier-film")
