@@ -3,7 +3,32 @@ import type { ModelProfile } from "./higgsfield-models";
 import type { GenerationResult } from "./higgsfield-server";
 export const ARK_TASKS_URL =
   "https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks";
-export class BytePlusRejectedError extends Error {}
+export class BytePlusRejectedError extends Error {
+  constructor(
+    message: string,
+    readonly httpStatus?: number,
+    readonly providerCode?: string,
+  ) {
+    super(message);
+  }
+}
+
+async function rejectionCode(response: Response): Promise<string | undefined> {
+  try {
+    const body = await readResult(response);
+    const error = body.error as Record<string, unknown> | undefined;
+    const code = error?.code;
+    // Provider messages may echo prompts, signed URLs or credentials. Keep only
+    // the bounded machine-readable error code, never the raw message/body.
+    return typeof code === "string" &&
+      /^[A-Za-z][A-Za-z0-9_.-]{0,99}$/.test(code) &&
+      code !== process.env.ARK_API_KEY?.trim()
+      ? code
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
 export function arkCredentials() {
   const key = process.env.ARK_API_KEY?.trim();
   if (!key || !/^[!-~]{1,4096}$/.test(key))
@@ -107,13 +132,17 @@ export async function submitBytePlusGeneration(
     body: JSON.stringify({ ...input, model }),
   });
   if (!response.ok) {
-    await response.body?.cancel();
     // These are definitive rejections. Timeouts/5xx/408 remain uncertain and
     // must never cause an automatic second billable POST.
-    if ([400, 401, 402, 403, 404, 422, 429].includes(response.status))
+    if ([400, 401, 402, 403, 404, 422, 429].includes(response.status)) {
+      const code = await rejectionCode(response);
       throw new BytePlusRejectedError(
-        `BytePlus rejected generation (HTTP ${response.status}).`,
+        `BytePlus rejected generation (HTTP ${response.status}${code ? `; code ${code}` : ""}).`,
+        response.status,
+        code,
       );
+    }
+    await response.body?.cancel();
     throw new Error("BytePlus generation confirmation is unavailable.");
   }
   const result = await readResult(response);

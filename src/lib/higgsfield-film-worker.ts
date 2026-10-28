@@ -399,6 +399,14 @@ export async function runHiggsfieldFilm(
         generation: job.montage_generation,
         scene: job.montage_next_shot,
         diagnostic: safeFilmDiagnostic(error),
+        ...(error instanceof BytePlusRejectedError
+          ? {
+              http_status: error.httpStatus,
+              provider_code: error.providerCode,
+              requested_seconds:
+                job.montage_plan?.shots[job.montage_next_shot]?.seconds,
+            }
+          : {}),
       }),
     );
     await checkpoint(admin, job, {
@@ -406,7 +414,9 @@ export async function runHiggsfieldFilm(
       p_error: budgetBlocked
         ? error.message
         : rejected
-          ? "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
+          ? error instanceof BytePlusRejectedError && error.httpStatus
+            ? `BytePlus rejected scene ${job.montage_next_shot + 1} (HTTP ${error.httpStatus}${error.providerCode ? `; code ${error.providerCode}` : ""}; duration ${job.montage_plan?.shots[job.montage_next_shot]?.seconds ?? "unknown"}s). Saved scenes are retained. No automatic resubmission.`
+            : "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
           : unboundSubmission
             ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."
             : `Film processing stopped at ${stage}. ${safeFilmDiagnostic(error)} Saved requests and scenes are retained. Do not rebuild while this issue is being investigated.`,

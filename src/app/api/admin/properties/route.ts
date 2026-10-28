@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         admin
           .from("property_video_jobs")
           .select(
-            "status,video_url,poster_url,model_config,provider_request_id,montage_plan,montage_next_shot,attempts,last_error",
+            "status,provider_phase,video_url,poster_url,model_config,provider_request_id,montage_plan,montage_next_shot,attempts,last_error",
           )
           .eq("property_id", id)
           .maybeSingle(),
@@ -52,6 +52,14 @@ export async function GET(request: Request) {
               nextProvider: configuredVideoProvider(),
               attempts: job.attempts,
               canRebuild: ["completed", "failed"].includes(job.status),
+              canResume:
+                job.status === "failed" &&
+                job.provider_phase === "provider_failed" &&
+                job.model_config?.profile?.provider === "byteplus" &&
+                job.attempts < 3 &&
+                (job.last_error?.startsWith("BytePlus rejected scene ") ||
+                  job.last_error ===
+                    "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."),
               rebuildUsesCredits: [
                 "higgsfield-montage",
                 "byteplus-montage",

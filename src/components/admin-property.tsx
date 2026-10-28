@@ -21,6 +21,7 @@ type Detail = {
     nextProvider?: string;
     attempts: number;
     canRebuild?: boolean;
+    canResume?: boolean;
     rebuildUsesCredits?: boolean;
     completed: number;
     total: number;
@@ -46,6 +47,7 @@ export function AdminProperty({ id }: { id: string }) {
   const refresh = useCallback(async () => {
     const next = await adminRequest(`properties?id=${encodeURIComponent(id)}`);
     setData(next);
+    if (next.video?.error || next.video?.status === "failed") setNotice("");
   }, [id]);
   useEffect(() => {
     if (isAdmin) void refresh().catch((e) => setError(e.message));
@@ -98,6 +100,23 @@ export function AdminProperty({ id }: { id: string }) {
       setError(
         e instanceof Error ? e.message : "The film could not be queued.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function resumeFilm() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await adminRequest("resume-film", { propertyId: id });
+      await refresh();
+      setNotice(
+        "Your film is resuming from the rejected scene. Completed scenes are retained; remaining generation uses API credits.",
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Resume is unavailable.");
     } finally {
       setBusy(false);
     }
@@ -161,14 +180,16 @@ export function AdminProperty({ id }: { id: string }) {
                   ` New films use ${data.video.nextProvider}.`}
               </p>
             )}
-            {data.video?.canRebuild && data.video.rebuildUsesCredits && (
-              <p>
-                Rebuilding generates up to{" "}
-                {Math.min(data.property.images.length, 23)} new scenes through
-                your selected video provider and uses your API credits. There is
-                no new $97 property payment.
-              </p>
-            )}
+            {data.video?.canRebuild &&
+              !data.video.canResume &&
+              data.video.rebuildUsesCredits && (
+                <p>
+                  Rebuilding generates up to{" "}
+                  {Math.min(data.property.images.length, 23)} new scenes through
+                  your selected video provider and uses your API credits. There
+                  is no new $97 property payment.
+                </p>
+              )}
             {data.video?.costEstimate && (
               <p>
                 Estimated video generation: $
@@ -181,7 +202,23 @@ export function AdminProperty({ id }: { id: string }) {
                 USD. Actual charges depend on the provider’s pricing.
               </p>
             )}
-            {data.video?.canRebuild && (
+            {data.video?.canResume && (
+              <div>
+                <p>
+                  Resume keeps the {data.video.completed} completed scenes.
+                  Remaining scenes use API credits. Check the rejection details
+                  before continuing.
+                </p>
+                <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() => void resumeFilm()}
+                >
+                  Resume video · Keep saved scenes
+                </button>
+              </div>
+            )}
+            {data.video?.canRebuild && !data.video.canResume && (
               <button
                 className="button secondary"
                 disabled={busy}

@@ -43,6 +43,10 @@ The task retrieval contract and nested image format were checked against the off
 
 ## Recovery and validation
 
+For definitive scene-submission rejections, install `supabase/sql-editor-byteplus-recovery.sql` (returns `MBP_BYTEPLUS_RECOVERY_READY`). Installation does not resume or purchase anything. Administrators then have **Resume video · Keep saved scenes** instead of rebuilding that film. It preserves the generation, plan, budget and completed clips; only the rejected reservation with no accepted task ID is released. The remaining scenes can incur charges. The function locks the property/order/job, rechecks admin and publication access, rejects ambiguous or already accepted requests, audits the action and limits attempts to three. This is manual recovery, never an automatic paid retry. Do not change the saved plan or erase task IDs to force a retry.
+
+Definitive BytePlus POST errors now retain the HTTP status, a bounded provider error code and the requested scene duration in the administrator's error message. Raw provider messages, prompts, credentials and signed media URLs are not logged. Historical errors cannot recover details discarded by an older deployment. A resumed rejection will report those details. Generation remains sequential; scheduler polling and the provider queue both contribute to elapsed time, and no completion-time guarantee is made.
+
 Scene reservation happens before a billable POST. A timeout, malformed response, 5xx, or failed database acknowledgement after submission is uncertain: no automatic second POST. The administrator must reconcile that task using the BytePlus task ID and existing protected binding workflow. This integration uses polling, not BytePlus callbacks. Poll/download/edit retries reuse saved task IDs and clips. Uncertain jobs do not automatically recover from a provider callback.
 
 The job and scene profiles select the provider on every resume, regardless of later environment changes. Missing credentials defer jobs before reservation. Non-success response bodies and credentials are not logged. Media downloads use the existing public-IP validation and do not carry the API key.

@@ -23,10 +23,12 @@ let serviceReads = 0,
 let actions: string[] = [],
   payload: Record<string, unknown> | null = null;
 let REBUILD: typeof import("../src/app/api/admin/rebuild-film/route").POST;
+let RESUME: typeof import("../src/app/api/admin/resume-film/route").POST;
 let PUBLISH: typeof import("../src/app/api/admin/publish/route").POST;
 let ACCOUNTS: typeof import("../src/app/api/admin/accounts/route").GET;
 let PROPERTIES: typeof import("../src/app/api/admin/properties/route").GET;
 before(async () => {
+  ({ POST: RESUME } = await import("../src/app/api/admin/resume-film/route"));
   ({ POST: REBUILD } = await import("../src/app/api/admin/rebuild-film/route"));
   ({ POST: PUBLISH } = await import("../src/app/api/admin/publish/route"));
   ({ GET: ACCOUNTS } = await import("../src/app/api/admin/accounts/route"));
@@ -132,6 +134,7 @@ globalThis.fetch = async (input, init) => {
     [
       "/rest/v1/rpc/admin_publish_property",
       "/rest/v1/rpc/admin_rebuild_property_film",
+      "/rest/v1/rpc/admin_resume_byteplus_film",
     ].includes(url.pathname)
   ) {
     actions.push("publish");
@@ -265,4 +268,24 @@ test("film rebuild verifies admin identity, enabled photo mode and transactional
     "Database rechecks revoked administrator rights",
   );
   delete process.env.HIGGSFIELD_ENABLED;
+});
+
+test("BytePlus resume verifies admin identity and never accepts a forged actor", async () => {
+  assert.equal((await RESUME(request({}, false))).status, 401);
+  assert.equal((await RESUME(request())).status, 403);
+  authorized = true;
+  process.env.PROPERTY_VIDEO_MODE = "byteplus-montage";
+  process.env.PROPERTY_VIDEO_ENABLED = "false";
+  assert.equal((await RESUME(request())).status, 409);
+  assert.equal(payload, null);
+  process.env.PROPERTY_VIDEO_ENABLED = "true";
+  process.env.ARK_API_KEY = "test-key";
+  publicationError = "P0409";
+  assert.equal(
+    (await RESUME(request({ propertyId: id, actor_id: agent }))).status,
+    409,
+  );
+  assert.deepEqual(payload, { listing_id: id, actor_id: actor });
+  delete process.env.PROPERTY_VIDEO_ENABLED;
+  delete process.env.ARK_API_KEY;
 });

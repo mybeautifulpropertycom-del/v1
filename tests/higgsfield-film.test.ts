@@ -393,3 +393,24 @@ test("BytePlus returning a longer scene stops the film before further paid reque
   assert.equal(await runHiggsfieldFilm(admin, order), "not_claimed");
   assert.equal(submissions.length, 1);
 });
+
+test("BytePlus scene rejection persists actionable HTTP, code and duration without another POST", async () => {
+  useBytePlus();
+  await runHiggsfieldFilm(admin, order);
+  let calls = 0;
+  aiFilmDependencies.submitBytePlusGeneration = async () => {
+    calls++;
+    throw new BytePlusRejectedError(
+      "rejected",
+      400,
+      "InvalidParameter.Duration",
+    );
+  };
+  assert.equal(await runHiggsfieldFilm(admin, order), "failed");
+  assert.match(
+    String(checks.at(-1)?.p_error),
+    /BytePlus rejected scene 1 \(HTTP 400; code InvalidParameter.Duration; duration [2-5]s\)/,
+  );
+  assert.equal(await runHiggsfieldFilm(admin, order), "not_claimed");
+  assert.equal(calls, 1);
+});

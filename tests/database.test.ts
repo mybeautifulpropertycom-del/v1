@@ -65,6 +65,114 @@ after(async () => {
   await db?.close();
 });
 
+test("BytePlus recovery preserves completed scenes and refuses uncertain, accepted or unauthorized retries", async () => {
+  const database = await createTestDatabase();
+  try {
+    for (const name of [
+      "sql-editor-setup.sql",
+      "sql-editor-higgsfield-films.sql",
+      "sql-editor-byteplus-recovery.sql",
+      "sql-editor-byteplus-recovery.sql",
+    ])
+      await database.exec(
+        await readFile(new URL(`../supabase/${name}`, import.meta.url), "utf8"),
+      );
+    await database.query(
+      "insert into auth.users(id,email) values($1,'admin@example.com'),($2,'agent@example.com')",
+      [agentA, agentB],
+    );
+    await database.exec(
+      "update profiles set name='Agent Name',phone='+1 555 123 4567'; select grant_platform_admin('admin@example.com'); select activate_property_billing()",
+    );
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$2,'resume-home','A home','A detailed property description for our cinematic film.','Austin',500000,1500,array['https://example.com/front.jpg'])",
+      [propertyB, agentB],
+    );
+    await database.exec("set role service_role");
+    await database.query("select admin_publish_property($1,$2,'Showcase')", [
+      propertyB,
+      agentA,
+    ]);
+    await database.exec("reset role");
+    const model = JSON.stringify({
+      provider: "byteplus",
+      endpoint: "seedance",
+    });
+    const plan = JSON.stringify({
+      shots: [{ seconds: 4 }, { seconds: 2 }],
+      generationBudget: { maxUsd: 20 },
+    });
+    await database.query(
+      `update property_video_jobs set status='failed',provider_phase='provider_failed', attempts=1,
+      model_config=jsonb_build_object('engine','higgsfield-montage-v1','profile',$1::jsonb),
+      montage_plan=$2::jsonb,montage_next_shot=1,montage_edited_shots=0,montage_generation=gen_random_uuid(),
+      last_error='BytePlus rejected scene 2 (HTTP 400; code InvalidParameter.Duration; duration 2s). Saved scenes are retained. No automatic resubmission.'`,
+      [model, plan],
+    );
+    await database.query(
+      `insert into property_film_scenes(order_id,generation,shot_index,status,model_config,model_input,request_id)
+      select order_id,montage_generation,i,case when i=0 then 'completed' else 'submitting' end,$1::jsonb,'{"duration":2}',case when i=0 then 'task-paid' else null end
+      from property_video_jobs cross join generate_series(0,1) i`,
+      [model],
+    );
+    const before = (
+      await database.query<Record<string, unknown>>(
+        "select montage_generation,montage_plan,source from property_video_jobs",
+      )
+    ).rows[0];
+    const resume = (actor = agentA) =>
+      database.query("select admin_resume_byteplus_film($1,$2)", [
+        propertyB,
+        actor,
+      ]);
+    await database.exec("set role authenticated");
+    await assert.rejects(resume(), /permission denied/);
+    await database.exec("reset role; set role service_role");
+    await assert.rejects(resume(agentB), /Administrator access/);
+    await database.exec(
+      "reset role; update property_film_scenes set status='uncertain' where shot_index=1; set role service_role",
+    );
+    await assert.rejects(resume(), /reconciliation/);
+    await database.exec(
+      "reset role; update property_film_scenes set status='submitted',request_id='accepted-task' where shot_index=1; set role service_role",
+    );
+    await assert.rejects(resume(), /reconciliation/);
+    await database.exec(
+      "reset role; update property_film_scenes set status='submitting',request_id=null where shot_index=1; set role service_role",
+    );
+    await resume();
+    await assert.rejects(resume(), /cannot be resumed safely/);
+    const after = (
+      await database.query<Record<string, unknown>>(
+        "select montage_generation,montage_plan,source,status,attempts,montage_next_shot from property_video_jobs",
+      )
+    ).rows[0];
+    for (const key of ["montage_generation", "montage_plan", "source"])
+      assert.deepEqual(after[key], before[key]);
+    assert.equal(after.status, "processing");
+    assert.equal(after.attempts, 2);
+    assert.equal(after.montage_next_shot, 1);
+    assert.deepEqual(
+      (
+        await database.query(
+          "select shot_index,request_id,status from property_film_scenes",
+        )
+      ).rows,
+      [{ shot_index: 0, request_id: "task-paid", status: "completed" }],
+    );
+    assert.equal(
+      (
+        await database.query(
+          "select * from platform_admin_audit where action='resume_byteplus_film'",
+        )
+      ).rows.length,
+      1,
+    );
+  } finally {
+    await database.close();
+  }
+});
+
 test("protected administrators grant publication and video without faking payment or opening agent privileges", async () => {
   const database = await createTestDatabase();
   try {

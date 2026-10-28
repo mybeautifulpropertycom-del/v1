@@ -185,6 +185,15 @@ const leadNotifications = await readFile(
   new URL("202610280001_lead_notifications.sql", directory),
   "utf8",
 );
+
+const byteplusRecovery = await readFile(
+  new URL("202610290001_resume_byteplus_film.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-byteplus-recovery.sql", import.meta.url),
+  `-- Run after the multi-photo film upgrade. Installs recovery only; no video generation is started.\nbegin;\n${byteplusRecovery.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_BYTEPLUS_RECOVERY_READY' as status;\n`,
+);
 await writeFile(
   new URL("../supabase/sql-editor-lead-notifications.sql", import.meta.url),
   `-- Run the ENTIRE file. Adds unread lead state and a private email outbox.\n-- Existing leads remain saved and are marked unread; historical emails are NOT sent.\nbegin;\n${leadNotifications.trim()}\ncommit;\nselect 'MBP_LEAD_NOTIFICATIONS_READY' as status;\n`,

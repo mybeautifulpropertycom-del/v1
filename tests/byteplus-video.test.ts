@@ -146,3 +146,40 @@ test("BytePlus worker can be enabled independently while Higgsfield stays off", 
   process.env.PROPERTY_VIDEO_ENABLED = "true";
   assert.equal(videoEnabled(), true);
 });
+
+test("definitive rejection retains HTTP and safe provider code but never echoes raw provider text", async () => {
+  globalThis.fetch = async () =>
+    Response.json(
+      {
+        error: {
+          code: "InvalidParameter.Duration",
+          message: "secret signed URL and private prompt",
+        },
+      },
+      { status: 400 },
+    );
+  await assert.rejects(
+    submitBytePlusGeneration("model", {}),
+    (error: unknown) => {
+      assert.ok(error instanceof BytePlusRejectedError);
+      assert.equal(error.httpStatus, 400);
+      assert.equal(error.providerCode, "InvalidParameter.Duration");
+      assert.doesNotMatch(error.message, /secret|signed|prompt/);
+      return true;
+    },
+  );
+  globalThis.fetch = async () =>
+    Response.json(
+      { error: { code: "secret https://private.example" } },
+      { status: 429 },
+    );
+  await assert.rejects(
+    submitBytePlusGeneration("model", {}),
+    (error: unknown) => {
+      assert.ok(error instanceof BytePlusRejectedError);
+      assert.equal(error.httpStatus, 429);
+      assert.equal(error.providerCode, undefined);
+      return true;
+    },
+  );
+});
