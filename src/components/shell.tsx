@@ -29,7 +29,7 @@ const nav = [
     label: "Design templates",
     icon: LayoutTemplate,
   },
-  { href: "/dashboard/video", label: "Video studio", icon: Video, soon: true },
+  { href: "/dashboard/video", label: "Video studio", icon: Video },
   { href: "/dashboard/inquiries", label: "My inbox", icon: Inbox },
   { href: "/dashboard/profile", label: "My profile", icon: UserRound },
 ];
@@ -98,7 +98,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <span>Administration</span>
             </Link>
           )}
-          {nav.map(({ href, label, icon: Icon, soon }) => (
+          {nav.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
@@ -117,7 +117,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
-              {soon && <span className="soon-dot" />}
             </Link>
           ))}
         </nav>

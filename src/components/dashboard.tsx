@@ -405,10 +405,13 @@ export function Dashboard() {
         </span>
         <div>
           <strong>Your photos. Their next chapter: motion.</strong>
-          <span>A new way to bring your properties to life is on its way.</span>
+          <span>
+            Bring your properties to life. View your videos and follow their
+            progress.
+          </span>
         </div>
         <Link href="/dashboard/video">
-          Coming soon <ArrowRight size={16} />
+          Open video studio <ArrowRight size={16} />
         </Link>
       </div>
     </>
