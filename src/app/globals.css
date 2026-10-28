@@ -238,6 +238,11 @@ label small {
   flex-direction: column;
   z-index: 35;
   padding: 32px 22px 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.sidebar > * {
+  flex-shrink: 0;
 }
 .brand-link {
   display: inline-block;
@@ -362,11 +367,6 @@ label small {
   border: 1px solid #efeee7;
   border-radius: 8px;
   margin-bottom: 23px;
-}
-.note-spark {
-  display: flex;
-  color: #9b9f81;
-  margin-bottom: 14px;
 }
 .sidebar-note h3 {
   font-family: var(--serif);
@@ -4529,4 +4529,21 @@ fieldset.editor-content {
 @media (prefers-reduced-motion: reduce) {
   .photo-upload-value { transition: none; }
   .upload-area.uploading > strong { animation: none; }
+}
+
+/* Keep the complete sidebar card visible on typical laptop-height screens. */
+@media (max-height: 950px) {
+  .sidebar { padding-top: 20px; }
+  .sidebar .brand-link { margin-bottom: 18px; }
+  .sidebar .workspace-label { margin-bottom: 18px; }
+  .sidebar .nav-caption { margin-bottom: 8px; }
+  .sidebar nav { gap: 3px; }
+  .sidebar .nav-link { padding-block: 9px; }
+  .sidebar .sidebar-bottom { padding-top: 18px; }
+  .sidebar .sidebar-note { padding: 15px 14px; margin-bottom: 12px; }
+  .sidebar .sidebar-note h3 { font-size: 16px; line-height: 1.35; }
+  .sidebar .sidebar-note p { margin-top: 8px; line-height: 1.6; }
+  .sidebar .sidebar-note a { margin-top: 12px; min-height: 24px; }
+  .sidebar .sidebar-help { margin-bottom: 8px; }
+  .sidebar .account-row { padding-block: 12px; }
 }

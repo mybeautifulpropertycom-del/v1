@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   Plus,
-  Sparkles,
   ShieldCheck,
   UserRound,
   Video,
@@ -114,9 +113,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-note">
-            <span className="note-spark">
-              <Sparkles size={19} />
-            </span>
             <h3>
               One property.
               <br />
