@@ -925,6 +925,60 @@
   max-height: 82dvh;
   object-fit: contain;
 }
+.property-photo-dialog {
+  overflow: hidden;
+}
+.property-photo-dialog > button {
+  z-index: 2;
+}
+.property-photo-dialog > [data-current-photo] {
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.property-photo-dialog > [data-dragging="true"] {
+  transition: none;
+}
+.property-photo-dialog > .photo-waiting {
+  opacity: 0;
+}
+.property-photo-dialog > .photo-outgoing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+  transform: translate(calc(-50% + var(--photo-offset)), -50%);
+}
+.property-photo-dialog > .photo-incoming {
+  animation: property-photo-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.property-photo-dialog > .photo-outgoing.photo-transitioning {
+  animation: property-photo-exit 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes property-photo-enter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--photo-enter));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes property-photo-exit {
+  from {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--photo-offset)), -50%);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--photo-exit)), -50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .property-photo-dialog > img {
+    animation-duration: 0.01ms !important;
+    transition: none !important;
+  }
+}
 .viewing-dialog {
   width: min(1000px, calc(100% - 40px));
   max-width: none;

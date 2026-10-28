@@ -1,7 +1,7 @@
 "use client";
 import { PropertyImage } from "./property-image";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { trapDialogFocus } from "./website-dialog-focus";
 
@@ -18,6 +18,30 @@ export function PropertyPhotoDialog({
 }) {
   const [index, setIndex] = useState(initial);
   const [dragX, setDragX] = useState(0);
+  const [previousPhoto, setPreviousPhoto] = useState<{
+    index: number;
+    offset: number;
+    direction: number;
+  } | null>(null);
+  const [photoReady, setPhotoReady] = useState(false);
+  const navigate = (direction: number) => {
+    if (images.length < 2) return;
+    // Retain the last visible photograph while the next one loads.
+    setPreviousPhoto(
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? null
+        : {
+            index: photoReady ? index : (previousPhoto?.index ?? index),
+            offset: dragX,
+            direction,
+          },
+    );
+    setPhotoReady(false);
+    setIndex(
+      (current) => (current + direction + images.length) % images.length,
+    );
+    setDragX(0);
+  };
   const gesture = useRef<{
     id: number;
     x: number;
@@ -32,11 +56,17 @@ export function PropertyPhotoDialog({
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const stopAnimation = () => {
+      if (motion.matches) setPreviousPhoto(null);
+    };
+    motion.addEventListener("change", stopAnimation);
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
     dialog?.showModal();
     document.body.style.overflow = "hidden";
     return () => {
+      motion.removeEventListener("change", stopAnimation);
       dialog?.close();
       document.body.style.overflow = overflow;
       previous?.focus({ preventScroll: true });
@@ -89,10 +119,7 @@ export function PropertyPhotoDialog({
           Math.max(40, e.currentTarget.clientWidth * 0.12),
         );
         if (start.horizontal && Math.abs(dx) >= threshold) {
-          setIndex(
-            (current) =>
-              (current + (dx < 0 ? 1 : -1) + images.length) % images.length,
-          );
+          navigate(dx < 0 ? 1 : -1);
         }
         resetGesture();
       }}
@@ -115,11 +142,11 @@ export function PropertyPhotoDialog({
         trapDialogFocus(e);
         if (e.key === "ArrowRight") {
           e.preventDefault();
-          setIndex((index + 1) % images.length);
+          navigate(1);
         }
         if (e.key === "ArrowLeft") {
           e.preventDefault();
-          setIndex((index - 1 + images.length) % images.length);
+          navigate(-1);
         }
       }}
     >
@@ -135,13 +162,49 @@ export function PropertyPhotoDialog({
         type="button"
         className="lightbox-prev"
         aria-label="Previous photo"
-        onClick={() => setIndex((index - 1 + images.length) % images.length)}
+        onClick={() => navigate(-1)}
       >
         <ChevronLeft size={30} />
       </button>
+      {previousPhoto && (
+        <PropertyImage
+          key={`previous-${previousPhoto.index}`}
+          className={`photo-outgoing${photoReady ? " photo-transitioning" : ""}`}
+          style={
+            {
+              "--photo-offset": `${previousPhoto.offset}px`,
+              "--photo-exit": `${previousPhoto.offset - previousPhoto.direction * 90}px`,
+            } as CSSProperties
+          }
+          sizes="100vw"
+          loading="eager"
+          src={images[previousPhoto.index]}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+      )}
       <PropertyImage
+        key={index}
+        data-current-photo="true"
+        data-dragging={dragX !== 0}
+        className={
+          previousPhoto
+            ? photoReady
+              ? "photo-incoming"
+              : "photo-waiting"
+            : undefined
+        }
         draggable={false}
-        style={{ transform: `translateX(${dragX}px)` }}
+        style={
+          {
+            transform: `translateX(${dragX}px)`,
+            "--photo-enter": `${(previousPhoto?.direction ?? 1) * 90}px`,
+          } as CSSProperties
+        }
+        onLoad={() => setPhotoReady(true)}
+        onError={() => setPhotoReady(true)}
+        onAnimationEnd={() => setPreviousPhoto(null)}
         sizes="100vw"
         loading="eager"
         src={images[index]}
@@ -151,7 +214,7 @@ export function PropertyPhotoDialog({
         type="button"
         className="lightbox-next"
         aria-label="Next photo"
-        onClick={() => setIndex((index + 1) % images.length)}
+        onClick={() => navigate(1)}
       >
         <ChevronRight size={30} />
       </button>

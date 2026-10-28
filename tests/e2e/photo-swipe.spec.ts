@@ -41,7 +41,7 @@ for (const theme of ["editorial", "minimal", "panorama"]) {
     const gallery = page.getByRole("dialog", {
       name: "Property photo gallery",
     });
-    const photo = gallery.locator("img");
+    const photo = gallery.locator("[data-current-photo]");
     const client = await context.newCDPSession(page);
     await expect(photo).toHaveAttribute("alt", /view 3$/);
     await swipe(client, -180);
@@ -69,3 +69,33 @@ for (const theme of ["editorial", "minimal", "panorama"]) {
     await client.detach();
   });
 }
+
+test("photo changes animate, settle, and respect reduced motion", async ({
+  page,
+}) => {
+  await page.goto("/templates/panorama");
+  await page
+    .getByRole("button", { name: "Enlarge property photo 3", exact: true })
+    .first()
+    .click();
+  const gallery = page.getByRole("dialog", { name: "Property photo gallery" });
+  const photo = gallery.locator("[data-current-photo]");
+  await expect
+    .poll(() =>
+      photo.evaluate(
+        (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+      ),
+    )
+    .toBe(true);
+  await gallery.getByRole("button", { name: "Next photo" }).click();
+  await expect(photo).toHaveClass("photo-incoming");
+  await expect(photo).toHaveCSS("animation-duration", "0.38s");
+  await expect(gallery.locator(".photo-outgoing")).toHaveCount(0);
+  await expect(photo).toHaveCSS("opacity", "1");
+  await expect(photo).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await gallery.getByRole("button", { name: "Previous photo" }).click();
+  await expect(photo).toHaveAttribute("alt", /view 3$/);
+  await expect(gallery.locator(".photo-outgoing")).toHaveCount(0);
+  await expect(photo).toHaveCSS("opacity", "1");
+});

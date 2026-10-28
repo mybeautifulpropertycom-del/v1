@@ -204,9 +204,9 @@ test("Heritage gallery filters real photographs and opens the right image", asyn
     .getByRole("button", { name: "Enlarge property photo 3", exact: true })
     .click();
   const dialog = page.getByRole("dialog", { name: "Property photo gallery" });
-  await expect(dialog.locator("img")).toHaveAttribute("alt", /view 3$/);
+  await expect(dialog.locator("[data-current-photo]")).toHaveAttribute("alt", /view 3$/);
   await page.keyboard.press("ArrowRight");
-  await expect(dialog.locator("img")).toHaveAttribute("alt", /view 4$/);
+  await expect(dialog.locator("[data-current-photo]")).toHaveAttribute("alt", /view 4$/);
   await page.keyboard.press("Escape");
   await page
     .getByRole("button", { name: "All photographs", exact: true })
