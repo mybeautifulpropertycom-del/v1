@@ -280,6 +280,15 @@ export async function runHiggsfieldFilm(
         return "provider_failed";
       }
       if (result.status !== "completed") {
+        console.info(
+          JSON.stringify({
+            event: "property_film_provider_wait",
+            order_id: job.order_id,
+            scene: job.montage_next_shot + 1,
+            provider: scene.model_config.provider || "higgsfield",
+            status: result.status,
+          }),
+        );
         await checkpoint(admin, job);
         return "generating";
       }

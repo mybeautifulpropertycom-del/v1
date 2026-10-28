@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { runFilmBatch } from "./film-batch";
 import {
   AuthenticationError,
   BadInputError,
@@ -196,7 +197,7 @@ async function processJob(job: VideoJob) {
     return phase;
   }
 }
-/** One short batch. The scheduler resumes jobs; no function waits for a render. */
+/** A bounded batch. The scheduler resumes jobs; no function waits for generation. */
 export async function runVideoWorker(orderId?: string) {
   if (!videoEnabled()) return { enabled: false, processed: 0 };
   workerSecret();
@@ -223,7 +224,6 @@ export async function runVideoWorker(orderId?: string) {
         candidate.status === "queued" &&
         aiMontageMode())
     ) {
-      const started = Date.now();
       let model: ModelProfile | null;
       const savedProfile = candidate.model_config?.profile;
       const byteplus = savedProfile
@@ -270,22 +270,27 @@ export async function runVideoWorker(orderId?: string) {
         results.push("configuration_required");
         continue;
       }
-      for (let step = 0; step < 3; step++) {
-        const result = await runHiggsfieldFilm(
-          admin,
-          candidate.order_id,
-          model,
-        );
-        results.push(result);
-        model = null;
-        if (
-          !["ai_film_planned", "ai_scene_saved", "ai_scene_edited"].includes(
-            result,
-          ) ||
-          Date.now() - started > 20000
-        )
-          break;
-      }
+      results.push(
+        ...(await runFilmBatch(async () => {
+          const started = Date.now();
+          const result = await runHiggsfieldFilm(
+            admin,
+            candidate.order_id,
+            model,
+          );
+          model = null;
+          console.info(
+            JSON.stringify({
+              event: "property_film_step_timing",
+              order_id: candidate.order_id,
+              provider: byteplus ? "byteplus" : "higgsfield",
+              result,
+              elapsed_ms: Date.now() - started,
+            }),
+          );
+          return result;
+        })),
+      );
       continue;
     }
     if (
