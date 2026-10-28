@@ -1,5 +1,9 @@
 import { platformAdmin, adminFailure } from "@/lib/platform-admin";
 import { billingJson, BillingError, UUID } from "@/lib/stripe-server";
+import {
+  savedVideoProvider,
+  configuredVideoProvider,
+} from "@/lib/video-service";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
@@ -44,6 +48,8 @@ export async function GET(request: Request) {
         video: job
           ? {
               status: job.status,
+              provider: savedVideoProvider(job.model_config),
+              nextProvider: configuredVideoProvider(),
               attempts: job.attempts,
               canRebuild: ["completed", "failed"].includes(job.status),
               rebuildUsesCredits: [

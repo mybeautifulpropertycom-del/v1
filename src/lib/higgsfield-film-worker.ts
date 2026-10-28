@@ -27,6 +27,7 @@ import {
   assembleFilm,
 } from "./property-film-render";
 import { downloadVideo } from "./video-download";
+import { safeFilmDiagnostic } from "./film-diagnostics";
 import {
   bytePlusBudgetSettings,
   walkthroughShotLimit,
@@ -164,6 +165,7 @@ export async function runHiggsfieldFilm(
     unboundSubmission = false,
     submitting = false;
   try {
+    stage = "photo_validation";
     const images = ownedFilmImages(job);
     const profile = validateModel(job.model_config.profile);
     if (profile.provider === "byteplus" && !job.montage_plan)
@@ -173,14 +175,15 @@ export async function runHiggsfieldFilm(
       const signal = AbortSignal.timeout(60000),
         fingerprints: string[] = [];
       for (const image of images) {
-        fingerprints.push(
-          await filmDependencies.photoFingerprint(
-            await filmDependencies.downloadPhoto(image, signal),
-          ),
-        );
+        stage = "photo_download";
+        const bytes = await filmDependencies.downloadPhoto(image, signal);
+        stage = "photo_decoding";
+        fingerprints.push(await filmDependencies.photoFingerprint(bytes));
         if (signal.aborted) throw new Error("Photo preparation timed out.");
       }
+      stage = "photo_analysis";
       const observations = await filmDependencies.analyzeFilmPhotos(images);
+      stage = "planning";
       let plan: FilmPlan = {
         ...makeFilmPlan(
           images,
@@ -197,10 +200,12 @@ export async function runHiggsfieldFilm(
         plan.generationBudget = budgetForPlan(plan, profile);
       }
       for (const shot of plan.shots) sceneGenerationInput(profile, shot);
+      stage = "plan_storage";
       return (await checkpoint(admin, job, { p_plan: plan }))
         ? "ai_film_planned"
         : "revoked";
     }
+    stage = "plan_validation";
     const plan = validateFilmPlan(job.montage_plan);
     if (
       plan.engine !== "higgsfield-montage-v1" ||
@@ -296,11 +301,13 @@ export async function runHiggsfieldFilm(
       if (typeof url !== "string")
         throw new Error("Missing configured scene output.");
       const media = await aiFilmDependencies.downloadVideo(url);
+      stage = "scene_normalization";
       const clip = await aiFilmDependencies.normalizeGeneratedClip(
         media.bytes,
         Number(scene.model_input.duration),
         shot.seconds,
       );
+      stage = "scene_storage";
       await storeClip(admin, job, index, "raw", clip);
       return (await checkpoint(admin, job, { p_scene: index }))
         ? "ai_scene_saved"
@@ -343,6 +350,7 @@ export async function runHiggsfieldFilm(
     );
     const digest = createHash("sha256").update(film).digest("hex").slice(0, 24);
     const publicPath = `${job.owner_id}/${order}/higgsfield-${job.montage_generation}-${digest}.mp4`;
+    stage = "film_delivery";
     const upload = await admin.storage
       .from("property-videos")
       .upload(publicPath, film, {
@@ -387,6 +395,10 @@ export async function runHiggsfieldFilm(
         event: "higgsfield_film_step_deferred",
         stage,
         failure,
+        order_id: job.order_id,
+        generation: job.montage_generation,
+        scene: job.montage_next_shot,
+        diagnostic: safeFilmDiagnostic(error),
       }),
     );
     await checkpoint(admin, job, {
@@ -397,7 +409,7 @@ export async function runHiggsfieldFilm(
           ? "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
           : unboundSubmission
             ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."
-            : "Film processing is delayed. Saved generation requests and scenes will be reused without another automatic generation charge.",
+            : `Film processing stopped at ${stage}. ${safeFilmDiagnostic(error)} Saved requests and scenes are retained. Do not rebuild while this issue is being investigated.`,
     });
     return failure;
   }

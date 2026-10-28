@@ -223,10 +223,25 @@ test("download/render retries reuse saved provider IDs rather than purchasing an
   await runHiggsfieldFilm(admin, order);
   downloadFails = true;
   assert.equal(await runHiggsfieldFilm(admin, order), "delayed");
+  assert.match(String(checks.at(-1)?.p_error), /scene_delivery/);
+  assert.doesNotMatch(String(checks.at(-1)?.p_error), /Download interrupted/);
   assert.equal(submissions.length, 1);
   assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_saved");
   assert.equal(submissions.length, 1);
   assert.equal(polls, 2);
+});
+
+test("photo analysis failures identify the stage before any video submission", async () => {
+  filmDependencies.analyzeFilmPhotos = async () => {
+    throw new Error("Photo analysis did not complete.");
+  };
+  assert.equal(await runHiggsfieldFilm(admin, order), "delayed");
+  assert.match(
+    String(checks.at(-1)?.p_error),
+    /photo_analysis.*Photo analysis did not complete/,
+  );
+  assert.equal(submissions.length, 0);
+  assert.equal(scenes.size, 0);
 });
 for (const failure of ["timeout", "binding"]) {
   test(`ambiguous ${failure} stops submission until the original request is reconciled`, async () => {

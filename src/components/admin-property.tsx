@@ -17,6 +17,8 @@ type Detail = {
   grant: { reason: string; granted_at: string } | null;
   video: {
     status: string;
+    provider?: string;
+    nextProvider?: string;
     attempts: number;
     canRebuild?: boolean;
     rebuildUsesCredits?: boolean;
@@ -150,6 +152,13 @@ export function AdminProperty({ id }: { id: string }) {
                 Complimentary publication approved on{" "}
                 {new Date(data.grant.granted_at).toLocaleDateString("en-US")}.{" "}
                 {data.grant.reason}
+              </p>
+            )}
+            {data.video?.provider && (
+              <p>
+                This video's provider: {data.video.provider}.
+                {data.video.nextProvider &&
+                  ` New films use ${data.video.nextProvider}.`}
               </p>
             )}
             {data.video?.canRebuild && data.video.rebuildUsesCredits && (
