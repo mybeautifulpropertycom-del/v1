@@ -8,25 +8,61 @@ export class BytePlusRejectedError extends Error {
     message: string,
     readonly httpStatus?: number,
     readonly providerCode?: string,
+    readonly providerDetail?: string,
   ) {
     super(message);
   }
 }
 
-async function rejectionCode(response: Response): Promise<string | undefined> {
+function safeProviderDetail(
+  value: unknown,
+  input: Record<string, unknown>,
+): string | undefined {
+  if (typeof value !== "string") return undefined;
+  let detail = value;
+  const key = process.env.ARK_API_KEY?.trim();
+  if (key) detail = detail.split(key).join("[redacted]");
+  // The error may echo submitted prompts or source URLs. Remove complete input
+  // strings before truncation, plus any credentials/URLs in provider prose.
+  const redactInput = (item: unknown): void => {
+    if (typeof item === "string" && item.length > 24)
+      detail = detail.split(item).join("[input redacted]");
+    else if (Array.isArray(item)) item.forEach(redactInput);
+    else if (item && typeof item === "object")
+      Object.values(item).forEach(redactInput);
+  };
+  redactInput(input);
+  return (
+    detail
+      .replace(/https?:\/\/[^\s<>"']+/gi, "[URL redacted]")
+      .replace(/Bearer\s+\S+/gi, "[credential redacted]")
+      .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "[email redacted]")
+      .replace(/[\u0000-\u001f\u007f]/g, " ")
+      .slice(0, 220)
+      .trim() || undefined
+  );
+}
+
+async function rejectionDetails(
+  response: Response,
+  input: Record<string, unknown>,
+): Promise<{ code?: string; detail?: string }> {
   try {
     const body = await readResult(response);
     const error = body.error as Record<string, unknown> | undefined;
     const code = error?.code;
-    // Provider messages may echo prompts, signed URLs or credentials. Keep only
-    // the bounded machine-readable error code, never the raw message/body.
-    return typeof code === "string" &&
+    const safeCode =
+      typeof code === "string" &&
       /^[A-Za-z][A-Za-z0-9_.-]{0,99}$/.test(code) &&
       code !== process.env.ARK_API_KEY?.trim()
-      ? code
-      : undefined;
+        ? code
+        : undefined;
+    return {
+      code: safeCode,
+      detail: safeProviderDetail(error?.message, input),
+    };
   } catch {
-    return undefined;
+    return {};
   }
 }
 export function arkCredentials() {
@@ -135,11 +171,12 @@ export async function submitBytePlusGeneration(
     // These are definitive rejections. Timeouts/5xx/408 remain uncertain and
     // must never cause an automatic second billable POST.
     if ([400, 401, 402, 403, 404, 422, 429].includes(response.status)) {
-      const code = await rejectionCode(response);
+      const { code, detail } = await rejectionDetails(response, input);
       throw new BytePlusRejectedError(
         `BytePlus rejected generation (HTTP ${response.status}${code ? `; code ${code}` : ""}).`,
         response.status,
         code,
+        detail,
       );
     }
     await response.body?.cancel();

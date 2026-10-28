@@ -183,3 +183,41 @@ test("definitive rejection retains HTTP and safe provider code but never echoes 
     },
   );
 });
+
+test("provider validation detail keeps parameter constraints while redacting credentials and photo inputs", async () => {
+  const prompt = "A sufficiently long private property cinematography prompt.";
+  const image = "https://photos.example/house.webp?secret=token";
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return Response.json(
+      {
+        error: {
+          code: "InvalidParameter",
+          message: `The duration must be between 4 and 15. ${process.env.ARK_API_KEY} ${prompt} ${image} https://other.example/?token=private owner@example.com`,
+        },
+      },
+      { status: 400 },
+    );
+  };
+  await assert.rejects(
+    submitBytePlusGeneration("model", {
+      content: [{ text: prompt }, { image_url: { url: image } }],
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof BytePlusRejectedError);
+      assert.match(
+        error.providerDetail || "",
+        /duration must be between 4 and 15/,
+      );
+      assert.doesNotMatch(
+        error.providerDetail || "",
+        /fake-byteplus-key|cinematography|photos.example|other.example|owner@example.com/,
+      );
+      assert.ok(error.providerDetail!.length <= 220);
+      assert.doesNotMatch(error.message, /between 4 and 15/);
+      return true;
+    },
+  );
+  assert.equal(calls, 1);
+});

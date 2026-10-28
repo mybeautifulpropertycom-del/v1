@@ -424,7 +424,7 @@ export async function runHiggsfieldFilm(
         ? error.message
         : rejected
           ? error instanceof BytePlusRejectedError && error.httpStatus
-            ? `BytePlus rejected scene ${job.montage_next_shot + 1} (HTTP ${error.httpStatus}${error.providerCode ? `; code ${error.providerCode}` : ""}; duration ${job.montage_plan?.shots[job.montage_next_shot]?.seconds ?? "unknown"}s). Saved scenes are retained. No automatic resubmission.`
+            ? `BytePlus rejected scene ${job.montage_next_shot + 1} (HTTP ${error.httpStatus}${error.providerCode ? `; code ${error.providerCode}` : ""}; duration ${job.montage_plan?.shots[job.montage_next_shot]?.seconds ?? "unknown"}s). ${error.providerDetail ? `${error.providerDetail} ` : ""}Saved scenes are retained. No automatic resubmission.`
             : "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
           : unboundSubmission
             ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."
