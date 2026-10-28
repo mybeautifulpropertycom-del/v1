@@ -92,7 +92,7 @@ test("missing prices, invalid caps, or mismatched model settings fail closed", (
     /verified BytePlus/,
   );
   process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.05";
-  process.env.PROPERTY_VIDEO_MAX_COST_USD = "16";
+  process.env.PROPERTY_VIDEO_MAX_COST_USD = "21";
   assert.throws(() => bytePlusBudgetSettings(bytePlusModel()), /at most/);
   process.env.PROPERTY_VIDEO_MAX_COST_USD = "15";
   const model = bytePlusModel();
@@ -117,4 +117,25 @@ test("price increases, smaller current budgets and missing approvals cannot bypa
     () => assertFilmBudget(plan, bytePlusModel()),
     /budget approval/,
   );
+});
+
+test("a $20 cap allows longer films without inflating shorter walkthroughs", () => {
+  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.28";
+  const shorter = planFor(15);
+  const longer = planFor(40);
+  process.env.PROPERTY_VIDEO_MAX_COST_USD = "20";
+  const shortWithHigherCap = planFor(15);
+  const longWithHigherCap = planFor(40);
+  assert.equal(shortWithHigherCap.duration, 30);
+  assert.equal(
+    shortWithHigherCap.generationBudget!.estimatedGenerationUsd,
+    shorter.generationBudget!.estimatedGenerationUsd,
+  );
+  assert.ok(longWithHigherCap.duration > longer.duration);
+  assert.ok(
+    longWithHigherCap.duration >= 55 && longWithHigherCap.duration <= 57,
+  );
+  assert.ok(longWithHigherCap.generationBudget!.estimatedGenerationUsd <= 16);
+  assert.equal(longWithHigherCap.generationBudget!.reserveUsd, 4);
+  assertFilmBudget(longWithHigherCap, bytePlusModel());
 });

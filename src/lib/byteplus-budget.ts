@@ -23,9 +23,9 @@ export function bytePlusBudgetSettings(model: ModelProfile) {
     throw new VideoBudgetError(
       "Video generation is paused: configure the verified BytePlus 720p price in BYTEPLUS_VIDEO_USD_PER_SECOND.",
     );
-  if (!Number.isFinite(maxUsd) || maxUsd <= 0 || maxUsd > 15)
+  if (!Number.isFinite(maxUsd) || maxUsd <= 0 || maxUsd > 20)
     throw new VideoBudgetError(
-      "PROPERTY_VIDEO_MAX_COST_USD must be greater than zero and at most $15.",
+      "PROPERTY_VIDEO_MAX_COST_USD must be greater than zero and at most $20.",
     );
   if (
     model.endpoint !==
@@ -181,7 +181,7 @@ export function assertFilmBudget(plan: FilmPlan, model: ModelProfile) {
     saved.usdPerSecond <= 0 ||
     !Number.isFinite(saved.maxUsd) ||
     saved.maxUsd <= 0 ||
-    saved.maxUsd > 15
+    saved.maxUsd > 20
   )
     throw new VideoBudgetError(
       "This film has no matching budget approval. Review it before generating more scenes.",
