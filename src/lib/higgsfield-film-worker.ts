@@ -54,6 +54,7 @@ type Job = {
   montage_plan: FilmPlan | null;
   montage_next_shot: number;
   montage_edited_shots: number;
+  byteplus_parallel?: boolean;
   model_config: { engine: "higgsfield-montage-v1"; profile: ModelProfile };
 };
 type Scene = {
@@ -171,7 +172,8 @@ export async function runHiggsfieldFilm(
   const job = data as Job;
   let stage = "planning",
     unboundSubmission = false,
-    submitting = false;
+    submitting = false,
+    activeIndex = job.montage_next_shot;
   try {
     stage = "photo_validation";
     const images = ownedFilmImages(job);
@@ -297,6 +299,79 @@ export async function runHiggsfieldFilm(
             status: result.status,
           }),
         );
+        // Reserve and bind at most ONE lookahead request. Generation overlaps at
+        // the provider, while delivery/checkpointing remains in shot order.
+        // The database flag is absent until the parallel upgrade is installed.
+        const ahead = index + 1;
+        if (
+          profile.provider === "byteplus" &&
+          job.byteplus_parallel &&
+          ahead < plan.shots.length
+        ) {
+          activeIndex = ahead;
+          stage = "lookahead_lookup";
+          const { data: existing, error: lookupError } = await admin
+            .from("property_film_scenes")
+            .select("request_id")
+            .eq("order_id", order)
+            .eq("generation", job.montage_generation)
+            .eq("shot_index", ahead)
+            .maybeSingle();
+          if (lookupError) throw new Error("Scene reservation failed.");
+          if (existing && !existing.request_id) {
+            unboundSubmission = true;
+            throw new Error("Scene request needs reconciliation.");
+          }
+          if (!existing) {
+            assertFilmBudget(plan, profile);
+            const nextShot = plan.shots[ahead];
+            const nextInput = sceneGenerationInput(profile, nextShot);
+            stage = "lookahead_photo";
+            const nextPhoto = await filmDependencies.downloadPhoto(
+              nextShot.image,
+            );
+            if (
+              (await filmDependencies.photoFingerprint(nextPhoto)) !==
+              nextShot.fingerprint
+            )
+              throw new Error("A photograph changed after planning.");
+            stage = "lookahead_reservation";
+            const reservedAhead = await admin.rpc(
+              "reserve_byteplus_lookahead",
+              {
+                p_order: order,
+                p_lease: job.lease_token,
+                p_attempt: job.attempts,
+                p_index: ahead,
+                p_input: nextInput,
+              },
+            );
+            if (reservedAhead.error)
+              throw new Error("Scene reservation failed.");
+            if (!reservedAhead.data) return "scene_unavailable";
+            const next = reservedAhead.data as Scene;
+            if (next.submit) {
+              stage = "lookahead_submission";
+              submitting = unboundSubmission = true;
+              const accepted =
+                await aiFilmDependencies.submitBytePlusGeneration(
+                  next.model_config.endpoint,
+                  next.model_input,
+                );
+              submitting = false;
+              const boundAhead = await admin.rpc("bind_property_film_scene", {
+                p_order: order,
+                p_generation: job.montage_generation,
+                p_index: ahead,
+                p_request: accepted.request_id,
+              });
+              if (boundAhead.error)
+                throw new Error("Scene request could not be bound.");
+              if (!boundAhead.data) return "revoked";
+              unboundSubmission = false;
+            }
+          }
+        }
         await checkpoint(admin, job);
         return "generating";
       }
@@ -414,7 +489,7 @@ export async function runHiggsfieldFilm(
         failure,
         order_id: job.order_id,
         generation: job.montage_generation,
-        scene: job.montage_next_shot,
+        scene: activeIndex,
         diagnostic: safeFilmDiagnostic(error),
         ...(error instanceof BytePlusRejectedError
           ? {
@@ -422,7 +497,7 @@ export async function runHiggsfieldFilm(
               provider_code: error.providerCode,
               requested_seconds: job.montage_plan
                 ? bytePlusSourceSeconds(
-                    job.montage_plan.shots[job.montage_next_shot].seconds!,
+                    job.montage_plan.shots[activeIndex].seconds!,
                   )
                 : undefined,
             }
@@ -435,7 +510,7 @@ export async function runHiggsfieldFilm(
         ? error.message
         : rejected
           ? error instanceof BytePlusRejectedError && error.httpStatus
-            ? `BytePlus rejected scene ${job.montage_next_shot + 1} (HTTP ${error.httpStatus}${error.providerCode ? `; code ${error.providerCode}` : ""}; duration ${job.montage_plan ? bytePlusSourceSeconds(job.montage_plan.shots[job.montage_next_shot].seconds!) : "unknown"}s). ${error.providerDetail ? `${error.providerDetail} ` : ""}Saved scenes are retained. No automatic resubmission.`
+            ? `BytePlus rejected scene ${activeIndex + 1} (HTTP ${error.httpStatus}${error.providerCode ? `; code ${error.providerCode}` : ""}; duration ${job.montage_plan ? bytePlusSourceSeconds(job.montage_plan.shots[activeIndex].seconds!) : "unknown"}s). ${error.providerDetail ? `${error.providerDetail} ` : ""}Saved scenes are retained. No automatic resubmission.`
             : "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
           : unboundSubmission
             ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."

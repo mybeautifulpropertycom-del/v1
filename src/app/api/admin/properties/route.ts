@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         admin
           .from("property_video_jobs")
           .select(
-            "status,provider_phase,video_url,poster_url,model_config,provider_request_id,montage_plan,montage_next_shot,attempts,last_error",
+            "order_id,status,provider_phase,video_url,poster_url,model_config,provider_request_id,montage_generation,montage_plan,montage_next_shot,attempts,last_error",
           )
           .eq("property_id", id)
           .maybeSingle(),
@@ -44,6 +44,20 @@ export async function GET(request: Request) {
       ]);
       if (profileError || jobError || grantError)
         throw new Error("Property details unavailable.");
+      let activeScenes: number | undefined;
+      if (
+        job?.status === "processing" &&
+        job.montage_generation &&
+        job.model_config?.profile?.provider === "byteplus"
+      ) {
+        const { count, error: countError } = await admin
+          .from("property_film_scenes")
+          .select("shot_index", { count: "exact", head: true })
+          .eq("order_id", job.order_id)
+          .eq("generation", job.montage_generation)
+          .eq("status", "submitted");
+        if (!countError) activeScenes = count ?? 0;
+      }
       const needsDurationRepair =
         job?.model_config?.profile?.provider === "byteplus" &&
         job?.montage_plan?.generationBudget?.version === 2;
@@ -85,6 +99,7 @@ export async function GET(request: Request) {
         video: job
           ? {
               status: job.status,
+              activeScenes,
               provider: savedVideoProvider(job.model_config),
               nextProvider: configuredVideoProvider(),
               attempts: job.attempts,

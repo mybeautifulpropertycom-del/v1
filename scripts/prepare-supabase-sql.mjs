@@ -194,6 +194,14 @@ const byteplusDuration = await readFile(
   new URL("202610290002_byteplus_duration.sql", directory),
   "utf8",
 );
+const byteplusParallel = await readFile(
+  new URL("202610290003_byteplus_parallel.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-byteplus-parallel.sql", import.meta.url),
+  `-- Enables up to two BytePlus scenes in flight per active film. Completed films remain unchanged.\n-- Does not requeue films or change generation budgets.\nbegin;\n${byteplusParallel.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_BYTEPLUS_PARALLEL_READY' as status;\n`,
+);
 await writeFile(
   new URL("../supabase/sql-editor-byteplus-duration.sql", import.meta.url),
   `-- Installs the Seedance duration repair. Does not start generation or replace videos.\nbegin;\n${byteplusDuration.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_BYTEPLUS_DURATION_READY' as status;\n`,

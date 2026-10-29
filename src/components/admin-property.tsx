@@ -17,6 +17,7 @@ type Detail = {
   grant: { reason: string; granted_at: string } | null;
   video: {
     status: string;
+    activeScenes?: number;
     provider?: string;
     nextProvider?: string;
     attempts: number;
@@ -272,6 +273,9 @@ export function AdminProperty({ id }: { id: string }) {
             {data.video && (
               <p role="status">
                 Video: {data.video.status}
+                {data.video.activeScenes
+                  ? ` · ${data.video.activeScenes} generation request${data.video.activeScenes === 1 ? "" : "s"} in progress`
+                  : ""}
                 {data.video.total
                   ? ` · ${data.video.completed} of ${data.video.total} scenes ready`
                   : ""}

@@ -2288,3 +2288,224 @@ test("lead notifications are private, owner-scoped, durable and fenced against d
     await database.close();
   }
 });
+
+test("two-scene BytePlus window locks reservations, preserves order, and reconciles the correct ambiguous or rejected scene", async () => {
+  const database = await createTestDatabase();
+  try {
+    for (const name of [
+      "sql-editor-setup.sql",
+      "sql-editor-byteplus-parallel.sql",
+      "sql-editor-byteplus-parallel.sql",
+    ])
+      await database.exec(
+        await readFile(new URL(`../supabase/${name}`, import.meta.url), "utf8"),
+      );
+    await database.query(
+      "insert into auth.users(id,email) values($1,'admin@example.com'),($2,'agent@example.com')",
+      [agentA, agentB],
+    );
+    await database.exec(
+      "update profiles set name='Agent Name',phone='+1 555 123 4567'; select grant_platform_admin('admin@example.com'); select activate_property_billing()",
+    );
+    await database.query(
+      "insert into properties(id,owner_id,slug,title,description,location,price,area,images) values($1,$2,'parallel-home','A home','A detailed property description for our cinematic film.','Austin',500000,1500,array['https://example.com/front.jpg'])",
+      [propertyB, agentB],
+    );
+    await database.exec("set role service_role");
+    await database.query("select admin_publish_property($1,$2,'Showcase')", [
+      propertyB,
+      agentA,
+    ]);
+    const order = (
+      await database.query<{ id: string }>(
+        "select id from property_orders where property_id=$1",
+        [propertyB],
+      )
+    ).rows[0].id;
+    const lease = "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      otherLease = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const profile = {
+      provider: "byteplus",
+      endpoint: "dreamina-seedance-2-5-260628",
+      input: { duration: 4, resolution: "720p", generate_audio: false },
+    };
+    const input = { duration: 4, resolution: "720p", generate_audio: false };
+    const plan = {
+      engine: "higgsfield-montage-v1",
+      shots: [{ seconds: 4 }, { seconds: 4 }, { seconds: 4 }],
+      generationBudget: { version: 3, sceneSeconds: [4, 4, 4] },
+    };
+    const claim = async () =>
+      (
+        await database.query<any>("select claim_property_ai_film($1,$2,$3)", [
+          order,
+          lease,
+          JSON.stringify(profile),
+        ])
+      ).rows[0].claim_property_ai_film;
+    const checkpoint = (fields: string, values: unknown[] = []) =>
+      database.query<any>(
+        `select checkpoint_property_ai_film($1,$2,1${fields})`,
+        [order, lease, ...values],
+      );
+    const ahead = (index: number, token = lease, body = input) =>
+      database.query<any>("select reserve_byteplus_lookahead($1,$2,1,$3,$4)", [
+        order,
+        token,
+        index,
+        JSON.stringify(body),
+      ]);
+    const bind = (index: number, id: string) =>
+      database.query<any>("select bind_property_film_scene($1,$2,$3,$4)", [
+        order,
+        generation,
+        index,
+        id,
+      ]);
+    const current = () =>
+      database.query<any>("select reserve_property_film_scene($1,$2,1,$3)", [
+        order,
+        lease,
+        JSON.stringify(input),
+      ]);
+    const first = await claim();
+    const generation = first.montage_generation;
+    await checkpoint(",$3", [JSON.stringify(plan)]);
+    await claim();
+    assert.equal(
+      (await ahead(1)).rows[0].reserve_byteplus_lookahead,
+      null,
+      "Never submit lookahead before first task is accepted",
+    );
+    assert.equal(
+      (await current()).rows[0].reserve_property_film_scene.submit,
+      true,
+    );
+    await bind(0, "parallel-0");
+    assert.equal(
+      (await ahead(1, otherLease)).rows[0].reserve_byteplus_lookahead,
+      null,
+    );
+    assert.equal(
+      (await ahead(2)).rows[0].reserve_byteplus_lookahead,
+      null,
+      "No third in-flight scene",
+    );
+    assert.equal(
+      (await ahead(1, lease, { ...input, duration: 5 })).rows[0]
+        .reserve_byteplus_lookahead,
+      null,
+      "No source duration beyond the budget snapshot",
+    );
+    assert.equal(
+      (await ahead(1)).rows[0].reserve_byteplus_lookahead.submit,
+      true,
+    );
+    assert.equal(
+      (await bind(1, "parallel-1")).rows[0].bind_property_film_scene,
+      true,
+    );
+    assert.equal(
+      (await ahead(1)).rows[0].reserve_byteplus_lookahead.submit,
+      false,
+    );
+    assert.equal(
+      (await checkpoint(",null,1")).rows[0].checkpoint_property_ai_film,
+      false,
+      "A faster second scene cannot change the film order",
+    );
+    assert.equal(
+      (await checkpoint(",null,0")).rows[0].checkpoint_property_ai_film,
+      true,
+    );
+    await claim();
+    assert.equal(
+      (await current()).rows[0].reserve_property_film_scene.request_id,
+      "parallel-1",
+    );
+    assert.equal(
+      (await current()).rows[0].reserve_property_film_scene.submit,
+      false,
+    );
+    assert.equal(
+      (await ahead(2)).rows[0].reserve_byteplus_lookahead.submit,
+      true,
+    );
+    await database.exec("begin; savepoint accepted_late");
+    await checkpoint(
+      ",null,null,null,null,'Unconfirmed lookahead','uncertain'",
+    );
+    assert.equal(
+      (
+        await database.query<any>(
+          "select provider_phase from property_video_jobs",
+        )
+      ).rows[0].provider_phase,
+      "uncertain",
+    );
+    assert.equal(
+      (
+        await database.query<any>(
+          "select status from property_film_scenes where shot_index=2",
+        )
+      ).rows[0].status,
+      "uncertain",
+    );
+    assert.equal(await claim(), null);
+    await assert.rejects(
+      database.query("select admin_resume_byteplus_film($1,$2)", [
+        propertyB,
+        agentA,
+      ]),
+      /cannot be resumed safely/,
+    );
+    // The failed statement aborted the transaction: restore the reserved scene.
+    await database.exec("rollback to accepted_late");
+    await checkpoint(
+      ",null,null,null,null,'Unconfirmed lookahead','uncertain'",
+    );
+    assert.equal(
+      (await bind(2, "parallel-2-late")).rows[0].bind_property_film_scene,
+      true,
+      "A verified late task ID can reconcile the lookahead",
+    );
+    await database.exec(
+      "rollback to accepted_late; release accepted_late; commit",
+    );
+    await checkpoint(
+      ",null,null,null,null,'BytePlus rejected scene 3 (HTTP 429; code RateLimitExceeded; duration 4s). Saved scenes are retained.','failed'",
+    );
+    await database.query("select admin_resume_byteplus_film($1,$2)", [
+      propertyB,
+      agentA,
+    ]);
+    assert.deepEqual(
+      (
+        await database.query(
+          "select shot_index,request_id from property_film_scenes order by shot_index",
+        )
+      ).rows,
+      [
+        { shot_index: 0, request_id: "parallel-0" },
+        { shot_index: 1, request_id: "parallel-1" },
+      ],
+    );
+    const saved = (
+      await database.query<any>(
+        "select montage_generation,montage_next_shot,montage_plan,byteplus_parallel from property_video_jobs",
+      )
+    ).rows[0];
+    assert.equal(saved.montage_generation, generation);
+    assert.equal(saved.montage_next_shot, 1);
+    assert.deepEqual(saved.montage_plan, plan);
+    assert.equal(
+      saved.byteplus_parallel,
+      false,
+      "Manual recovery after rate limiting switches this film to sequential processing",
+    );
+    await database.exec("reset role; set role authenticated");
+    await assert.rejects(ahead(2), /permission denied/);
+  } finally {
+    await database.close();
+  }
+});

@@ -142,6 +142,22 @@ after(() => {
   Object.assign(filmDependencies, originalPhoto);
 });
 const admin = {
+  from: (table: string) => {
+    assert.equal(table, "property_film_scenes");
+    let index = -1;
+    const query = {
+      select: () => query,
+      eq: (key: string, value: unknown) => {
+        if (key === "shot_index") index = Number(value);
+        return query;
+      },
+      maybeSingle: async () => ({
+        data: scenes.get(index) || null,
+        error: null,
+      }),
+    };
+    return query;
+  },
   rpc: async (name: string, body: Record<string, unknown>) => {
     if (name === "claim_property_ai_film")
       return {
@@ -153,8 +169,17 @@ const admin = {
             : structuredClone(job),
         error: null,
       };
-    if (name === "reserve_property_film_scene") {
-      const existing = scenes.get(job.montage_next_shot);
+    if (
+      name === "reserve_property_film_scene" ||
+      name === "reserve_byteplus_lookahead"
+    ) {
+      const index =
+        name === "reserve_byteplus_lookahead"
+          ? Number(body.p_index)
+          : job.montage_next_shot;
+      if (name === "reserve_byteplus_lookahead")
+        assert.equal(index, job.montage_next_shot + 1);
+      const existing = scenes.get(index);
       if (existing)
         return { data: { ...existing, submit: false }, error: null };
       const row = {
@@ -162,7 +187,7 @@ const admin = {
         model_config: job.model_config.profile,
         request_id: null,
       };
-      scenes.set(job.montage_next_shot, row);
+      scenes.set(index, row);
       return { data: { ...row, submit: true }, error: null };
     }
     if (name === "bind_property_film_scene") {
@@ -422,3 +447,96 @@ test("BytePlus scene rejection persists actionable HTTP, code and duration witho
   assert.equal(await runHiggsfieldFilm(admin, order), "not_claimed");
   assert.equal(calls, 1);
 });
+
+function useParallelBytePlus() {
+  useBytePlus();
+  job.byteplus_parallel = true;
+  job.source.images.push(
+    job.source.images[1].replace("back.jpg", "detail.jpg"),
+    job.source.images[1].replace("back.jpg", "closing.jpg"),
+  );
+  filmDependencies.photoFingerprint = async (bytes) =>
+    String(job.source.images.indexOf(bytes.toString())).repeat(64);
+  filmDependencies.analyzeFilmPhotos = async () =>
+    [0, 1, 2, 3].map((index) => ({
+      index,
+      category: index === 1 ? "living" : index === 2 ? "detail" : "exterior",
+      strength: 5,
+      aerial: false,
+      evening: false,
+    }));
+}
+
+test("BytePlus overlaps only the next scene, preserves shot order, and reuses accepted requests", async () => {
+  useParallelBytePlus();
+  await runHiggsfieldFilm(admin, order);
+  const pollCompleted = aiFilmDependencies.bytePlusGenerationStatus;
+  aiFilmDependencies.bytePlusGenerationStatus = async (id) => ({
+    request_id: id,
+    status: "in_progress",
+  });
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  assert.equal(submissions.length, 2);
+  assert.equal(scenes.get(0).request_id, "cgt-1");
+  assert.equal(scenes.get(1).request_id, "cgt-2");
+  assert.equal(job.montage_next_shot, 0);
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  assert.equal(
+    submissions.length,
+    2,
+    "No third request while both slots are occupied",
+  );
+  aiFilmDependencies.bytePlusGenerationStatus = async (id) =>
+    id === "cgt-2"
+      ? { request_id: id, status: "in_progress" }
+      : pollCompleted(id);
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_saved");
+  assert.equal(job.montage_next_shot, 1);
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  assert.equal(
+    submissions.length,
+    3,
+    "Only refill after the first scene is safely saved",
+  );
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  assert.equal(submissions.length, 3);
+  aiFilmDependencies.bytePlusGenerationStatus = pollCompleted;
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_saved");
+  assert.equal(await runHiggsfieldFilm(admin, order), "ai_scene_saved");
+  assert.equal(job.montage_next_shot, 3);
+  assert.equal(submissions.length, 3);
+});
+
+for (const failure of ["timeout", "rejected", "binding"]) {
+  test(`a ${failure} in the lookahead scene retains the accepted first task and never resubmits automatically`, async () => {
+    useParallelBytePlus();
+    await runHiggsfieldFilm(admin, order);
+    const submit = aiFilmDependencies.submitBytePlusGeneration;
+    aiFilmDependencies.submitBytePlusGeneration = async (endpoint, input) => {
+      if (submissions.length === 1) {
+        if (failure === "binding") {
+          failBinding = true;
+          return submit(endpoint, input);
+        }
+        submissions.push(input);
+        if (failure === "rejected")
+          throw new BytePlusRejectedError("Rejected", 429, "RateLimitExceeded");
+        throw new Error("Connection lost after acceptance");
+      }
+      return submit(endpoint, input);
+    };
+    assert.equal(
+      await runHiggsfieldFilm(admin, order),
+      failure === "rejected" ? "failed" : "uncertain",
+    );
+    assert.equal(scenes.get(0).request_id, "cgt-1");
+    assert.equal(scenes.get(1).request_id, null);
+    if (failure === "rejected")
+      assert.match(
+        String(checks.at(-1)?.p_error),
+        /rejected scene 2 .*HTTP 429/,
+      );
+    assert.equal(await runHiggsfieldFilm(admin, order), "not_claimed");
+    assert.equal(submissions.length, 2);
+  });
+}
