@@ -2,6 +2,7 @@ import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 import { locale, defaultCurrency, defaultAreaUnit } from "@/i18n/config";
 import type { SavedPropertyStory } from "./property-story";
 export type TemplateId = "editorial" | "minimal" | "panorama";
+export const MAX_PROFILE_BIO_LENGTH = 400;
 export type Profile = {
   id: string;
   name: string;

@@ -11,7 +11,12 @@ import {
 import { useRouter } from "next/navigation";
 import { Check, LoaderCircle, X } from "lucide-react";
 import type { Profile, Property, Workspace } from "@/lib/model";
-import { propertyErrors, publicationErrors, slugify } from "@/lib/model";
+import {
+  MAX_PROFILE_BIO_LENGTH,
+  propertyErrors,
+  publicationErrors,
+  slugify,
+} from "@/lib/model";
 import { readDemo, writeDemo } from "@/lib/demo-storage";
 import { uploadPropertyPhoto } from "@/lib/photo-upload";
 import { getSupabase, supabaseConfigured } from "@/lib/supabase";
@@ -173,6 +178,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     [commit],
   );
   async function saveProfile(profile: Profile) {
+    if (profile.bio.length > MAX_PROFILE_BIO_LENGTH)
+      throw new Error(
+        `Shorten your introduction to ${MAX_PROFILE_BIO_LENGTH} characters or fewer before saving.`,
+      );
     const current = stateRef.current!;
     const supabase = getSupabase();
     if (supabase) {

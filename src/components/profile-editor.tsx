@@ -12,7 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
-import { profileErrors } from "@/lib/model";
+import { MAX_PROFILE_BIO_LENGTH, profileErrors } from "@/lib/model";
 import { en } from "@/i18n/en";
 
 export function ProfileEditor() {
@@ -172,12 +172,22 @@ export function ProfileEditor() {
               {t.bio}
               <textarea
                 rows={4}
-                maxLength={1000}
+                maxLength={MAX_PROFILE_BIO_LENGTH}
+                aria-describedby="profile-bio-hint"
+                aria-invalid={form.bio.length > MAX_PROFILE_BIO_LENGTH}
                 placeholder="A few words about you and your approach to finding the perfect home…"
                 value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                onChange={(e) => {
+                  setSaved(false);
+                  setForm({ ...form, bio: e.target.value });
+                }}
               />
-              <small>Keep it warm, personal, and true to you.</small>
+              <small id="profile-bio-hint">
+                {form.bio.length} / {MAX_PROFILE_BIO_LENGTH} characters.{" "}
+                {form.bio.length > MAX_PROFILE_BIO_LENGTH
+                  ? "Please shorten your introduction before saving."
+                  : "Keep it warm, personal, and true to you."}
+              </small>
             </label>
           </div>
           {error && (
