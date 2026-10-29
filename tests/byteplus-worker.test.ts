@@ -38,6 +38,8 @@ beforeEach(() => {
       "https://byteplus-worker.supabase.co",
       "Selection must not submit any generation",
     );
+    if (url.pathname === "/rest/v1/rpc/claim_byteplus_slot_checks")
+      return Response.json([]);
     const body = init?.body ? JSON.parse(String(init.body)) : null;
     if (url.pathname === "/rest/v1/property_video_jobs") {
       if (init?.method === "PATCH") {
@@ -106,6 +108,19 @@ test("disabled shared worker performs no database or provider calls", async () =
     throw new Error("Unexpected request");
   };
   assert.deepEqual(await runVideoWorker(), { enabled: false, processed: 0 });
+});
+
+test("a missing shared queue migration stops before any film claim or paid submission", async () => {
+  const read = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    if (String(input).includes("/rpc/claim_byteplus_slot_checks"))
+      return Response.json({ message: "Function unavailable" }, { status: 404 });
+    return read(input, init);
+  };
+  const result = await runVideoWorker();
+  assert.equal(result.processed, 0);
+  assert.deepEqual(result.results, ["queue_upgrade_required"]);
+  assert.equal(claimed.length, 0);
 });
 
 test("unknown pricing pauses before even claiming a film", async () => {

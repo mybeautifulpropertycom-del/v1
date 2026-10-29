@@ -140,7 +140,8 @@ test("BytePlus recovery preserves completed scenes and refuses uncertain, accept
     );
     await assert.rejects(resume(), /reconciliation/);
     await database.exec(
-      "reset role; update property_film_scenes set status='submitting',request_id=null where shot_index=1; set role service_role",
+      // Undo the synthetic accepted-task fixture in both durable records.
+      "reset role; update property_film_scenes set status='submitting',request_id=null where shot_index=1; update byteplus_scene_slots set request_id=null where shot_index=1; set role service_role",
     );
     await resume();
     await assert.rejects(resume(), /cannot be resumed safely/);

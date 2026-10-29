@@ -242,7 +242,11 @@ export async function runHiggsfieldFilm(
         p_input: input,
       });
       if (reserved.error) throw new Error("Scene reservation failed.");
-      if (!reserved.data) return "scene_unavailable";
+      if (!reserved.data) {
+        return (await checkpoint(admin, job))
+          ? "waiting_for_capacity"
+          : "revoked";
+      }
       const scene = reserved.data as Scene;
       let result;
       if (scene.submit) {
@@ -348,7 +352,10 @@ export async function runHiggsfieldFilm(
             );
             if (reservedAhead.error)
               throw new Error("Scene reservation failed.");
-            if (!reservedAhead.data) return "scene_unavailable";
+            if (!reservedAhead.data) {
+              await checkpoint(admin, job);
+              return "generating";
+            }
             const next = reservedAhead.data as Scene;
             if (next.submit) {
               stage = "lookahead_submission";
@@ -475,6 +482,22 @@ export async function runHiggsfieldFilm(
         error instanceof BadInputError ||
         error instanceof NotEnoughCreditsError ||
         error instanceof ValidationError);
+    if (
+      rejected &&
+      error instanceof BytePlusRejectedError &&
+      error.httpStatus
+    ) {
+      const deferred = await admin.rpc("reject_byteplus_scene", {
+        p_order: order,
+        p_lease: job.lease_token,
+        p_attempt: job.attempts,
+        p_generation: job.montage_generation,
+        p_index: activeIndex,
+        p_http: error.httpStatus,
+      });
+      if (!deferred.error && deferred.data && error.httpStatus === 429)
+        return "waiting_for_provider_capacity";
+    }
     const budgetBlocked = error instanceof VideoBudgetError;
     const failure =
       rejected || budgetBlocked

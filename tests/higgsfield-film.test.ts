@@ -33,6 +33,8 @@ let downloadFails = false,
   timeout = false,
   failBinding = false,
   revoked = false;
+let queueFull = false,
+  rateLimitDeferred = false;
 let polls = 0,
   edited = 0;
 beforeEach(() => {
@@ -71,6 +73,7 @@ beforeEach(() => {
   uploads = [];
   checks = [];
   polls = edited = 0;
+  queueFull = rateLimitDeferred = false;
   downloadFails = rejectCredits = timeout = failBinding = revoked = false;
   filmDependencies.downloadPhoto = async (url) => Buffer.from(url);
   filmDependencies.photoFingerprint = async (bytes) =>
@@ -159,6 +162,13 @@ const admin = {
     return query;
   },
   rpc: async (name: string, body: Record<string, unknown>) => {
+    if (name === "reject_byteplus_scene") {
+      if (rateLimitDeferred && body.p_http === 429) {
+        scenes.delete(Number(body.p_index));
+        return { data: true, error: null };
+      }
+      return { data: false, error: null };
+    }
     if (name === "claim_property_ai_film")
       return {
         data:
@@ -180,6 +190,7 @@ const admin = {
       if (name === "reserve_byteplus_lookahead")
         assert.equal(index, job.montage_next_shot + 1);
       const existing = scenes.get(index);
+      if (!existing && queueFull) return { data: null, error: null };
       if (existing)
         return { data: { ...existing, submit: false }, error: null };
       const row = {
@@ -540,3 +551,39 @@ for (const failure of ["timeout", "rejected", "binding"]) {
     assert.equal(submissions.length, 2);
   });
 }
+
+test("a full shared queue releases the job lease without failure or a provider submission", async () => {
+  useBytePlus();
+  await runHiggsfieldFilm(admin, order);
+  queueFull = true;
+  assert.equal(await runHiggsfieldFilm(admin, order), "waiting_for_capacity");
+  assert.equal(submissions.length, 0);
+  assert.equal(checks.at(-1)?.p_error, undefined);
+  assert.equal(checks.at(-1)?.p_failure, undefined);
+  queueFull = false;
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  assert.equal(submissions.length, 1);
+});
+
+test("an explicit lookahead 429 keeps the accepted task and returns to the shared queue", async () => {
+  useParallelBytePlus();
+  await runHiggsfieldFilm(admin, order);
+  rateLimitDeferred = true;
+  const submit = aiFilmDependencies.submitBytePlusGeneration;
+  aiFilmDependencies.submitBytePlusGeneration = async (endpoint, input) => {
+    if (submissions.length === 1)
+      throw new BytePlusRejectedError("rate limit", 429, "RateLimitExceeded");
+    return submit(endpoint, input);
+  };
+  assert.equal(
+    await runHiggsfieldFilm(admin, order),
+    "waiting_for_provider_capacity",
+  );
+  assert.equal(scenes.get(0).request_id, "cgt-1");
+  assert.equal(scenes.has(1), false);
+  assert.equal(job.status, "processing");
+  assert.equal(
+    checks.some((value) => value.p_failure),
+    false,
+  );
+});

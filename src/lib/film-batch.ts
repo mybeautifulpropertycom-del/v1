@@ -12,13 +12,15 @@ const progress = new Set([
 export async function runFilmBatch(
   step: () => Promise<string>,
   now: () => number = Date.now,
+  deadline = now() + 60000,
 ): Promise<string[]> {
   const started = now();
   const results: string[] = [];
   for (let index = 0; index < 24; index++) {
     const result = await step();
     results.push(result);
-    if (!progress.has(result) || now() - started >= 60000) break;
+    if (!progress.has(result) || now() - started >= 60000 || now() >= deadline)
+      break;
   }
   return results;
 }

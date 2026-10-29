@@ -214,3 +214,20 @@ await writeFile(
   new URL("../supabase/sql-editor-lead-notifications.sql", import.meta.url),
   `-- Run the ENTIRE file. Adds unread lead state and a private email outbox.\n-- Existing leads remain saved and are marked unread; historical emails are NOT sent.\nbegin;\n${leadNotifications.trim()}\ncommit;\nselect 'MBP_LEAD_NOTIFICATIONS_READY' as status;\n`,
 );
+
+const byteplusQueue = await readFile(
+  new URL("202610290004_byteplus_shared_queue.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-byteplus-queue.sql", import.meta.url),
+  `-- Shared BytePlus queue: 3 active provider scenes across all properties.
+-- Run the ENTIRE file after the multi-photo film setup. Includes the previous parallel upgrade.
+-- Preserves films, payments and accepted requests. Does not start or rebuild any film.
+begin;
+${byteplusParallel.trim()}
+${byteplusQueue.trim()}
+commit;
+select 'MBP_BYTEPLUS_QUEUE_READY' as status;
+`,
+);

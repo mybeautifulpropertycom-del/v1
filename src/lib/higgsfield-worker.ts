@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { runFilmBatch } from "./film-batch";
+import { refreshBytePlusCapacity, runVideoQueueBatch } from "./byteplus-queue";
 import {
   AuthenticationError,
   BadInputError,
@@ -199,6 +200,7 @@ async function processJob(job: VideoJob) {
 }
 /** A bounded batch. The scheduler resumes jobs; no function waits for generation. */
 export async function runVideoWorker(orderId?: string) {
+  const deadline = Date.now() + 60000;
   if (!videoEnabled()) return { enabled: false, processed: 0 };
   workerSecret();
   callbackUrl("configuration-check", 1);
@@ -211,149 +213,177 @@ export async function runVideoWorker(orderId?: string) {
     .or(`lease_until.is.null,lease_until.lt.${new Date().toISOString()}`)
     .lte("next_poll_at", new Date().toISOString())
     .order("next_poll_at")
-    .limit(1);
+    .limit(orderId ? 1 : 12);
   if (orderId) query = query.eq("order_id", orderId);
   const { data: candidates, error } = await query;
   if (error)
     throw new Error("The Higgsfield database migration is not installed.");
-  const results: string[] = [];
-  for (const candidate of candidates || []) {
-    if (
-      candidate.model_config?.engine === "higgsfield-montage-v1" ||
-      (!candidate.model_config?.engine &&
-        candidate.status === "queued" &&
-        aiMontageMode())
-    ) {
-      let model: ModelProfile | null;
-      const savedProfile = candidate.model_config?.profile;
-      const byteplus = savedProfile
-        ? savedProfile.provider === "byteplus"
-        : process.env.PROPERTY_VIDEO_MODE === "byteplus-montage";
-      try {
-        if (byteplus) {
-          arkCredentials();
-          const profile = savedProfile
-            ? validateModel(savedProfile)
-            : bytePlusModel();
-          if (!candidate.montage_plan) bytePlusBudgetSettings(profile);
-          else if (
-            candidate.montage_next_shot < candidate.montage_plan.shots.length
-          )
-            assertFilmBudget(candidate.montage_plan, profile);
-        } else {
-          if (process.env.HIGGSFIELD_ENABLED !== "true")
-            throw new Error("Higgsfield is paused.");
-          higgsfieldCredentials();
-        }
-        model =
-          candidate.status === "queued"
-            ? savedProfile
+  if (
+    process.env.PROPERTY_VIDEO_MODE === "byteplus-montage" ||
+    candidates?.some(
+      (candidate) => candidate.model_config?.profile?.provider === "byteplus",
+    )
+  ) {
+    try {
+      await refreshBytePlusCapacity(admin);
+    } catch {
+      // Fail closed before any submission if the database-wide cap is unavailable.
+      return {
+        enabled: true,
+        processed: 0,
+        results: ["queue_upgrade_required"],
+      };
+    }
+  }
+  const results = await runVideoQueueBatch(
+    candidates || [],
+    async (candidate) => {
+      const results: string[] = [];
+      if (
+        candidate.model_config?.engine === "higgsfield-montage-v1" ||
+        (!candidate.model_config?.engine &&
+          candidate.status === "queued" &&
+          aiMontageMode())
+      ) {
+        let model: ModelProfile | null;
+        const savedProfile = candidate.model_config?.profile;
+        const byteplus = savedProfile
+          ? savedProfile.provider === "byteplus"
+          : process.env.PROPERTY_VIDEO_MODE === "byteplus-montage";
+        try {
+          if (byteplus) {
+            arkCredentials();
+            const profile = savedProfile
               ? validateModel(savedProfile)
-              : byteplus
-                ? bytePlusModel()
-                : configuredModel()
-            : null;
-      } catch (error) {
+              : bytePlusModel();
+            if (!candidate.montage_plan) bytePlusBudgetSettings(profile);
+            else if (
+              candidate.montage_next_shot < candidate.montage_plan.shots.length
+            )
+              assertFilmBudget(candidate.montage_plan, profile);
+          } else {
+            if (process.env.HIGGSFIELD_ENABLED !== "true")
+              throw new Error("Higgsfield is paused.");
+            higgsfieldCredentials();
+          }
+          model =
+            candidate.status === "queued"
+              ? savedProfile
+                ? validateModel(savedProfile)
+                : byteplus
+                  ? bytePlusModel()
+                  : configuredModel()
+              : null;
+        } catch (error) {
+          await admin
+            .from("property_video_jobs")
+            .update({
+              last_error:
+                error instanceof VideoBudgetError
+                  ? error.message
+                  : byteplus
+                    ? "BytePlus API configuration is incomplete. Check ARK_API_KEY and BYTEPLUS_VIDEO_MODEL."
+                    : "Higgsfield is paused or its configuration is incomplete. Existing work remains assigned to its original provider.",
+              next_poll_at: new Date(Date.now() + 300000).toISOString(),
+            })
+            .eq("order_id", candidate.order_id)
+            .eq("status", candidate.status);
+          results.push("configuration_required");
+          return results;
+        }
+        results.push(
+          ...(await runFilmBatch(
+            async () => {
+              const started = Date.now();
+              const result = await runHiggsfieldFilm(
+                admin,
+                candidate.order_id,
+                model,
+              );
+              model = null;
+              console.info(
+                JSON.stringify({
+                  event: "property_film_step_timing",
+                  order_id: candidate.order_id,
+                  provider: byteplus ? "byteplus" : "higgsfield",
+                  result,
+                  elapsed_ms: Date.now() - started,
+                }),
+              );
+              return result;
+            },
+            Date.now,
+            deadline,
+          )),
+        );
+        return results;
+      }
+      if (
+        candidate.model_config?.engine === "photo-montage-v1" ||
+        (candidate.status === "queued" &&
+          process.env.PROPERTY_VIDEO_MODE === "photo-montage")
+      ) {
+        results.push(await runPropertyFilm(admin, candidate.order_id));
+        return results;
+      }
+      if (process.env.HIGGSFIELD_ENABLED !== "true") {
         await admin
           .from("property_video_jobs")
           .update({
-            last_error:
-              error instanceof VideoBudgetError
-                ? error.message
-                : byteplus
-                  ? "BytePlus API configuration is incomplete. Check ARK_API_KEY and BYTEPLUS_VIDEO_MODEL."
-                  : "Higgsfield is paused or its configuration is incomplete. Existing work remains assigned to its original provider.",
             next_poll_at: new Date(Date.now() + 300000).toISOString(),
+            last_error:
+              "Higgsfield is paused. This existing request remains assigned to its original provider.",
           })
           .eq("order_id", candidate.order_id)
           .eq("status", candidate.status);
         results.push("configuration_required");
-        continue;
+        return results;
       }
-      results.push(
-        ...(await runFilmBatch(async () => {
-          const started = Date.now();
-          const result = await runHiggsfieldFilm(
-            admin,
-            candidate.order_id,
+      higgsfieldCredentials();
+      let model: ModelProfile | null = null;
+      let input: Record<string, unknown> | null = null;
+      if (candidate.status === "queued") {
+        try {
+          model = configuredModel();
+          input = propertyVideoInput(
             model,
+            candidate.source,
+            candidate.owner_id,
+            candidate.property_id,
           );
-          model = null;
-          console.info(
-            JSON.stringify({
-              event: "property_film_step_timing",
-              order_id: candidate.order_id,
-              provider: byteplus ? "byteplus" : "higgsfield",
-              result,
-              elapsed_ms: Date.now() - started,
-            }),
-          );
-          return result;
-        })),
-      );
-      continue;
-    }
-    if (
-      candidate.model_config?.engine === "photo-montage-v1" ||
-      (candidate.status === "queued" &&
-        process.env.PROPERTY_VIDEO_MODE === "photo-montage")
-    ) {
-      results.push(await runPropertyFilm(admin, candidate.order_id));
-      continue;
-    }
-    if (process.env.HIGGSFIELD_ENABLED !== "true") {
-      await admin
-        .from("property_video_jobs")
-        .update({
-          next_poll_at: new Date(Date.now() + 300000).toISOString(),
-          last_error:
-            "Higgsfield is paused. This existing request remains assigned to its original provider.",
-        })
-        .eq("order_id", candidate.order_id)
-        .eq("status", candidate.status);
-      results.push("configuration_required");
-      continue;
-    }
-    higgsfieldCredentials();
-    let model: ModelProfile | null = null;
-    let input: Record<string, unknown> | null = null;
-    if (candidate.status === "queued") {
-      try {
-        model = configuredModel();
-        input = propertyVideoInput(
-          model,
-          candidate.source,
-          candidate.owner_id,
-          candidate.property_id,
-        );
-      } catch {
-        // Invalid input must not block other queued or already-rendering jobs.
-        const { error: deferError } = await admin
-          .from("property_video_jobs")
-          .update({
-            next_poll_at: new Date(Date.now() + 300000).toISOString(),
-            last_error:
-              "Video setup needs review. Check the selected model and saved photo inputs.",
-          })
-          .eq("order_id", candidate.order_id)
-          .eq("status", "queued");
-        if (deferError) throw new Error("The video job could not be deferred.");
-        results.push("configuration_required");
-        continue;
+        } catch {
+          // Invalid input must not block other queued or already-rendering jobs.
+          const { error: deferError } = await admin
+            .from("property_video_jobs")
+            .update({
+              next_poll_at: new Date(Date.now() + 300000).toISOString(),
+              last_error:
+                "Video setup needs review. Check the selected model and saved photo inputs.",
+            })
+            .eq("order_id", candidate.order_id)
+            .eq("status", "queued");
+          if (deferError)
+            throw new Error("The video job could not be deferred.");
+          results.push("configuration_required");
+          return results;
+        }
       }
-    }
-    const { data, error: claimError } = await admin.rpc(
-      "claim_property_video",
-      {
-        p_order: candidate.order_id,
-        p_lease: crypto.randomUUID(),
-        p_model: candidate.status === "queued" ? model : null,
-        p_input: input,
-      },
-    );
-    if (claimError) throw new Error("The video job could not be claimed.");
-    if (data) results.push(await processJob(data as VideoJob));
-  }
+      const { data, error: claimError } = await admin.rpc(
+        "claim_property_video",
+        {
+          p_order: candidate.order_id,
+          p_lease: crypto.randomUUID(),
+          p_model: candidate.status === "queued" ? model : null,
+          p_input: input,
+        },
+      );
+      if (claimError) throw new Error("The video job could not be claimed.");
+      if (data) results.push(await processJob(data as VideoJob));
+      return results;
+    },
+    Date.now,
+    deadline,
+  );
   return { enabled: true, processed: results.length, results };
 }
 /** For best-effort wakeups; the scheduler is the durable recovery mechanism. */

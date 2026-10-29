@@ -76,3 +76,16 @@ test("time and step bounds leave work for the durable scheduler", async () => {
   );
   assert.equal(bounded.length, 24);
 });
+
+test("a film shares the enclosing invocation deadline instead of starting a fresh minute", async () => {
+  let clock = 55000;
+  const result = await runFilmBatch(
+    async () => {
+      clock += 6000;
+      return "ai_scene_saved";
+    },
+    () => clock,
+    60000,
+  );
+  assert.equal(result.length, 1);
+});
