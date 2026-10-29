@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "./workspace-provider";
 import { adminRequest } from "@/lib/admin-client";
+import { DeleteAction } from "./delete-action";
 
 type Account = {
   id: string;
@@ -13,6 +14,7 @@ type Account = {
   agency: string;
   property_count: number;
   last_sign_in_at: string | null;
+  deleting?: boolean;
 };
 type Listing = {
   id: string;
@@ -23,7 +25,8 @@ type Listing = {
   agent?: { name: string; email: string };
 };
 export function AdminDashboard() {
-  const { isAdmin } = useWorkspace();
+  const { isAdmin, profile, notify } = useWorkspace();
+  const [revision, setRevision] = useState(0);
   const [view, setView] = useState<"accounts" | "properties">("accounts");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -59,7 +62,17 @@ export function AdminDashboard() {
       active = false;
       clearTimeout(timer);
     };
-  }, [isAdmin, view, owner, page, search]);
+  }, [isAdmin, view, owner, page, search, revision]);
+  async function remove(kind: "account" | "property", id: string) {
+    await adminRequest("delete", { kind, id });
+    notify(
+      kind === "account"
+        ? "Account deletion requested. Its properties have been removed; files and the account will be deleted in the background."
+        : "Property deleted. Its photos and video are queued for storage cleanup.",
+    );
+    setPage(0);
+    setRevision((value) => value + 1);
+  }
   if (!isAdmin)
     return (
       <div className="state-screen">
@@ -181,20 +194,35 @@ export function AdminDashboard() {
                           </td>
                           <td>{account.property_count}</td>
                           <td>
-                            <button
-                              className="text-button"
-                              onClick={() => {
-                                setOwner({
-                                  id: account.id,
-                                  name: account.name || account.login_email,
-                                });
-                                setView("properties");
-                                setSearch("");
-                                setPage(0);
-                              }}
-                            >
-                              View properties →
-                            </button>
+                            {account.deleting ? (
+                              <span role="status">Deletion in progress…</span>
+                            ) : (
+                              <>
+                                <button
+                                  className="text-button"
+                                  onClick={() => {
+                                    setOwner({
+                                      id: account.id,
+                                      name: account.name || account.login_email,
+                                    });
+                                    setView("properties");
+                                    setSearch("");
+                                    setPage(0);
+                                  }}
+                                >
+                                  View properties →
+                                </button>
+                                {account.id !== profile.id && (
+                                  <DeleteAction
+                                    label={`Delete account ${account.login_email}`}
+                                    confirmation={`Permanently delete ${account.login_email}, all their properties, leads, photos and videos? This cannot be undone. Existing payments are not automatically refunded.`}
+                                    onDelete={() =>
+                                      remove("account", account.id)
+                                    }
+                                  />
+                                )}
+                              </>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -222,6 +250,11 @@ export function AdminDashboard() {
                             >
                               Review property →
                             </Link>
+                            <DeleteAction
+                              label={`Delete ${property.title || "property"}`}
+                              confirmation={`Permanently delete ${property.title || "this property"}, its photos and video? Leads remain in the agent's inbox. Existing payments are not automatically refunded.`}
+                              onDelete={() => remove("property", property.id)}
+                            />
                           </td>
                         </tr>
                       ))}

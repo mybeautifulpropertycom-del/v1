@@ -231,3 +231,19 @@ commit;
 select 'MBP_BYTEPLUS_QUEUE_READY' as status;
 `,
 );
+
+const accountLifecycle = await readFile(
+  new URL("202610290005_account_lifecycle.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-account-lifecycle.sql", import.meta.url),
+  `-- Run the ENTIRE file on the existing installation.
+-- Adds admin deletion, durable storage cleanup, first-profile completion and 14-day draft expiry.
+-- Existing drafts receive 14 days from this installation. No account/property is deleted by this installer.
+begin;
+${accountLifecycle.trim()}
+commit;
+select 'MBP_ACCOUNT_LIFECYCLE_READY' as status;
+`,
+);

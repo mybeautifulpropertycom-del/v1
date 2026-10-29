@@ -24,7 +24,27 @@ export async function GET(request: Request) {
       );
     const { data, error, count } = await query;
     if (error) throw error;
-    return billingJson({ accounts: data, total: count || 0, page });
+    const { data: pending, error: cleanupError } = data?.length
+      ? await admin
+          .from("account_cleanup_jobs")
+          .select("owner_id")
+          .eq("kind", "account")
+          .eq("status", "pending")
+          .in(
+            "owner_id",
+            data.map((account) => account.id),
+          )
+      : { data: [], error: null };
+    if (cleanupError) throw cleanupError;
+    const deleting = new Set((pending || []).map((job) => job.owner_id));
+    return billingJson({
+      accounts: (data || []).map((account) => ({
+        ...account,
+        deleting: deleting.has(account.id),
+      })),
+      total: count || 0,
+      page,
+    });
   } catch (error) {
     return adminFailure(error);
   }

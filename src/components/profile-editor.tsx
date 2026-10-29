@@ -1,6 +1,7 @@
 "use client";
 import { AgentAvatar } from "./agent-avatar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,16 +17,23 @@ import { MAX_PROFILE_BIO_LENGTH, profileErrors } from "@/lib/model";
 import { en } from "@/i18n/en";
 
 export function ProfileEditor() {
+  const router = useRouter();
   const { profile, saveProfile, uploadAvatar, notify } = useWorkspace();
   const [form, setForm] = useState(profile);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  useEffect(() => {
+    if (!redirecting) return;
+    const timer = setTimeout(() => router.push("/dashboard"), 3000);
+    return () => clearTimeout(timer);
+  }, [redirecting, router]);
   const t = en.profile;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (uploading || busy) return;
+    if (uploading || busy || redirecting) return;
     setError("");
     const errors = profileErrors(form);
     if (errors.length) {
@@ -34,9 +42,12 @@ export function ProfileEditor() {
     }
     setBusy(true);
     try {
+      const firstCompletion =
+        !profile.profile_completed_at && profileErrors(profile).length > 0;
       await saveProfile(form);
       notify(t.saved);
       setSaved(true);
+      if (firstCompletion) setRedirecting(true);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Your profile could not be saved.",
@@ -200,12 +211,20 @@ export function ProfileEditor() {
               <ShieldCheck size={15} />
               Your public contact details
             </span>
-            <button className="button primary" disabled={busy || uploading}>
+            <button
+              className="button primary"
+              disabled={busy || uploading || redirecting}
+            >
               <Save size={16} />
               {busy ? en.common.saving : en.common.save}
             </button>
           </div>
-          {saved && (
+          {redirecting && (
+            <p role="status">
+              Your profile is saved. Taking you to My properties in 3 seconds…
+            </p>
+          )}
+          {saved && !redirecting && (
             <Link className="success-next" href="/dashboard/properties/new">
               Your profile is ready. Add your first property{" "}
               <ArrowRight size={17} />

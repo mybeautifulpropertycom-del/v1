@@ -11,6 +11,7 @@ export type Profile = {
   agency: string;
   bio: string;
   avatar_url?: string;
+  profile_completed_at?: string | null;
 };
 export type Property = {
   id: string;

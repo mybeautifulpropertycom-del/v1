@@ -338,9 +338,7 @@ export function AtelierWebsite({
         </section>
         <section className="atelier-details atelier-pad" id="details">
           <div className="atelier-details-heading">
-            <span className="atelier-kicker">
-              EVERYDAY DETAILS
-            </span>
+            <span className="atelier-kicker">EVERYDAY DETAILS</span>
             <h2>
               {text("detailsTitle")}
               <em>{text("detailsAccent")}</em>
@@ -407,9 +405,7 @@ export function AtelierWebsite({
         <section className="atelier-gallery atelier-pad" id="gallery">
           <div className="atelier-section-heading">
             <div>
-              <span className="atelier-kicker">
-                A CLOSER LOOK
-              </span>
+              <span className="atelier-kicker">A CLOSER LOOK</span>
               <h2>
                 {text("galleryTitle")}
                 <em>{text("galleryAccent")}</em>
@@ -423,9 +419,7 @@ export function AtelierWebsite({
             {property.images.map((src, index) => (
               <figure key={`${src}-${index}`}>
                 {photo(src, index)}
-                <figcaption>
-                  {copy.captions[index]}
-                </figcaption>
+                <figcaption>{copy.captions[index]}</figcaption>
               </figure>
             ))}
           </div>
@@ -434,9 +428,7 @@ export function AtelierWebsite({
         {(film?.src || isPreview) && (
           <section className="atelier-film atelier-pad" id="film">
             <div className="atelier-film-heading">
-              <span className="atelier-kicker">
-                IN MOTION
-              </span>
+              <span className="atelier-kicker">IN MOTION</span>
               <h2>
                 Step inside.<em>Feel at home.</em>
               </h2>
@@ -444,6 +436,8 @@ export function AtelierWebsite({
             {film?.src && videoPanel}
             {film?.src ? (
               <video
+                controlsList="nodownload"
+                onContextMenu={(event) => event.preventDefault()}
                 controls
                 playsInline
                 preload="metadata"
@@ -486,9 +480,7 @@ export function AtelierWebsite({
         )}
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
-            <span className="atelier-kicker">
-              YOUR AGENT
-            </span>
+            <span className="atelier-kicker">YOUR AGENT</span>
             <h2>
               Let’s connect.<em>Meet your agent.</em>
             </h2>

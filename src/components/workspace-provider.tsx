@@ -185,7 +185,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     const current = stateRef.current!;
     const supabase = getSupabase();
     if (supabase) {
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from("profiles")
         .update({
           name: profile.name,
@@ -198,12 +198,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
             : {}),
         })
         .eq("id", current.profile.id)
-        .select("id")
+        .select("*")
         .single();
       if (error)
         throw new Error(
           "Your profile was not saved. Check your connection and try again.",
         );
+      profile = { ...profile, profile_completed_at: data.profile_completed_at };
     }
     const next = { ...stateRef.current!, profile };
     if (!supabase) await writeDemo(next);

@@ -96,6 +96,8 @@ globalThis.fetch = async (input, init) => {
   }
   assert.equal(headers.get("authorization"), "Bearer test-service-key");
   serviceReads++;
+  if (url.pathname === "/rest/v1/account_cleanup_jobs")
+    return Response.json([]);
   if (url.pathname === "/rest/v1/platform_account_directory") {
     assert.equal(url.searchParams.get("offset"), "25");
     assert.equal(url.searchParams.get("limit"), "25");

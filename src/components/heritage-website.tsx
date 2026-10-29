@@ -449,9 +449,7 @@ export function HeritageWebsite({
                     <Plus size={17} />
                   </span>
                 </button>
-                <figcaption>
-                  {copy.captions[index]}
-                </figcaption>
+                <figcaption>{copy.captions[index]}</figcaption>
               </figure>
             ))}
           </div>
@@ -538,6 +536,8 @@ export function HeritageWebsite({
                   Picture your <em>next chapter.</em>
                 </h2>
                 <video
+                  controlsList="nodownload"
+                  onContextMenu={(event) => event.preventDefault()}
                   controls
                   playsInline
                   preload="metadata"
@@ -554,8 +554,7 @@ export function HeritageWebsite({
                       label="English"
                     />
                   )}
-                  Your browser does not support this video.{" "}
-                  <a href={film.src}>Open the property film</a>.
+                  Your browser does not support this video.
                 </video>
               </>
             ) : videoPanel ? (

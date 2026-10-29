@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { OwnerVideoDownload } from "./owner-video-download";
 import { useEffect, useRef, useState } from "react";
 import { Pencil, Save, Globe2, ExternalLink } from "lucide-react";
 import { usePropertyPublication } from "./property-publication";
@@ -217,6 +218,9 @@ export function PropertyPreview({ id }: { id: string }) {
               Edit on page
             </button>
           )}
+          {!demo &&
+            property.status === "published" &&
+            publication.film?.src && <OwnerVideoDownload propertyId={id} />}
           {property.status === "published" ? (
             <Link
               className="button primary"
@@ -238,7 +242,9 @@ export function PropertyPreview({ id }: { id: string }) {
           )}
         </div>
       </div>
-      <div className="property-video-status-strip">{publication.videoStatus}</div>
+      <div className="property-video-status-strip">
+        {publication.videoStatus}
+      </div>
       {publication.dialog}
       {preparing && (
         <div className="inline-notice" role="status">

@@ -348,9 +348,7 @@ export function EditorialWebsite({
         </section>
         <section className="estate-story estate-pad estate-space" id="story">
           <div>
-            <span className="estate-eyebrow">
-              At a glance
-            </span>
+            <span className="estate-eyebrow">At a glance</span>
             <h2>
               <EditableText
                 field="copy.introTitle"
@@ -440,9 +438,7 @@ export function EditorialWebsite({
             )}
           </div>
           <div className="estate-details-copy">
-            <span className="estate-eyebrow">
-              Thoughtful details
-            </span>
+            <span className="estate-eyebrow">Thoughtful details</span>
             <h2>
               <EditableText
                 field="copy.storyTitle"
@@ -583,6 +579,8 @@ export function EditorialWebsite({
             {film?.src && videoPanel}
             {film?.src ? (
               <video
+                controlsList="nodownload"
+                onContextMenu={(event) => event.preventDefault()}
                 className="estate-film-player"
                 controls
                 playsInline
@@ -600,8 +598,7 @@ export function EditorialWebsite({
                     label="English"
                   />
                 )}
-                Your browser does not support this video.{" "}
-                <a href={film.src}>Open the property film</a>.
+                Your browser does not support this video.
               </video>
             ) : videoPanel ? (
               videoPanel
