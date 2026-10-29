@@ -14,17 +14,33 @@ export const storyErrorMessages = {
   AI_TIMEOUT:
     "The writing service took too long to respond. Your saved property has not changed. Please try again shortly.",
   AI_OUTPUT:
-    "The writing service returned incomplete copy. Your saved property has not changed. Please try again.",
+    "The writing service could not complete all website descriptions. Your saved photos and property details are safe. Please try again.",
   AI_UNAVAILABLE:
     "AI writing is temporarily unavailable. Your saved property has not changed. Please try again later.",
 } as const;
 export type StoryErrorCode = keyof typeof storyErrorMessages;
+export type StoryOutputDiagnostic = {
+  reason:
+    | "token_limit"
+    | "response_incomplete"
+    | "refusal"
+    | "malformed_json"
+    | "invalid_shape"
+    | "missing_field"
+    | "field_length"
+    | "caption_count"
+    | "caption_text";
+  field?: string;
+  expected?: number;
+  actual?: number;
+};
 
 export class PropertyStoryError extends Error {
   constructor(
     public code: StoryErrorCode,
     public status = 502,
     public providerStatus?: number,
+    public outputDiagnostic?: StoryOutputDiagnostic,
   ) {
     super(storyErrorMessages[code]);
     this.name = "PropertyStoryError";

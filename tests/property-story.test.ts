@@ -304,3 +304,213 @@ test("section copy preserves agent notes, edits independently, and rejects stale
   assert.equal(filled.description, draft.description);
   assert.ok(hasWebsiteDescriptions(filled));
 });
+
+function generatedResponse(draft: unknown) {
+  return Response.json({
+    status: "completed",
+    output: [
+      {
+        type: "message",
+        content: [{ type: "output_text", text: JSON.stringify(draft) }],
+      },
+    ],
+  });
+}
+
+for (const imageCount of [30, 40]) {
+  test(`${imageCount}-photo stories require every caption and restore photo order from keyed output`, async () => {
+    const property = {
+      ...demoWorkspace().properties[0],
+      images: Array.from(
+        { length: imageCount },
+        (_, i) => `https://example.com/photo-${i}.webp`,
+      ),
+    };
+    const draft = storyFixture(property);
+    const captions = property.images.map(
+      (_, i) => `Distinct visible detail ${i + 1}`,
+    );
+    let calls = 0;
+    const result = await generatePropertyStory(property, property.images, {
+      apiKey: "test",
+      model: "test",
+      fetcher: async (_url, init) => {
+        calls++;
+        const request = JSON.parse(String(init?.body));
+        assert.equal(request.max_output_tokens, 3000 + imageCount * 100);
+        const schema =
+          request.text.format.schema.properties.content.properties.captions;
+        assert.equal(schema.type, "object");
+        assert.equal(schema.additionalProperties, false);
+        assert.deepEqual(
+          schema.required,
+          captions.map((_, i) => `photo_${i + 1}`),
+        );
+        assert.equal(Object.keys(schema.properties).length, imageCount);
+        assert.equal(
+          request.input[0].content.filter(
+            (part: { type: string }) => part.type === "input_image",
+          ).length,
+          imageCount,
+        );
+        return generatedResponse({
+          ...draft,
+          content: {
+            ...draft.content,
+            captions: Object.fromEntries(
+              captions
+                .map((caption, i) => [`photo_${i + 1}`, caption])
+                .reverse(),
+            ),
+          },
+        });
+      },
+    });
+    assert.equal(calls, 1);
+    assert.deepEqual(result.content.captions, captions);
+    assert.ok(parseStoryDraft(result, imageCount));
+  });
+}
+
+test("overlong copy receives one text-only repair and valid fields cannot be overwritten", async () => {
+  const property = demoWorkspace().properties[0];
+  const valid = storyFixture(property);
+  const invalid = structuredClone(valid);
+  invalid.content.heroIntro =
+    "The view offers a " + "generous ".repeat(35) + "space. Arrange a visit.";
+  invalid.content.captions[0] = "A " + "bright ".repeat(25) + "room";
+  let calls = 0;
+  let signal: AbortSignal | null | undefined;
+  const result = await generatePropertyStory(property, property.images, {
+    apiKey: "test",
+    model: "test",
+    fetcher: async (_url, init) => {
+      calls++;
+      const request = JSON.parse(String(init?.body));
+      if (calls === 1) {
+        signal = init?.signal;
+        return generatedResponse(invalid);
+      }
+      assert.equal(calls, 2);
+      assert.equal(init?.signal, signal);
+      assert.equal(request.store, false);
+      assert.equal(request.input[0].content.length, 1);
+      assert.equal(request.input[0].content[0].type, "input_text");
+      assert.ok(!JSON.stringify(request.input).includes("input_image"));
+      const repair = structuredClone(valid);
+      repair.content.introTitle = "Must not replace the original";
+      repair.content.captions[1] = "Must not replace a valid caption";
+      repair.description =
+        "This is an unrelated replacement description. It must never replace the original valid text.";
+      return generatedResponse(repair);
+    },
+  });
+  assert.equal(calls, 2);
+  assert.deepEqual(result, valid);
+});
+
+test("unsuccessful repair is bounded to two calls and reports only safe length diagnostics", async () => {
+  const property = demoWorkspace().properties[0];
+  const draft = storyFixture(property);
+  draft.content.heroLine = "private-test-key ".repeat(10);
+  let calls = 0;
+  await assert.rejects(
+    generatePropertyStory(property, property.images, {
+      apiKey: "test",
+      model: "test",
+      fetcher: async () => {
+        calls++;
+        return generatedResponse(draft);
+      },
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof PropertyStoryError);
+      assert.equal(error.code, "AI_OUTPUT");
+      assert.deepEqual(error.outputDiagnostic, {
+        reason: "field_length",
+        field: "heroLine",
+        actual: draft.content.heroLine.length,
+        expected: 90,
+      });
+      assert.ok(!JSON.stringify(error).includes("private-test-key"));
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
+});
+
+test("missing captions, missing sections, refusals and truncated output never trigger a repair or accept partial copy", async () => {
+  const property = demoWorkspace().properties[0];
+  const draft = storyFixture(property);
+  for (const [response, reason] of [
+    [
+      () =>
+        generatedResponse({
+          ...draft,
+          content: {
+            ...draft.content,
+            captions: draft.content.captions.slice(1),
+          },
+        }),
+      "caption_count",
+    ],
+    [
+      () =>
+        generatedResponse({
+          ...draft,
+          content: { ...draft.content, heroLine: undefined },
+        }),
+      "missing_field",
+    ],
+    [
+      () =>
+        generatedResponse({
+          ...draft,
+          content: {
+            ...draft.content,
+            heroLine: "x".repeat(100),
+            captions: [],
+          },
+        }),
+      "field_length",
+    ],
+    [
+      () =>
+        Response.json({
+          status: "incomplete",
+          incomplete_details: { reason: "max_output_tokens" },
+          output: [],
+        }),
+      "token_limit",
+    ],
+    [
+      () =>
+        Response.json({
+          status: "completed",
+          output: [
+            {
+              type: "message",
+              content: [{ type: "refusal", refusal: "private" }],
+            },
+          ],
+        }),
+      "refusal",
+    ],
+  ] as const) {
+    let calls = 0;
+    await assert.rejects(
+      generatePropertyStory(property, property.images, {
+        apiKey: "test",
+        model: "test",
+        fetcher: async () => {
+          calls++;
+          return response();
+        },
+      }),
+      (error: unknown) =>
+        error instanceof PropertyStoryError &&
+        error.outputDiagnostic?.reason === reason,
+    );
+    assert.equal(calls, 1);
+  }
+});

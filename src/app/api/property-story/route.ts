@@ -154,6 +154,7 @@ export async function POST(request: Request) {
         reference,
         code: failure.code,
         providerStatus: failure.providerStatus,
+        outputDiagnostic: failure.outputDiagnostic,
       }),
     );
     return json(

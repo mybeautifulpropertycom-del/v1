@@ -39,7 +39,7 @@ already published listing updates its live website; merely previewing it does no
 3. Optionally set `OPENAI_PROPERTY_MODEL`; the default is `gpt-4.1-mini`, which
    supports image input and structured output. Use a model with those capabilities.
    Redeploy after changing variables. The server uses OpenAI's Responses API with
-   `store: false`, low-detail image input, a 4,000-output-token cap, and a 45-second
+   `store: false`, low-detail image input, a photo-count-based output-token cap (4,000–7,000 for up to 40 photos), and a 45-second
    provider timeout within a 55-second request deadline. Charges depend on image count, model, and output; set API project
    budgets/alerts as appropriate. Limits/alerts in the provider dashboard may not
    be hard spending caps.
@@ -56,13 +56,12 @@ copy. Results for an outdated input snapshot cannot be applied.
 Generation errors leave the entered details/photos saved and never publish a draft.
 The editor brings the error into view and offers manual continuation using the
 agent's own text. Save again to retry automatic preparation; private preview has a
-**Try again** action. The service has no automatic retry loop.
+**Try again** action. A complete response with an overlong section or caption can receive one text-only repair within the same 45-second provider deadline. The repair does not resend photos and only replaces invalid fields; valid sections and captions are preserved. This can incur one additional OpenAI text call, within the same reserved daily attempt. Missing content, refusals, truncation, provider errors and a failed repair are not retried automatically.
 
 ## Troubleshooting generation
 
 Failures now carry a safe support code and request reference. The matching Vercel
-log entry is `property_story_failed`; it contains only the code, reference, and
-provider HTTP status, never API keys, auth tokens, image URLs or provider messages.
+log entry is `property_story_failed`; it contains the code, reference, provider HTTP status, and a safe `outputDiagnostic` category (for example `token_limit`, `field_length`, or `caption_count`). Field names and numeric lengths/counts may be included; API keys, auth tokens, image URLs, listing/generated text and provider messages are never logged. The category is server-only; the customer sees a friendly message and reference.
 
 | Code | What to check |
 | --- | --- |
@@ -77,8 +76,7 @@ provider HTTP status, never API keys, auth tokens, image URLs or provider messag
 | `AI_UNAVAILABLE` | A temporary connection or service issue; retry later. |
 
 Sign-in retrieval, upstream requests, and the client wait have deadlines. Non-JSON
-platform timeout pages produce readable messages. Structured output uses the basic
-object/string/array schema; paragraph lengths and caption counts are checked locally.
+platform timeout pages produce readable messages. Structured output uses basic object/string schemas, with one required `photo_N` key per photograph. This enforces complete photo coverage even on models without array-length keywords. Keys are converted to the existing ordered caption array before saving and are never visible in the gallery. Paragraph lengths and caption counts are also checked locally; incomplete copy is never silently filled with invented or generic text. Existing stored stories remain compatible. No SQL or environment changes are needed for this update.
 
 ## Scope and safeguards
 

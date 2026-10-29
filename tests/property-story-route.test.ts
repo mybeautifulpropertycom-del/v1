@@ -29,6 +29,7 @@ let providerCalls = 0;
 let databaseCalls = 0;
 let mutationCalls = 0;
 let providerStatus = 200;
+let providerPayload: unknown;
 globalThis.fetch = async (input, init) => {
   const url = new URL(
     typeof input === "string"
@@ -71,6 +72,7 @@ globalThis.fetch = async (input, init) => {
       { status: providerStatus },
     );
   const draft = storyFixture(property);
+  if (providerPayload !== undefined) return Response.json(providerPayload);
   return Response.json({
     status: "completed",
     output: [
@@ -153,5 +155,45 @@ test("the route preserves safe provider diagnostics instead of swallowing the re
   } finally {
     console.warn = originalWarn;
     providerStatus = 200;
+  }
+});
+
+test("invalid output logs the failure category under its reference without leaking copy or changing saved data", async () => {
+  const draft = storyFixture(property);
+  draft.description =
+    "Private listing information must never appear in diagnostic logs.";
+  draft.content.captions = [];
+  providerPayload = {
+    status: "completed",
+    output: [
+      {
+        type: "message",
+        content: [{ type: "output_text", text: JSON.stringify(draft) }],
+      },
+    ],
+  };
+  const originalWarn = console.warn;
+  const logs: string[] = [];
+  console.warn = (message) => {
+    logs.push(String(message));
+  };
+  try {
+    const response = await POST(request());
+    assert.equal(response.status, 502);
+    const body = await response.json();
+    assert.equal(body.code, "AI_OUTPUT");
+    assert.equal(body.outputDiagnostic, undefined);
+    const diagnostic = JSON.parse(logs[0]);
+    assert.equal(diagnostic.reference, body.reference);
+    assert.deepEqual(diagnostic.outputDiagnostic, {
+      reason: "caption_count",
+      expected: 1,
+      actual: 0,
+    });
+    assert.ok(!logs.join("").includes("Private listing information"));
+    assert.equal(mutationCalls, 0);
+  } finally {
+    console.warn = originalWarn;
+    providerPayload = undefined;
   }
 });
