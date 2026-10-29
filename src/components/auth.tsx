@@ -7,8 +7,14 @@ import { Brand } from "./shell";
 import { photos } from "@/lib/demo";
 import { getSupabase } from "@/lib/supabase";
 
-export function Auth({ resetPassword = false }: { resetPassword?: boolean }) {
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+export function Auth({
+  resetPassword = false,
+  initialMode = "login",
+}: {
+  resetPassword?: boolean;
+  initialMode?: "login" | "signup";
+}) {
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
