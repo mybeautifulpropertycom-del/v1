@@ -16,6 +16,7 @@ import { submitGeneration, generationStatus } from "./higgsfield-server";
 import { filmCallbackUrl } from "./higgsfield-security";
 import {
   makeFilmPlan,
+  directCinematicWalkthrough,
   validateFilmPlan,
   type FilmPlan,
   type FilmShot,
@@ -74,13 +75,20 @@ export const aiFilmDependencies = {
   assembleFilm,
 };
 export function sceneGenerationInput(model: ModelProfile, shot: FilmShot) {
-  const motion = shot.aerial
-    ? "A stable, cinematic aerial glide, staying within the elevated viewpoint and visible surroundings of this supplied aerial photograph."
-    : shot.motion === "pull"
-      ? "A controlled, cinematic pull-back along the existing camera axis, keeping the original view and composition."
-      : shot.motion.includes("glide")
-        ? `A steady, small lateral camera glide ${shot.motion === "glide-left" ? "left" : "right"}, keeping the photographed space and original composition.`
-        : "A smooth, cinematic forward camera push along the existing camera axis, with visible but controlled movement.";
+  const motion =
+    shot.camera === "wide-push"
+      ? "Wide push: a smooth, confident forward dolly from the photograph’s existing wide composition. Preserve its field of view and straight architectural lines; no added ultra-wide lens distortion. Build momentum gently, then ease into the view. Keep the property readable, with natural depth and restrained parallax only where supported by the photograph."
+      : shot.camera === "fpv-glide"
+        ? `FPV-inspired precision glide: a short, fluid forward movement with a restrained lateral arc inside the visible space. ${shot.aerial ? "Keep the elevated viewpoint of this genuine aerial photograph." : "Keep the original ground-level camera height; do not lift into an aerial viewpoint."} Keep the horizon level, with no banking, roll, dives, sudden turns or obstacle fly-throughs. Use the energy of controlled FPV cinematography with the stability of a gimbal. No unseen continuation of the room or flight path.`
+        : shot.camera === "steady-glide"
+          ? "A refined, slow gimbal glide across the visible detail, with a very small movement and steady composition. Let the materials and finishes read clearly. No orbit behind furniture or reveal of hidden surfaces."
+          : shot.aerial
+            ? "A stable, cinematic aerial glide, staying within the elevated viewpoint and visible surroundings of this supplied aerial photograph."
+            : shot.motion === "pull"
+              ? "A controlled, cinematic pull-back along the existing camera axis, keeping the original view and composition."
+              : shot.motion.includes("glide")
+                ? `A steady, small lateral camera glide ${shot.motion === "glide-left" ? "left" : "right"}, keeping the photographed space and original composition.`
+                : "A smooth, cinematic forward camera push along the existing camera axis, with visible but controlled movement.";
   const prompt = [
     "Animate this ONE supplied property photograph into a realistic real-estate cinematography shot.",
     motion,
@@ -208,6 +216,7 @@ export async function runHiggsfieldFilm(
       if (profile.provider === "byteplus") {
         plan = timeWalkthrough(plan, new Set(fingerprints).size, profile);
         plan.generationBudget = budgetForPlan(plan, profile);
+        plan = directCinematicWalkthrough(plan);
       }
       for (const shot of plan.shots) sceneGenerationInput(profile, shot);
       stage = "plan_storage";
@@ -405,6 +414,7 @@ export async function runHiggsfieldFilm(
         media.bytes,
         Number(scene.model_input.duration),
         shot.seconds,
+        plan.style,
       );
       stage = "scene_storage";
       await storeClip(admin, job, index, "raw", clip);
@@ -430,6 +440,10 @@ export async function runHiggsfieldFilm(
         await aiFilmDependencies.editGeneratedClip(current, previous, next, {
           seconds: plan.shots[index].seconds,
           previousSeconds: plan.shots[index - 1]?.seconds,
+          style: plan.style,
+          entry: plan.shots[index - 1]?.transition,
+          exit: plan.shots[index].transition,
+          shotIndex: index,
         }),
       );
       return (await checkpoint(admin, job, { p_edit: index }))
@@ -446,6 +460,7 @@ export async function runHiggsfieldFilm(
       plan.timing === "variable-v1"
         ? plan.shots.map((shot) => shot.seconds!)
         : undefined,
+      plan.style,
     );
     const digest = createHash("sha256").update(film).digest("hex").slice(0, 24);
     const publicPath = `${job.owner_id}/${order}/higgsfield-${job.montage_generation}-${digest}.mp4`;

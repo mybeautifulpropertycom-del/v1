@@ -24,12 +24,15 @@ export type PhotoAnalysis = {
   evening: boolean;
 };
 export type FilmShot = PhotoAnalysis & {
+  camera?: "wide-push" | "fpv-glide" | "steady-glide";
+  transition?: "speed" | "soft";
   seconds?: number;
   image: string;
   fingerprint: string;
   motion: "push" | "pull" | "glide-left" | "glide-right" | "aerial-glide";
 };
 export type FilmPlan = {
+  style?: "cinematic-walkthrough-v3";
   timing?: "variable-v1";
   generationBudget?: FilmBudget;
   version: 1 | 2;
@@ -37,8 +40,42 @@ export type FilmPlan = {
   secondsPerShot: 3.4;
   duration: number;
   shots: FilmShot[];
-  music: "original-instrumental-v1" | "modern-instrumental-v2";
+  music:
+    | "original-instrumental-v1"
+    | "modern-instrumental-v2"
+    | "modern-instrumental-v3";
 };
+
+/** Pin creative direction to NEW generated films. Existing plans keep their
+ * original prompts, edit style and soundtrack when the worker resumes. */
+export function directCinematicWalkthrough(plan: FilmPlan): FilmPlan {
+  if (plan.engine !== "higgsfield-montage-v1" || plan.timing !== "variable-v1")
+    throw new Error(
+      "Cinematic direction requires a generated variable-timing film.",
+    );
+  const quiet = (shot: FilmShot) =>
+    ["detail", "bathroom", "bedroom", "other"].includes(shot.category);
+  return {
+    ...plan,
+    style: "cinematic-walkthrough-v3",
+    music: "modern-instrumental-v3",
+    shots: plan.shots.map((shot, index) => ({
+      ...shot,
+      camera: quiet(shot)
+        ? "steady-glide"
+        : shot.aerial || (index > 0 && index % 3 === 1)
+          ? "fpv-glide"
+          : "wide-push",
+      transition:
+        index < plan.shots.length - 1 &&
+        !quiet(shot) &&
+        !quiet(plan.shots[index + 1]) &&
+        index % 3 !== 2
+          ? "speed"
+          : "soft",
+    })),
+  };
+}
 
 export function parsePhotoAnalysis(
   raw: unknown,
@@ -157,10 +194,16 @@ export function validateFilmPlan(value: unknown): FilmPlan {
     ![1, 2].includes(plan.version) ||
     !["photo-montage-v1", "higgsfield-montage-v1"].includes(plan.engine) ||
     plan.secondsPerShot !== SHOT_SECONDS ||
+    (plan.style !== undefined &&
+      (plan.style !== "cinematic-walkthrough-v3" ||
+        plan.timing !== "variable-v1" ||
+        plan.engine !== "higgsfield-montage-v1")) ||
     plan.music !==
-      (plan.version === 1
-        ? "original-instrumental-v1"
-        : "modern-instrumental-v2") ||
+      (plan.style === "cinematic-walkthrough-v3"
+        ? "modern-instrumental-v3"
+        : plan.version === 1
+          ? "original-instrumental-v1"
+          : "modern-instrumental-v2") ||
     !Array.isArray(plan.shots) ||
     !plan.shots.length ||
     plan.shots.length > MAX_FILM_SHOTS ||
@@ -179,6 +222,11 @@ export function validateFilmPlan(value: unknown): FilmPlan {
   for (const shot of plan.shots) {
     if (
       typeof shot.image !== "string" ||
+      (plan.style === "cinematic-walkthrough-v3"
+        ? !["wide-push", "fpv-glide", "steady-glide"].includes(
+            shot.camera || "",
+          ) || !["speed", "soft"].includes(shot.transition || "")
+        : shot.camera !== undefined || shot.transition !== undefined) ||
       (plan.timing === "variable-v1"
         ? !Number.isInteger(shot.seconds) ||
           Number(shot.seconds) < 2 ||

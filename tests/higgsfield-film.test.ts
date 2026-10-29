@@ -119,8 +119,10 @@ beforeEach(() => {
     bytes,
     seconds,
     targetSeconds,
+    style,
   ) => {
     assert.equal(bytes.toString(), "provider-motion");
+    assert.equal(style, job.montage_plan.style);
     if (job.model_config.profile.provider === "byteplus") {
       assert.equal(
         targetSeconds,
@@ -130,11 +132,23 @@ beforeEach(() => {
     } else assert.equal(seconds, 6);
     return Buffer.from("normalized-motion");
   };
-  aiFilmDependencies.editGeneratedClip = async () => {
+  aiFilmDependencies.editGeneratedClip = async (
+    _current,
+    _previous,
+    _next,
+    timing,
+  ) => {
+    assert.equal(timing?.style, job.montage_plan.style);
     edited++;
     return Buffer.from("edited-motion");
   };
-  aiFilmDependencies.assembleFilm = async (clips, version) => {
+  aiFilmDependencies.assembleFilm = async (
+    clips,
+    version,
+    _durations,
+    style,
+  ) => {
+    assert.equal(style, job.montage_plan.style);
     assert.equal(clips.length, 2);
     assert.equal(version, 2);
     return Buffer.from("finished-film");
@@ -586,4 +600,20 @@ test("an explicit lookahead 429 keeps the accepted task and returns to the share
     checks.some((value) => value.p_failure),
     false,
   );
+});
+
+test("resuming a previously planned BytePlus film keeps its original creative direction", async () => {
+  useBytePlus();
+  await runHiggsfieldFilm(admin, order);
+  assert.equal(job.montage_plan.style, "cinematic-walkthrough-v3");
+  // A legacy saved plan predates the creative-style field.
+  delete job.montage_plan.style;
+  job.montage_plan.music = "modern-instrumental-v2";
+  for (const shot of job.montage_plan.shots) {
+    delete shot.camera;
+    delete shot.transition;
+  }
+  assert.equal(await runHiggsfieldFilm(admin, order), "generating");
+  assert.equal(job.montage_plan.style, undefined);
+  assert.doesNotMatch(JSON.stringify(submissions[0]), /Wide push|FPV-inspired/);
 });

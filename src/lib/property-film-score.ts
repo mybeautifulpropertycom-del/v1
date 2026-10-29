@@ -1,11 +1,20 @@
-import { MAX_FILM_SHOTS, SHOT_SECONDS } from "./property-film-plan";
+import {
+  MAX_FILM_SHOTS,
+  SHOT_SECONDS,
+  type FilmPlan,
+} from "./property-film-plan";
 
 /** Original modern instrumental arrangement, synthesized without third-party
- * recordings/samples. Eight beats per shot (141.176 BPM), stereo keys, bass,
+ * recordings/samples. Legacy score: 141.176 BPM; cinematic v3: 120 BPM. Stereo keys, bass,
  * four-on-the-floor drums and syncopated accents. No voice or reference audio.
  * This is a proposed house soundtrack, not a claim of a licensed studio track.
  */
-export function originalFilmScore(shots: number, durations?: number[]): Buffer {
+export function originalFilmScore(
+  shots: number,
+  durations?: number[],
+  style?: FilmPlan["style"],
+): Buffer {
+  const cinematic = style === "cinematic-walkthrough-v3";
   if (!Number.isInteger(shots) || shots < 1 || shots > MAX_FILM_SHOTS)
     throw new Error("Invalid score duration.");
   if (
@@ -24,7 +33,9 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
   if (duration > 80) throw new Error("Invalid score duration.");
   const left = new Float32Array(count),
     right = new Float32Array(count);
-  const beat = SHOT_SECONDS / 8,
+  // 120 BPM puts every integer-length 2–5s shot boundary on a beat.
+  const barSeconds = cinematic ? 4 : SHOT_SECONDS;
+  const beat = barSeconds / 8,
     tau = 2 * Math.PI;
   const chords = [
     [57, 60, 64, 67],
@@ -60,10 +71,10 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
     }
   }
   const frequency = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
-  for (let bar = 0; bar < Math.ceil(duration / SHOT_SECONDS); bar++) {
+  for (let bar = 0; bar < Math.ceil(duration / barSeconds); bar++) {
     const chord = chords[bar % 4],
       root = roots[bar % 4],
-      start = bar * SHOT_SECONDS;
+      start = bar * barSeconds;
     // Warm struck keys with restrained FM overtones and an answering motif.
     for (let hit = 0; hit < 4; hit++)
       for (let n = 0; n < chord.length; n++) {
@@ -71,11 +82,14 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
         voice(
           start + hit * beat * 2 + n * 0.008,
           1.35,
-          0.055,
+          cinematic ? 0.045 : 0.055,
           (n - 1.5) * 0.32,
           (t) =>
             Math.sin(
-              tau * f * t + 1.1 * Math.exp(-5 * t) * Math.sin(tau * f * 2 * t),
+              tau * f * t +
+                (cinematic ? 0.55 : 1.1) *
+                  Math.exp(-5 * t) *
+                  Math.sin(tau * f * 2 * t),
             ) * Math.exp(-2.5 * t),
         );
       }
@@ -84,7 +98,7 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
       voice(
         start + (step + 0.5) * beat,
         0.6,
-        step % 2 ? 0.019 : 0.026,
+        (step % 2 ? 0.019 : 0.026) * (cinematic ? 0.75 : 1),
         step % 2 ? 0.45 : -0.45,
         (t) =>
           (Math.sin(tau * f * t) + 0.18 * Math.sin(tau * f * 3 * t)) *
@@ -96,7 +110,7 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
       voice(
         at,
         0.32,
-        0.43,
+        cinematic ? 0.33 : 0.43,
         0,
         (t) =>
           Math.sin(tau * (48 * t + 2.7 * (1 - Math.exp(-32 * t)))) *
@@ -106,7 +120,7 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
       voice(
         at + beat * 0.34,
         beat * 0.62,
-        0.19,
+        cinematic ? 0.15 : 0.19,
         0,
         (t) =>
           (Math.sin(tau * bass * t) +
@@ -116,7 +130,7 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
       );
       if (b % 2 === 1) {
         let previous = 0;
-        voice(at, 0.19, 0.105, 0.04, (t) => {
+        voice(at, 0.19, cinematic ? 0.075 : 0.105, 0.04, (t) => {
           const white = noise(),
             high = white - previous;
           previous = white;
@@ -133,7 +147,7 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
         voice(
           at + (half * beat) / 2,
           half ? 0.13 : 0.07,
-          half ? 0.023 : 0.015,
+          (half ? 0.023 : 0.015) * (cinematic ? 0.7 : 1),
           half ? 0.38 : -0.3,
           (t) => {
             const white = noise(),
@@ -147,8 +161,8 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
     // Very soft sustained texture and sidechain breathing under the beat.
     for (let n = 0; n < 3; n++) {
       const f = frequency(chord[n] + 12);
-      voice(start, SHOT_SECONDS, 0.018, (n - 1) * 0.6, (t) => {
-        const fade = Math.min(1, t / 0.4, (SHOT_SECONDS - t) / 0.45);
+      voice(start, barSeconds, 0.018, (n - 1) * 0.6, (t) => {
+        const fade = Math.min(1, t / 0.4, (barSeconds - t) / 0.45);
         const duck = 0.35 + 0.65 * Math.min(1, (t % beat) / 0.16);
         return (
           (Math.sin(tau * f * t) + 0.28 * Math.sin(tau * f * 1.003 * t)) *
@@ -164,6 +178,15 @@ export function originalFilmScore(shots: number, durations?: number[]): Buffer {
     let cut = 0;
     for (const length of durations.slice(0, -1)) {
       cut += length;
+      if (cinematic) {
+        let smooth = 0;
+        // A restrained original air sweep anticipates the cut, with no voice
+        // or third-party samples. The score never restarts between rooms.
+        voice(cut - 0.18, 0.36, 0.035, 0.15, (t) => {
+          smooth = 0.88 * smooth + 0.12 * noise();
+          return smooth * Math.sin((Math.PI * t) / 0.36) ** 2;
+        });
+      }
       voice(
         cut,
         0.12,

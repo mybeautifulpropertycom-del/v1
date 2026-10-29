@@ -13,6 +13,7 @@ import {
   SHOT_SECONDS,
   MAX_FILM_SHOTS,
   type FilmShot,
+  type FilmPlan,
 } from "./property-film-plan";
 
 export function filmBinary() {
@@ -359,6 +360,7 @@ export async function assembleFilm(
   segments: Buffer[],
   version: 1 | 2 = 2,
   durations?: number[],
+  style?: FilmPlan["style"],
 ): Promise<Buffer> {
   if (!segments.length || segments.length > MAX_FILM_SHOTS)
     throw new Error("Invalid film length.");
@@ -389,7 +391,7 @@ export async function assembleFilm(
       music,
       version === 1
         ? legacyFilmScore(segments.length)
-        : originalFilmScore(segments.length, durations),
+        : originalFilmScore(segments.length, durations, style),
     );
     await executeFilmCommand([
       "-protocol_whitelist",
@@ -435,6 +437,7 @@ export async function normalizeGeneratedClip(
   bytes: Buffer,
   sourceSeconds: number,
   targetSeconds: number = SHOT_SECONDS,
+  style?: FilmPlan["style"],
 ): Promise<Buffer> {
   if (
     !Number.isFinite(sourceSeconds) ||
@@ -463,7 +466,7 @@ export async function normalizeGeneratedClip(
       "-i",
       input,
       "-vf",
-      `trim=duration=${sourceSeconds},setpts=PTS-STARTPTS,setpts='${normalizedSeconds}*(${t}-0.65*sin(2*PI*${t})/(2*PI))/TB',fps=30,scale=1280:720:force_original_aspect_ratio=decrease:flags=lanczos,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x111916,setsar=1,format=yuv420p`,
+      `trim=duration=${sourceSeconds},setpts=PTS-STARTPTS,setpts='${normalizedSeconds}*(${t}-${style === "cinematic-walkthrough-v3" ? "0.72" : "0.65"}*sin(2*PI*${t})/(2*PI))/TB',fps=30,scale=1280:720:force_original_aspect_ratio=decrease:flags=lanczos,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x111916,setsar=1,format=yuv420p`,
       "-frames:v",
       String(frames),
       "-an",
@@ -544,7 +547,14 @@ export async function editGeneratedClip(
   current: Buffer,
   previous?: Buffer,
   next?: Buffer,
-  timing: { seconds?: number; previousSeconds?: number } = {},
+  timing: {
+    seconds?: number;
+    previousSeconds?: number;
+    style?: FilmPlan["style"];
+    entry?: FilmShot["transition"];
+    exit?: FilmShot["transition"];
+    shotIndex?: number;
+  } = {},
 ): Promise<Buffer> {
   const seconds = timing.seconds ?? SHOT_SECONDS;
   const previousSeconds = timing.previousSeconds ?? SHOT_SECONDS;
@@ -598,6 +608,41 @@ export async function editGeneratedClip(
         `[${output}][next]blend=all_expr='if(gt(N,${frames - 3}),A*(1-(N-${frames - 2.5})/6)+B*(N-${frames - 2.5})/6,A)':shortest=1[outgoing]`,
       );
       output = "outgoing";
+    }
+    const speedIn =
+      Boolean(previous) &&
+      timing.style === "cinematic-walkthrough-v3" &&
+      timing.entry === "speed";
+    const speedOut =
+      Boolean(next) &&
+      timing.style === "cinematic-walkthrough-v3" &&
+      timing.exit === "speed";
+    if (speedIn || speedOut) {
+      const shotIndex = timing.shotIndex ?? 0;
+      if (
+        !Number.isInteger(shotIndex) ||
+        shotIndex < 0 ||
+        shotIndex >= MAX_FILM_SHOTS
+      )
+        throw new Error("Invalid scene index.");
+      const directionIn = (shotIndex - 1) % 2 === 0 ? 1 : -1;
+      const directionOut = shotIndex % 2 === 0 ? 1 : -1;
+      const incoming = speedIn ? "max(0,1-n/5)" : "0";
+      const outgoing = speedOut ? `max(0,(n-${frames - 6})/5)` : "0";
+      const weight = `${speedIn ? "max(0,(6-N)/5)" : "0"}+${speedOut ? `max(0,(N-${frames - 5})/5)` : "0"}`;
+      const edges = `${speedIn ? "lt(n,6)" : "0"}+${speedOut ? `gte(n,${frames - 6})` : "0"}`;
+      // Five-percent overscan keeps every edge covered during a short whip.
+      // The middle stays sharp; blur is confined to six frames on each chosen cut.
+      filters.push(
+        `[${output}]scale=1344:756:flags=bicubic,crop=1280:720:x='32+32*(-${directionIn}*${incoming}+${directionOut}*${outgoing})':y=18,split[clean][smear]`,
+      );
+      filters.push(
+        `[smear]gblur=sigma=8:sigmaV=0.5:steps=2:enable='${edges}'[blurred]`,
+      );
+      filters.push(
+        `[clean][blurred]blend=all_expr='A*(1-0.55*(${weight}))+B*0.55*(${weight})':shortest=1:enable='${edges}'[speed]`,
+      );
+      output = "speed";
     }
     filters.push(`[${output}]format=yuv420p[video]`);
     const path = join(directory, "edited.mp4");
