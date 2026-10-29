@@ -112,11 +112,19 @@ beforeEach(() => {
       extension: "mp4",
     };
   };
-  aiFilmDependencies.normalizeGeneratedClip = async (bytes, seconds) => {
+  aiFilmDependencies.normalizeGeneratedClip = async (
+    bytes,
+    seconds,
+    targetSeconds,
+  ) => {
     assert.equal(bytes.toString(), "provider-motion");
-    if (job.model_config.profile.provider === "byteplus")
-      assert.ok(seconds >= 2 && seconds <= 5);
-    else assert.equal(seconds, 6);
+    if (job.model_config.profile.provider === "byteplus") {
+      assert.equal(
+        targetSeconds,
+        job.montage_plan.shots[job.montage_next_shot].seconds,
+      );
+      assert.equal(seconds, Math.max(4, targetSeconds!));
+    } else assert.equal(seconds, 6);
     return Buffer.from("normalized-motion");
   };
   aiFilmDependencies.editGeneratedClip = async () => {

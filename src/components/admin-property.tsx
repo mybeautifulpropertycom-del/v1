@@ -22,6 +22,11 @@ type Detail = {
     attempts: number;
     canRebuild?: boolean;
     canResume?: boolean;
+    durationRepair?: {
+      usd: number;
+      generatedSeconds: number;
+      error?: string;
+    } | null;
     rebuildUsesCredits?: boolean;
     completed: number;
     total: number;
@@ -104,13 +109,16 @@ export function AdminProperty({ id }: { id: string }) {
       setBusy(false);
     }
   }
-  async function resumeFilm() {
+  async function resumeFilm(repairDuration = false) {
     if (busy) return;
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await adminRequest("resume-film", { propertyId: id });
+      await adminRequest(
+        repairDuration ? "repair-film-duration" : "resume-film",
+        { propertyId: id },
+      );
       await refresh();
       setNotice(
         "Your film is resuming from the rejected scene. Completed scenes are retained; remaining generation uses API credits.",
@@ -182,6 +190,7 @@ export function AdminProperty({ id }: { id: string }) {
             )}
             {data.video?.canRebuild &&
               !data.video.canResume &&
+              !data.video.durationRepair &&
               data.video.rebuildUsesCredits && (
                 <p>
                   Rebuilding generates up to{" "}
@@ -192,7 +201,9 @@ export function AdminProperty({ id }: { id: string }) {
               )}
             {data.video?.costEstimate && (
               <p>
-                Estimated video generation: $
+                {data.video.durationRepair
+                  ? "Previous generation estimate: $"
+                  : "Estimated video generation: $"}
                 {data.video.costEstimate.usd.toFixed(2)} USD
                 {" · "}
                 {data.video.costEstimate.generatedSeconds}s generated
@@ -218,17 +229,45 @@ export function AdminProperty({ id }: { id: string }) {
                 </button>
               </div>
             )}
-            {data.video?.canRebuild && !data.video.canResume && (
-              <button
-                className="button secondary"
-                disabled={busy}
-                onClick={() => void rebuildFilm()}
-              >
-                {data.video.rebuildUsesCredits
-                  ? "Rebuild video · Uses API credits"
-                  : "Rebuild video · No property fee"}
-              </button>
+            {data.video?.durationRepair && (
+              <div>
+                {data.video.durationRepair.error ? (
+                  <p role="status">{data.video.durationRepair.error}</p>
+                ) : (
+                  <>
+                    <p>
+                      Seedance requires at least 4 generated seconds per scene.
+                      Keep your {data.video.completed} completed scenes and the
+                      short cuts in the final edit. Corrected total generation
+                      estimate: ${data.video.durationRepair.usd.toFixed(2)} USD
+                      · {data.video.durationRepair.generatedSeconds}s generated,
+                      including saved scenes. Remaining generation uses API
+                      credits.
+                    </p>
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={() => void resumeFilm(true)}
+                    >
+                      Fix duration &amp; resume · Keep saved scenes
+                    </button>
+                  </>
+                )}
+              </div>
             )}
+            {data.video?.canRebuild &&
+              !data.video.canResume &&
+              !data.video.durationRepair && (
+                <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() => void rebuildFilm()}
+                >
+                  {data.video.rebuildUsesCredits
+                    ? "Rebuild video · Uses API credits"
+                    : "Rebuild video · No property fee"}
+                </button>
+              )}
             {data.video?.error && <p role="status">{data.video.error}</p>}
             {data.video && (
               <p role="status">

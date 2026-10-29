@@ -24,10 +24,13 @@ let actions: string[] = [],
   payload: Record<string, unknown> | null = null;
 let REBUILD: typeof import("../src/app/api/admin/rebuild-film/route").POST;
 let RESUME: typeof import("../src/app/api/admin/resume-film/route").POST;
+let REPAIR: typeof import("../src/app/api/admin/repair-film-duration/route").POST;
 let PUBLISH: typeof import("../src/app/api/admin/publish/route").POST;
 let ACCOUNTS: typeof import("../src/app/api/admin/accounts/route").GET;
 let PROPERTIES: typeof import("../src/app/api/admin/properties/route").GET;
 before(async () => {
+  ({ POST: REPAIR } =
+    await import("../src/app/api/admin/repair-film-duration/route"));
   ({ POST: RESUME } = await import("../src/app/api/admin/resume-film/route"));
   ({ POST: REBUILD } = await import("../src/app/api/admin/rebuild-film/route"));
   ({ POST: PUBLISH } = await import("../src/app/api/admin/publish/route"));
@@ -135,6 +138,7 @@ globalThis.fetch = async (input, init) => {
       "/rest/v1/rpc/admin_publish_property",
       "/rest/v1/rpc/admin_rebuild_property_film",
       "/rest/v1/rpc/admin_resume_byteplus_film",
+      "/rest/v1/rpc/admin_repair_byteplus_duration",
     ].includes(url.pathname)
   ) {
     actions.push("publish");
@@ -286,6 +290,34 @@ test("BytePlus resume verifies admin identity and never accepts a forged actor",
     409,
   );
   assert.deepEqual(payload, { listing_id: id, actor_id: actor });
+  delete process.env.PROPERTY_VIDEO_ENABLED;
+  delete process.env.ARK_API_KEY;
+});
+
+test("duration repair uses the server tariff and verified administrator, never client pricing", async () => {
+  assert.equal((await REPAIR(request({}, false))).status, 401);
+  assert.equal((await REPAIR(request())).status, 403);
+  authorized = true;
+  process.env.PROPERTY_VIDEO_MODE = "byteplus-montage";
+  process.env.PROPERTY_VIDEO_ENABLED = "true";
+  process.env.ARK_API_KEY = "test-key";
+  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.28";
+  process.env.PROPERTY_VIDEO_MAX_COST_USD = "20";
+  publicationError = "P0409";
+  assert.equal(
+    (
+      await REPAIR(
+        request({ propertyId: id, actor_id: agent, p_rate: 0, p_max: 999 }),
+      )
+    ).status,
+    409,
+  );
+  assert.deepEqual(payload, {
+    listing_id: id,
+    actor_id: actor,
+    p_rate: 0.28,
+    p_max: 20,
+  });
   delete process.env.PROPERTY_VIDEO_ENABLED;
   delete process.env.ARK_API_KEY;
 });

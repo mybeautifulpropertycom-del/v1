@@ -190,6 +190,14 @@ const byteplusRecovery = await readFile(
   new URL("202610290001_resume_byteplus_film.sql", directory),
   "utf8",
 );
+const byteplusDuration = await readFile(
+  new URL("202610290002_byteplus_duration.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-byteplus-duration.sql", import.meta.url),
+  `-- Installs the Seedance duration repair. Does not start generation or replace videos.\nbegin;\n${byteplusDuration.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_BYTEPLUS_DURATION_READY' as status;\n`,
+);
 await writeFile(
   new URL("../supabase/sql-editor-byteplus-recovery.sql", import.meta.url),
   `-- Run after the multi-photo film upgrade. Installs recovery only; no video generation is started.\nbegin;\n${byteplusRecovery.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_BYTEPLUS_RECOVERY_READY' as status;\n`,

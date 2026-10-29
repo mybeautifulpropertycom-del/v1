@@ -7,6 +7,7 @@ import {
   timeWalkthrough,
   budgetForPlan,
   assertFilmBudget,
+  repairedDurationBudget,
 } from "../src/lib/byteplus-budget";
 import {
   makeFilmPlan,
@@ -75,11 +76,14 @@ test("duplicate photographs cannot inflate duration or paid generation count", (
 test("cost counts actual variable generated seconds, reserves 20%, and trims selection to budget", () => {
   process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.22";
   const plan = planFor(40);
-  assert.equal(plan.shots.length, 23);
-  assert.ok(plan.generationBudget!.estimatedGenerationUsd >= 11.88);
+  assert.equal(plan.shots.length, 13);
+  assert.ok(plan.generationBudget!.estimatedGenerationUsd >= 11);
   assert.ok(plan.generationBudget!.estimatedGenerationUsd <= 12);
   assert.equal(plan.generationBudget!.reserveUsd, 3);
-  assert.equal(plan.generationBudget!.generatedSeconds, plan.duration);
+  assert.ok(plan.generationBudget!.generatedSeconds >= plan.duration);
+  assert.ok(
+    plan.generationBudget!.sceneSeconds.every((seconds) => seconds >= 4),
+  );
   assert.ok(
     plan.shots.every((shot) => shot.seconds! >= 2 && shot.seconds! <= 5),
   );
@@ -127,15 +131,49 @@ test("a $20 cap allows longer films without inflating shorter walkthroughs", () 
   const shortWithHigherCap = planFor(15);
   const longWithHigherCap = planFor(40);
   assert.equal(shortWithHigherCap.duration, 30);
-  assert.equal(
-    shortWithHigherCap.generationBudget!.estimatedGenerationUsd,
-    shorter.generationBudget!.estimatedGenerationUsd,
+  assert.equal(shorter.duration, 30);
+  assert.ok(
+    shortWithHigherCap.generationBudget!.generatedSeconds >
+      shortWithHigherCap.duration,
   );
   assert.ok(longWithHigherCap.duration > longer.duration);
-  assert.ok(
-    longWithHigherCap.duration >= 55 && longWithHigherCap.duration <= 57,
-  );
+  assert.ok(longWithHigherCap.duration <= 57);
   assert.ok(longWithHigherCap.generationBudget!.estimatedGenerationUsd <= 16);
   assert.equal(longWithHigherCap.generationBudget!.reserveUsd, 4);
   assertFilmBudget(longWithHigherCap, bytePlusModel());
+});
+
+test("two-second edits purchase and budget at least four source seconds", () => {
+  const plan = planFor(1);
+  assert.equal(plan.duration, 2);
+  assert.deepEqual(plan.generationBudget!.sceneSeconds, [4]);
+  assert.equal(plan.generationBudget!.version, 3);
+  assert.equal(plan.generationBudget!.estimatedGenerationUsd, 0.2);
+});
+
+test("legacy duration budget repair preserves timeline, counts all generated seconds and respects the saved cap", () => {
+  process.env.BYTEPLUS_VIDEO_USD_PER_SECOND = "0.28";
+  process.env.PROPERTY_VIDEO_MAX_COST_USD = "20";
+  const plan = planFor(16);
+  const shots = JSON.stringify(plan.shots);
+  plan.generationBudget = {
+    ...plan.generationBudget!,
+    version: 2,
+    sceneSeconds: plan.shots.map((s) => s.seconds!),
+    generatedSeconds: plan.duration,
+  };
+  assert.throws(
+    () => assertFilmBudget(plan, bytePlusModel()),
+    /budget approval/,
+  );
+  const budget = repairedDurationBudget(plan, bytePlusModel());
+  assert.equal(budget.version, 3);
+  assert.ok(budget.generatedSeconds > plan.duration);
+  assert.ok(budget.estimatedGenerationUsd <= 16);
+  assert.equal(JSON.stringify(plan.shots), shots);
+  plan.generationBudget.maxUsd = 5;
+  assert.throws(
+    () => repairedDurationBudget(plan, bytePlusModel()),
+    /approved budget/,
+  );
 });

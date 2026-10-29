@@ -1,5 +1,8 @@
 import { platformAdmin, adminFailure } from "@/lib/platform-admin";
 import { billingJson, BillingError, UUID } from "@/lib/stripe-server";
+import { repairedDurationBudget } from "@/lib/byteplus-budget";
+import { validateFilmPlan } from "@/lib/property-film-plan";
+import { validateModel } from "@/lib/higgsfield-models";
 import {
   savedVideoProvider,
   configuredVideoProvider,
@@ -41,6 +44,40 @@ export async function GET(request: Request) {
       ]);
       if (profileError || jobError || grantError)
         throw new Error("Property details unavailable.");
+      const needsDurationRepair =
+        job?.model_config?.profile?.provider === "byteplus" &&
+        job?.montage_plan?.generationBudget?.version === 2;
+      let durationRepair: {
+        usd: number;
+        generatedSeconds: number;
+        error?: string;
+      } | null = null;
+      if (
+        needsDurationRepair &&
+        job.status === "failed" &&
+        job.provider_phase === "provider_failed" &&
+        /^BytePlus rejected scene \d+ \(HTTP 400; code InvalidParameter[^;]*; duration [23]s\)/.test(
+          job.last_error || "",
+        )
+      ) {
+        try {
+          const budget = repairedDurationBudget(
+            validateFilmPlan(job.montage_plan),
+            validateModel(job.model_config.profile),
+          );
+          durationRepair = {
+            usd: budget.estimatedGenerationUsd,
+            generatedSeconds: budget.generatedSeconds,
+          };
+        } catch {
+          durationRepair = {
+            usd: 0,
+            generatedSeconds: 0,
+            error:
+              "The corrected duration budget needs review before this film can resume.",
+          };
+        }
+      }
       return billingJson({
         property,
         profile,
@@ -51,8 +88,10 @@ export async function GET(request: Request) {
               provider: savedVideoProvider(job.model_config),
               nextProvider: configuredVideoProvider(),
               attempts: job.attempts,
+              durationRepair,
               canRebuild: ["completed", "failed"].includes(job.status),
               canResume:
+                !needsDurationRepair &&
                 job.status === "failed" &&
                 job.provider_phase === "provider_failed" &&
                 job.model_config?.profile?.provider === "byteplus" &&

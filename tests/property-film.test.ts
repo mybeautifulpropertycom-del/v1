@@ -460,6 +460,7 @@ test(
           ),
         ).streams;
       for (const seconds of durations) {
+        const sourceSeconds = Math.max(4, seconds);
         const path = join(directory, `source-${seconds}.mp4`);
         execFileSync(filmBinary(), [
           "-v",
@@ -467,7 +468,7 @@ test(
           "-f",
           "lavfi",
           "-i",
-          `testsrc2=size=320x180:rate=30:duration=${seconds}`,
+          `testsrc2=size=320x180:rate=30:duration=${sourceSeconds}`,
           "-c:v",
           "libx264",
           "-threads",
@@ -478,7 +479,7 @@ test(
         ]);
         const clip = await normalizeGeneratedClip(
           await readFile(path),
-          seconds,
+          sourceSeconds,
           seconds,
         );
         const resultPath = join(directory, `normalized-${seconds}.mp4`);

@@ -35,6 +35,7 @@ import {
   budgetForPlan,
   assertFilmBudget,
   VideoBudgetError,
+  bytePlusSourceSeconds,
 } from "./byteplus-budget";
 import {
   submitBytePlusGeneration,
@@ -96,10 +97,17 @@ export function sceneGenerationInput(model: ModelProfile, shot: FilmShot) {
     property: {},
   });
   if (model.provider === "byteplus" && shot.seconds !== undefined)
-    input.duration = shot.seconds;
+    input.duration = bytePlusSourceSeconds(shot.seconds);
   if (!JSON.stringify(input).includes(shot.image))
     throw new Error("The model must accept the selected property photograph.");
   const duration = Number(input.duration);
+  if (
+    model.provider === "byteplus" &&
+    (input.frames !== undefined || duration < 4)
+  )
+    throw new VideoBudgetError(
+      "Seedance source generation requires at least four seconds; frame overrides are not budgeted.",
+    );
   if (!Number.isFinite(duration) || duration < 2 || duration > 15)
     throw new Error("Configure the model's duration between 2 and 15 seconds.");
   return input;
@@ -412,8 +420,11 @@ export async function runHiggsfieldFilm(
           ? {
               http_status: error.httpStatus,
               provider_code: error.providerCode,
-              requested_seconds:
-                job.montage_plan?.shots[job.montage_next_shot]?.seconds,
+              requested_seconds: job.montage_plan
+                ? bytePlusSourceSeconds(
+                    job.montage_plan.shots[job.montage_next_shot].seconds!,
+                  )
+                : undefined,
             }
           : {}),
       }),
@@ -424,7 +435,7 @@ export async function runHiggsfieldFilm(
         ? error.message
         : rejected
           ? error instanceof BytePlusRejectedError && error.httpStatus
-            ? `BytePlus rejected scene ${job.montage_next_shot + 1} (HTTP ${error.httpStatus}${error.providerCode ? `; code ${error.providerCode}` : ""}; duration ${job.montage_plan?.shots[job.montage_next_shot]?.seconds ?? "unknown"}s). ${error.providerDetail ? `${error.providerDetail} ` : ""}Saved scenes are retained. No automatic resubmission.`
+            ? `BytePlus rejected scene ${job.montage_next_shot + 1} (HTTP ${error.httpStatus}${error.providerCode ? `; code ${error.providerCode}` : ""}; duration ${job.montage_plan ? bytePlusSourceSeconds(job.montage_plan.shots[job.montage_next_shot].seconds!) : "unknown"}s). ${error.providerDetail ? `${error.providerDetail} ` : ""}Saved scenes are retained. No automatic resubmission.`
             : "The video provider rejected this scene. Check API credentials, API credits and model settings. No new generation will be submitted automatically."
           : unboundSubmission
             ? "Scene generation confirmation is delayed. We will not resubmit it automatically; reconcile this request in the provider dashboard."

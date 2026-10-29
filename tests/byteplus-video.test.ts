@@ -38,7 +38,7 @@ test("BytePlus scenes use saved photo content, no generated audio, and a configu
   assert.equal(model.endpoint, "dreamina-seedance-2-5-260628");
   assert.equal(model.output.path, "content.video_url");
   assert.equal(input.generate_audio, false);
-  assert.equal(input.duration, 3);
+  assert.equal(input.duration, 4);
   assert.equal(input.ratio, "16:9");
   assert.equal(input.resolution, "720p");
   const content = input.content as any[];
@@ -88,6 +88,35 @@ test("direct submission and polling use fixed Ark origin, bearer auth and no Hig
     video_url: "https://cdn.example/video.mp4",
   });
   assert.equal(calls, 2);
+});
+
+test("short edits use the documented source minimum and unbudgeted frame overrides are rejected", () => {
+  const model = bytePlusModel();
+  for (const seconds of [2, 3, 4, 5]) {
+    const shot = {
+      index: 0,
+      image: "https://photos.example/front.webp",
+      fingerprint: "a".repeat(64),
+      category: "exterior" as const,
+      strength: 5,
+      aerial: false,
+      evening: false,
+      motion: "push" as const,
+      seconds,
+    };
+    assert.equal(
+      sceneGenerationInput(model, shot).duration,
+      Math.max(4, seconds),
+    );
+    assert.throws(
+      () =>
+        sceneGenerationInput(
+          { ...model, input: { ...model.input, frames: 1000 } },
+          shot,
+        ),
+      /frame overrides/,
+    );
+  }
 });
 test("status responses are bounded and task identity is checked", async () => {
   for (const [status, mapped] of Object.entries({

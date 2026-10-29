@@ -88,7 +88,7 @@ export function bytePlusModel(): ModelProfile {
           role: "reference_image",
         },
       ],
-      duration: 3,
+      duration: 4,
       resolution: "720p",
       ratio: "16:9",
       generate_audio: false,

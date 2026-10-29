@@ -73,6 +73,8 @@ test("BytePlus recovery preserves completed scenes and refuses uncertain, accept
       "sql-editor-higgsfield-films.sql",
       "sql-editor-byteplus-recovery.sql",
       "sql-editor-byteplus-recovery.sql",
+      "sql-editor-byteplus-duration.sql",
+      "sql-editor-byteplus-duration.sql",
     ])
       await database.exec(
         await readFile(new URL(`../supabase/${name}`, import.meta.url), "utf8"),
@@ -168,6 +170,84 @@ test("BytePlus recovery preserves completed scenes and refuses uncertain, accept
       ).rows.length,
       1,
     );
+    // The one-time minimum-duration repair also works after the old retry limit,
+    // without resetting attempts or discarding completed/provider-accepted work.
+    await database.exec("reset role");
+    const profile = {
+      provider: "byteplus",
+      endpoint: "dreamina-seedance-2-5-260628",
+      input: { resolution: "720p", generate_audio: false },
+    };
+    const legacyPlan = {
+      timing: "variable-v1",
+      duration: 7,
+      shots: [{ seconds: 4 }, { seconds: 3 }],
+      generationBudget: {
+        version: 2,
+        model: profile.endpoint,
+        resolution: "720p",
+        usdPerSecond: 0.28,
+        maxUsd: 20,
+        sceneSeconds: [4, 3],
+        generatedSeconds: 7,
+        plannedScenes: 2,
+        estimatedGenerationUsd: 1.96,
+        reserveUsd: 4,
+      },
+    };
+    await database.query(
+      `update property_video_jobs set status='failed',provider_phase='provider_failed',attempts=3,
+      model_config=jsonb_build_object('engine','higgsfield-montage-v1','profile',$1::jsonb),montage_plan=$2::jsonb,
+      last_error='BytePlus rejected scene 2 (HTTP 400; code InvalidParameter; duration 3s). Saved scenes are retained.'`,
+      [JSON.stringify(profile), JSON.stringify(legacyPlan)],
+    );
+    await database.query(
+      "update property_film_scenes set model_config=$1::jsonb,model_input='{\"duration\":4}'",
+      [JSON.stringify(profile)],
+    );
+    await database.query(
+      `insert into property_film_scenes(order_id,generation,shot_index,status,model_config,model_input)
+      select order_id,montage_generation,1,'submitting',$1::jsonb,'{"duration":3}' from property_video_jobs`,
+      [JSON.stringify(profile)],
+    );
+    const repair = (cap = 20, actor = agentA) =>
+      database.query<{ admin_repair_byteplus_duration: any }>(
+        "select admin_repair_byteplus_duration($1,$2,0.28,$3)",
+        [propertyB, actor, cap],
+      );
+    await database.exec("set role authenticated");
+    await assert.rejects(repair(), /permission denied/);
+    await database.exec("reset role; set role service_role");
+    await assert.rejects(repair(20, agentB), /Administrator access/);
+    await assert.rejects(repair(1), /approved budget/);
+    await database.exec(
+      "reset role; update property_film_scenes set request_id='accepted-task' where shot_index=1; set role service_role",
+    );
+    await assert.rejects(repair(), /reconciliation/);
+    await database.exec(
+      "reset role; update property_film_scenes set request_id=null where shot_index=1; set role service_role",
+    );
+    const repaired = (await repair()).rows[0].admin_repair_byteplus_duration;
+    assert.equal(repaired.budget.version, 3);
+    assert.equal(repaired.budget.estimatedGenerationUsd, 2.24);
+    assert.deepEqual(repaired.budget.sceneSeconds, [4, 4]);
+    const saved = (
+      await database.query<any>(
+        "select montage_generation,montage_plan,source,attempts,montage_next_shot from property_video_jobs",
+      )
+    ).rows[0];
+    assert.equal(saved.montage_generation, before.montage_generation);
+    assert.equal(saved.attempts, 4);
+    assert.equal(saved.montage_next_shot, 1);
+    assert.deepEqual(saved.montage_plan.shots, legacyPlan.shots);
+    assert.equal(saved.montage_plan.duration, 7);
+    assert.deepEqual(saved.source, before.source);
+    assert.deepEqual(
+      (await database.query("select request_id from property_film_scenes"))
+        .rows,
+      [{ request_id: "task-paid" }],
+    );
+    await assert.rejects(repair(), /not eligible/);
   } finally {
     await database.close();
   }
