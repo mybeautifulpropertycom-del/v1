@@ -10,6 +10,7 @@ import {
 } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { PropertyWebsite } from "./property-website";
+import { PropertyVideoProgressPanel } from "./property-video-progress";
 
 type Detail = {
   property: Property;
@@ -311,6 +312,15 @@ export function AdminProperty({ id }: { id: string }) {
             label: "Back to administration",
           }}
           film={data.video?.film || undefined}
+          videoPanel={
+            data.video && data.video.status !== "completed" ? (
+              <PropertyVideoProgressPanel
+                status={data.video.status}
+                progress={{ completed: data.video.completed, total: data.video.total }}
+                needsReview={Boolean(data.video.error) && data.video.status === "processing"}
+              />
+            ) : undefined
+          }
         />
       )}
     </>

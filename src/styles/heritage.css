@@ -41,9 +41,10 @@
   text-transform: uppercase;
 }
 .heritage-website h2 {
-  font: 400 clamp(33px, 3.5vw, 52px)/1.15 var(--serif);
-  letter-spacing: -1.8px;
+  font: 400 clamp(26px, 2.8vw, 42px)/1.18 var(--serif);
+  letter-spacing: -0.03em;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 .heritage-website h2 em,
 .heritage-website h3 em {
@@ -398,7 +399,7 @@
   margin-bottom: 15px;
 }
 .heritage-story-copy h2 {
-  font-size: clamp(32px, 3vw, 45px);
+  font-size: clamp(26px, 2.4vw, 36px);
 }
 .heritage-story-copy > p {
   font-size: 12px;
@@ -588,7 +589,7 @@
   margin-bottom: 26px;
 }
 .heritage-details-copy h2 {
-  font-size: clamp(32px, 3vw, 47px);
+  font-size: clamp(26px, 2.4vw, 38px);
 }
 .heritage-details-copy h2 em {
   color: #c7cfad;
@@ -659,7 +660,7 @@
   font-size: 7px;
 }
 .heritage-film-preview h2 {
-  font-size: clamp(35px, 4vw, 60px);
+  font-size: clamp(28px, 3.2vw, 48px);
   margin: 20px 0;
 }
 .heritage-film-preview h2 em {
@@ -685,7 +686,7 @@
   padding-block: 25px 65px;
 }
 .heritage-agent h2 {
-  font-size: clamp(29px, 2.6vw, 38px);
+  font-size: clamp(26px, 2.08vw, 30px);
   margin: 19px 0 29px;
 }
 .heritage-agent .heritage-agent-profile {
@@ -783,7 +784,7 @@
   max-width: 480px;
 }
 .heritage-setting-layout h2 {
-  font-size: clamp(32px, 3.2vw, 47px);
+  font-size: clamp(26px, 2.56vw, 38px);
   margin-top: 20px;
 }
 .heritage-setting-layout > div > p {
@@ -859,7 +860,7 @@
   font-size: 8px;
 }
 .heritage-invitation h2 {
-  font-size: clamp(36px, 4.5vw, 66px);
+  font-size: clamp(29px, 3.6vw, 52px);
   margin: 25px 0 30px;
 }
 .heritage-invitation h2 em {
@@ -1042,8 +1043,8 @@
     margin-bottom: 40px;
   }
   .heritage-website h2 {
-    font-size: clamp(32px, 8vw, 42px);
-    letter-spacing: -1.3px;
+    font-size: clamp(26px, 6.4vw, 34px);
+    letter-spacing: -0.03em;
   }
   .heritage-section-heading > p {
     max-width: none;
@@ -1146,7 +1147,7 @@
     padding: 25px 15px;
   }
   .heritage-film-preview h2 {
-    font-size: 39px;
+    font-size: 31px;
   }
   .heritage-film-preview small {
     font-size: 7px;
@@ -1160,7 +1161,7 @@
     padding-block: 0 55px;
   }
   .heritage-agent h2 {
-    font-size: 30px;
+    font-size: 26px;
   }
   .heritage-contact-note {
     padding-block: 35px;
@@ -1191,7 +1192,7 @@
     padding: 65px 6%;
   }
   .heritage-invitation h2 {
-    font-size: 37px;
+    font-size: 30px;
   }
   .heritage-invitation .heritage-kicker {
     font-size: 7px;

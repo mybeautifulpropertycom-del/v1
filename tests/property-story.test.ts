@@ -23,7 +23,7 @@ test("each listing has factual copy and old photo analysis cannot survive change
   const condoCopy = propertyStory(condo);
   assert.notEqual(houseCopy.introBody, condoCopy.introBody);
   assert.match(condoCopy.heroIntro, /2 bedrooms · 2 bathrooms · 1,450 sq ft/);
-  assert.match(condoCopy.settingTitle, /Austin/);
+  assert.match(condoCopy.settingBody, /Austin/);
   assert.equal(condoCopy.detailsTitle, "Private balcony");
   assert.ok(!JSON.stringify(condoCopy).includes("Private garden"));
   const stored = {

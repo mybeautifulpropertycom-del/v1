@@ -531,6 +531,7 @@ export function HeritageWebsite({
               </span>
               <span>THE HOME, IN MOTION</span>
             </div>
+            {film?.src && videoPanel}
             {film?.src ? (
               <>
                 <h2 id="heritage-film-title" className="heritage-film-title">
@@ -650,7 +651,7 @@ export function HeritageWebsite({
           </div>
           <div className="heritage-setting-layout">
             <div>
-              <span className="heritage-kicker">More than an address</span>
+              <span className="heritage-kicker">The setting</span>
               <h2>
                 <EditableText
                   field="copy.settingTitle"

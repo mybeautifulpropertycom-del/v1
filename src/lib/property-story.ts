@@ -128,7 +128,7 @@ export function propertyStory(
       galleryAccent: /^\d+ photographs\. A closer look\.$/.test(
         saved.galleryAccent,
       )
-        ? "A different perspective."
+        ? "Another perspective."
         : saved.galleryAccent,
       captions: saved.captions.map((caption, index) =>
         caption === `${p.title || p.type} · Photograph ${index + 1}`
@@ -158,29 +158,28 @@ export function propertyStory(
     heroIntro: `${rooms}${p.area > 0 ? ` · ${size}` : ""}\n${location}`,
     introTitle:
       p.type === "Land"
-        ? "A different possibility."
-        : `${p.bedrooms === 0 ? "Space" : `${p.bedrooms} bedrooms`}. Your possibilities.`,
-    introAccent: `A ${type} to make your own.`,
+        ? "Room for possibility."
+        : "Space to settle.",
+    introAccent: "Make it yours.",
     introBody:
       summary.length > 300
         ? `${summary.slice(0, 297).replace(/\s+\S*$/, "")}…`
         : summary,
-    storyTitle: p.title || `Discover this ${type}.`,
+    storyTitle: "A closer look.",
     storyAccent:
       p.transaction === "rent" ? "A place to settle in." : "A new beginning.",
     galleryTitle: `Explore this ${type}.`,
-    galleryAccent: "A different perspective.",
+    galleryAccent: "Another perspective.",
     galleryBody: `Explore the photographs of this ${type}. Arrange a tour to see the details in person.`,
     detailsTitle: p.amenities[0] || `Discover the ${type}.`,
-    detailsAccent: "The details, considered.",
+    detailsAccent: "Thoughtful details.",
     detailsBody:
       features || `${rooms}${p.area > 0 ? `, across ${size}.` : "."}`,
-    settingTitle: location,
-    settingAccent:
-      p.area > 0 ? `${size} to make your own.` : "See the possibilities.",
+    settingTitle: "The setting.",
+    settingAccent: "A sense of place.",
     settingBody: `Explore this ${type} in ${location}. Contact the listing agent for more about the property and to arrange a visit.`,
-    closingTitle: p.title || `Discover this ${type}.`,
-    closingAccent: "Experience it in person.",
+    closingTitle: "Come take a look.",
+    closingAccent: "See it yourself.",
     closingBody: `Take the next step with this ${type} in ${location}. Schedule a tour with the listing agent and see how it feels in person.`,
     captions: p.images.map(() => p.title || p.type),
   };

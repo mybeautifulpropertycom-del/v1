@@ -349,7 +349,7 @@ export function EditorialWebsite({
         <section className="estate-story estate-pad estate-space" id="story">
           <div>
             <span className="estate-eyebrow">
-              A little closer to what matters
+              At a glance
             </span>
             <h2>
               <EditableText
@@ -441,7 +441,7 @@ export function EditorialWebsite({
           </div>
           <div className="estate-details-copy">
             <span className="estate-eyebrow">
-              The details make the difference
+              Thoughtful details
             </span>
             <h2>
               <EditableText
@@ -580,6 +580,7 @@ export function EditorialWebsite({
                 <br />A little closer to being here.
               </p>
             </div>
+            {film?.src && videoPanel}
             {film?.src ? (
               <video
                 className="estate-film-player"
@@ -634,11 +635,11 @@ export function EditorialWebsite({
           id="contact"
         >
           <div className="estate-agent landing-agent">
-            <span className="estate-eyebrow">A personal introduction</span>
+            <span className="estate-eyebrow">Your agent</span>
             <h2>
-              A new home.
+              Let’s connect.
               <br />
-              <em>A familiar face.</em>
+              <em>Feel at home.</em>
             </h2>
             <div className="estate-agent-person landing-agent-profile">
               <span className="estate-agent-monogram">

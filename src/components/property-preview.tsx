@@ -238,6 +238,7 @@ export function PropertyPreview({ id }: { id: string }) {
           )}
         </div>
       </div>
+      <div className="property-video-status-strip">{publication.videoStatus}</div>
       {publication.dialog}
       {preparing && (
         <div className="inline-notice" role="status">

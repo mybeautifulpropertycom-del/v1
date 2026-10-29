@@ -40,10 +40,11 @@
 }
 .estate-website h2 {
   font-family: var(--serif);
-  font-size: clamp(38px, 4.3vw, 67px);
+  font-size: clamp(30px, 3.44vw, 52px);
   font-weight: 400;
-  line-height: 1.12;
-  letter-spacing: -2px;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 .estate-website h2 em,
 .estate-website h3 em {
@@ -331,7 +332,7 @@
   font-size: 9px;
 }
 .estate-scroll-heading h2 {
-  font-size: clamp(35px, 3.6vw, 56px);
+  font-size: clamp(28px, 2.88vw, 45px);
 }
 .estate-scroll-heading h2 em {
   color: #c2c9a2;
@@ -447,7 +448,7 @@
   padding-block: 10px;
 }
 .estate-details h2 {
-  font-size: clamp(36px, 3.6vw, 54px);
+  font-size: clamp(29px, 2.88vw, 43px);
 }
 .estate-details-copy > p {
   font-size: 13px;
@@ -839,7 +840,7 @@
   color: #d5ddb8;
 }
 .estate-invitation h2 {
-  font-size: clamp(40px, 5.5vw, 80px);
+  font-size: clamp(32px, 4.4vw, 52px);
 }
 .estate-invitation h2 em {
   color: #cbd1a7;
@@ -1228,8 +1229,8 @@
     padding-block: 60px;
   }
   .estate-website h2 {
-    font-size: clamp(35px, 9vw, 50px);
-    letter-spacing: -1.5px;
+    font-size: clamp(28px, 7.2vw, 34px);
+    letter-spacing: -0.03em;
   }
   .estate-eyebrow {
     font-size: 8px;

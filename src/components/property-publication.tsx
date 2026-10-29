@@ -13,6 +13,10 @@ import { getSupabase } from "@/lib/supabase";
 import { publicPath, type Property } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { adminRequest } from "@/lib/admin-client";
+import {
+  PropertyVideoProgressPanel,
+  PropertyVideoStatus,
+} from "./property-video-progress";
 
 type PublicationStatus = {
   enabled?: boolean;
@@ -339,80 +343,73 @@ export function usePropertyPublication(options: {
     setOpen(false);
     setPayment(null);
   };
-  const videoPanel = (
-    <div className="property-video-prompt">
-      <Film size={30} strokeWidth={1.3} />
-      <h3>
-        {status.videoNeedsReview
-          ? "Your video needs a status check."
-          : status.videoStatus === "processing"
-            ? "Your property, coming to life."
-            : status.videoStatus === "queued"
-              ? "Your video is queued."
-              : status.videoStatus === "failed"
-                ? "Your video needs another moment."
-                : "Bring your property to life."}
-      </h3>
-      <p>
-        {status.videoNeedsReview
-          ? "Your website remains live. We are checking the generation confirmation. Please contact support; another video will not be charged automatically."
-          : status.videoStatus === "queued"
-            ? "Your website is live. Your included video is awaiting generation and will appear here when it is ready."
-            : status.videoStatus === "processing"
-              ? "We’re creating your cinematic walkthrough. It will appear here and on your property website when it’s ready."
-              : status.videoStatus === "failed"
-                ? (status.videoAttempts ?? 0) >= 3
-                  ? "Your website remains live. Please contact support to finish your included video; no new property payment is needed."
-                  : "Your website remains live. You can retry your video after a short pause, without another payment."
-                : options.property?.status === "published"
-                  ? "Your completed cinematic walkthrough will appear here when it is available."
-                  : "Publish your property to generate a cinematic walkthrough from your photos. Your video will appear here and on your property website when it’s ready."}
-      </p>
-      {status.videoStatus === "processing" && status.videoProgress && (
-        <p role="status">
-          {status.videoProgress.completed < status.videoProgress.total
-            ? `${status.videoProgress.completed} of ${status.videoProgress.total} scenes ready. You can leave this page; your video will keep processing.`
-            : "Your scenes are ready. We’re adding the music and finishing your film."}
-        </p>
-      )}
-      {status.videoStatus === "failed" && status.canRetryVideo !== false && (
-        <button
-          type="button"
-          className="button secondary"
-          disabled={retrying}
-          onClick={async () => {
-            if (!id || retrying) return;
-            setRetrying(true);
-            setVideoError("");
-            try {
-              await request(id, "POST", true);
-              setStatus((s) => ({ ...s, videoStatus: "queued" }));
-            } catch (e) {
-              setVideoError(
-                e instanceof Error ? e.message : "Please try again.",
-              );
-            } finally {
-              setRetrying(false);
-            }
-          }}
-        >
-          {retrying ? "Queuing your video…" : "Retry video · No extra charge"}
-        </button>
-      )}
-      {videoError && <p role="alert">{videoError}</p>}
-      {options.property?.status !== "published" && (
-        <button
-          type="button"
-          className="button primary"
-          disabled={options.disabled}
-          onClick={() => void publish()}
-        >
-          <Globe2 size={16} />
-          Publish Property
-        </button>
-      )}
-    </div>
+  const videoStatus = (
+    <PropertyVideoStatus
+      status={status.videoStatus}
+      progress={status.videoProgress}
+      needsReview={status.videoNeedsReview}
+    />
   );
+  const videoPanel =
+    status.videoStatus === "completed" &&
+    status.film?.src ? null : status.videoStatus ? (
+      <PropertyVideoProgressPanel
+        status={status.videoStatus}
+        progress={status.videoProgress}
+        needsReview={status.videoNeedsReview}
+      >
+        {status.videoStatus === "failed" &&
+          !status.videoNeedsReview &&
+          status.canRetryVideo !== false && (
+            <button
+              type="button"
+              className="button secondary"
+              disabled={retrying}
+              onClick={async () => {
+                if (!id || retrying) return;
+                setRetrying(true);
+                setVideoError("");
+                try {
+                  await request(id, "POST", true);
+                  setStatus((s) => ({ ...s, videoStatus: "queued" }));
+                } catch (e) {
+                  setVideoError(
+                    e instanceof Error ? e.message : "Please try again.",
+                  );
+                } finally {
+                  setRetrying(false);
+                }
+              }}
+            >
+              {retrying
+                ? "Queuing your video…"
+                : "Retry video · No extra charge"}
+            </button>
+          )}
+        {videoError && <p role="alert">{videoError}</p>}
+      </PropertyVideoProgressPanel>
+    ) : (
+      <div className="property-video-prompt">
+        <Film size={30} strokeWidth={1.3} />
+        <h3>Bring your property to life.</h3>
+        <p>
+          {options.property?.status === "published"
+            ? "Your video will appear here automatically when it’s ready."
+            : "Publish your property to generate a cinematic walkthrough from your photos. Your video will appear here automatically when it’s ready."}
+        </p>
+        {options.property?.status !== "published" && (
+          <button
+            type="button"
+            className="button primary"
+            disabled={options.disabled}
+            onClick={() => void publish()}
+          >
+            <Globe2 size={16} />
+            Publish Property
+          </button>
+        )}
+      </div>
+    );
   const dialog = open ? (
     <Modal onClose={close}>
       <div className="publish-dialog-heading">
@@ -569,5 +566,11 @@ export function usePropertyPublication(options: {
       )}
     </Modal>
   ) : null;
-  return { publish, dialog, videoPanel, film: status.film ?? undefined };
+  return {
+    publish,
+    dialog,
+    videoPanel,
+    videoStatus,
+    film: status.film ?? undefined,
+  };
 }

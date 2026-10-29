@@ -324,7 +324,7 @@ export function AtelierWebsite({
             </figcaption>
           </figure>
           <div className="atelier-story-copy">
-            <span className="atelier-kicker">THE ART OF FEELING AT HOME</span>
+            <span className="atelier-kicker">FEEL AT HOME</span>
             <h2>
               {text("storyTitle")}
               <em>{text("storyAccent")}</em>
@@ -339,7 +339,7 @@ export function AtelierWebsite({
         <section className="atelier-details atelier-pad" id="details">
           <div className="atelier-details-heading">
             <span className="atelier-kicker">
-              GOOD DESIGN. EVERYDAY POSSIBILITY.
+              EVERYDAY DETAILS
             </span>
             <h2>
               {text("detailsTitle")}
@@ -408,7 +408,7 @@ export function AtelierWebsite({
           <div className="atelier-section-heading">
             <div>
               <span className="atelier-kicker">
-                AN OPEN INVITATION TO LOOK CLOSER
+                A CLOSER LOOK
               </span>
               <h2>
                 {text("galleryTitle")}
@@ -435,12 +435,13 @@ export function AtelierWebsite({
           <section className="atelier-film atelier-pad" id="film">
             <div className="atelier-film-heading">
               <span className="atelier-kicker">
-                A DIFFERENT WAY TO EXPERIENCE IT
+                IN MOTION
               </span>
               <h2>
-                A little closer.<em>Before you arrive.</em>
+                Step inside.<em>Feel at home.</em>
               </h2>
             </div>
+            {film?.src && videoPanel}
             {film?.src ? (
               <video
                 controls
@@ -486,10 +487,10 @@ export function AtelierWebsite({
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
             <span className="atelier-kicker">
-              BEHIND EVERY HOME, A HUMAN CONNECTION
+              YOUR AGENT
             </span>
             <h2>
-              A familiar face.<em>A personal introduction.</em>
+              Let’s connect.<em>Meet your agent.</em>
             </h2>
             <div className="landing-agent-profile">
               <span className="atelier-avatar">

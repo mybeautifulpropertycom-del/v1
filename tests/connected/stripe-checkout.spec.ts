@@ -88,7 +88,7 @@ test("the private website can be edited before payment; both Publish buttons ope
   await buttons.first().click();
   await expect(page.getByRole("dialog")).toContainText("$97");
   await expect(page.getByRole("dialog")).toContainText(
-    "One presentation video",
+    "One cinematic walkthrough from your photos",
   );
   await expect(
     page.getByRole("button", { name: "Complete secure payment" }),
@@ -266,4 +266,68 @@ test("an uncertain generation explains the delay without offering another paid s
     "contact support",
   );
   await expect(page.locator(".property-video-prompt button")).toHaveCount(0);
+});
+
+for (const template of ["editorial", "minimal", "panorama"] as const) {
+  test(`${template}: scene progress updates to the completed film without a reload or generation request`, async ({ page }) => {
+    await page.clock.install();
+    const { state } = await fixture(page);
+    state.property.status = "published";
+    state.property.template = template;
+    let completed = false;
+    let scenesReady = 3;
+    let generationRequests = 0;
+    page.on("request", (request) => {
+      if (request.method() === "POST" && /\/api\/(video|billing)/.test(request.url())) generationRequests++;
+    });
+    const src = "https://browser-test.supabase.co/storage/v1/object/public/property-videos/finished.mp4";
+    await page.route("**/api/billing/checkout**", (route) => route.fulfill({ json: {
+      published: true,
+      paid: true,
+      videoStatus: completed ? "completed" : "processing",
+      videoProgress: { completed: scenesReady, total: 11 },
+      film: completed ? { src } : null,
+    } }));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/preview/${id}`);
+    await expect(page.locator(".property-video-status-strip")).toHaveText("Video: processing · 3 of 11 scenes ready");
+    const panel = page.locator(".property-video-prompt");
+    await expect(panel).toContainText("Your video will appear here automatically when it’s ready.");
+    await expect(panel.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "3");
+    await expect(panel.locator(".property-video-spinner")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("Estimated video generation");
+    await expect(page.locator("body")).not.toContainText("API credits");
+    if (template === "panorama") {
+      await panel.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: "/tmp/mbp-video-progress-mobile.png" });
+    }
+    scenesReady = 11;
+    await page.clock.fastForward(15001);
+    await expect(page.locator(".property-video-status-strip")).toHaveText("Video: processing · 11 of 11 scenes ready");
+    await expect(panel).toContainText("All scenes are ready. We’re finishing your film.");
+    await expect(page.locator("#film video")).toHaveCount(0);
+    completed = true;
+    await page.clock.fastForward(15001);
+    await expect(page.locator(".property-video-status-strip")).toHaveText("Video: completed · 11 of 11 scenes ready");
+    await expect(page.locator("#film video source")).toHaveAttribute("src", src);
+    await expect(panel).toHaveCount(0);
+    expect(generationRequests).toBe(0);
+  });
+}
+
+test("a stopped video shows its saved progress without a loading animation or provider diagnostics", async ({ page }) => {
+  const { state } = await fixture(page);
+  state.property.status = "published";
+  await page.route("**/api/billing/checkout**", (route) => route.fulfill({ json: {
+    published: true,
+    videoStatus: "failed",
+    videoProgress: { completed: 3, total: 11 },
+    canRetryVideo: false,
+    videoError: "Internal provider diagnostics should stay out of the agent view",
+  } }));
+  await page.goto(`/preview/${id}`);
+  await expect(page.locator(".property-video-status-strip")).toHaveText("Video: failed · 3 of 11 scenes ready");
+  await expect(page.locator(".property-video-prompt")).toContainText("contact support");
+  await expect(page.locator(".property-video-spinner, .property-video-emblem.is-working")).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText("Internal provider diagnostics");
 });

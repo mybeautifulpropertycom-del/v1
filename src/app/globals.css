@@ -4437,7 +4437,7 @@ fieldset.editor-content {
   gap: 20px;
 }
 .property-video-prompt h3 {
-  font: clamp(28px, 3vw, 46px)/1.2 var(--serif);
+  font: clamp(26px, 2.6vw, 36px)/1.2 var(--serif);
   margin: 0;
 }
 .property-video-prompt p {
@@ -4449,6 +4449,67 @@ fieldset.editor-content {
 .property-video-prompt .button {
   font: 500 14px var(--sans);
   margin-top: 6px;
+}
+.property-video-status-strip:has(.property-video-status) {
+  padding: 13px 24px;
+  background: #f6f7f2;
+  border-bottom: 1px solid #e0e5da;
+}
+.property-video-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #365144;
+  font: 500 13px/1.6 var(--sans);
+}
+.property-video-status svg {
+  flex-shrink: 0;
+}
+.property-video-spinner {
+  animation: property-video-turn 1.5s linear infinite;
+}
+.property-video-emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border: 1px solid #c9d3c1;
+  border-radius: 50%;
+}
+.property-video-emblem.is-working::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 2px solid transparent;
+  border-top-color: #6d8461;
+  border-radius: 50%;
+  animation: property-video-turn 2.4s linear infinite;
+}
+.property-video-progress-track {
+  width: min(100%, 320px);
+  height: 4px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #d6dfcf;
+}
+.property-video-progress-track > span {
+  display: block;
+  height: 100%;
+  background: #6d8461;
+  transition: width 600ms ease;
+}
+.property-video-prompt .property-video-finishing {
+  font-size: 13px;
+}
+@keyframes property-video-turn {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .property-video-spinner,
+  .property-video-emblem.is-working::after { animation: none; }
+  .property-video-progress-track > span { transition: none; }
 }
 @media (max-width: 600px) {
   .publish-dialog {
