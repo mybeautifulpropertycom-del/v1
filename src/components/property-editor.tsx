@@ -413,7 +413,7 @@ export function PropertyEditor({
                         update("type", e.target.value as Property["type"])
                       }
                     >
-                      {["House", "Condo", "Penthouse", "Land"].map((v) => (
+                      {["House", "Condo", "Penthouse"].map((v) => (
                         <option key={v}>{v}</option>
                       ))}
                     </select>
