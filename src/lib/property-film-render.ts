@@ -429,7 +429,7 @@ export async function assembleFilm(
   }
 }
 
-/** Preserve provider motion and add six edit-handle frames around the chosen duration.
+/** Preserve provider motion and add edit handles around the chosen duration.
  * Monotone time mapping accelerates edges and gives the middle more screen time.
  * Provider audio is deliberately removed: the final film uses the chosen score.
  */
@@ -438,6 +438,7 @@ export async function normalizeGeneratedClip(
   sourceSeconds: number,
   targetSeconds: number = SHOT_SECONDS,
   style?: FilmPlan["style"],
+  renderVersion?: FilmPlan["renderVersion"],
 ): Promise<Buffer> {
   if (
     !Number.isFinite(sourceSeconds) ||
@@ -450,6 +451,7 @@ export async function normalizeGeneratedClip(
     throw new Error(
       "Configure a generated clip duration between 2 and 15 seconds.",
     );
+  const smooth = renderVersion === "smooth-v1";
   const frames = Math.round(targetSeconds * FILM_FPS) + 6;
   const normalizedSeconds = frames / FILM_FPS;
   const directory = await mkdtemp(join(tmpdir(), "mbp-generated-scene-"));
@@ -457,37 +459,56 @@ export async function normalizeGeneratedClip(
     const input = join(directory, "provider.mp4"),
       output = join(directory, "normalized.mp4");
     await writeFile(input, bytes);
+    if (smooth) {
+      // Interpolation needs a small tail for look-ahead. Validate the actual
+      // decoded source BEFORE adding it, so truncated downloads cannot pass.
+      const source = await filmFrameStats(input);
+      if (source.seconds + 0.001 < sourceSeconds)
+        throw new Error(
+          "The provider clip is shorter than the configured scene duration.",
+        );
+    }
     const t = `(T/${sourceSeconds})`;
-    await executeFilmCommand([
-      "-protocol_whitelist",
-      "file,pipe",
-      "-threads",
-      "2",
-      "-i",
-      input,
-      "-vf",
-      `trim=duration=${sourceSeconds},setpts=PTS-STARTPTS,setpts='${normalizedSeconds}*(${t}-${style === "cinematic-walkthrough-v3" ? "0.72" : "0.65"}*sin(2*PI*${t})/(2*PI))/TB',fps=30,scale=1280:720:force_original_aspect_ratio=decrease:flags=lanczos,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x111916,setsar=1,format=yuv420p`,
-      "-frames:v",
-      String(frames),
-      "-an",
-      "-c:v",
-      "libx264",
-      "-preset",
-      "veryfast",
-      "-crf",
-      "18",
-      "-maxrate",
-      "4M",
-      "-bufsize",
-      "8M",
-      "-threads",
-      "2",
-      "-video_track_timescale",
-      "15360",
-      "-movflags",
-      "+faststart",
-      output,
-    ]);
+    const ramp = style === "cinematic-walkthrough-v3" ? "0.72" : "0.65";
+    const sampling = smooth
+      ? // Interpolate within one continuous scene only, before any room cuts.
+        // A simple fps filter repeats frames during slow-down (especially 24fps
+        // sources). Bounded motion search keeps 720p processing practical.
+        "scale=w='min(1280,iw)':h='min(720,ih)':force_original_aspect_ratio=decrease,tpad=stop_mode=clone:stop_duration=0.25,minterpolate=fps=30:mi_mode=mci:mc_mode=aobmc:me_mode=bilat:me=hexbs:mb_size=16:search_param=16:vsbmc=0"
+      : "fps=30";
+    await executeFilmCommand(
+      [
+        "-protocol_whitelist",
+        "file,pipe",
+        "-threads",
+        "2",
+        "-i",
+        input,
+        "-vf",
+        `trim=duration=${sourceSeconds},${smooth ? "settb=AVTB," : ""}setpts=PTS-STARTPTS,setpts='${normalizedSeconds}*(${t}-${ramp}*sin(2*PI*${t})/(2*PI))/TB',${sampling},scale=1280:720:force_original_aspect_ratio=decrease:flags=lanczos,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x111916,setsar=1,format=yuv420p`,
+        "-frames:v",
+        String(frames),
+        "-an",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-maxrate",
+        "4M",
+        "-bufsize",
+        "8M",
+        "-threads",
+        "2",
+        "-video_track_timescale",
+        "15360",
+        "-movflags",
+        "+faststart",
+        output,
+      ],
+      smooth ? 90000 : 60000,
+    );
     // A truncated provider clip must not be silently padded into a static shot.
     await verifyFilmFrames(output, frames);
     return await readFile(output);
@@ -495,8 +516,8 @@ export async function normalizeGeneratedClip(
     await rm(directory, { recursive: true, force: true });
   }
 }
-async function verifyFilmFrames(path: string, expected: number) {
-  const count = await new Promise<number>((resolve, reject) => {
+async function filmFrameStats(path: string) {
+  return new Promise<{ frames: number; seconds: number }>((resolve, reject) => {
     const child = spawn(
       /* turbopackIgnore: true */ filmBinary(),
       [
@@ -533,12 +554,19 @@ async function verifyFilmFrames(path: string, expected: number) {
     child.once("exit", (code) => {
       clearTimeout(timer);
       const frames = [...output.matchAll(/^frame=(\d+)$/gm)];
-      if (code !== 0 || !frames.length)
+      const times = [...output.matchAll(/^out_time_us=(\d+)$/gm)];
+      if (code !== 0 || !frames.length || !times.length)
         reject(new Error("Film validation failed."));
-      else resolve(Number(frames.at(-1)![1]));
+      else
+        resolve({
+          frames: Number(frames.at(-1)![1]),
+          seconds: Number(times.at(-1)![1]) / 1e6,
+        });
     });
   });
-  if (count !== expected)
+}
+async function verifyFilmFrames(path: string, expected: number) {
+  if ((await filmFrameStats(path)).frames !== expected)
     throw new Error(
       "The provider clip is shorter than the configured scene duration.",
     );

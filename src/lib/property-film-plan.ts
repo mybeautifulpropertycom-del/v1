@@ -32,6 +32,7 @@ export type FilmShot = PhotoAnalysis & {
   motion: "push" | "pull" | "glide-left" | "glide-right" | "aerial-glide";
 };
 export type FilmPlan = {
+  renderVersion?: "smooth-v1";
   style?: "cinematic-walkthrough-v3";
   timing?: "variable-v1";
   generationBudget?: FilmBudget;
@@ -58,6 +59,7 @@ export function directCinematicWalkthrough(plan: FilmPlan): FilmPlan {
   return {
     ...plan,
     style: "cinematic-walkthrough-v3",
+    renderVersion: "smooth-v1",
     music: "modern-instrumental-v3",
     shots: plan.shots.map((shot, index) => ({
       ...shot,
@@ -194,6 +196,9 @@ export function validateFilmPlan(value: unknown): FilmPlan {
     ![1, 2].includes(plan.version) ||
     !["photo-montage-v1", "higgsfield-montage-v1"].includes(plan.engine) ||
     plan.secondsPerShot !== SHOT_SECONDS ||
+    (plan.renderVersion !== undefined &&
+      (plan.renderVersion !== "smooth-v1" ||
+        plan.style !== "cinematic-walkthrough-v3")) ||
     (plan.style !== undefined &&
       (plan.style !== "cinematic-walkthrough-v3" ||
         plan.timing !== "variable-v1" ||

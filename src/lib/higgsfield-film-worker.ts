@@ -415,6 +415,7 @@ export async function runHiggsfieldFilm(
         Number(scene.model_input.duration),
         shot.seconds,
         plan.style,
+        plan.renderVersion,
       );
       stage = "scene_storage";
       await storeClip(admin, job, index, "raw", clip);

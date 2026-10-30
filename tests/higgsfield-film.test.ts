@@ -120,9 +120,11 @@ beforeEach(() => {
     seconds,
     targetSeconds,
     style,
+    renderVersion,
   ) => {
     assert.equal(bytes.toString(), "provider-motion");
     assert.equal(style, job.montage_plan.style);
+    assert.equal(renderVersion, job.montage_plan.renderVersion);
     if (job.model_config.profile.provider === "byteplus") {
       assert.equal(
         targetSeconds,
@@ -608,6 +610,7 @@ test("resuming a previously planned BytePlus film keeps its original creative di
   assert.equal(job.montage_plan.style, "cinematic-walkthrough-v3");
   // A legacy saved plan predates the creative-style field.
   delete job.montage_plan.style;
+  delete job.montage_plan.renderVersion;
   job.montage_plan.music = "modern-instrumental-v2";
   for (const shot of job.montage_plan.shots) {
     delete shot.camera;

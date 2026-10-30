@@ -56,6 +56,13 @@ test("new direction preserves photos and timing, reserves FPV for principal view
   const directed = directCinematicWalkthrough(old);
   assert.equal(validateFilmPlan(directed), directed);
   assert.equal(old.style, undefined);
+  assert.equal(old.renderVersion, undefined);
+  assert.equal(directed.renderVersion, "smooth-v1");
+  assert.throws(() =>
+    validateFilmPlan({ ...directed, renderVersion: "unknown" }),
+  );
+  const previousCinematic = { ...directed, renderVersion: undefined };
+  assert.equal(validateFilmPlan(previousCinematic), previousCinematic);
   assert.equal(directed.shots[0].camera, "wide-push");
   assert.equal(directed.shots.at(-1)?.camera, "fpv-glide");
   assert.equal(directed.shots.at(-1)?.aerial, true);
