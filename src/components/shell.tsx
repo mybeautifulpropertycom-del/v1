@@ -13,6 +13,7 @@ import {
   Inbox,
   LayoutTemplate,
   LogOut,
+  Mail,
   Menu,
   Plus,
   ShieldCheck,
@@ -261,14 +262,23 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </p>
               </li>
             </ol>
-            <Link
-              href="/dashboard/properties/new"
-              className="button primary"
-              onClick={() => setHelp(false)}
-            >
-              <Plus size={16} />
-              Add a property
-            </Link>
+            <div className="help-actions">
+              <Link
+                href="/dashboard/properties/new"
+                className="button primary"
+                onClick={() => setHelp(false)}
+              >
+                <Plus size={16} />
+                Add a property
+              </Link>
+              <a
+                href="mailto:contact@mybeautifulproperty.com"
+                className="button secondary"
+              >
+                <Mail size={17} />
+                Contact us
+              </a>
+            </div>
           </section>
         </div>
       )}

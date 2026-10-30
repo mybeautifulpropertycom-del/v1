@@ -563,32 +563,6 @@ label small {
 .page-heading > .button {
   margin-top: 44px;
 }
-.properties-heading {
-  flex-wrap: wrap;
-}
-.properties-heading-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 44px;
-}
-@media (max-width: 1100px) {
-  .properties-heading-actions {
-    margin-top: 0;
-  }
-}
-@media (max-width: 480px) {
-  .properties-heading-actions {
-    margin-top: 22px;
-    gap: 8px;
-  }
-  .properties-heading-actions .button {
-    padding: 10px 12px;
-    min-height: 44px;
-    font-size: 11px;
-    gap: 6px;
-  }
-}
 .page-heading .eyebrow {
   font-size: 8px;
   letter-spacing: 1.9px;
@@ -2263,6 +2237,28 @@ label small {
   color: #9aa58a;
   line-height: 1.8;
   margin-top: 4px;
+}
+.help-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .help-actions {
+    gap: 8px;
+  }
+  .help-actions .button {
+    padding: 10px 8px;
+    min-height: 44px;
+    font-size: 10px;
+    gap: 5px;
+  }
+  .help-actions .button svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
 }
 .sidebar-overlay {
   display: none;
