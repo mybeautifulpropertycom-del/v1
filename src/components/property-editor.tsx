@@ -789,12 +789,6 @@ export function PropertyEditor({
             />
             <h3>{property.title || "Your next beautiful property"}</h3>
             <p>{property.location || "Somewhere worth calling home"}</p>
-            {property.status === "draft" && (
-              <small>
-                Unpublished, unpaid drafts are automatically deleted after 14
-                days, including their photos.
-              </small>
-            )}
             <div className="editor-site-link">
               <Globe2 size={14} />
               <span>

@@ -563,6 +563,32 @@ label small {
 .page-heading > .button {
   margin-top: 44px;
 }
+.properties-heading {
+  flex-wrap: wrap;
+}
+.properties-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 44px;
+}
+@media (max-width: 1100px) {
+  .properties-heading-actions {
+    margin-top: 0;
+  }
+}
+@media (max-width: 480px) {
+  .properties-heading-actions {
+    margin-top: 22px;
+    gap: 8px;
+  }
+  .properties-heading-actions .button {
+    padding: 10px 12px;
+    min-height: 44px;
+    font-size: 11px;
+    gap: 6px;
+  }
+}
 .page-heading .eyebrow {
   font-size: 8px;
   letter-spacing: 1.9px;

@@ -14,6 +14,7 @@ import {
   ImagePlus,
   LayoutGrid,
   List,
+  Mail,
   MapPin,
   Plus,
   Search,
@@ -161,7 +162,7 @@ export function Dashboard() {
   const complete = profileErrors(profile).length === 0;
   return (
     <>
-      <div className="page-heading">
+      <div className="page-heading properties-heading">
         <div>
           <span className="eyebrow">
             <span className="tiny-sun">✳</span> YOUR NEXT CHAPTER STARTS HERE
@@ -176,13 +177,22 @@ export function Dashboard() {
             someone’s next home stand out.
           </p>
         </div>
-        <Link
-          href={complete ? "/dashboard/properties/new" : "/dashboard/profile"}
-          className="button primary"
-        >
-          <Plus size={18} />
-          Add a property
-        </Link>
+        <div className="properties-heading-actions">
+          <Link
+            href={complete ? "/dashboard/properties/new" : "/dashboard/profile"}
+            className="button primary"
+          >
+            <Plus size={18} />
+            Add a property
+          </Link>
+          <a
+            href="mailto:contact@mybeautifulproperty.com"
+            className="button secondary"
+          >
+            <Mail size={17} />
+            Contact us
+          </a>
+        </div>
       </div>
       {!complete && (
         <Link href="/dashboard/profile" className="onboarding-callout">
