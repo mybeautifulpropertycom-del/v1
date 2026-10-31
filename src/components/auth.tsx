@@ -103,13 +103,13 @@ export function Auth({
         </Link>
         <div>
           <h1>
-            Great properties.
+            Sell your property 10x faster
             <br />
-            <em>Beautiful beginnings.</em>
+            <em>using the new app.</em>
           </h1>
           <p>
-            A thoughtful home for your listings. Create beautiful property
-            websites that make the right first impression.
+            Create beautiful property funnels and walkthrough videos that make
+            the right first impression.
           </p>
         </div>
         <span className="eyebrow">
