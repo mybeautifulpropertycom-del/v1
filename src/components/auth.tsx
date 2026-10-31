@@ -102,11 +102,7 @@ export function Auth({
           <Brand light />
         </Link>
         <div>
-          <h1>
-            Sell your property 10x faster
-            <br />
-            <em>using the new app.</em>
-          </h1>
+          <h1>Sell your property 10x faster using our new software.</h1>
           <p>
             Create beautiful property funnels and walkthrough videos that make
             the right first impression.
