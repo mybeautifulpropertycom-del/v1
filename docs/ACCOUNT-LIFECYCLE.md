@@ -26,7 +26,7 @@ This restricts the product's download feature; it is not DRM. Public playback st
 
 ## First profile completion
 
-The database records the first valid profile completion once. Existing complete profiles are backfilled. On the first successful completion in My profile, the app shows its success message and navigates to My properties after three seconds. Later edits and failed saves remain on the profile page; navigating away cancels the timer.
+The database records the first valid profile completion once. Existing complete profiles are backfilled. On the first successful completion in My profile, the app shows its normal saved confirmation and navigates to My properties after three seconds, without a redirect or countdown message. Later edits and failed saves remain on the profile page; navigating away cancels the timer.
 
 ## Verification
 

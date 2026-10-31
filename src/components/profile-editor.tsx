@@ -219,11 +219,6 @@ export function ProfileEditor() {
               {busy ? en.common.saving : en.common.save}
             </button>
           </div>
-          {redirecting && (
-            <p role="status">
-              Your profile is saved. Taking you to My properties in 3 seconds…
-            </p>
-          )}
           {saved && !redirecting && (
             <Link className="success-next" href="/dashboard/properties/new">
               Your profile is ready. Add your first property{" "}

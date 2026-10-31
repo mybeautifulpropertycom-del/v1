@@ -25,11 +25,12 @@ test("first successful profile completion confirms save then redirects once, lat
     .getByLabel("Phone number", { exact: true })
     .fill("+1 555 123 4567");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("saved");
   await expect(
     page.getByText("Taking you to My properties in 3 seconds…", {
       exact: false,
     }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 6000 });
   await page.goto("/dashboard/profile");
   await page
