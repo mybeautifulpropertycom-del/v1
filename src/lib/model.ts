@@ -24,7 +24,7 @@ export type Property = {
   price: number;
   currency: "USD" | "EUR" | "RON";
   transaction: "sale" | "rent";
-  type: "Condo" | "House" | "Penthouse" | "Land";
+  type: "Condo" | "House" | "Town House" | "Penthouse" | "Land";
   area: number;
   area_unit: "sqft" | "sqm";
   bedrooms: number;

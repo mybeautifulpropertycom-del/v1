@@ -311,7 +311,7 @@ export function Dashboard() {
               Property type
               <select value={type} onChange={(e) => setType(e.target.value)}>
                 <option value="all">All types</option>
-                {["Condo", "House", "Penthouse"].map((t) => (
+                {["Condo", "House", "Town House", "Penthouse"].map((t) => (
                   <option key={t}>{t}</option>
                 ))}
               </select>

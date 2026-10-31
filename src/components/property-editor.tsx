@@ -277,7 +277,6 @@ export function PropertyEditor({
       "Outdoor terrace",
       "Outdoor Kitchen",
       "Two-car garage",
-      "Central air",
       "Central Heating",
       "Solar Panels",
       "Island Kitchen",
@@ -418,7 +417,7 @@ export function PropertyEditor({
                         update("type", e.target.value as Property["type"])
                       }
                     >
-                      {["House", "Condo", "Penthouse"].map((v) => (
+                      {["House", "Town House", "Condo", "Penthouse"].map((v) => (
                         <option key={v}>{v}</option>
                       ))}
                     </select>

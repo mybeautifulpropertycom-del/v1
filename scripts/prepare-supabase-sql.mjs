@@ -30,6 +30,20 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const townHouse = await readFile(
+  new URL("202610310001_town_house.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-town-house.sql", import.meta.url),
+  `-- Existing installations: adds Town House without changing saved properties.
+begin;
+${townHouse.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_TOWN_HOUSE_READY' as status;
+`,
+);
 const platformAdmin = await readFile(
   new URL("202610260003_platform_admin.sql", directory),
   "utf8",
