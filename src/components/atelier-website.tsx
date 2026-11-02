@@ -591,8 +591,7 @@ export function AtelierWebsite({
             </button>
             <small>
               By sending, you agree to be contacted by{" "}
-              {profile.name || "the agent"} about this property. Your details
-              are stored in their private inbox.
+              {profile.name || "the agent"} about this property.
             </small>
             {(preview || sample) && (
               <small className="preview-form-note">

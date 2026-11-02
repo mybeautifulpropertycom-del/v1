@@ -755,8 +755,7 @@ export function EditorialWebsite({
             </button>
             <small>
               By sending, you agree to be contacted by{" "}
-              {profile.name || "the agent"} about this property. Your details
-              are stored in their private inbox.
+              {profile.name || "the agent"} about this property.
             </small>
             {isPreview && (
               <small>Preview only. This form does not send messages.</small>

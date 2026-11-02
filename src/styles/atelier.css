@@ -736,9 +736,15 @@
 .atelier-contact .landing-inquiry textarea {
   padding-inline: 20px;
   background: #fafbf6;
+  color: #292e29;
   border-color: #d7dbcd;
   border-radius: 1px;
   font-size: 12px;
+}
+.atelier-contact .landing-inquiry input::placeholder,
+.atelier-contact .landing-inquiry textarea::placeholder {
+  color: #50564b;
+  opacity: 1;
 }
 .atelier-contact .landing-inquiry .landing-button {
   background: #292e29;
