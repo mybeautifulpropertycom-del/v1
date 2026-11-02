@@ -9,11 +9,11 @@ import { htmlLanguage } from "@/i18n/config";
 
 export const metadata: Metadata = {
   title: {
-    default: "My Beautiful Property — A beautiful first impression",
+    default: "My Beautiful Property - Sell Your Property 10x Faster",
     template: "%s | My Beautiful Property",
   },
   description:
-    "Beautiful property websites, your personal brand, and every listing in one thoughtfully designed workspace.",
+    "Sell your property 10x faster using My Beautiful Property app. Add your details, property information and the images. Our app make the rest.",
 };
 
 export default function RootLayout({
