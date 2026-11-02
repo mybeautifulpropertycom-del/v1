@@ -1,5 +1,6 @@
 "use client";
 import { PropertyImage } from "./property-image";
+import { PriceInput } from "./price-input";
 import { MAX_PROPERTY_PHOTOS } from "@/lib/photo-limits";
 import { AgentAvatar } from "./agent-avatar";
 
@@ -417,9 +418,11 @@ export function PropertyEditor({
                         update("type", e.target.value as Property["type"])
                       }
                     >
-                      {["House", "Town House", "Condo", "Penthouse"].map((v) => (
-                        <option key={v}>{v}</option>
-                      ))}
+                      {["House", "Town House", "Condo", "Penthouse"].map(
+                        (v) => (
+                          <option key={v}>{v}</option>
+                        ),
+                      )}
                     </select>
                   </label>
                   <label>
@@ -439,13 +442,10 @@ export function PropertyEditor({
                   </label>
                   <label>
                     Price
-                    <input
-                      type="number"
-                      min="0"
-                      max="999999999999"
-                      value={property.price || ""}
-                      placeholder="1250000"
-                      onChange={(e) => update("price", Number(e.target.value))}
+                    <PriceInput
+                      value={property.price}
+                      currency={property.currency}
+                      onChange={(value) => update("price", value)}
                     />
                   </label>
                   <label>
@@ -460,8 +460,11 @@ export function PropertyEditor({
                       }
                     >
                       <option value="USD">USD — US Dollar</option>
-                      <option value="EUR">EUR — Euro</option>
-                      <option value="RON">RON — Romanian Leu</option>
+                      {property.currency !== "USD" && (
+                        <option value={property.currency} disabled>
+                          {property.currency} — saved currency
+                        </option>
+                      )}
                     </select>
                   </label>
                   <label>
