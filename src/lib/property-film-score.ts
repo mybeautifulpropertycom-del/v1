@@ -3,9 +3,15 @@ import {
   SHOT_SECONDS,
   type FilmPlan,
 } from "./property-film-plan";
+import {
+  soundtrackArrangement,
+  validateFilmSoundtrack,
+  type FilmSoundtrack,
+} from "./film-soundtrack";
 
-/** Original modern instrumental arrangement, synthesized without third-party
- * recordings/samples. Legacy score: 141.176 BPM; cinematic v3: 120 BPM. Stereo keys, bass,
+/** Original instrumental arrangements, synthesized without third-party
+ * recordings/samples. New descriptors vary the composition and scene energy.
+ * Without a descriptor, preserve the legacy score: 141.176 BPM; cinematic v3: 120 BPM. Stereo keys, bass,
  * four-on-the-floor drums and syncopated accents. No voice or reference audio.
  * This is a proposed house soundtrack, not a claim of a licensed studio track.
  */
@@ -13,6 +19,7 @@ export function originalFilmScore(
   shots: number,
   durations?: number[],
   style?: FilmPlan["style"],
+  soundtrack?: FilmSoundtrack,
 ): Buffer {
   const cinematic = style === "cinematic-walkthrough-v3";
   if (!Number.isInteger(shots) || shots < 1 || shots > MAX_FILM_SHOTS)
@@ -31,20 +38,34 @@ export function originalFilmScore(
       : shots * SHOT_SECONDS,
     count = Math.round(duration * rate);
   if (duration > 80) throw new Error("Invalid score duration.");
+  const arrangement = soundtrack
+    ? soundtrackArrangement(validateFilmSoundtrack(soundtrack, shots))
+    : undefined;
+  const boundaries: number[] = [];
+  let elapsed = 0;
+  for (const seconds of durations || Array(shots).fill(SHOT_SECONDS)) {
+    elapsed += seconds;
+    boundaries.push(elapsed);
+  }
   const left = new Float32Array(count),
     right = new Float32Array(count);
-  // 120 BPM puts every integer-length 2–5s shot boundary on a beat.
-  const barSeconds = cinematic ? 4 : SHOT_SECONDS;
+  // Legacy cinematic plans stay at 120 BPM. New compositions keep a continuous
+  // context-selected tempo, with separate accents at the actual scene cuts.
+  const barSeconds = arrangement
+    ? (8 * 60) / arrangement.tempo
+    : cinematic
+      ? 4
+      : SHOT_SECONDS;
   const beat = barSeconds / 8,
     tau = 2 * Math.PI;
-  const chords = [
+  const chords = arrangement?.chords || [
     [57, 60, 64, 67],
     [53, 57, 60, 64],
     [55, 60, 64, 71],
     [55, 59, 62, 67],
   ];
-  const roots = [33, 29, 36, 31];
-  let seed = 419;
+  const roots = arrangement?.roots || [33, 29, 36, 31];
+  let seed = soundtrack ? parseInt(soundtrack.seed.slice(-8), 16) || 419 : 419;
   const noise = () => {
     seed ^= seed << 13;
     seed ^= seed >>> 17;
@@ -58,6 +79,10 @@ export function originalFilmScore(
     pan: number,
     sample: (t: number) => number,
   ) {
+    if (soundtrack) {
+      const scene = boundaries.findIndex((end) => start < end);
+      amplitude *= soundtrack.sceneEnergy[scene < 0 ? shots - 1 : scene];
+    }
     const begin = Math.round(start * rate),
       end = Math.min(count, begin + Math.ceil(length * rate));
     const l = Math.sqrt((1 - pan) / 2),
@@ -76,33 +101,44 @@ export function originalFilmScore(
       root = roots[bar % 4],
       start = bar * barSeconds;
     // Warm struck keys with restrained FM overtones and an answering motif.
-    for (let hit = 0; hit < 4; hit++)
+    const chordHits = soundtrack && soundtrack.mood !== "bright" ? 2 : 4;
+    for (let hit = 0; hit < chordHits; hit++)
       for (let n = 0; n < chord.length; n++) {
         const f = frequency(chord[n]);
         voice(
-          start + hit * beat * 2 + n * 0.008,
-          1.35,
+          start + hit * beat * (8 / chordHits) + n * 0.008,
+          arrangement ? Math.min(2, beat * 3) : 1.35,
           cinematic ? 0.045 : 0.055,
           (n - 1.5) * 0.32,
           (t) =>
             Math.sin(
               tau * f * t +
-                (cinematic ? 0.55 : 1.1) *
+                (arrangement?.timbre ?? (cinematic ? 0.55 : 1.1)) *
                   Math.exp(-5 * t) *
                   Math.sin(tau * f * 2 * t),
             ) * Math.exp(-2.5 * t),
         );
       }
     for (let step = 0; step < 8; step++) {
-      const f = frequency(chord[[0, 2, 1, 3, 2, 1, 3, 2][step]] + 12);
+      const phraseStep = (bar % 2) * 8 + step;
+      if (arrangement?.rests[phraseStep]) continue;
+      const f = frequency(
+        chord[
+          arrangement
+            ? arrangement.motif[phraseStep]
+            : [0, 2, 1, 3, 2, 1, 3, 2][step]
+        ] + 12,
+      );
       voice(
-        start + (step + 0.5) * beat,
-        0.6,
+        start + (step + (arrangement?.syncopation ?? 0.5)) * beat,
+        arrangement ? beat * 1.25 : 0.6,
         (step % 2 ? 0.019 : 0.026) * (cinematic ? 0.75 : 1),
         step % 2 ? 0.45 : -0.45,
         (t) =>
           (Math.sin(tau * f * t) + 0.18 * Math.sin(tau * f * 3 * t)) *
-          Math.exp(-7 * t),
+          Math.exp(
+            -(arrangement && soundtrack?.mood !== "bright" ? 4.5 : 7) * t,
+          ),
       );
     }
     for (let b = 0; b < 8; b++) {
@@ -110,7 +146,9 @@ export function originalFilmScore(
       voice(
         at,
         0.32,
-        cinematic ? 0.33 : 0.43,
+        (cinematic ? 0.33 : 0.43) *
+          (arrangement?.percussion ?? 1) *
+          (soundtrack && soundtrack.mood !== "bright" && b % 2 ? 0 : 1),
         0,
         (t) =>
           Math.sin(tau * (48 * t + 2.7 * (1 - Math.exp(-32 * t)))) *
@@ -130,24 +168,32 @@ export function originalFilmScore(
       );
       if (b % 2 === 1) {
         let previous = 0;
-        voice(at, 0.19, cinematic ? 0.075 : 0.105, 0.04, (t) => {
-          const white = noise(),
-            high = white - previous;
-          previous = white;
-          const burst =
-            Math.exp(-t * 26) +
-            0.35 * Math.exp(-Math.pow((t - 0.018) / 0.006, 2));
-          return (
-            high * burst + 0.13 * Math.sin(tau * 185 * t) * Math.exp(-22 * t)
-          );
-        });
+        voice(
+          at,
+          0.19,
+          (cinematic ? 0.075 : 0.105) * (arrangement?.percussion ?? 1),
+          0.04,
+          (t) => {
+            const white = noise(),
+              high = white - previous;
+            previous = white;
+            const burst =
+              Math.exp(-t * 26) +
+              0.35 * Math.exp(-Math.pow((t - 0.018) / 0.006, 2));
+            return (
+              high * burst + 0.13 * Math.sin(tau * 185 * t) * Math.exp(-22 * t)
+            );
+          },
+        );
       }
       for (let half = 0; half < 2; half++) {
         let previous = 0;
         voice(
           at + (half * beat) / 2,
           half ? 0.13 : 0.07,
-          (half ? 0.023 : 0.015) * (cinematic ? 0.7 : 1),
+          (half ? 0.023 : 0.015) *
+            (cinematic ? 0.7 : 1) *
+            (arrangement?.percussion ?? 1),
           half ? 0.38 : -0.3,
           (t) => {
             const white = noise(),
@@ -172,7 +218,7 @@ export function originalFilmScore(
       });
     }
   }
-  // Keep the same continuous melody and tempo. Subtle percussion accents
+  // Keep each film's continuous melody and tempo. Subtle percussion accents
   // follow variable scene boundaries without restarting the score at each cut.
   if (durations) {
     let cut = 0;

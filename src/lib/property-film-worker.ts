@@ -1,6 +1,7 @@
 import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
+import { planFilmSoundtrack } from "./film-soundtrack";
 import { analyzeFilmPhotos } from "./property-film-analysis";
 import {
   makeFilmPlan,
@@ -141,6 +142,10 @@ export async function runPropertyFilm(
       stage = "photo_ordering";
       const analysis = await filmDependencies.analyzeFilmPhotos(images);
       const plan = makeFilmPlan(images, analysis, fingerprints);
+      plan.soundtrack = planFilmSoundtrack(
+        plan,
+        job.montage_generation || job.order_id,
+      );
       return (await checkpoint(admin, job, { p_plan: plan }))
         ? "film_planned"
         : "revoked";
@@ -199,7 +204,13 @@ export async function runPropertyFilm(
       segments.push(...batch);
     }
     stage = "film_assembly";
-    const film = await filmDependencies.assembleFilm(segments, plan.version);
+    const film = await filmDependencies.assembleFilm(
+      segments,
+      plan.version,
+      undefined,
+      plan.style,
+      plan.soundtrack,
+    );
     // Content-addressed public name prevents a stale/refunded worker from
     // overwriting a different completed film at the same object path.
     const digest = createHash("sha256").update(film).digest("hex").slice(0, 24);

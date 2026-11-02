@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
+import { planFilmSoundtrack } from "./film-soundtrack";
 import {
   AuthenticationError,
   BadInputError,
@@ -218,6 +219,7 @@ export async function runHiggsfieldFilm(
         plan.generationBudget = budgetForPlan(plan, profile);
         plan = directCinematicWalkthrough(plan);
       }
+      plan.soundtrack = planFilmSoundtrack(plan, job.montage_generation);
       for (const shot of plan.shots) sceneGenerationInput(profile, shot);
       stage = "plan_storage";
       return (await checkpoint(admin, job, { p_plan: plan }))
@@ -462,6 +464,7 @@ export async function runHiggsfieldFilm(
         ? plan.shots.map((shot) => shot.seconds!)
         : undefined,
       plan.style,
+      plan.soundtrack,
     );
     const digest = createHash("sha256").update(film).digest("hex").slice(0, 24);
     const publicPath = `${job.owner_id}/${order}/higgsfield-${job.montage_generation}-${digest}.mp4`;

@@ -1,5 +1,6 @@
 import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 import type { FilmBudget } from "./byteplus-budget";
+import { validateFilmSoundtrack, type FilmSoundtrack } from "./film-soundtrack";
 // Shared ordering and timing for original-photo and Higgsfield presentation films.
 export const SHOT_SECONDS = 3.4;
 export const FILM_FPS = 30;
@@ -32,6 +33,7 @@ export type FilmShot = PhotoAnalysis & {
   motion: "push" | "pull" | "glide-left" | "glide-right" | "aerial-glide";
 };
 export type FilmPlan = {
+  soundtrack?: FilmSoundtrack;
   renderVersion?: "smooth-v1";
   style?: "cinematic-walkthrough-v3";
   timing?: "variable-v1";
@@ -224,6 +226,10 @@ export function validateFilmPlan(value: unknown): FilmPlan {
   )
     throw new Error("Invalid film plan.");
   const seen = new Set<string>();
+  if (plan.soundtrack !== undefined) {
+    if (plan.version !== 2) throw new Error("Invalid film soundtrack version.");
+    validateFilmSoundtrack(plan.soundtrack, plan.shots.length);
+  }
   for (const shot of plan.shots) {
     if (
       typeof shot.image !== "string" ||

@@ -74,8 +74,15 @@ beforeEach(() => {
     rendered++;
     return Buffer.from("segment");
   };
-  filmDependencies.assembleFilm = async (segments) => {
+  filmDependencies.assembleFilm = async (
+    segments,
+    _version,
+    _durations,
+    _style,
+    soundtrack,
+  ) => {
     assembled++;
+    assert.deepEqual(soundtrack, job.montage_plan?.soundtrack);
     assert.equal(segments.length, 2);
     return Buffer.from("complete-film");
   };
@@ -181,6 +188,7 @@ test("rebuilding isolates private scene files and preserves pinned legacy render
     ...job.montage_plan!,
     version: 1,
     music: "original-instrumental-v1",
+    soundtrack: undefined,
   };
   await runPropertyFilm(admin, "order");
   assert.equal(

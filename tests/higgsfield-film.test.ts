@@ -149,8 +149,10 @@ beforeEach(() => {
     version,
     _durations,
     style,
+    soundtrack,
   ) => {
     assert.equal(style, job.montage_plan.style);
+    assert.deepEqual(soundtrack, job.montage_plan.soundtrack);
     assert.equal(clips.length, 2);
     assert.equal(version, 2);
     return Buffer.from("finished-film");
@@ -611,6 +613,7 @@ test("resuming a previously planned BytePlus film keeps its original creative di
   // A legacy saved plan predates the creative-style field.
   delete job.montage_plan.style;
   delete job.montage_plan.renderVersion;
+  delete job.montage_plan.soundtrack;
   job.montage_plan.music = "modern-instrumental-v2";
   for (const shot of job.montage_plan.shots) {
     delete shot.camera;
@@ -618,5 +621,24 @@ test("resuming a previously planned BytePlus film keeps its original creative di
   }
   assert.equal(await runHiggsfieldFilm(admin, order), "generating");
   assert.equal(job.montage_plan.style, undefined);
+  assert.equal(job.montage_plan.soundtrack, undefined);
   assert.doesNotMatch(JSON.stringify(submissions[0]), /Wide push|FPV-inspired/);
+});
+
+test("new BytePlus generations pin different music before purchasing scenes and preserve it on resume", async () => {
+  useBytePlus();
+  await runHiggsfieldFilm(admin, order);
+  const first = structuredClone(job.montage_plan.soundtrack);
+  assert.equal(first.version, "property-score-v1");
+  assert.equal(first.sceneEnergy.length, job.montage_plan.shots.length);
+  assert.equal(submissions.length, 0);
+  job.montage_plan = null;
+  job.montage_generation = "new-generation";
+  await runHiggsfieldFilm(admin, order);
+  const second = structuredClone(job.montage_plan.soundtrack);
+  assert.notEqual(first.seed, second.seed);
+  assert.equal(submissions.length, 0);
+  await runHiggsfieldFilm(admin, order);
+  await runHiggsfieldFilm(admin, order);
+  assert.deepEqual(job.montage_plan.soundtrack, second);
 });

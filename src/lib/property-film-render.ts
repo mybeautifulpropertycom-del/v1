@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { originalFilmScore } from "./property-film-score";
+import type { FilmSoundtrack } from "./film-soundtrack";
 export { originalFilmScore } from "./property-film-score";
 import {
   FILM_FPS,
@@ -361,6 +362,7 @@ export async function assembleFilm(
   version: 1 | 2 = 2,
   durations?: number[],
   style?: FilmPlan["style"],
+  soundtrack?: FilmSoundtrack,
 ): Promise<Buffer> {
   if (!segments.length || segments.length > MAX_FILM_SHOTS)
     throw new Error("Invalid film length.");
@@ -391,7 +393,7 @@ export async function assembleFilm(
       music,
       version === 1
         ? legacyFilmScore(segments.length)
-        : originalFilmScore(segments.length, durations, style),
+        : originalFilmScore(segments.length, durations, style, soundtrack),
     );
     await executeFilmCommand([
       "-protocol_whitelist",

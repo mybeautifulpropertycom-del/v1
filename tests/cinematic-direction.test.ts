@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { planFilmSoundtrack } from "../src/lib/film-soundtrack";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -200,7 +201,16 @@ test(
       const output = join(directory, "film.mp4");
       await writeFile(
         output,
-        await assembleFilm(edited, 2, durations, "cinematic-walkthrough-v3"),
+        await assembleFilm(
+          edited,
+          2,
+          durations,
+          "cinematic-walkthrough-v3",
+          planFilmSoundtrack(
+            { ...plan(), duration: 9, shots: plan().shots.slice(0, 3) },
+            "personalized-mux-test",
+          ),
+        ),
       );
       const streams = JSON.parse(
         execFileSync(
