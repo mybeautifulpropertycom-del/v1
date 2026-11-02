@@ -530,15 +530,16 @@ export function PropertyEditor({
                     rows={7}
                     maxLength={12000}
                     value={property.description}
-                    placeholder="What makes this home feel special? Tell the story in your own words…"
+                    placeholder="Tell us about the home in your own words: its layout, features, recent updates, and what you want visitors to notice…"
                     onChange={(e) => update("description", e.target.value)}
                   />
                   <small>
                     {property.description.length.toLocaleString("en-US")} /
-                    12,000 characters. Add details you want buyers to know. When
-                    you save, your photos and property details are shared with
-                    our AI writing service to prepare separate website
-                    descriptions. You can edit them directly on your page.
+                    12,000 characters. Your notes guide the writing for each
+                    website section. When you save, our AI writing service uses
+                    these notes, your photos and property details to write
+                    clear, natural text. Your notes stay here; you can edit the
+                    website text directly on your page.
                   </small>
                 </label>
                 <label className="amenity-label">The little extras</label>

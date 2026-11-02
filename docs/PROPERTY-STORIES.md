@@ -5,11 +5,27 @@ before AI is enabled. Its amenity ribbon loops **only the saved amenities** (or
 listing facts when no amenities exist), with no SVG icons. It can be paused and
 becomes a static wrapping list when reduced motion is preferred.
 
-OpenAI analyzes the saved photographs and writes separate English paragraphs for
-positions on the landing page. Each paragraph requests two short sentences. The
-introduction uses the cover photo, the main story uses photo 2 (or the cover), the
-features section uses photo 3 (or the last available photo), and gallery copy uses
-all photographs. Editorial, Heritage and Atelier use independent section text. The page layouts and property facts remain unchanged.
+OpenAI uses the saved **Tell the story** notes as the primary editorial brief and
+writes separate English paragraphs for the landing page. Notes are rewritten and
+distributed across the relevant sections; they are not overwritten or copied into
+every paragraph. Photographs support the story and supply visible details and captions.
+When the notes are blank, generation uses the structured listing facts and photographs.
+Structured facts take precedence over conflicting notes, and embedded instructions
+in notes or images are never treated as writing rules.
+
+The writing direction is natural and specific: everyday words, active verbs, varied
+sentence openings and few adjectives. Headings and accents use concrete ideas rather
+than philosophical slogans, luxury clichés or stacked adjectives. Paragraphs use
+one or two short sentences without padding. This applies to all generated headings,
+introductions, body paragraphs, captions and invitations, and to the bounded length
+repair. There is no extra paid "humanizer" pass. The model's prose should still be
+reviewed for accuracy and taste; automated tests validate the instructions and data flow,
+not a guarantee that every generated sentence will read well.
+
+Section photo mappings remain: introduction/cover, main story/photo 2 (or cover),
+features/photo 3 (or last available), gallery/all photos. These mappings supplement
+the notes rather than overriding them. Editorial, Heritage and Atelier use independent
+section text. The page layouts and property facts remain unchanged.
 
 There is no separate AI card, generation button, or review form. In a connected
 workspace, **Save changes**, **Choose your design**, and **Publish website** prepare
@@ -17,6 +33,10 @@ missing or stale descriptions as part of saving. A valid saved result is reused,
 including after changing only the template. Agent-entered description notes are
 preserved. Generated main text is stored separately in `website_copy.description`;
 only an empty description is initialized from the generated paragraph.
+
+Editing and saving Tell the story invalidates the prior source snapshot and prepares
+fresh text from the new notes. Deploying new writing instructions alone does not
+rewrite existing saved or manually edited sections and does not trigger bulk API calls.
 
 Opening a private preview of a property without current section copy also prepares
 text, displayed directly in the page. This preview result is local until the agent

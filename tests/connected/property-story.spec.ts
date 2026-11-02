@@ -3,6 +3,46 @@ import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
 import { workspace, id } from "./workspace-fixture";
 
+test("Tell the story notes are saved before generation and updated notes refresh the website copy", async ({
+  page,
+}) => {
+  const state = await workspace(page, { template: "panorama" });
+  const notes = [
+    "Kitchen opens onto the courtyard. Roof replaced in 2024.",
+    "Kitchen opens onto the courtyard. Roof replaced in 2025.",
+  ];
+  let requests = 0;
+  await page.route("**/api/property-story", async (route) => {
+    expect(state.property.description).toBe(notes[requests]);
+    const draft = storyFixture(state.property);
+    draft.description = `The kitchen opens onto the courtyard. The roof was replaced in ${requests === 0 ? "2024" : "2025"}.`;
+    draft.content.introBody = "Step from the kitchen into the courtyard.";
+    requests++;
+    await route.fulfill({
+      json: { draft, source: propertyStorySource(state.property) },
+    });
+  });
+  for (let i = 0; i < notes.length; i++) {
+    await page.goto(`/dashboard/properties/${id}`);
+    await page.getByLabel("Description", { exact: false }).fill(notes[i]);
+    await page
+      .getByRole("button", { name: "Save changes", exact: true })
+      .click();
+    await expect(
+      page.getByText("Your changes are saved.", { exact: true }),
+    ).toBeVisible();
+    expect(state.property.description).toBe(notes[i]);
+    await page.goto(`/preview/${id}`);
+    await expect(page.locator(".atelier-website")).toContainText(
+      `The roof was replaced in ${i === 0 ? "2024" : "2025"}.`,
+    );
+    await expect(page.locator(".atelier-website")).toContainText(
+      "Step from the kitchen into the courtyard.",
+    );
+    expect(requests).toBe(i + 1);
+  }
+});
+
 test("save prepares separate section text, preserves notes, and reuses saved copy", async ({
   page,
 }) => {
