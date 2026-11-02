@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { PropertyWebsite } from "@/components/property-website";
+import { PublicPropertyPage } from "@/components/public-property-page";
 import { publicPath } from "@/lib/model";
 import { getPublished, publishedMetadata } from "@/lib/published-property";
 
@@ -15,7 +15,7 @@ export default async function Page({ params }: Props) {
   // Temporary redirects avoid cached redirect loops if an agent restores an earlier address.
   if (slug !== data.property.address_slug) redirect(publicPath(data.property));
   return (
-    <PropertyWebsite
+    <PublicPropertyPage
       property={data.property}
       profile={data.profile}
       film={data.film ?? undefined}

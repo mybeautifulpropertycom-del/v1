@@ -6,14 +6,15 @@ import "@/styles/atelier.css";
 import "@/styles/footer.css";
 import "@/styles/admin.css";
 import { htmlLanguage } from "@/i18n/config";
+import { HOME_TITLE, HOME_DESCRIPTION, siteOrigin } from "@/lib/seo";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteOrigin()),
   title: {
-    default: "My Beautiful Property - Sell Your Property 10x Faster",
+    default: HOME_TITLE,
     template: "%s | My Beautiful Property",
   },
-  description:
-    "Sell your property 10x faster using My Beautiful Property app. Add your details, property information and the images. Our app make the rest.",
+  description: HOME_DESCRIPTION,
 };
 
 export default function RootLayout({

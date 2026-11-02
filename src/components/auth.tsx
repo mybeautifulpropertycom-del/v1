@@ -10,9 +10,11 @@ import { getSupabase } from "@/lib/supabase";
 export function Auth({
   resetPassword = false,
   initialMode = "login",
+  redirectAuthenticated = false,
 }: {
   resetPassword?: boolean;
   initialMode?: "login" | "signup";
+  redirectAuthenticated?: boolean;
 }) {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [name, setName] = useState("");
@@ -24,6 +26,21 @@ export function Auth({
   const [recoveryReady, setRecoveryReady] = useState(false);
   const router = useRouter();
   const supabase = getSupabase();
+  useEffect(() => {
+    if (!redirectAuthenticated || resetPassword || !supabase) return;
+    let active = true;
+    void supabase.auth
+      .getUser()
+      .then(({ data: { user } }) => {
+        if (active && user) router.replace("/dashboard");
+      })
+      .catch(() => {
+        /* Keep the login form available if the session cannot be checked. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [redirectAuthenticated, resetPassword, router, supabase]);
   useEffect(() => {
     if (!resetPassword || !supabase) return;
     const {

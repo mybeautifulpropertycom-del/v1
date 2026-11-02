@@ -1,5 +1,7 @@
 import { Auth } from "@/components/auth";
-export const metadata = { title: "Welcome home", robots: { index: false } };
+import { homeMetadata } from "@/lib/seo";
+// The same login experience is available at /; consolidate search signals there.
+export const metadata = homeMetadata();
 export default function Page() {
-  return <Auth />;
+  return <Auth redirectAuthenticated />;
 }

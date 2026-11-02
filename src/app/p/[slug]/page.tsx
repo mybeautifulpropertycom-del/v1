@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { PropertyWebsite } from "@/components/property-website";
+import { PublicPropertyPage } from "@/components/public-property-page";
 import { publicPath } from "@/lib/model";
 import { getPublished, publishedMetadata } from "@/lib/published-property";
 
@@ -14,7 +14,7 @@ export default async function Page({ params }: Props) {
   if (data.property.address_slug) redirect(publicPath(data.property));
   // Existing deployments continue to serve their original URLs until the SQL upgrade runs.
   return (
-    <PropertyWebsite
+    <PublicPropertyPage
       property={data.property}
       profile={data.profile}
       film={data.film ?? undefined}

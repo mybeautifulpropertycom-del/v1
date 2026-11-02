@@ -30,6 +30,14 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const publicSitemap = await readFile(
+  new URL("202611020001_public_sitemap.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-public-sitemap.sql", import.meta.url),
+  `-- Existing installations: adds read-only public sitemap discovery. No records are modified.\nbegin;\n${publicSitemap.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_PUBLIC_SITEMAP_READY' as status;\n`,
+);
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",

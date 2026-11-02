@@ -1,7 +1,8 @@
 import { cache } from "react";
 import type { Metadata } from "next";
 import { serverSupabase } from "./supabase";
-import { publicPath, type PublicProfile, type PublicProperty } from "./model";
+import { type PublicProfile, type PublicProperty } from "./model";
+import { propertyMetadata } from "./seo";
 
 export const getPublished = cache(
   async (
@@ -26,19 +27,5 @@ export const getPublished = cache(
 export async function publishedMetadata(slug: string): Promise<Metadata> {
   const data = await getPublished(slug);
   if (!data) return { title: "Property unavailable", robots: { index: false } };
-  const canonical = new URL(
-    publicPath(data.property),
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.mybeautifulproperty.com",
-  ).href;
-  return {
-    title: `${data.property.title} · ${data.property.location}`,
-    description: data.property.description.slice(0, 155),
-    alternates: { canonical },
-    openGraph: {
-      url: canonical,
-      title: data.property.title,
-      description: data.property.description.slice(0, 155),
-      images: data.property.images.slice(0, 1),
-    },
-  };
+  return propertyMetadata(data.property);
 }

@@ -72,6 +72,8 @@ Add `mybeautifulproperty.com` in the host’s domain settings and enter the exac
 
 No deployment or DNS modification has been performed. Publishing a Codex development-environment snapshot is separate from deploying this website.
 
+SEO and Google Search Console setup: see [SEO-SEARCH-CONSOLE.md](docs/SEO-SEARCH-CONSOLE.md). The homepage keeps the existing sign-in screen, with public metadata; signed-in visitors continue to the dashboard. Published property metadata and paginated sitemap entries are generated automatically. Existing Supabase projects must apply [the public sitemap update](supabase/sql-editor-public-sitemap.sql) before submitting `/sitemap.xml` in Search Console.
+
 ## Validation
 
 ```bash
