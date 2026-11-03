@@ -15,11 +15,11 @@ export const en = {
     eyebrow: "THE PERSON BEHIND THE PROPERTIES",
     title: "A little more you.",
     intro:
-      "Introduce yourself once. We’ll take care of the introductions on every property website.",
+      "Introduce yourself once. They'll appear on all your property pages.",
     saved: "Your profile is saved. Every property website is up to date.",
     contactTitle: "Let’s make it personal.",
     contactDescription:
-      "These details appear on all three website designs, so potential buyers can reach you directly.",
+      "These details are displayed on every property website, giving buyers a direct way to contact you.",
     name: "Full name",
     agency: "Brokerage / agency",
     email: "Public contact email",
