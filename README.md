@@ -74,6 +74,8 @@ No deployment or DNS modification has been performed. Publishing a Codex develop
 
 SEO and Google Search Console setup: see [SEO-SEARCH-CONSOLE.md](docs/SEO-SEARCH-CONSOLE.md). The homepage keeps the existing sign-in screen, with public metadata; signed-in visitors continue to the dashboard. Published property metadata and paginated sitemap entries are generated automatically. Existing Supabase projects must apply [the public sitemap update](supabase/sql-editor-public-sitemap.sql) before submitting `/sitemap.xml` in Search Console.
 
+Published properties have Facebook, X, LinkedIn, Email and **Save as PDF** actions below **Preview saved website** in the property editor. Sharing uses the saved public URL and title, not unsaved edits. Drafts and local demo listings do not show these controls. Social links open the platform's composer; nothing is posted automatically. The PDF action opens `/p/<stable-slug>/print`, a print-friendly version with property details, section text, photographs and agent contact information. Choose **Print / Save as PDF**, then **Save as PDF** in the browser's print dialog. Interactive forms and video remain on the linked website. Print pages read only published data and are noindex; unpublishing removes access. No new credentials, SQL upgrade or PDF conversion service is required.
+
 ## Validation
 
 ```bash

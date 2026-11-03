@@ -1774,6 +1774,45 @@ label small {
   padding: 8px 15px;
   font-size: 10px;
 }
+.property-sharing {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+.property-sharing h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.property-share-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.property-share-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--white);
+}
+.property-share-links a:hover {
+  background: var(--sage);
+}
+.property-sharing > small {
+  display: block;
+  margin-top: 8px;
+  color: #626a65;
+  font-size: 11px;
+  line-height: 1.5;
+}
 .editor-preview-card {
   padding: 21px;
   background: #fff;

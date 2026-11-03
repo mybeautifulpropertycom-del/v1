@@ -1,6 +1,7 @@
 "use client";
 import { PropertyImage } from "./property-image";
 import { PriceInput } from "./price-input";
+import { PropertySharing } from "./property-sharing";
 import { MAX_PROPERTY_PHOTOS } from "@/lib/photo-limits";
 import { AgentAvatar } from "./agent-avatar";
 
@@ -815,6 +816,9 @@ export function PropertyEditor({
                 <Eye size={15} />
                 Preview saved website
               </Link>
+            )}
+            {!demo && !busy && existing?.status === "published" && (
+              <PropertySharing property={existing} />
             )}
             {dirty && (
               <small className="unsaved-hint">

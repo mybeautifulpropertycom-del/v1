@@ -8,7 +8,8 @@ export default defineConfig({
   testDir: "./tests/connected",
   use: { ...base.use, baseURL: "http://127.0.0.1:3002" },
   webServer: {
-    command: "npm run start -- --port 3002",
+    command:
+      "node --import tsx --import ./tests/fixtures/public-property-server.ts ./node_modules/next/dist/bin/next start --hostname 0.0.0.0 --port 3002",
     url: "http://127.0.0.1:3002",
     reuseExistingServer: false,
     timeout: 30000,
