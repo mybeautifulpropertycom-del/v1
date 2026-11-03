@@ -172,8 +172,8 @@ export function Dashboard() {
             <em>Impossible to overlook.</em>
           </h1>
           <p>
-            Welcome back, {profile.name.split(" ")[0] || "there"}. Let’s make
-            someone’s next home stand out.
+            Welcome back, {profile.name.split(" ")[0] || "there"}. Let's make your
+            next listing unforgettable.
           </p>
         </div>
         <Link
