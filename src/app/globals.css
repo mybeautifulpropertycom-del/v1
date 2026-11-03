@@ -90,6 +90,13 @@ a svg {
 em {
   font-weight: 400;
 }
+.app-shell em,
+.property-website em,
+.atelier-website em,
+.template-miniature em,
+.viewing-dialog em {
+  font-style: normal;
+}
 ::selection {
   background: #ecd5c6;
 }

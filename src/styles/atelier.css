@@ -228,7 +228,7 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  font: italic 23px var(--serif);
+  font: normal 23px var(--serif);
 }
 .atelier-mosaic-side {
   display: grid;
@@ -655,7 +655,7 @@
   padding: 25px;
 }
 .atelier-film-placeholder > span {
-  font: italic clamp(26px, 4vw, 50px) var(--serif);
+  font: normal clamp(26px, 4vw, 50px) var(--serif);
 }
 .atelier-film-placeholder p,
 .atelier-film-placeholder small {
