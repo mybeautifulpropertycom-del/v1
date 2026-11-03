@@ -404,10 +404,10 @@ export function Dashboard() {
           <Video size={21} />
         </span>
         <div>
-          <strong>Your photos. Their next chapter: motion.</strong>
+          <strong>Your photos in motion.</strong>
           <span>
-            Bring your properties to life. View your videos and follow their
-            progress.
+            Bring your properties to life. Transform your photos into a
+            walkthrough video.
           </span>
         </div>
         <Link href="/dashboard/video">
