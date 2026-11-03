@@ -18,15 +18,13 @@ export default function Page() {
         <span className="collection-number">01 — 03</span>
       </div>
       <div className="templates-gallery">
-        {templates.map((t, i) => (
+        {templates.map((t) => (
           <article className="template-gallery-card" key={t.id}>
             <Link href={`/templates/${t.id}`}>
               <TemplateMiniature template={t.id} />
             </Link>
             <div className="template-gallery-copy">
-              <span className="eyebrow">
-                0{i + 1} / {t.tag}
-              </span>
+              <span className="eyebrow">{t.tag}</span>
               <h2>{t.name}</h2>
               <p>{t.description}</p>
               <div>

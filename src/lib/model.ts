@@ -50,7 +50,7 @@ export const templates = [
     name: "The Editorial",
     tag: "WARM & IMMERSIVE",
     description:
-      "Soft sage, cinematic photography, and a personal invitation. A home to fall in love with.",
+      "Cinematic photography, and a personal invitation. A home to fall in love with.",
     color: "#e9eee5",
   },
   {
@@ -58,7 +58,7 @@ export const templates = [
     name: "The Heritage",
     tag: "CHARACTER & CHARM",
     description:
-      "A warm, collected feel. An immersive opening, an album of photographs, and room for a new beginning.",
+      "A warm feel. An immersive opening, an album of photographs, and room for a new beginning.",
     color: "#f5f2e7",
   },
   {
@@ -66,7 +66,7 @@ export const templates = [
     name: "The Atelier",
     tag: "A NEW PERSPECTIVE",
     description:
-      "An opening gallery, sculptural typography, and considered details. An invitation to see things differently.",
+      "An opening gallery and considered details. An invitation to see things differently.",
     color: "#e9e5dc",
   },
 ];
