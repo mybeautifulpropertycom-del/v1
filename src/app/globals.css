@@ -1039,6 +1039,7 @@ label small {
 }
 .design-strip-copy h2 em {
   color: #8d957c;
+  font-style: normal;
 }
 .design-strip-copy p {
   font-size: 9px;
