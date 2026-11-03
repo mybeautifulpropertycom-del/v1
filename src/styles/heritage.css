@@ -384,14 +384,12 @@
   text-align: center;
   gap: 2px;
 }
-.heritage-seal strong {
+.heritage-seal strong,
+.heritage-seal em {
   font-size: 14px;
   font-weight: 400;
+  font-style: normal;
   margin: 0;
-  line-height: 1.25;
-}
-.heritage-seal em {
-  font-size: 18px;
   line-height: 1.25;
 }
 .heritage-story-copy > .heritage-kicker {
