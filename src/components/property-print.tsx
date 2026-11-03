@@ -111,7 +111,12 @@ export function PropertyPrint({
           </div>
         </section>
         <footer className="property-print-contact">
-          <h2>Contact {profile.name || "the agent"}</h2>
+          <h2>Schedule a private tour</h2>
+          {profile.name && (
+            <p>
+              <strong>{profile.name}</strong>
+            </p>
+          )}
           {profile.agency && <p>{profile.agency}</p>}
           {profile.email && (
             <p>
