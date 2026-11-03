@@ -1,6 +1,6 @@
 import { templatePhotos } from "@/lib/template-photos";
 import { PropertyImage } from "./property-image";
-import type { TemplateId } from "@/lib/model";
+import { templates, type TemplateId } from "@/lib/model";
 export function TemplateMiniature({
   template,
   image = templatePhotos[0],
@@ -8,11 +8,12 @@ export function TemplateMiniature({
   template: TemplateId;
   image?: string;
 }) {
+  const templateName = templates.find((t) => t.id === template)!.name;
   if (template === "panorama")
     return (
       <div className="template-miniature miniature-atelier" aria-hidden="true">
         <div className="mini-nav">
-          <span>THE ATELIER ↗</span>
+          <span>{templateName.toUpperCase()} ↗</span>
           <span>MENU +</span>
         </div>
         <div className="mini-atelier-gallery">
@@ -38,7 +39,7 @@ export function TemplateMiniature({
       aria-hidden="true"
     >
       <div className="mini-nav">
-        <span>THE HOME EDIT</span>
+        <span>{templateName.toUpperCase()}</span>
         <span>CONTACT ↗</span>
       </div>
       <div className="mini-content">
