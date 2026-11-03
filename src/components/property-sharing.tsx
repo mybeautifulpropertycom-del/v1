@@ -32,9 +32,6 @@ export function PropertySharing({ property }: { property: Property }) {
       >
         <Printer size={15} /> Save as PDF
       </a>
-      <small>
-        Opens a print-friendly page. Choose “Save as PDF” in the print dialog.
-      </small>
     </section>
   );
 }
