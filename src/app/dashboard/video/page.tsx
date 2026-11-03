@@ -13,8 +13,7 @@ export default function Page() {
             A story worth <em>watching.</em>
           </h1>
           <p>
-            One cinematic walkthrough, included with each property package.
-            Follow your film from your website editor.
+            One cinematic walkthrough video included with every published property.
           </p>
         </div>
       </div>
