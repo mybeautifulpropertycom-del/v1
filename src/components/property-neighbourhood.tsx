@@ -312,8 +312,7 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
           </div>
           <p className="neighbourhood-note">
             Up to {NEARBY_LIMIT} nearby places within approximately 3 miles.{" "}
-            Distances are straight-line estimates, not walking or driving
-            routes.
+            Distances are straight-line estimates.
           </p>
           <div className="neighbourhood-results" aria-busy={busy}>
             {ready && busy && <p role="status">Finding nearby places…</p>}
