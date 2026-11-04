@@ -17,23 +17,22 @@ Search Console verification does not enable these services.
   Existing listings acquire a map only when an
   agent selects their address from the suggestions and saves it; no bulk geocoding.
 - All three property templates show **Explore the neighborhood** before the
-  contact section for selected addresses. No map, Places searches, or photo
-  requests are made merely by loading a property page.
-- Show map fetches the selected place's current coordinates and creates a Google
-  map with the **Your next home** marker. Schools, Childcare, Parks, Shopping and
-  Culture buttons request up to six results within approximately three miles,
-  ordered by distance. A category is requested once per mounted view unless it
-  fails. This is nearby discovery, not an exhaustive list or school zoning advice.
-- Numbered map pins and cards correspond. A card focuses its location. Photos are
-  fetched only with **Show photo**. If Nearby Search omits photo metadata, that
-  click requests Place Details with only the `photos` field before deciding
-  whether a photo exists. This adds a Place Details request only when needed.
-  Missing photos and failed requests have separate states; failures allow an
-  explicit retry. Photo metadata requests are reused within the current view.
-  Photo
-  authors and returned data providers are attributed with their links. Custom
-  "Open in Google Maps" / "View place" links are omitted; cards focus the map
-  within the page. Google's native map attribution is preserved.
+  contact section for selected addresses. The map loads automatically when the
+  section approaches the viewport (200 px margin), with Schools preselected.
+  There is no introductory card or Show map button. Visitors who never approach
+  the section do not trigger its Google requests.
+- The map appears on the left and categories with a compact place list on the
+  right; on narrow screens they stack vertically. The **Your next home** pin
+  marks the property. Schools, Childcare, Restaurants, Parks, Shopping and Culture
+  return up to six places within approximately three miles, ordered by distance.
+  Schools are requested on initialization; other categories are requested on
+  selection. Successful results are reused within the mounted view. This is
+  nearby discovery, not an exhaustive list or school zoning advice.
+- Numbered pins and list entries correspond. Selecting an entry focuses its
+  location within the map. No place photographs, photo metadata, or photo-media
+  requests are used. Returned data providers retain their attribution links.
+  Custom "Open in Google Maps" / "View place" links are omitted; Google's native
+  map attribution is preserved.
 - Miles are straight-line estimates; no routing or travel times are claimed.
 - Editing an address clears the saved place ID in the editor and inline preview.
   A DB trigger also clears stale IDs on direct updates. Deleting/unpublishing a
@@ -71,19 +70,19 @@ Search Console verification does not enable these services.
    service-account credential or a server-only key in a `NEXT_PUBLIC_` variable.
    Keep the switch false until the migration, key restrictions and quotas are ready.
 6. Review the site's privacy notice and Google Maps attribution/terms requirements
-   for the production integration. The page tells visitors when Google is loaded;
-   this implementation does not read visitor geolocation.
+   for the production integration, including automatic map loading near the
+   viewport. This implementation does not read visitor geolocation.
 7. Select a real US address in a test listing and save it. Once published, verify
-   its pin on the public page and check all three templates. Test Nearby Search
-   and an attributed photo using the real
-   configured key, then inspect Cloud usage/billing. Mocked tests cannot establish
-   that the live key, enabled APIs, quotas or photo coverage are correct.
+   its pin on the public page and check all three templates. Test the automatic
+   Schools results and Restaurants filter using the configured key, then inspect
+   Cloud usage/billing. Mocked tests cannot establish that the live key, enabled
+   APIs or quotas are correct.
 
 ## Cost control and data handling
 
 - Billable operations depend on Google's current SKU rules: autocomplete and its
-  terminating Place Details request, place details on opening a map, dynamic map
-  loads, Nearby Search and photo requests. No dollar cost or free allowance is
+  terminating Place Details request, place details when the map section is
+  approached, dynamic map loads and Nearby Search. No dollar cost or free allowance is
   assumed here. Field masks are explicit and never `*`; we omit reviews, ratings,
   opening hours, contact information and route calculations.
 - Configure low API request quotas where the chosen API exposes them, plus billing
@@ -91,14 +90,15 @@ Search Console verification does not enable these services.
   not impose a monthly dollar ceiling. Quotas apply to the Google project, so
   account for other applications sharing it. Browser throttling is a UX measure,
   not a tamper-proof billing limit.
-- No map loads on initial page views, no automatic category searches, no background
-  retries, no panning-triggered Nearby Search, and no preloaded place photographs.
+- Each visit that reaches the map section can incur one map load, one home Place
+  Details request and one Schools Nearby Search. Scrolling away and back does
+  not repeat these requests. There are no automatic retries, panning-triggered
+  searches or photo requests. Other categories load on selection.
   Category results stay only in the current component's memory and are discarded
   on navigation/address changes. A reload/new visitor can incur new requests.
 - Persist only the agent-confirmed listing address and a Google place ID. Do not
   persist Google coordinates, place descriptions, photo URLs, or third-party
   photos in Supabase, IndexedDB, localStorage, a CDN, or the website's AI text.
-  Place photos load directly from Google, not through Next's image optimizer.
 - If Google fails or a quota is exhausted, show a useful message and allow an
   in-page retry. Property text, photos, forms, publication and payment
   flows do not depend on Google being available.

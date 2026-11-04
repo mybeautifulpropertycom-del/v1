@@ -14,6 +14,7 @@ export const nearbyCategories = [
     label: "Childcare",
     types: ["preschool", "child_care_agency"],
   },
+  { id: "restaurants", label: "Restaurants", types: ["restaurant"] },
   { id: "parks", label: "Parks", types: ["park"] },
   {
     id: "shopping",

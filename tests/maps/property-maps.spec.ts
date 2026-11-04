@@ -91,7 +91,7 @@ test("non-US/city selections and stale asynchronous selections never create a pi
 });
 
 for (const template of ["editorial", "minimal", "panorama"]) {
-  test(`${template}: map, places and attributed photos load only on demand`, async ({
+  test(`${template}: map loads near the viewport with Schools selected and a responsive nearby list`, async ({
     page,
   }, testInfo) => {
     await mockGoogleMaps(page);
@@ -101,16 +101,16 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     });
     await expect(section).toBeVisible();
     expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
-    await section
-      .getByRole("button", { name: "Show map", exact: true })
-      .click();
+    await expect(
+      section.getByRole("button", { name: "Show map", exact: true }),
+    ).toHaveCount(0);
+    await section.scrollIntoViewIfNeeded();
     await expect(
       section.getByText("Your next home", { exact: true }),
     ).toBeVisible();
-    expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(
-      0,
-    );
-    await section.getByRole("button", { name: "Schools", exact: true }).click();
+    await expect(
+      section.getByRole("button", { name: "Schools", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
     await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
     const requests = await page.evaluate(() => window.__mapsTest);
     expect(requests.searches).toHaveLength(1);
@@ -127,24 +127,31 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect(
       section.getByRole("link", { name: "View place", exact: true }),
     ).toHaveCount(0);
+    expect(requests.maps).toBe(1);
+    expect(requests.details).toHaveLength(1);
+    expect(requests.searches[0].includedTypes).toEqual([
+      "primary_school",
+      "secondary_school",
+    ]);
+    expect(requests.searches[0].fields).not.toContain("photos");
+    await expect(section.locator(".neighbourhood-cards img")).toHaveCount(0);
+    await expect(
+      section.getByRole("link", { name: "Local data provider" }),
+    ).toHaveCount(2);
+    const mapBox = await section.locator(".neighbourhood-map").boundingBox();
+    const panelBox = await section
+      .locator(".neighbourhood-panel")
+      .boundingBox();
+    expect(mapBox!.x + mapBox!.width).toBeLessThan(panelBox!.x);
     await section
-      .getByRole("button", { name: "Show photo of Nearby Elementary School" })
+      .getByRole("button", { name: "Restaurants", exact: true })
       .click();
     await expect(
-      section.getByRole("img", {
-        name: "Nearby Elementary School",
-        exact: true,
-      }),
+      section.getByRole("button", { name: "1 Nearby Restaurant" }),
     ).toBeVisible();
-    await expect(
-      section.getByRole("link", { name: "Sample photographer" }),
-    ).toBeVisible();
-    expect(await page.evaluate(() => window.__mapsTest.photos)).toBe(1);
     expect(
-      await page.evaluate(() =>
-        window.__mapsTest.details.filter((r) => r.fields.includes("photos")),
-      ),
-    ).toEqual([{ id: "ChIJ-nearby-0", fields: ["photos"] }]);
+      await page.evaluate(() => window.__mapsTest.searches[1].includedTypes),
+    ).toEqual(["restaurant"]);
     await section.locator(".neighbourhood-card-copy > button").first().click();
     await expect(
       section.locator(".neighbourhood-card.is-selected"),
@@ -156,7 +163,14 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await section.getByRole("button", { name: "Schools", exact: true }).click();
     await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
     expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(
-      2,
+      3,
+    );
+    // Leaving and returning to the section must not reload the map or Schools.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await section.scrollIntoViewIfNeeded();
+    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);
+    expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(
+      3,
     );
     await section.screenshot({
       path: testInfo.outputPath("neighbourhood-desktop.png"),
@@ -168,6 +182,11 @@ for (const template of ["editorial", "minimal", "panorama"]) {
         () => document.documentElement.scrollWidth <= window.innerWidth,
       ),
     ).toBe(true);
+    const mobileMap = await section.locator(".neighbourhood-map").boundingBox();
+    const mobilePanel = await section
+      .locator(".neighbourhood-panel")
+      .boundingBox();
+    expect(mobileMap!.y + mobileMap!.height).toBeLessThan(mobilePanel!.y);
     await section.screenshot({
       path: testInfo.outputPath("neighbourhood-mobile.png"),
       animations: "disabled",
@@ -183,11 +202,10 @@ test("quota errors keep the property page usable and let the visitor retry", asy
   const section = page.getByRole("region", {
     name: "Explore the neighborhood.",
   });
-  await section.getByRole("button", { name: "Show map", exact: true }).click();
   await page.evaluate(() => {
     window.__mapsTest.failSearch = true;
   });
-  await section.getByRole("button", { name: "Schools", exact: true }).click();
+  await section.scrollIntoViewIfNeeded();
   await expect(section.getByRole("status")).toContainText(
     "Nearby places could not be loaded",
   );
@@ -197,7 +215,9 @@ test("quota errors keep the property page usable and let the visitor retry", asy
   await page.evaluate(() => {
     window.__mapsTest.failSearch = false;
   });
-  await section.getByRole("button", { name: "Schools", exact: true }).click();
+  await section
+    .getByRole("button", { name: "Retry places", exact: true })
+    .click();
   await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
 });
 
@@ -209,7 +229,7 @@ test("a blocked Google script offers an in-page retry without external navigatio
   const section = page.getByRole("region", {
     name: "Explore the neighborhood.",
   });
-  await section.getByRole("button", { name: "Show map", exact: true }).click();
+  await section.scrollIntoViewIfNeeded();
   await expect(section.getByRole("status")).toContainText(
     "The map is unavailable",
   );
@@ -217,7 +237,7 @@ test("a blocked Google script offers an in-page retry without external navigatio
     section.getByRole("link", { name: "Open in Google Maps" }),
   ).toHaveCount(0);
   await expect(
-    section.getByRole("button", { name: "Show map", exact: true }),
+    section.getByRole("button", { name: "Retry map", exact: true }),
   ).toBeEnabled();
   await expect(
     page.getByRole("heading", { name: /A personal introduction/ }),
@@ -231,111 +251,6 @@ test("old listings without a selected place keep their existing layout", async (
   await page.goto("/templates/minimal");
   await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
   expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
-});
-
-test("photo details failures are retryable and missing photos are checked before showing an empty state", async ({
-  page,
-}) => {
-  await mockGoogleMaps(page);
-  await page.goto("/map-test-editorial");
-  const section = page.getByRole("region", {
-    name: "Explore the neighborhood.",
-  });
-  await section.getByRole("button", { name: "Show map", exact: true }).click();
-  await section.getByRole("button", { name: "Schools", exact: true }).click();
-  await page.evaluate(() => {
-    window.__mapsTest.failPhotoDetails = true;
-  });
-  await section
-    .getByRole("button", { name: "Show photo of Nearby Elementary School" })
-    .click();
-  await expect(section.getByRole("status")).toContainText(
-    "The photo could not load",
-  );
-  expect(await page.evaluate(() => window.__mapsTest.photos)).toBe(0);
-  await page.evaluate(() => {
-    window.__mapsTest.failPhotoDetails = false;
-  });
-  await section
-    .getByRole("button", { name: "Retry photo of Nearby Elementary School" })
-    .click();
-  await expect(
-    section.getByRole("img", { name: "Nearby Elementary School" }),
-  ).toBeVisible();
-  await section
-    .getByRole("button", { name: "Show photo of Nearby Learning Centre" })
-    .click();
-  await expect(
-    section.getByText("No photo provided for this place."),
-  ).toBeVisible();
-  const calls = await page.evaluate(() =>
-    window.__mapsTest.details.filter((r) => r.fields.includes("photos")),
-  );
-  expect(calls.map((r) => r.id)).toEqual([
-    "ChIJ-nearby-0",
-    "ChIJ-nearby-0",
-    "ChIJ-nearby-1",
-  ]);
-  await section.getByRole("button", { name: "Parks", exact: true }).click();
-  await section.getByRole("button", { name: "Schools", exact: true }).click();
-  await section
-    .getByRole("button", { name: "Show photo of Nearby Elementary School" })
-    .click();
-  await expect(
-    section.getByRole("img", { name: "Nearby Elementary School" }),
-  ).toBeVisible();
-  expect(
-    await page.evaluate(
-      () =>
-        window.__mapsTest.details.filter((r) => r.fields.includes("photos"))
-          .length,
-    ),
-  ).toBe(3);
-});
-
-test("available photo metadata avoids extra details requests and expired images can be refreshed", async ({
-  page,
-}) => {
-  await mockGoogleMaps(page);
-  await page.goto("/map-test-minimal");
-  await page.evaluate(() => {
-    window.__mapsTest.nearbyPhotos = true;
-  });
-  const section = page.getByRole("region", {
-    name: "Explore the neighborhood.",
-  });
-  await section.getByRole("button", { name: "Show map", exact: true }).click();
-  await section.getByRole("button", { name: "Schools", exact: true }).click();
-  await page.route("**/images/villa.jpg", (route) => route.abort());
-  await section
-    .getByRole("button", { name: "Show photo of Nearby Elementary School" })
-    .click();
-  await expect(
-    section.getByRole("button", {
-      name: "Retry photo of Nearby Elementary School",
-    }),
-  ).toBeVisible();
-  expect(
-    await page.evaluate(
-      () =>
-        window.__mapsTest.details.filter((r) => r.fields.includes("photos"))
-          .length,
-    ),
-  ).toBe(0);
-  await page.unroute("**/images/villa.jpg");
-  await section
-    .getByRole("button", { name: "Retry photo of Nearby Elementary School" })
-    .click();
-  await expect(
-    section.getByRole("img", { name: "Nearby Elementary School" }),
-  ).toBeVisible();
-  expect(
-    await page.evaluate(
-      () =>
-        window.__mapsTest.details.filter((r) => r.fields.includes("photos"))
-          .length,
-    ),
-  ).toBe(1);
 });
 
 for (const template of ["editorial", "minimal", "panorama"] as const) {
