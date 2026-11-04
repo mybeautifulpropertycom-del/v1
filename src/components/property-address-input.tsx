@@ -120,9 +120,7 @@ export function PropertyAddressInput({
         place.formattedAddress.length > 200 ||
         !PLACE_ID.test(place.id)
       ) {
-        setError(
-          "Choose a full US street address or building, rather than a city or region.",
-        );
+        // Keep manual entry available without displaying a regional warning.
         return;
       }
       onChange(place.formattedAddress, place.id);
@@ -222,8 +220,8 @@ export function PropertyAddressInput({
       <small id={`${id}-hint`}>
         {enabled
           ? placeId
-            ? "Address selected. Check its map position below before publishing."
-            : "Search a US street address and choose a suggestion to add a map. The address also becomes your public link."
+            ? "Address selected."
+            : "Search a street address and choose a suggestion to add a map. The address also becomes your public link."
           : "Enter the property’s address. It appears on the website and becomes its public link when you publish."}
       </small>
       {enabled && (

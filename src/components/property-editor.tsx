@@ -3,7 +3,6 @@ import { PropertyImage } from "./property-image";
 import { PriceInput } from "./price-input";
 import { PropertySharing } from "./property-sharing";
 import { PropertyAddressInput } from "./property-address-input";
-import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { MAX_PROPERTY_PHOTOS } from "@/lib/photo-limits";
 import { AgentAvatar } from "./agent-avatar";
 
@@ -418,7 +417,6 @@ export function PropertyEditor({
                       setPublished(false);
                     }}
                   />
-                  <PropertyNeighbourhood property={property} compact />
                   <label>
                     Property type
                     <select

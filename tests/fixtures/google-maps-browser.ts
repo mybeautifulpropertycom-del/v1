@@ -18,6 +18,8 @@ type MapsTestState = {
   maps: number;
   delay: number;
   failSearch: boolean;
+  nearbyPhotos: boolean;
+  failPhotoDetails: boolean;
 };
 declare global {
   interface Window {
@@ -44,8 +46,24 @@ export async function mockGoogleMaps(page: Page) {
       maps: 0,
       delay: 0,
       failSearch: false,
+      nearbyPhotos: false,
+      failPhotoDetails: false,
     });
     let sessionCounter = 0;
+    const photos = () => [
+      {
+        getURI() {
+          state.photos++;
+          return "/images/villa.jpg";
+        },
+        authorAttributions: [
+          {
+            displayName: "Sample photographer",
+            uri: "https://example.com/photographer",
+          },
+        ],
+      },
+    ];
     const point = (lat = 30.2672, lng = -97.7431) => ({
       toJSON: () => ({ lat, lng }),
       lat: () => lat,
@@ -53,6 +71,7 @@ export async function mockGoogleMaps(page: Page) {
     });
     class Place {
       id: string;
+      photos?: ReturnType<typeof photos>;
       location = point();
       formattedAddress = "123 Test Street, Austin, TX, USA";
       addressComponents = [
@@ -67,6 +86,11 @@ export async function mockGoogleMaps(page: Page) {
         state.details.push({ id: this.id, fields });
         if (state.delay)
           await new Promise((resolve) => setTimeout(resolve, state.delay));
+        if (fields.includes("photos")) {
+          if (state.failPhotoDetails)
+            throw new Error("Photo details quota exhausted");
+          this.photos = this.id === "ChIJ-nearby-0" ? photos() : [];
+        }
         if (this.id === "ChIJ-canada")
           this.addressComponents[0].shortText = "CA";
         if (this.id === "ChIJ-city") {
@@ -92,22 +116,7 @@ export async function mockGoogleMaps(page: Page) {
                 providerURI: "https://example.com/attribution",
               },
             ],
-            photos: n
-              ? []
-              : [
-                  {
-                    getURI() {
-                      state.photos++;
-                      return "/images/villa.jpg";
-                    },
-                    authorAttributions: [
-                      {
-                        displayName: "Sample photographer",
-                        uri: "https://example.com/photographer",
-                      },
-                    ],
-                  },
-                ],
+            photos: state.nearbyPhotos && n === 0 ? photos() : undefined,
           })),
         };
       }

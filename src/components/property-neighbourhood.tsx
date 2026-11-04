@@ -1,13 +1,12 @@
 "use client";
 import { useLayoutEffect, useId, useRef, useState } from "react";
-import { ImageIcon, MapPin, ArrowUpRight } from "lucide-react";
+import { ImageIcon, MapPin } from "lucide-react";
 import type { PublicProperty } from "@/lib/model";
 import { loadGoogleMaps, withMapsTimeout } from "@/lib/google-maps";
 import {
   distanceMiles,
   isUSAddress,
   mapsEnabled,
-  mapsLink,
   nearbyCategories,
   NEARBY_LIMIT,
   NEARBY_RADIUS_METERS,
@@ -19,10 +18,8 @@ import {
 type MappedProperty = Pick<PublicProperty, "location" | "google_place_id">;
 export function PropertyNeighbourhood({
   property,
-  compact = false,
 }: {
   property: MappedProperty;
-  compact?: boolean;
 }) {
   if (
     !mapsEnabled() ||
@@ -35,25 +32,61 @@ export function PropertyNeighbourhood({
     <Neighbourhood
       key={`${property.google_place_id}:${property.location}`}
       property={property}
-      compact={compact}
     />
   );
 }
 
 function PlacePhoto({
-  photo,
   name,
+  resolvePhoto,
 }: {
-  photo?: google.maps.places.Photo;
   name: string;
+  resolvePhoto: (
+    refresh: boolean,
+  ) => Promise<google.maps.places.Photo | undefined>;
 }) {
+  const [photo, setPhoto] = useState<google.maps.places.Photo>();
   const [src, setSrc] = useState("");
-  const [failed, setFailed] = useState(false);
-  if (!photo || failed)
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "loaded" | "empty" | "error"
+  >("idle");
+  const pending = useRef(false);
+  const active = useRef(true);
+  useLayoutEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+
+  async function showPhoto() {
+    if (pending.current) return;
+    pending.current = true;
+    const refresh = status === "error";
+    setStatus("loading");
+    try {
+      const nextPhoto = await resolvePhoto(refresh);
+      if (!active.current) return;
+      if (!nextPhoto) {
+        setStatus("empty");
+        return;
+      }
+      const uri = nextPhoto.getURI({ maxWidth: 400, maxHeight: 240 });
+      if (!uri) throw new Error("Missing photo URL");
+      setPhoto(nextPhoto);
+      setSrc(uri);
+    } catch {
+      if (active.current) setStatus("error");
+    } finally {
+      pending.current = false;
+    }
+  }
+
+  if (status === "empty")
     return (
       <div className="neighbourhood-photo-empty">
         <ImageIcon size={24} />
-        <span>Photo unavailable</span>
+        <span>No photo provided for this place.</span>
       </div>
     );
   return (
@@ -66,10 +99,14 @@ function PlacePhoto({
             alt={name}
             width={400}
             height={240}
-            onError={() => setFailed(true)}
+            onLoad={() => setStatus("loaded")}
+            onError={() => {
+              setSrc("");
+              setStatus("error");
+            }}
           />
           <div className="neighbourhood-photo-credit">
-            {photo.authorAttributions.map((author, index) => {
+            {photo?.authorAttributions.map((author, index) => {
               const href = safeExternalUrl(author.uri);
               return href ? (
                 <a
@@ -89,29 +126,29 @@ function PlacePhoto({
       ) : (
         <button
           type="button"
-          onClick={() => {
-            try {
-              setSrc(photo.getURI({ maxWidth: 400, maxHeight: 240 }));
-            } catch {
-              setFailed(true);
-            }
-          }}
+          disabled={status === "loading"}
+          onClick={() => void showPhoto()}
         >
           <ImageIcon size={24} />
-          <span>Show photo of {name}</span>
+          <span>
+            {status === "loading"
+              ? "Loading photo…"
+              : status === "error"
+                ? `Retry photo of ${name}`
+                : `Show photo of ${name}`}
+          </span>
         </button>
+      )}
+      {status === "error" && (
+        <p role="status" className="neighbourhood-photo-error">
+          The photo could not load. Please try again.
+        </p>
       )}
     </div>
   );
 }
 
-function Neighbourhood({
-  property,
-  compact,
-}: {
-  property: MappedProperty;
-  compact: boolean;
-}) {
+function Neighbourhood({ property }: { property: MappedProperty }) {
   const heading = useId();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
@@ -125,6 +162,9 @@ function Neighbourhood({
   const searching = useRef(false);
   // Ephemeral UI state only. No database/localStorage caching of Places content.
   const results = useRef(new Map<string, google.maps.places.Place[]>());
+  const photoRequests = useRef(
+    new Map<string, Promise<google.maps.places.Photo | undefined>>(),
+  );
   const [opened, setOpened] = useState(false);
   const [interactive, setInteractive] = useState(false);
   const [ready, setReady] = useState(false);
@@ -138,9 +178,7 @@ function Neighbourhood({
   useLayoutEffect(() => {
     setInteractive(true);
     const failed = () =>
-      setError(
-        "The map is unavailable right now. You can open this address in Google Maps.",
-      );
+      setError("The map is unavailable right now. Please try again shortly.");
     window.addEventListener("mbp-maps-error", failed);
     return () => {
       currentRequest.current++;
@@ -151,6 +189,27 @@ function Neighbourhood({
       if (homeMarker.current) homeMarker.current.map = null;
     };
   }, []);
+
+  function resolvePhoto(place: google.maps.places.Place, refresh: boolean) {
+    if (!refresh && place.photos?.[0]) return Promise.resolve(place.photos[0]);
+    if (refresh) photoRequests.current.delete(place.id);
+    const existing = photoRequests.current.get(place.id);
+    if (existing) return existing;
+    const request = (async () => {
+      const maps = await loadGoogleMaps();
+      const { Place } = (await maps.importLibrary(
+        "places",
+      )) as google.maps.PlacesLibrary;
+      const details = new Place({ id: place.id, requestedLanguage: "en" });
+      await withMapsTimeout(details.fetchFields({ fields: ["photos"] }));
+      return details.photos?.[0];
+    })().catch((error: unknown) => {
+      photoRequests.current.delete(place.id);
+      throw error;
+    });
+    photoRequests.current.set(place.id, request);
+    return request;
+  }
 
   function focusPlace(place: google.maps.places.Place) {
     setSelected(place.id);
@@ -196,6 +255,7 @@ function Neighbourhood({
         mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID!.trim(),
         mapTypeControl: false,
         streetViewControl: false,
+        clickableIcons: false,
         gestureHandling: "cooperative",
       });
       const label = document.createElement("div");
@@ -211,9 +271,7 @@ function Neighbourhood({
       setReady(true);
     } catch {
       if (request === currentRequest.current)
-        setError(
-          "The map is unavailable right now. You can open this address in Google Maps or try again.",
-        );
+        setError("The map is unavailable right now. Please try again shortly.");
     } finally {
       opening.current = false;
       if (request === currentRequest.current) setBusy(false);
@@ -242,14 +300,7 @@ function Neighbourhood({
       if (!nearby) {
         const response = await withMapsTimeout(
           placesLibrary.Place.searchNearby({
-            fields: [
-              "id",
-              "displayName",
-              "location",
-              "photos",
-              "googleMapsURI",
-              "attributions",
-            ],
+            fields: ["id", "displayName", "location", "photos", "attributions"],
             includedTypes: [...next.types],
             maxResultCount: NEARBY_LIMIT,
             locationRestriction: {
@@ -304,38 +355,20 @@ function Neighbourhood({
   }
 
   return (
-    <section
-      className={`property-neighbourhood${compact ? " property-neighbourhood-compact full-width" : ""}`}
-      aria-labelledby={heading}
-    >
+    <section className="property-neighbourhood" aria-labelledby={heading}>
       <div className="neighbourhood-heading">
         <div>
-          <span className="neighbourhood-kicker">
-            {compact ? "CHECK THE LOCATION" : "AROUND YOUR NEXT HOME"}
-          </span>
-          <h2 id={heading}>
-            {compact
-              ? "Your property on the map."
-              : "Explore the neighborhood."}
-          </h2>
+          <span className="neighbourhood-kicker">AROUND YOUR NEXT HOME</span>
+          <h2 id={heading}>Explore the neighborhood.</h2>
           <p>{property.location}</p>
         </div>
-        <a
-          className="neighbourhood-external"
-          href={mapsLink(property.location, property.google_place_id)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Open in Google Maps <ArrowUpRight size={16} />
-        </a>
       </div>
       {!ready && (
         <div className="neighbourhood-intro">
           <MapPin size={30} strokeWidth={1.3} />
           <p>
-            {compact
-              ? "Check the pin before publishing. If it is incorrect, choose another address suggestion."
-              : "Find your bearings. Explore schools, parks, shops and places to visit nearby."}
+            Find your bearings. Explore schools, parks, shops and places to
+            visit nearby.
           </p>
           <button
             className="neighbourhood-button"
@@ -354,7 +387,7 @@ function Neighbourhood({
         hidden={!opened}
         aria-label="Property and nearby places map"
       />
-      {ready && !compact && (
+      {ready && (
         <>
           <div
             className="neighbourhood-categories"
@@ -394,7 +427,7 @@ function Neighbourhood({
                 className={`neighbourhood-card${selected === place.id ? " is-selected" : ""}`}
               >
                 <PlacePhoto
-                  photo={place.photos?.[0]}
+                  resolvePhoto={(refresh) => resolvePhoto(place, refresh)}
                   name={place.displayName || "Nearby place"}
                 />
                 <div className="neighbourhood-card-copy">
@@ -413,16 +446,6 @@ function Neighbourhood({
                     ).toFixed(1)}{" "}
                     mi away · straight-line distance
                   </p>
-                  <a
-                    href={
-                      safeExternalUrl(place.googleMapsURI) ||
-                      mapsLink(place.displayName || "Nearby place", place.id)
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View place <ArrowUpRight size={14} />
-                  </a>
                   {place.attributions?.map((attribution, i) => (
                     <small key={i}>
                       {safeExternalUrl(attribution.providerURI) ? (

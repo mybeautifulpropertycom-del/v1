@@ -479,7 +479,7 @@ export function AtelierWebsite({
             )}
           </section>
         )}
-        <PropertyNeighbourhood property={property} />
+        {!preview && <PropertyNeighbourhood property={property} />}
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
             <span className="atelier-kicker">YOUR AGENT</span>

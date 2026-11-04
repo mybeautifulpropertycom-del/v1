@@ -11,8 +11,10 @@ Search Console verification does not enable these services.
   to `us`. Selecting a suggestion completes its autocomplete session and checks
   for a full US street address/building. A city alone or a non-US result is rejected.
   The agent can still enter and save an address manually when suggestions fail.
-- A selected address unlocks **Show map** in the editor for checking the pin.
-  Save changes before publishing. Existing listings acquire a map only when an
+  Ineligible selections leave manual entry intact without a regional warning.
+- The agent's editor saves the selection without showing a map card. The map
+  section appears on the public landing page, not private website previews.
+  Existing listings acquire a map only when an
   agent selects their address from the suggestions and saves it; no bulk geocoding.
 - All three property templates show **Explore the neighborhood** before the
   contact section for selected addresses. No map, Places searches, or photo
@@ -23,8 +25,15 @@ Search Console verification does not enable these services.
   ordered by distance. A category is requested once per mounted view unless it
   fails. This is nearby discovery, not an exhaustive list or school zoning advice.
 - Numbered map pins and cards correspond. A card focuses its location. Photos are
-  fetched only with **Show photo**; missing photos have a text placeholder. Photo
-  authors and returned data providers are attributed with their links.
+  fetched only with **Show photo**. If Nearby Search omits photo metadata, that
+  click requests Place Details with only the `photos` field before deciding
+  whether a photo exists. This adds a Place Details request only when needed.
+  Missing photos and failed requests have separate states; failures allow an
+  explicit retry. Photo metadata requests are reused within the current view.
+  Photo
+  authors and returned data providers are attributed with their links. Custom
+  "Open in Google Maps" / "View place" links are omitted; cards focus the map
+  within the page. Google's native map attribution is preserved.
 - Miles are straight-line estimates; no routing or travel times are claimed.
 - Editing an address clears the saved place ID in the editor and inline preview.
   A DB trigger also clears stale IDs on direct updates. Deleting/unpublishing a
@@ -64,8 +73,9 @@ Search Console verification does not enable these services.
 6. Review the site's privacy notice and Google Maps attribution/terms requirements
    for the production integration. The page tells visitors when Google is loaded;
    this implementation does not read visitor geolocation.
-7. Select a real US address in a test listing, verify its pin, save, and check all
-   three templates. Test Nearby Search and an attributed photo using the real
+7. Select a real US address in a test listing and save it. Once published, verify
+   its pin on the public page and check all three templates. Test Nearby Search
+   and an attributed photo using the real
    configured key, then inspect Cloud usage/billing. Mocked tests cannot establish
    that the live key, enabled APIs, quotas or photo coverage are correct.
 
@@ -89,8 +99,8 @@ Search Console verification does not enable these services.
   persist Google coordinates, place descriptions, photo URLs, or third-party
   photos in Supabase, IndexedDB, localStorage, a CDN, or the website's AI text.
   Place photos load directly from Google, not through Next's image optimizer.
-- If Google fails or a quota is exhausted, show a useful message and the external
-  Google Maps address link. Property text, photos, forms, publication and payment
+- If Google fails or a quota is exhausted, show a useful message and allow an
+  in-page retry. Property text, photos, forms, publication and payment
   flows do not depend on Google being available.
 - To disable new in-app requests, set the enabled flag to `false` and redeploy.
   For an immediate provider-side cutoff, disable/restrict the API key in Cloud;

@@ -56,12 +56,6 @@
   background: var(--neighbourhood-paper);
   border-top: 1px solid #84957630;
 }
-.property-neighbourhood-compact {
-  padding: 20px;
-  border: 1px solid #dce1d4;
-  border-radius: 8px;
-  margin-top: 8px;
-}
 .neighbourhood-heading {
   display: flex;
   justify-content: space-between;
@@ -78,9 +72,6 @@
   letter-spacing: -0.03em;
   margin: 12px 0;
 }
-.property-neighbourhood-compact h2 {
-  font-size: 24px;
-}
 .property-neighbourhood p {
   font: 13px/1.7 var(--sans);
   margin: 8px 0;
@@ -89,13 +80,6 @@
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-.neighbourhood-external {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  font: 12px/1.5 var(--sans);
 }
 .neighbourhood-intro {
   display: flex;
@@ -127,9 +111,6 @@
   width: 100%;
   height: 430px;
   background: #e7ebdf;
-}
-.property-neighbourhood-compact .neighbourhood-map {
-  height: 260px;
 }
 .neighbourhood-home-pin {
   background: #304536;
@@ -265,12 +246,14 @@
   font-size: 11px;
   color: var(--neighbourhood-muted);
 }
-.neighbourhood-card-copy > a {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font: 12px/1.5 var(--sans);
-  margin-top: 6px;
+.property-neighbourhood .neighbourhood-photo-error {
+  position: absolute;
+  bottom: 8px;
+  inset-inline: 12px;
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  color: #894632;
 }
 .neighbourhood-card-copy small {
   display: block;
@@ -300,9 +283,6 @@
 @media (max-width: 440px) {
   .neighbourhood-cards {
     grid-template-columns: 1fr;
-  }
-  .property-neighbourhood-compact {
-    padding: 14px;
   }
 }
 @media print {
