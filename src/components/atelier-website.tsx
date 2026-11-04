@@ -19,7 +19,11 @@ import {
   X,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
-import { propertyStory, type WebsiteCopyField } from "@/lib/property-story";
+import {
+  propertyStory,
+  propertyOpeningAccent,
+  type WebsiteCopyField,
+} from "@/lib/property-story";
 import { EditableText } from "./website-editable-text";
 import type { PropertyWebsiteProps } from "./property-website";
 import { PropertyPhotoDialog } from "./property-photo-dialog";
@@ -272,6 +276,9 @@ export function AtelierWebsite({
                 value={property.title || "A different perspective."}
                 onEdit={onEdit}
               />
+              <em className="atelier-opening-accent">
+                {propertyOpeningAccent(property, copy.heroLine)}
+              </em>
             </h1>
             <div className="atelier-intro-copy">
               <p>{text("introBody")}</p>
@@ -478,7 +485,6 @@ export function AtelierWebsite({
         <PropertyNeighbourhood property={property} />
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
-            <span className="atelier-kicker">YOUR AGENT</span>
             <h2>
               Let’s connect.<em>Meet your agent.</em>
             </h2>

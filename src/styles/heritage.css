@@ -625,10 +625,11 @@
 }
 .heritage-film-heading h2 {
   max-width: 65%;
-  text-align: right;
+  text-align: left;
 }
 .heritage-film-heading > .heritage-kicker {
   flex-shrink: 0;
+  text-align: right;
 }
 .heritage-film-preview {
   aspect-ratio: 16/9;
@@ -686,7 +687,6 @@
   padding-block: 25px 65px;
 }
 .heritage-agent h2 {
-  font-size: clamp(26px, 2.08vw, 30px);
   margin: 19px 0 29px;
 }
 .heritage-agent .heritage-agent-profile {
@@ -783,8 +783,12 @@
   min-width: 0;
   max-width: 480px;
 }
+.heritage-agent h2,
+.heritage-film-heading h2,
 .heritage-setting-layout h2 {
   font-size: clamp(26px, 2.56vw, 38px);
+}
+.heritage-setting-layout h2 {
   margin-top: 20px;
 }
 .heritage-setting-layout > div > p {
@@ -794,8 +798,9 @@
   margin-top: 22px;
 }
 .heritage-setting-layout dl {
-  display: flex;
-  gap: 35px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 35px;
   margin: 28px 0 8px;
 }
 .heritage-setting-layout dt {
@@ -1145,6 +1150,9 @@
     max-width: 100%;
     text-align: left;
   }
+  .heritage-film-heading > .heritage-kicker {
+    align-self: flex-end;
+  }
   .heritage-film-preview {
     aspect-ratio: 0.95;
   }
@@ -1164,9 +1172,6 @@
     grid-template-columns: 1fr;
     gap: 30px;
     padding-block: 0 55px;
-  }
-  .heritage-agent h2 {
-    font-size: 26px;
   }
   .heritage-contact-note {
     padding-block: 35px;

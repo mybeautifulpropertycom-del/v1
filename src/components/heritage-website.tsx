@@ -506,10 +506,10 @@ export function HeritageWebsite({
             aria-labelledby="heritage-film-title"
           >
             <div className="heritage-film-heading">
-              <span className="heritage-kicker">THE HOME, IN MOTION</span>
               <h2 id="heritage-film-title">
                 Picture your <em>next chapter.</em>
               </h2>
+              <span className="heritage-kicker">THE HOME, IN MOTION</span>
             </div>
             {film?.src && videoPanel}
             {film?.src ? (
@@ -652,6 +652,14 @@ export function HeritageWebsite({
                 <div>
                   <dt>Property type</dt>
                   <dd>{property.type}</dd>
+                </div>
+                <div>
+                  <dt>Bedrooms</dt>
+                  <dd>{property.bedrooms}</dd>
+                </div>
+                <div>
+                  <dt>Bathrooms</dt>
+                  <dd>{property.bathrooms}</dd>
                 </div>
               </dl>
               {tourButton("heritage-link")}

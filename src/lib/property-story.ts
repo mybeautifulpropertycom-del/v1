@@ -157,9 +157,7 @@ export function propertyStory(
       p.transaction === "rent" ? "Your next address." : "Your next chapter.",
     heroIntro: `${rooms}${p.area > 0 ? ` · ${size}` : ""}\n${location}`,
     introTitle:
-      p.type === "Land"
-        ? "Room for possibility."
-        : "Space to settle.",
+      p.type === "Land" ? "Room for possibility." : "Space to settle.",
     introAccent: "Make it yours.",
     introBody:
       summary.length > 300
@@ -183,6 +181,42 @@ export function propertyStory(
     closingBody: `Take the next step with this ${type} in ${location}. Schedule a tour with the listing agent and see how it feels in person.`,
     captions: p.images.map(() => p.title || p.type),
   };
+}
+
+// A compact accent for Atelier: prefer the property's prepared copy, then
+// confirmed amenities. Never infer a view, terrace, or other feature from its type.
+export function propertyOpeningAccent(p: Listing, prepared: string): string {
+  const clean = prepared.trim();
+  if (
+    clean.split(/\s+/).length === 3 &&
+    !/^your next (chapter|address)\.?$/i.test(clean)
+  )
+    return clean;
+
+  const features: Record<string, string> = {
+    "private garden": "Private Garden Living",
+    "swimming pool": "Swim, Relax, Repeat",
+    "outdoor terrace": "Your Outdoor Terrace",
+    "outdoor kitchen": "Cook, Dine, Gather",
+    "two-car garage": "Two-Car Garage Space",
+    "island kitchen": "Around The Island",
+    "walk-in closet": "Walk-in Wardrobe Space",
+    "city views": "City View Living",
+    "sea view": "Sea View Living",
+    fireplace: "Around The Fireplace",
+  };
+  for (const amenity of p.amenities) {
+    const key = amenity.trim().toLowerCase();
+    if (Object.hasOwn(features, key)) return features[key];
+  }
+  const homes: Record<Listing["type"], string> = {
+    Condo: "Your Condo Home",
+    House: "Your Next House",
+    "Town House": "Your Townhouse Home",
+    Penthouse: "Your Penthouse Home",
+    Land: "Your Next Plot",
+  };
+  return homes[p.type];
 }
 
 export type WebsiteCopyField = StoryField | "storyBody";

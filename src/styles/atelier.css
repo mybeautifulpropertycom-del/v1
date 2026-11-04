@@ -307,6 +307,15 @@
   overflow-wrap: anywhere;
   font-weight: 400;
 }
+.atelier-title-row .atelier-opening-accent {
+  display: block;
+  margin-top: 12px;
+  color: #7b826e;
+  font-size: 0.65em;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
 .atelier-intro-copy {
   max-width: 390px;
   justify-self: end;

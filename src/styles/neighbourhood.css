@@ -280,5 +280,5 @@
   padding-bottom: clamp(28px, 3vw, 44px);
 }
 .property-neighbourhood + :is(.estate-contact, .atelier-contact) {
-  padding-top: clamp(28px, 3vw, 44px);
+  padding-top: clamp(44px, 4vw, 60px);
 }
