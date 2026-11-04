@@ -30,6 +30,14 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const propertyMaps = await readFile(
+  new URL("202611040001_property_maps.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-property-maps.sql", import.meta.url),
+  `-- Existing installations: adds optional map place IDs. No existing addresses are changed.\nbegin;\n${propertyMaps.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_PROPERTY_MAPS_READY' as status;\n`,
+);
 const publicSitemap = await readFile(
   new URL("202611020001_public_sitemap.sql", directory),
   "utf8",

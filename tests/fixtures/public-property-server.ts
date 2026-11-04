@@ -13,6 +13,24 @@ globalThis.fetch = async (input, init) => {
     : input instanceof Request
       ? await input.clone().json()
       : {};
+  const mapTemplate = /^map-test-(editorial|minimal|panorama)$/.exec(
+    body.property_slug || "",
+  )?.[1];
+  if (mapTemplate) {
+    const sample = demoWorkspace();
+    return Response.json({
+      property: {
+        ...sample.properties[0],
+        template: mapTemplate,
+        slug: body.property_slug,
+        address_slug: body.property_slug,
+        status: "published",
+        location: "123 Test Street, Austin, TX, USA",
+        google_place_id: "ChIJ-test-home",
+      },
+      profile: sample.profile,
+    });
+  }
   if (body.property_slug !== "print-test-home") return Response.json(null);
   const sample = demoWorkspace();
   return Response.json({

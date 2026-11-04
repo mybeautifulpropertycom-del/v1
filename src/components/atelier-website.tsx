@@ -1,4 +1,5 @@
 "use client";
+import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
@@ -478,6 +479,7 @@ export function AtelierWebsite({
             )}
           </section>
         )}
+        <PropertyNeighbourhood property={property} />
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
             <span className="atelier-kicker">YOUR AGENT</span>

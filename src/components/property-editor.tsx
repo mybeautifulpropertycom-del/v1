@@ -2,6 +2,8 @@
 import { PropertyImage } from "./property-image";
 import { PriceInput } from "./price-input";
 import { PropertySharing } from "./property-sharing";
+import { PropertyAddressInput } from "./property-address-input";
+import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { MAX_PROPERTY_PHOTOS } from "@/lib/photo-limits";
 import { AgentAvatar } from "./agent-avatar";
 
@@ -398,19 +400,25 @@ export function PropertyEditor({
                       onChange={(e) => update("title", e.target.value)}
                     />
                   </label>
-                  <label className="full-width">
-                    Address
-                    <input
-                      value={property.location}
-                      maxLength={200}
-                      placeholder="123 Palm Drive, Beverly Hills, CA"
-                      onChange={(e) => update("location", e.target.value)}
-                    />
-                    <small>
-                      Enter the property’s address. It appears on the website
-                      and becomes its public link when you publish.
-                    </small>
-                  </label>
+                  <PropertyAddressInput
+                    value={property.location}
+                    placeId={property.google_place_id}
+                    disabled={busy}
+                    onChange={(location, placeId) => {
+                      if (saving.current) return;
+                      setProperty((p) => ({
+                        ...p,
+                        location,
+                        // Keep old installations usable until Maps is activated.
+                        ...(placeId || p.google_place_id !== undefined
+                          ? { google_place_id: placeId }
+                          : {}),
+                      }));
+                      setDirty(true);
+                      setPublished(false);
+                    }}
+                  />
+                  <PropertyNeighbourhood property={property} compact />
                   <label>
                     Property type
                     <select

@@ -21,6 +21,7 @@ export type Property = {
   title: string;
   description: string;
   location: string;
+  google_place_id?: string | null;
   price: number;
   currency: "USD" | "EUR" | "RON";
   transaction: "sale" | "rent";

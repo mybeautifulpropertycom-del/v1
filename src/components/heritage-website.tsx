@@ -1,4 +1,5 @@
 "use client";
+import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
@@ -585,6 +586,7 @@ export function HeritageWebsite({
             )}
           </section>
         )}
+        <PropertyNeighbourhood property={property} />
         <section
           className="heritage-contact heritage-pad"
           id="contact"

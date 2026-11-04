@@ -6,6 +6,7 @@ import "@/styles/atelier.css";
 import "@/styles/footer.css";
 import "@/styles/admin.css";
 import "@/styles/property-print.css";
+import "@/styles/neighbourhood.css";
 import { htmlLanguage } from "@/i18n/config";
 import { HOME_TITLE, HOME_DESCRIPTION, siteOrigin } from "@/lib/seo";
 

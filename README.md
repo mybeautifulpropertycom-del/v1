@@ -109,6 +109,8 @@ The third design is now **The Atelier**, replacing Panorama: a gallery opening, 
 
 Agent profile photos and property/lead deletion are available in the workspace. Existing Supabase installations need the additive [account tools update](supabase/sql-editor-account-tools.sql); see [activation instructions](docs/ACCOUNT-TOOLS.md).
 
+Optional US address suggestions and neighbourhood maps are available in all three designs. Maps, nearby categories and attributed photos load on request. See [Google Maps setup and cost controls](docs/GOOGLE-MAPS.md) and apply the additive [property maps update](supabase/sql-editor-property-maps.sql) before enabling the feature. It remains off until a restricted browser key and JavaScript map ID are configured.
+
 ### Stripe checkout (test and live)
 
 Model-configurable Higgsfield generation, paid-job processing, callbacks and durable video storage are implemented. See [Higgsfield API setup](docs/HIGGSFIELD-SETUP.md) for the migration, model profiles, credentials, scheduler and activation flag. Generation remains disabled until configured.

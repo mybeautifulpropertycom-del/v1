@@ -1,4 +1,5 @@
 "use client";
+import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
@@ -627,6 +628,7 @@ export function EditorialWebsite({
             )}
           </section>
         )}
+        <PropertyNeighbourhood property={property} />
         <section
           className="estate-contact estate-pad estate-space"
           id="contact"

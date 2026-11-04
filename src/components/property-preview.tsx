@@ -90,7 +90,15 @@ export function PropertyPreview({ id }: { id: string }) {
       setProperty(
         field.startsWith("copy.")
           ? editWebsiteCopy(property, field.slice(5) as WebsiteCopyField, value)
-          : { ...property, [field]: value },
+          : {
+              ...property,
+              [field]: value,
+              ...(field === "location" &&
+              value !== property.location &&
+              property.google_place_id
+                ? { google_place_id: null }
+                : {}),
+            },
       );
       setError("");
     } catch (error) {
