@@ -382,8 +382,6 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
           {ready && (
             <p className="neighbourhood-note neighbourhood-source">
               Places from Google Maps. Results may be incomplete.
-              {category.id === "schools" &&
-                " School proximity does not establish enrollment eligibility or attendance boundaries."}
             </p>
           )}
         </div>

@@ -349,7 +349,6 @@ export function EditorialWebsite({
         </section>
         <section className="estate-story estate-pad estate-space" id="story">
           <div>
-            <span className="estate-eyebrow">At a glance</span>
             <h2>
               <EditableText
                 field="copy.introTitle"
@@ -439,7 +438,6 @@ export function EditorialWebsite({
             )}
           </div>
           <div className="estate-details-copy">
-            <span className="estate-eyebrow">Thoughtful details</span>
             <h2>
               <EditableText
                 field="copy.storyTitle"
@@ -515,7 +513,6 @@ export function EditorialWebsite({
         >
           <div className="estate-section-heading">
             <div>
-              <span className="estate-eyebrow">The complete picture</span>
               <h2>
                 <EditableText
                   field="copy.galleryTitle"
@@ -567,7 +564,6 @@ export function EditorialWebsite({
           >
             <div className="estate-section-heading">
               <div>
-                <span className="estate-eyebrow">The residence, in motion</span>
                 <h2 id="film-title">
                   Before you step <em>inside.</em>
                 </h2>
@@ -628,13 +624,12 @@ export function EditorialWebsite({
             )}
           </section>
         )}
-        {!preview && <PropertyNeighbourhood property={property} />}
+        <PropertyNeighbourhood property={property} />
         <section
           className="estate-contact estate-pad estate-space"
           id="contact"
         >
           <div className="estate-agent landing-agent">
-            <span className="estate-eyebrow">Your agent</span>
             <h2>
               Let’s connect.
               <br />

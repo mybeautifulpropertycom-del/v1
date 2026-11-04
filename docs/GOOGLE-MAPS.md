@@ -13,7 +13,7 @@ Search Console verification does not enable these services.
   The agent can still enter and save an address manually when suggestions fail.
   Ineligible selections leave manual entry intact without a regional warning.
 - The agent's editor saves the selection without showing a map card. The map
-  section appears on the public landing page, not private website previews.
+  section appears on public landing pages and saved website previews.
   Existing listings acquire a map only when an
   agent selects their address from the suggestions and saves it; no bulk geocoding.
 - All three property templates show **Explore the neighborhood** before the
@@ -90,7 +90,7 @@ Search Console verification does not enable these services.
   not impose a monthly dollar ceiling. Quotas apply to the Google project, so
   account for other applications sharing it. Browser throttling is a UX measure,
   not a tamper-proof billing limit.
-- Each visit that reaches the map section can incur one map load, one home Place
+- Each public visit or saved-preview visit that reaches the map section can incur one map load, one home Place
   Details request and one Schools Nearby Search. Scrolling away and back does
   not repeat these requests. There are no automatic retries, panning-triggered
   searches or photo requests. Other categories load on selection.

@@ -254,7 +254,7 @@ test("old listings without a selected place keep their existing layout", async (
 });
 
 for (const template of ["editorial", "minimal", "panorama"] as const) {
-  test(`${template}: agents do not see the map in their private website preview`, async ({
+  test(`${template}: saved website previews show the map with Schools selected`, async ({
     page,
   }) => {
     await mockGoogleMaps(page);
@@ -271,7 +271,16 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
         template === "panorama" ? ".atelier-website" : ".property-website",
       ),
     ).toBeVisible();
-    await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
+    const section = page.getByRole("region", {
+      name: "Explore the neighborhood.",
+    });
+    await expect(section).toBeVisible();
     expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
+    await section.scrollIntoViewIfNeeded();
+    await expect(
+      section.getByRole("button", { name: "Schools", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
+    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);
   });
 }

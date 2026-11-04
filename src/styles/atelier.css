@@ -302,17 +302,10 @@
   align-items: end;
 }
 .atelier-title-row h1 {
-  font: clamp(48px, 6.3vw, 96px)/1.06 var(--serif);
-  letter-spacing: -0.055em;
+  font: clamp(36px, 4.4vw, 66px)/1.12 var(--serif);
+  letter-spacing: -0.035em;
   overflow-wrap: anywhere;
   font-weight: 400;
-}
-.atelier-title-row h1 > em {
-  display: block;
-  font-size: 0.65em;
-  color: #7b826e;
-  margin-top: 12px;
-  letter-spacing: -0.035em;
 }
 .atelier-intro-copy {
   max-width: 390px;
@@ -627,7 +620,7 @@
 }
 .atelier-film-heading {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 40px;
   align-items: center;
   margin-bottom: 40px;
@@ -936,7 +929,7 @@
     padding: 25px 0 35px;
   }
   .atelier-title-row h1 {
-    font-size: 46px;
+    font-size: clamp(32px, 8.2vw, 42px);
   }
   .atelier-intro-copy {
     max-width: none;
@@ -1003,7 +996,7 @@
     display: block;
   }
   .atelier-film-heading h2 {
-    margin-top: 20px;
+    margin-top: 0;
   }
   .atelier-film-placeholder,
   .atelier-film video {

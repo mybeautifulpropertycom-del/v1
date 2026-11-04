@@ -190,19 +190,11 @@
   margin-bottom: 20px;
 }
 .heritage-hero h1 {
-  font: 400 clamp(47px, 5.8vw, 88px)/1.08 var(--serif);
-  letter-spacing: -3px;
-  max-width: 850px;
+  font: 400 clamp(38px, 4.5vw, 66px)/1.12 var(--serif);
+  letter-spacing: -0.035em;
+  max-width: 760px;
   overflow-wrap: anywhere;
   text-wrap: balance;
-}
-.heritage-hero-script {
-  font: normal 400 clamp(47px, 5.8vw, 88px)/1.12 var(--serif);
-  letter-spacing: -3px;
-  color: #e8e9d7;
-  margin-top: 4px;
-  max-width: 900px;
-  overflow-wrap: anywhere;
 }
 .heritage-hero-intro {
   margin-top: 22px;
@@ -316,7 +308,7 @@
   color: #526247;
   letter-spacing: 1.5px;
   text-wrap: balance;
-  text-align: right;
+  text-align: left;
 }
 .heritage-section-heading {
   display: flex;
@@ -437,8 +429,7 @@
   font: 400 17px/1.6 var(--serif);
   white-space: nowrap;
 }
-.heritage-amenity-strip:is(:hover, :focus-within)
-  .heritage-amenity-track {
+.heritage-amenity-strip:is(:hover, :focus-within) .heritage-amenity-track {
   animation-play-state: paused;
 }
 @keyframes heritage-highlights {
@@ -625,8 +616,19 @@
   background: #203a2b;
   max-height: 85svh;
 }
-.heritage-film-title {
-  margin-bottom: 30px;
+.heritage-film-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 36px;
+}
+.heritage-film-heading h2 {
+  max-width: 65%;
+  text-align: right;
+}
+.heritage-film-heading > .heritage-kicker {
+  flex-shrink: 0;
 }
 .heritage-film-preview {
   aspect-ratio: 16/9;
@@ -822,14 +824,14 @@
   position: relative;
   padding: 17px 20px;
   background: #e3e9d4;
-  font-size: 13px;
+  font-size: 10px;
   line-height: 1.6;
   color: #304536;
   box-shadow: 0 2px 7px #3f5e2610;
 }
 .heritage-setting-layout figcaption small {
   display: block;
-  font-size: 10px;
+  font-size: 7px;
   line-height: 1.7;
   font-weight: 500;
   margin-top: 6px;
@@ -975,13 +977,8 @@
     letter-spacing: 1.5px;
   }
   .heritage-hero h1 {
-    font-size: clamp(40px, 9vw, 64px);
-    letter-spacing: -2px;
-  }
-  .heritage-hero-script {
-    font-size: clamp(39px, 8.7vw, 63px);
-    letter-spacing: -2px;
-    margin-top: 7px;
+    font-size: clamp(34px, 7.6vw, 46px);
+    letter-spacing: -0.035em;
   }
   .heritage-hero-intro {
     font-size: 11px;
@@ -1137,6 +1134,16 @@
   .heritage-details-copy li {
     padding-block: 15px;
     font-size: 15px;
+  }
+  .heritage-film-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 25px;
+  }
+  .heritage-film-heading h2 {
+    max-width: 100%;
+    text-align: left;
   }
   .heritage-film-preview {
     aspect-ratio: 0.95;

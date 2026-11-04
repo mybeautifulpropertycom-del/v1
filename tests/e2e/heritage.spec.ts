@@ -75,7 +75,7 @@ test("Heritage highlights loop as text, pause on hover, and remain fully readabl
   ).toBeVisible();
   await expect(
     page.locator(".heritage-setting-layout figcaption small"),
-  ).toHaveCSS("font-size", "10px");
+  ).toHaveCSS("font-size", "7px");
   expect(
     await strip.evaluate((node) => node.scrollWidth <= node.clientWidth),
   ).toBe(true);
@@ -142,7 +142,7 @@ test("reviewed property copy persists, captions match images, and changed facts 
     page.getByText("Your changes are saved.", { exact: true }),
   ).toBeVisible();
   await page.goto("/preview/demo-apartment");
-  await expect(page.locator(".heritage-setting h2")).toContainText(
+  await expect(page.locator(".heritage-setting-layout figcaption")).toContainText(
     "Portland, OR",
   );
   await expect(

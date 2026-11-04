@@ -272,7 +272,6 @@ export function AtelierWebsite({
                 value={property.title || "A different perspective."}
                 onEdit={onEdit}
               />
-              <em>{text("heroLine")}</em>
             </h1>
             <div className="atelier-intro-copy">
               <p>{text("introBody")}</p>
@@ -406,7 +405,6 @@ export function AtelierWebsite({
         <section className="atelier-gallery atelier-pad" id="gallery">
           <div className="atelier-section-heading">
             <div>
-              <span className="atelier-kicker">A CLOSER LOOK</span>
               <h2>
                 {text("galleryTitle")}
                 <em>{text("galleryAccent")}</em>
@@ -429,7 +427,6 @@ export function AtelierWebsite({
         {(film?.src || isPreview) && (
           <section className="atelier-film atelier-pad" id="film">
             <div className="atelier-film-heading">
-              <span className="atelier-kicker">IN MOTION</span>
               <h2>
                 Step inside.<em>Feel at home.</em>
               </h2>
@@ -470,7 +467,6 @@ export function AtelierWebsite({
                 }
               >
                 <Film size={32} strokeWidth={1} />
-                <span>Your property, in motion.</span>
                 <p>Your completed property film will appear here.</p>
                 <small>
                   Video layout preview · No film has been generated yet
@@ -479,7 +475,7 @@ export function AtelierWebsite({
             )}
           </section>
         )}
-        {!preview && <PropertyNeighbourhood property={property} />}
+        <PropertyNeighbourhood property={property} />
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
             <span className="atelier-kicker">YOUR AGENT</span>

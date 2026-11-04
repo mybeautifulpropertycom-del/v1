@@ -214,13 +214,6 @@ export function HeritageWebsite({
                   onEdit={onEdit}
                 />
               </h1>
-              <p className="heritage-hero-script">
-                <EditableText
-                  field="copy.heroLine"
-                  value={copy.heroLine}
-                  onEdit={onEdit}
-                />
-              </p>
               <p className="heritage-hero-intro">
                 <EditableText
                   field="copy.heroIntro"
@@ -273,10 +266,6 @@ export function HeritageWebsite({
           id="story"
         >
           <div className="heritage-section-label">
-            <span>
-              <Plus size={13} />
-              The introduction
-            </span>
             <span>A HOME. A FEELING. A FRESH START.</span>
           </div>
           <div className="heritage-section-heading">
@@ -381,9 +370,6 @@ export function HeritageWebsite({
           id="gallery"
         >
           <div className="heritage-section-label">
-            <span>
-              <Plus size={13} />A closer look
-            </span>
             <span>EVERY PICTURE, ANOTHER POSSIBILITY</span>
           </div>
           <div className="heritage-section-heading">
@@ -460,11 +446,7 @@ export function HeritageWebsite({
             </div>
           )}
           <div className="heritage-gallery-footer">
-            <p>
-              Good photographs. Real possibilities.
-              <br />
-              See the rest in person.
-            </p>
+            <p>See the rest in person.</p>
             {tourButton("heritage-button heritage-button-outline")}
           </div>
         </section>
@@ -523,19 +505,15 @@ export function HeritageWebsite({
             id="film"
             aria-labelledby="heritage-film-title"
           >
-            <div className="heritage-section-label">
-              <span>
-                <Plus size={13} />
-                Picture yourself here
-              </span>
-              <span>THE HOME, IN MOTION</span>
+            <div className="heritage-film-heading">
+              <span className="heritage-kicker">THE HOME, IN MOTION</span>
+              <h2 id="heritage-film-title">
+                Picture your <em>next chapter.</em>
+              </h2>
             </div>
             {film?.src && videoPanel}
             {film?.src ? (
               <>
-                <h2 id="heritage-film-title" className="heritage-film-title">
-                  Picture your <em>next chapter.</em>
-                </h2>
                 <video
                   controlsList="nodownload"
                   onContextMenu={(event) => event.preventDefault()}
@@ -571,11 +549,6 @@ export function HeritageWebsite({
                 )}
                 <div>
                   <span className="heritage-kicker">There’s a story here</span>
-                  <h2 id="heritage-film-title">
-                    Picture your
-                    <br />
-                    <em>next chapter.</em>
-                  </h2>
                   <Film size={28} strokeWidth={1} />
                   <p>Your completed property film will appear here.</p>
                   <small>
@@ -586,7 +559,7 @@ export function HeritageWebsite({
             )}
           </section>
         )}
-        {!preview && <PropertyNeighbourhood property={property} />}
+        <PropertyNeighbourhood property={property} />
         <section
           className="heritage-contact heritage-pad"
           id="contact"
@@ -644,15 +617,11 @@ export function HeritageWebsite({
           className="heritage-setting heritage-section heritage-pad"
           id="setting"
         >
-          <div className="heritage-section-label">
-            <span>
-              <Plus size={13} />A sense of place
-            </span>
-            <span>MAKE ROOM FOR WHAT COMES NEXT</span>
-          </div>
           <div className="heritage-setting-layout">
             <div>
-              <span className="heritage-kicker">The setting</span>
+              <span className="heritage-kicker">
+                MAKE ROOM FOR WHAT COMES NEXT
+              </span>
               <h2>
                 <EditableText
                   field="copy.settingTitle"

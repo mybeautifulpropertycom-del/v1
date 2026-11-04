@@ -256,8 +256,14 @@
   gap: 45px 9%;
   padding-bottom: 60px;
 }
+.estate-story > div {
+  align-self: center;
+}
+.estate-story > div:first-child {
+  text-align: center;
+}
 .estate-story-copy {
-  padding-top: 5px;
+  padding-top: 0;
 }
 .estate-story-copy > p {
   white-space: pre-line;
@@ -418,6 +424,12 @@
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
   gap: 8%;
+}
+.estate-details.estate-space {
+  padding-bottom: clamp(36px, 4vw, 64px);
+}
+.estate-details + .estate-gallery {
+  padding-top: clamp(36px, 4vw, 64px);
 }
 .estate-details-photo {
   position: relative;
@@ -613,7 +625,7 @@
   gap: 10%;
 }
 .estate-contact .estate-agent h2 {
-  margin: 25px 0 35px;
+  margin: 0 0 35px;
 }
 .estate-contact .estate-agent > .estate-eyebrow {
   font-size: 10px;

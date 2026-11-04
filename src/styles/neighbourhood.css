@@ -274,3 +274,11 @@
     display: none;
   }
 }
+
+/* Keep the map and agent introduction close without compressing other sections. */
+:is(.estate-website, .atelier-website) .property-neighbourhood {
+  padding-bottom: clamp(28px, 3vw, 44px);
+}
+.property-neighbourhood + :is(.estate-contact, .atelier-contact) {
+  padding-top: clamp(28px, 3vw, 44px);
+}
