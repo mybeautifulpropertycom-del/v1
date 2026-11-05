@@ -113,7 +113,7 @@ export function ProfileEditor() {
               <small>
                 {uploading
                   ? "Uploading your photo…"
-                  : "JPG, PNG or WebP, up to 10 MB. Save changes to update your photo everywhere."}
+                  : "JPG, PNG or WebP, up to 10 MB. Save changes to update your photo."}
               </small>
               {form.avatar_url && (
                 <button
@@ -137,7 +137,7 @@ export function ProfileEditor() {
                 required
                 autoComplete="name"
                 maxLength={100}
-                placeholder="Olivia Bennett"
+                placeholder="Your name"
                 value={form.name}
                 onChange={(e) => {
                   setSaved(false);
@@ -186,7 +186,7 @@ export function ProfileEditor() {
                 maxLength={MAX_PROFILE_BIO_LENGTH}
                 aria-describedby="profile-bio-hint"
                 aria-invalid={form.bio.length > MAX_PROFILE_BIO_LENGTH}
-                placeholder="A few words about you and your approach to finding the perfect home…"
+                placeholder="A few words about you and your approach..."
                 value={form.bio}
                 onChange={(e) => {
                   setSaved(false);
@@ -197,7 +197,7 @@ export function ProfileEditor() {
                 {form.bio.length} / {MAX_PROFILE_BIO_LENGTH} characters.{" "}
                 {form.bio.length > MAX_PROFILE_BIO_LENGTH
                   ? "Please shorten your introduction before saving."
-                  : "Keep it warm, personal, and true to you."}
+                  : "Keep it warm, personal, and true."}
               </small>
             </label>
           </div>

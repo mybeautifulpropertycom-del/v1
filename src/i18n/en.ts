@@ -13,7 +13,7 @@ export const en = {
   },
   profile: {
     eyebrow: "THE PERSON BEHIND THE PROPERTIES",
-    title: "A little more you.",
+    title: "A little more about you.",
     intro:
       "Introduce yourself once. They'll appear on all your property pages.",
     saved: "Your profile is saved. Every property website is up to date.",
@@ -27,7 +27,7 @@ export const en = {
     bio: "A short introduction",
     sync: "One profile. Every property.",
     syncDescription:
-      "Update your details here and your published websites automatically reflect the change.",
+      "Update your details here and your published properties automatically reflect the change.",
     firstStep: "Your first step",
     firstStepDescription:
       "Add your name, email, and phone number before creating your first property.",
