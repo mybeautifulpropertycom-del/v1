@@ -27,7 +27,11 @@ export default async function Page({
         images: templatePhotos,
         template: selectedTemplate.id,
       }}
-      profile={{ ...data.profile, agency: selectedTemplate.name }}
+      profile={{
+        ...data.profile,
+        agency: selectedTemplate.name,
+        phone: "+1 (209) 274-8650",
+      }}
       film={{
         src: "/videos/template-property-tour.mp4",
         poster: "/videos/template-property-tour-poster.webp",
