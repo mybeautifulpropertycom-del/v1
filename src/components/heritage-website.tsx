@@ -645,28 +645,24 @@ export function HeritageWebsite({
               </p>
               <dl>
                 <div>
-                  <dt>Bedrooms</dt>
-                  <dd>{property.bedrooms}</dd>
-                </div>
-                <div>
-                  <dt>Bathrooms</dt>
-                  <dd>{property.bathrooms}</dd>
-                </div>
-                <div>
-                  <dt>Living space</dt>
-                  <dd>{size}</dd>
-                </div>
-                <div>
-                  <dt>Property type</dt>
-                  <dd>{property.type}</dd>
-                </div>
-                <div className="heritage-setting-price">
                   <dt>
                     {property.transaction === "rent"
                       ? "Monthly rent"
                       : "Offered at"}
                   </dt>
                   <dd>{formatPrice(property)}</dd>
+                </div>
+                <div>
+                  <dt>Living space</dt>
+                  <dd>{size}</dd>
+                </div>
+                <div>
+                  <dt>Number of bedrooms</dt>
+                  <dd>{property.bedrooms}</dd>
+                </div>
+                <div>
+                  <dt>Number of bathrooms</dt>
+                  <dd>{property.bathrooms}</dd>
                 </div>
               </dl>
               {tourButton("heritage-link")}
