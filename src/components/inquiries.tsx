@@ -113,7 +113,7 @@ export function Inquiries() {
             <br />
             <em>A new possibility.</em>
           </h1>
-          <p>Messages from your property websites, in one personal space.</p>
+          <p>Messages from your property forms.</p>
         </div>
       </div>
       {error ? (
