@@ -645,20 +645,20 @@ export function HeritageWebsite({
               </p>
               <dl>
                 <div>
-                  <dt>Living space</dt>
-                  <dd>{size}</dd>
-                </div>
-                <div>
-                  <dt>Property type</dt>
-                  <dd>{property.type}</dd>
-                </div>
-                <div>
                   <dt>Bedrooms</dt>
                   <dd>{property.bedrooms}</dd>
                 </div>
                 <div>
                   <dt>Bathrooms</dt>
                   <dd>{property.bathrooms}</dd>
+                </div>
+                <div>
+                  <dt>Living space</dt>
+                  <dd>{size}</dd>
+                </div>
+                <div>
+                  <dt>Property type</dt>
+                  <dd>{property.type}</dd>
                 </div>
               </dl>
               {tourButton("heritage-link")}
