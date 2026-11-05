@@ -791,13 +791,19 @@
 }
 .heritage-setting-layout dl {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.25fr) minmax(
+      0,
+      1fr
+    );
   gap: 16px;
-  margin: 28px 0 8px;
+  margin: 28px 0 20px;
 }
 .heritage-setting-layout dl > div {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+.heritage-setting-price {
+  grid-column: 1 / -1;
 }
 .heritage-setting-layout dt {
   color: #8c947c;

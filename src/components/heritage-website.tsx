@@ -660,6 +660,14 @@ export function HeritageWebsite({
                   <dt>Property type</dt>
                   <dd>{property.type}</dd>
                 </div>
+                <div className="heritage-setting-price">
+                  <dt>
+                    {property.transaction === "rent"
+                      ? "Monthly rent"
+                      : "Offered at"}
+                  </dt>
+                  <dd>{formatPrice(property)}</dd>
+                </div>
               </dl>
               {tourButton("heritage-link")}
             </div>
