@@ -12,6 +12,7 @@ export function AgentAvatar({
   const url = profile.avatar_url || "";
   const allowed =
     /^https:\/\//i.test(url) ||
+    /^\/images\/[a-z0-9][a-z0-9/_-]*\.(webp|png|jpe?g)$/i.test(url) ||
     /^data:image\/(webp|png|jpeg);base64,/i.test(url);
   if (allowed && url !== failed)
     return (

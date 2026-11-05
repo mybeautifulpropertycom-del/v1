@@ -31,6 +31,7 @@ export default async function Page({
         ...data.profile,
         agency: selectedTemplate.name,
         phone: "+1 (209) 274-8650",
+        avatar_url: "/images/template-agent.jpg",
       }}
       film={{
         src: "/videos/template-property-tour.mp4",
