@@ -13,7 +13,7 @@ globalThis.fetch = async (input, init) => {
     : input instanceof Request
       ? await input.clone().json()
       : {};
-  const mapTemplate = /^map-test-(editorial|minimal|panorama)$/.exec(
+  const mapTemplate = /^map-test-(editorial|minimal|panorama|unmapped)$/.exec(
     body.property_slug || "",
   )?.[1];
   if (mapTemplate) {
@@ -21,12 +21,15 @@ globalThis.fetch = async (input, init) => {
     return Response.json({
       property: {
         ...sample.properties[0],
-        template: mapTemplate,
+        template: mapTemplate === "unmapped" ? "editorial" : mapTemplate,
         slug: body.property_slug,
         address_slug: body.property_slug,
         status: "published",
-        location: "123 Test Street, Austin, TX, USA",
-        google_place_id: "ChIJ-test-home",
+        location:
+          mapTemplate === "unmapped"
+            ? "370 Ocean St, Santa Cruz, CA"
+            : "123 Test Street, Austin, TX, USA",
+        google_place_id: mapTemplate === "unmapped" ? null : "ChIJ-test-home",
       },
       profile: sample.profile,
     });

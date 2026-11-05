@@ -248,10 +248,95 @@ test("old listings without a selected place keep their existing layout", async (
   page,
 }) => {
   await mockGoogleMaps(page);
-  await page.goto("/templates/minimal");
+  await page.goto("/map-test-unmapped");
   await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
   expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
 });
+
+for (const template of ["editorial", "minimal", "panorama"]) {
+  test(`${template}: design samples locate the Santa Cruz address and show nearby places`, async ({
+    page,
+  }) => {
+    await mockGoogleMaps(page);
+    await page.goto(`/templates/${template}`);
+    const section = page.getByRole("region", {
+      name: "Explore the neighborhood.",
+    });
+    await expect(section.locator(".neighbourhood-heading p")).toHaveText(
+      "370 Ocean St, Santa Cruz, CA",
+    );
+    await expect(page.locator("main")).not.toContainText("Beverly Hills");
+    expect(
+      await page.evaluate(() => window.__mapsTest.textSearches.length),
+    ).toBe(0);
+    await section.scrollIntoViewIfNeeded();
+    await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
+    await expect(
+      section.getByRole("button", { name: "Schools", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    const requests = await page.evaluate(() => window.__mapsTest);
+    expect(requests.textSearches).toHaveLength(1);
+    expect(requests.textSearches[0]).toMatchObject({
+      textQuery: "370 Ocean St, Santa Cruz, CA, USA",
+      fields: ["id"],
+      maxResultCount: 1,
+      region: "us",
+    });
+    expect(requests.details).toEqual([
+      {
+        id: "ChIJ-template-home",
+        fields: ["location", "addressComponents", "types"],
+      },
+    ]);
+    expect(requests.maps).toBe(1);
+    await section
+      .getByRole("button", { name: "Restaurants", exact: true })
+      .click();
+    await expect(
+      section.getByRole("button", { name: "1 Nearby Restaurant" }),
+    ).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await section.scrollIntoViewIfNeeded();
+    expect(
+      await page.evaluate(() => window.__mapsTest.textSearches.length),
+    ).toBe(1);
+  });
+}
+
+for (const result of ["empty", "wrong-address"] as const) {
+  test(`template address lookup rejects ${result} results and allows a retry`, async ({
+    page,
+  }) => {
+    await mockGoogleMaps(page);
+    await page.goto("/templates/minimal");
+    await page.evaluate((result) => {
+      window.__mapsTest.templateAddressResult = result;
+    }, result);
+    const section = page.getByRole("region", {
+      name: "Explore the neighborhood.",
+    });
+    await section.scrollIntoViewIfNeeded();
+    await expect(section.getByRole("status")).toContainText(
+      "The map is unavailable",
+    );
+    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(0);
+    expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(
+      0,
+    );
+    expect(
+      await page.evaluate(() => window.__mapsTest.textSearches.length),
+    ).toBe(1);
+    await page.evaluate(() => {
+      window.__mapsTest.templateAddressResult = "match";
+    });
+    await section.getByRole("button", { name: "Retry map" }).click();
+    await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
+    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);
+    expect(
+      await page.evaluate(() => window.__mapsTest.textSearches.length),
+    ).toBe(2);
+  });
+}
 
 for (const template of ["editorial", "minimal", "panorama"] as const) {
   test(`${template}: saved website previews show the map with Schools selected`, async ({

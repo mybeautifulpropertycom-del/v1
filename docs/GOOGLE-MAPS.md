@@ -16,6 +16,13 @@ Search Console verification does not enable these services.
   section appears on public landing pages and saved website previews.
   Existing listings acquire a map only when an
   agent selects their address from the suggestions and saves it; no bulk geocoding.
+- The three public design samples at `/templates/editorial`, `/templates/minimal`
+  and `/templates/panorama` use **370 Ocean St, Santa Cruz, CA**. When the map
+  section approaches the viewport, Places Text Search requests one place ID for
+  this fixed address. Place Details then checks the street number, street, city,
+  state and country before showing a pin. A missing or mismatched address shows
+  the normal retry state. This exception applies only to design samples; ordinary
+  listings without an agent-selected place ID still do not load a map.
 - All three property templates show **Explore the neighborhood** before the
   contact section for selected addresses. The map loads automatically when the
   section approaches the viewport (200 px margin), with Schools preselected.
@@ -94,6 +101,9 @@ Search Console verification does not enable these services.
   Details request and one Schools Nearby Search. Scrolling away and back does
   not repeat these requests. There are no automatic retries, panning-triggered
   searches or photo requests. Other categories load on selection.
+  Design samples add one Text Search request with only the `id` field to resolve
+  their demonstration address. They use the same configured Maps/Places key and
+  project quotas, including the Text Search quota. No extra API needs enabling.
   Category results stay only in the current component's memory and are discarded
   on navigation/address changes. A reload/new visitor can incur new requests.
 - Persist only the agent-confirmed listing address and a Google place ID. Do not

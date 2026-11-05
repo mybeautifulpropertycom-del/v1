@@ -558,7 +558,7 @@ export function HeritageWebsite({
             )}
           </section>
         )}
-        <PropertyNeighbourhood property={property} />
+        <PropertyNeighbourhood property={property} sample={sample} />
         <section
           className="heritage-contact heritage-pad"
           id="contact"

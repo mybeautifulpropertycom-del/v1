@@ -3,6 +3,7 @@ import { PropertyWebsite } from "@/components/property-website";
 import { demoWorkspace } from "@/lib/demo";
 import { templatePhotos } from "@/lib/template-photos";
 import { templates } from "@/lib/model";
+import { TEMPLATE_LOCATION } from "@/lib/template-location";
 export const metadata = { robots: { index: false, follow: false } };
 export default async function Page({
   params,
@@ -17,6 +18,12 @@ export default async function Page({
     <PropertyWebsite
       property={{
         ...data.properties[0],
+        location: TEMPLATE_LOCATION,
+        google_place_id: null,
+        description: data.properties[0].description.replaceAll(
+          "Beverly Hills",
+          "Santa Cruz",
+        ),
         images: templatePhotos,
         template: selectedTemplate.id,
       }}

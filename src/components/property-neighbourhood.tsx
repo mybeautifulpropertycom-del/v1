@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import type { PublicProperty } from "@/lib/model";
 import { loadGoogleMaps, withMapsTimeout } from "@/lib/google-maps";
+import { isTemplateAddress, TEMPLATE_LOCATION } from "@/lib/template-location";
 import {
   distanceMiles,
   isUSAddress,
@@ -17,31 +18,44 @@ import {
 type MappedProperty = Pick<PublicProperty, "location" | "google_place_id">;
 export function PropertyNeighbourhood({
   property,
+  sample = false,
 }: {
   property: MappedProperty;
+  sample?: boolean;
 }) {
-  if (
-    !mapsEnabled() ||
-    !property.google_place_id ||
-    !PLACE_ID.test(property.google_place_id)
-  )
+  const hasSavedPlace = Boolean(
+    property.google_place_id && PLACE_ID.test(property.google_place_id),
+  );
+  // Only the fixed design demonstration may look up an address automatically.
+  // Real listings still require the agent's confirmed address selection.
+  const resolveTemplateAddress =
+    !hasSavedPlace && sample && property.location === TEMPLATE_LOCATION;
+  if (!mapsEnabled() || (!hasSavedPlace && !resolveTemplateAddress))
     return null;
   // Remount on address changes: a pending request must never populate a new listing.
   return (
     <Neighbourhood
       key={`${property.google_place_id}:${property.location}`}
       property={property}
+      resolveTemplateAddress={resolveTemplateAddress}
     />
   );
 }
 
-function Neighbourhood({ property }: { property: MappedProperty }) {
+function Neighbourhood({
+  property,
+  resolveTemplateAddress,
+}: {
+  property: MappedProperty;
+  resolveTemplateAddress: boolean;
+}) {
   const heading = useId();
   const section = useRef<HTMLElement>(null);
   const startMap = useRef<() => void>(() => {});
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const centre = useRef<google.maps.LatLngLiteral | null>(null);
+  const homePlaceId = useRef<string | null>(null);
   const homeMarker = useRef<google.maps.marker.AdvancedMarkerElement | null>(
     null,
   );
@@ -125,8 +139,24 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
         ]),
       );
       if (request !== currentRequest.current) return;
+      let placeId = property.google_place_id;
+      if (resolveTemplateAddress) {
+        const response = await withMapsTimeout(
+          placesLibrary.Place.searchByText({
+            textQuery: `${TEMPLATE_LOCATION}, USA`,
+            fields: ["id"],
+            maxResultCount: 1,
+            language: "en",
+            region: "us",
+          }),
+        );
+        if (request !== currentRequest.current) return;
+        placeId = response.places[0]?.id;
+      }
+      if (!placeId || !PLACE_ID.test(placeId))
+        throw new Error("The address could not be located.");
       const home = new placesLibrary.Place({
-        id: property.google_place_id!,
+        id: placeId,
         requestedLanguage: "en",
       });
       await withMapsTimeout(
@@ -135,8 +165,13 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
         }),
       );
       if (request !== currentRequest.current || !mapContainer.current) return;
-      if (!home.location || !isUSAddress(home))
+      if (
+        !home.location ||
+        !isUSAddress(home) ||
+        (resolveTemplateAddress && !isTemplateAddress(home))
+      )
         throw new Error("The address could not be located.");
+      homePlaceId.current = home.id;
       centre.current = home.location.toJSON();
       map.current = new mapsLibrary.Map(mapContainer.current, {
         center: centre.current,
@@ -216,7 +251,7 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
           }),
         );
         nearby = response.places.filter(
-          (place) => place.location && place.id !== property.google_place_id,
+          (place) => place.location && place.id !== homePlaceId.current,
         );
         if (request !== currentRequest.current) return;
         results.current.set(next.id, nearby);

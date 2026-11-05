@@ -8,6 +8,13 @@ type MapsTestState = {
     token: number;
   }>;
   details: Array<{ id: string; fields: string[] }>;
+  textSearches: Array<{
+    textQuery: string;
+    fields: string[];
+    maxResultCount: number;
+    region: string;
+  }>;
+  templateAddressResult: "match" | "wrong-address" | "empty";
   searches: Array<{
     fields: string[];
     includedTypes: string[];
@@ -39,6 +46,8 @@ export async function mockGoogleMaps(page: Page) {
       imports: [],
       autocomplete: [],
       details: [],
+      textSearches: [],
+      templateAddressResult: "match",
       searches: [],
       photos: 0,
       maps: 0,
@@ -73,7 +82,31 @@ export async function mockGoogleMaps(page: Page) {
           this.addressComponents = [{ types: ["country"], shortText: "US" }];
           this.types = ["locality"];
         }
+        if (this.id === "ChIJ-template-home") {
+          this.addressComponents = [
+            { types: ["country"], shortText: "US" },
+            {
+              types: ["street_number"],
+              shortText:
+                state.templateAddressResult === "wrong-address" ? "371" : "370",
+            },
+            { types: ["route"], shortText: "Ocean St" },
+            { types: ["locality"], shortText: "Santa Cruz" },
+            { types: ["administrative_area_level_1"], shortText: "CA" },
+          ];
+        }
         return { place: this };
+      }
+      static async searchByText(
+        request: MapsTestState["textSearches"][number],
+      ) {
+        state.textSearches.push(request);
+        return {
+          places:
+            state.templateAddressResult === "empty"
+              ? []
+              : [new Place({ id: "ChIJ-template-home" })],
+        };
       }
       static async searchNearby(request: MapsTestState["searches"][number]) {
         state.searches.push(request);

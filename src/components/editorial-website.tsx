@@ -624,7 +624,7 @@ export function EditorialWebsite({
             )}
           </section>
         )}
-        <PropertyNeighbourhood property={property} />
+        <PropertyNeighbourhood property={property} sample={sample} />
         <section
           className="estate-contact estate-pad estate-space"
           id="contact"
