@@ -436,7 +436,6 @@ export function HeritageWebsite({
                     <Plus size={17} />
                   </span>
                 </button>
-                <figcaption>{copy.captions[index]}</figcaption>
               </figure>
             ))}
           </div>

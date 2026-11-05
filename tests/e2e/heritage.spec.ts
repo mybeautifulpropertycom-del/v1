@@ -81,7 +81,7 @@ test("Heritage highlights loop as text, pause on hover, and remain fully readabl
   ).toBe(true);
 });
 
-test("reviewed property copy persists, captions match images, and changed facts invalidate old analysis", async ({
+test("reviewed property copy persists, gallery captions stay hidden, and changed facts invalidate old analysis", async ({
   page,
 }) => {
   await page.goto("/dashboard");
@@ -118,8 +118,8 @@ test("reviewed property copy persists, captions match images, and changed facts 
     page.locator(".heritage-story .heritage-section-heading h2"),
   ).toContainText("Windows onto a new day.");
   await expect(
-    page.locator(".heritage-photo-grid figure").nth(1).locator("figcaption"),
-  ).toContainText("Reviewed caption 2");
+    page.locator(".heritage-photo-grid figcaption"),
+  ).toHaveCount(0);
   await expect(
     page.getByLabel("Property highlights").locator("ul").first(),
   ).not.toContainText("Private garden");
