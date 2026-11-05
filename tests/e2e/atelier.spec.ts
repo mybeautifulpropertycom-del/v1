@@ -25,6 +25,7 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
   ).toBeFocused();
   const gallery = page.locator(".atelier-photo-grid");
   await expect(gallery.locator("figure")).toHaveCount(40);
+  await expect(gallery.locator("figcaption")).toHaveCount(0);
   await gallery.getByRole("button", { name: "Enlarge property photo 4", exact: true }).click();
   await expect(page.locator(".lightbox>span")).toHaveText("4 / 40");
   await page.keyboard.press("Escape");

@@ -425,7 +425,6 @@ export function AtelierWebsite({
             {property.images.map((src, index) => (
               <figure key={`${src}-${index}`}>
                 {photo(src, index)}
-                <figcaption>{copy.captions[index]}</figcaption>
               </figure>
             ))}
           </div>

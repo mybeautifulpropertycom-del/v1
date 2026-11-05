@@ -614,15 +614,6 @@
 .atelier-photo-grid button:hover img {
   transform: scale(1.035);
 }
-.atelier-photo-grid figcaption {
-  display: flex;
-  align-items: baseline;
-  gap: 15px;
-  color: var(--at-muted);
-  font-size: 11px;
-  line-height: 1.6;
-  margin-top: 14px;
-}
 .atelier-film {
   padding-block: 70px 90px;
   background: #eaece3;

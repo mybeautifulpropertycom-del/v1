@@ -282,3 +282,9 @@
 .property-neighbourhood + :is(.estate-contact, .atelier-contact) {
   padding-top: clamp(44px, 4vw, 60px);
 }
+@media (max-width: 640px) {
+  .atelier-website .property-neighbourhood + .atelier-contact {
+    /* Total note-to-heading gap: 28 + 15 + 25 = 68px, down from 97px. */
+    padding-top: 15px;
+  }
+}
