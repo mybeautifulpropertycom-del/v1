@@ -469,16 +469,16 @@
 }
 .atelier-spec-grid dd {
   margin: 0;
-  font: 27px/1.2 var(--serif);
+  font: 25px/1.2 var(--serif);
   color: #f2f1e8;
   overflow-wrap: anywhere;
 }
 .atelier-spec-grid dd small {
-  font: 12px var(--sans);
+  font: 10px var(--sans);
   color: #c1c4b8;
 }
 .atelier-spec-location dd {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.4;
 }
 .atelier-extras {
