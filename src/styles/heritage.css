@@ -1,5 +1,7 @@
 /* The Heritage: warm paper, forest green, and photographs collected like an album. */
 .heritage-website {
+  --sans: "Nunito Sans Variable", Arial, sans-serif;
+  --serif: var(--sans);
   --heritage-paper: #f6f3e9;
   --heritage-ink: #304536;
   --heritage-muted: #727a66;
@@ -12,6 +14,7 @@
   --estate-line: var(--heritage-line);
   background: var(--heritage-paper);
   color: var(--heritage-ink);
+  font-family: var(--sans);
 }
 .heritage-website ::selection {
   background: #d9dfc6;
@@ -41,7 +44,7 @@
   text-transform: uppercase;
 }
 .heritage-website h2 {
-  font: 400 clamp(26px, 2.8vw, 42px)/1.18 var(--serif);
+  font: 600 clamp(26px, 2.8vw, 42px)/1.2 var(--serif);
   letter-spacing: -0.03em;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -190,7 +193,7 @@
   margin-bottom: 20px;
 }
 .heritage-hero h1 {
-  font: 400 clamp(38px, 4.5vw, 66px)/1.12 var(--serif);
+  font: 600 clamp(38px, 4.5vw, 66px)/1.12 var(--serif);
   letter-spacing: -0.035em;
   max-width: 760px;
   overflow-wrap: anywhere;
@@ -703,7 +706,7 @@
 }
 .heritage-agent .heritage-agent-profile strong {
   display: block;
-  font: 400 22px var(--serif);
+  font: 600 22px var(--serif);
   color: var(--heritage-ink);
 }
 .heritage-agent .heritage-agent-profile > div > span {
@@ -747,8 +750,8 @@
   margin-bottom: 16px;
 }
 .heritage-contact-note h3 {
-  font: 400 35px/1.2 var(--serif);
-  letter-spacing: -1px;
+  font: 600 35px/1.2 var(--serif);
+  letter-spacing: -0.03em;
 }
 .heritage-contact-note p {
   color: #6c7b5d;

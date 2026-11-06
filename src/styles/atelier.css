@@ -1,4 +1,6 @@
 .atelier-website {
+  --sans: "Nunito Sans Variable", Arial, sans-serif;
+  --serif: var(--sans);
   --at-ink: #282b27;
   --at-muted: #71756a;
   --at-line: #dcded5;
@@ -40,7 +42,7 @@
   padding-inline: clamp(24px, 6vw, 110px);
 }
 .atelier-website h2 {
-  font: clamp(27px, 3.44vw, 52px)/1.18 var(--serif);
+  font: 600 clamp(27px, 3.44vw, 52px)/1.2 var(--serif);
   letter-spacing: -0.03em;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -302,10 +304,9 @@
   align-items: end;
 }
 .atelier-title-row h1 {
-  font: clamp(36px, 4.4vw, 66px)/1.12 var(--serif);
+  font: 600 clamp(36px, 4.4vw, 66px)/1.12 var(--serif);
   letter-spacing: -0.035em;
   overflow-wrap: anywhere;
-  font-weight: 400;
 }
 .atelier-title-row .atelier-opening-accent {
   display: block;
@@ -676,6 +677,9 @@
   margin: 30px 0;
   gap: 15px;
 }
+.atelier-contact .landing-agent-profile strong {
+  font-weight: 600;
+}
 .atelier-avatar {
   width: 65px;
   height: 65px;
@@ -715,7 +719,7 @@
   align-self: start;
 }
 .atelier-contact .landing-inquiry h3 {
-  font: 30px var(--serif);
+  font: 600 30px/1.2 var(--serif);
   letter-spacing: -0.02em;
 }
 .atelier-contact .landing-inquiry > p {

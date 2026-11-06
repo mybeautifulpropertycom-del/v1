@@ -1044,7 +1044,7 @@
 .viewing-intro h2 em {
   color: var(--estate-sage);
 }
-.estate-website .viewing-dialog .viewing-intro h2 {
+:is(.estate-website, .heritage-website, .atelier-website) .viewing-dialog .viewing-intro h2 {
   font-weight: 600;
   line-height: 1.16;
   letter-spacing: -0.03em;
