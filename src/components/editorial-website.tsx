@@ -31,18 +31,35 @@ import { PropertyPhotoDialog } from "./property-photo-dialog";
 /** A completed, browser-playable film supplied by a future video integration. */
 export type PropertyFilm = { src: string; poster?: string; captions?: string };
 
+const SCROLL_GALLERY_CAPTIONS = [
+  ["Imagine", "living here."],
+  ["Make room", "for your next chapter."],
+  ["Come home", "to your own space."],
+  ["Stay a little.", "Look a little closer."],
+  ["A new address.", "A new beginning."],
+  ["Picture", "your everyday here."],
+  ["Bring your plans.", "Make this yours."],
+  ["Find a place", "to put down roots."],
+  ["Your next move", "could start here."],
+  ["Think of the people", "you’d welcome here."],
+  ["A place to return to.", "A place to call yours."],
+  ["Take your time.", "See what feels right."],
+  ["Let yourself", "feel at home."],
+  ["A fresh start", "with room for you."],
+  ["Turn a possibility", "into your home."],
+  ["See the details.", "Imagine the days."],
+  ["Where could", "your story begin?"],
+  ["Imagine the moment", "you get the keys."],
+  ["There’s more", "to discover here."],
+  ["See it in person.", "Picture what comes next."],
+] as const;
+
 function ScrollGallery({ images, title }: { images: string[]; title: string }) {
   const stage = useRef<HTMLDivElement>(null);
   const [scrollState, setScrollState] = useState<{
     pinned: boolean | null;
     active: number;
   }>({ pinned: null, active: 0 });
-  const captions = [
-    ["Start with a", "breath of fresh air."],
-    ["A little more", "to fall in love with."],
-    ["A closer look.", "A different feeling."],
-    ["Imagine the days", "you’ll spend here."],
-  ];
 
   useEffect(() => {
     const root = stage.current;
@@ -121,7 +138,7 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
             aria-label="Property photographs"
           >
             {images.map((image, index) => {
-              const caption = captions[index % captions.length];
+              const caption = SCROLL_GALLERY_CAPTIONS[index];
               return (
                 <div
                   key={`${image}-${index}`}
@@ -412,7 +429,7 @@ export function EditorialWebsite({
           </dl>
         </section>
         <ScrollGallery
-          images={property.images.slice(0, 20)}
+          images={property.images.slice(0, SCROLL_GALLERY_CAPTIONS.length)}
           title={property.title}
         />
         <section className="estate-details estate-pad estate-space">
