@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.2.8",
+    "@fontsource-variable/nunito-sans": "^5.3.0",
     "@fontsource-variable/playfair-display": "^5.2.8",
     "@higgsfield/client": "^0.2.6",
     "@stripe/stripe-js": "^10.1.0",
