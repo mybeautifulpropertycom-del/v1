@@ -132,7 +132,13 @@ export function Auth({
       <main className="login-panel">
         <div className="auth-card">
           <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
-          <h2>
+          <h2
+            className={
+              !resetPassword && supabase && mode === "signup"
+                ? "auth-signup-title"
+                : undefined
+            }
+          >
             {resetPassword
               ? "A fresh start."
               : !supabase
