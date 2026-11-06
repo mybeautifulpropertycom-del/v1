@@ -1,0 +1,7 @@
+/* Workspace titles and descriptions share The Editorial's rounded font. */
+.app-shell :is(h1, h2, h3, h4, p) {
+  font-family: "Nunito Sans Variable", Arial, sans-serif;
+}
+.app-shell :is(h1, h2, h3, h4) {
+  font-weight: 600;
+}
