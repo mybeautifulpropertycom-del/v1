@@ -183,7 +183,7 @@ export function Auth({
                     autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name and last name."
+                    placeholder="Your name and last name"
                   />
                 </label>
               )}
