@@ -558,9 +558,8 @@ export function AtelierWebsite({
               </label>
             </div>
             <label>
-              Your message
+              Your message (optional)
               <textarea
-                required
                 minLength={10}
                 maxLength={2000}
                 rows={3}

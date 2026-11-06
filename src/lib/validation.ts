@@ -15,15 +15,17 @@ export function validateInquiry(
   const value = input as Record<string, unknown>;
   if (value.website)
     return { ok: false, error: "Please leave the website field empty." };
-  for (const key of ["slug", "name", "email", "phone", "message"])
+  for (const key of ["slug", "name", "email", "phone"])
     if (typeof value[key] !== "string")
       return { ok: false, error: "Please complete the contact form." };
+  if (value.message !== undefined && typeof value.message !== "string")
+    return { ok: false, error: "Please check your message." };
   const result: Inquiry = {
     slug: (value.slug as string).trim(),
     name: (value.name as string).trim(),
     email: (value.email as string).trim().toLowerCase(),
     phone: (value.phone as string).trim(),
-    message: (value.message as string).trim(),
+    message: ((value.message as string | undefined) ?? "").trim(),
   };
   if (value.preferredDate !== undefined) {
     if (!validViewingDate(value.preferredDate))
@@ -41,6 +43,9 @@ export function validateInquiry(
       };
     result.message = `Viewing request\nPreferred date: ${viewingDateLabel(value.preferredDate)} (${value.preferredDate})\nTime and availability to be confirmed by the agent.${result.message ? `\n\n${result.message}` : ""}`;
   }
+  // Keep optional contact requests compatible with the inbox's non-empty
+  // message constraint, without attributing a written message to the visitor.
+  if (!result.message) result.message = "No message provided.";
   if (
     !/^[a-z0-9-]{1,110}$/.test(result.slug) ||
     result.name.length < 2 ||
@@ -54,7 +59,7 @@ export function validateInquiry(
     return {
       ok: false,
       error:
-        "Add a valid name, email, and a message between 10 and 2,000 characters.",
+        "Add a valid name and email. If you include a message, use 10 to 2,000 characters.",
     };
   return { ok: true, value: result };
 }

@@ -86,6 +86,24 @@ test("inquiries normalize contact details and reject invalid or oversized inputs
     assert.equal(validateInquiry(invalid).ok, false);
 });
 
+test("contact inquiries accept an omitted or blank message without losing contact details", () => {
+  const contact = {
+    slug: "published-home",
+    name: "Alex Morgan",
+    email: "alex@example.com",
+    phone: "",
+  };
+  for (const message of [undefined, "", "   "]) {
+    const result = validateInquiry({ ...contact, message });
+    assert.ok(result.ok);
+    assert.equal(result.value.message, "No message provided.");
+    assert.equal(result.value.email, contact.email);
+  }
+  for (const message of [null, 123, {}, []])
+    assert.equal(validateInquiry({ ...contact, message }).ok, false);
+  assert.equal(validateInquiry({ ...contact, email: "invalid" }).ok, false);
+});
+
 test("public links use allocated addresses and retain legacy fallback until migration", () => {
   assert.equal(
     publicPath({ slug: "property-123", address_slug: "123-palm-drive" }),

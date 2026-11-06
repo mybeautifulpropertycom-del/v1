@@ -39,7 +39,7 @@ test("viewing requests preserve the preferred date in the existing private inbox
   assert.equal(result.value.slug, "the-garden-residence");
 });
 
-test("viewing requests need a valid date and phone; ordinary inquiries still need a message", () => {
+test("viewing requests need a valid date and phone; ordinary inquiry messages are optional", () => {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + 1);
   const base = {
@@ -50,7 +50,7 @@ test("viewing requests need a valid date and phone; ordinary inquiries still nee
     message: "",
     website: "",
   };
-  assert.equal(validateInquiry({ ...base }).ok, false);
+  assert.equal(validateInquiry({ ...base }).ok, true);
   assert.equal(
     validateInquiry({ ...base, preferredDate: date.toISOString().slice(0, 10) })
       .ok,

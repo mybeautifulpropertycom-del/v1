@@ -944,6 +944,29 @@ test("contact forms route to the correct owner, limit repeat sends, and hide mes
     3,
   );
 });
+test("a contact request without a message reaches the existing inbox", async () => {
+  const parsed = validateInquiry({
+    slug: "published-home",
+    name: "Contact Guest",
+    email: "no-message@example.com",
+    phone: "",
+    message: "",
+  });
+  assert.ok(parsed.ok);
+  const value = parsed.value;
+  await asAnon();
+  const result = await db.query<{ result: string }>(
+    "select public.submit_property_inquiry($1,$2,$3,$4,$5) as result",
+    [value.slug, value.name, value.email, value.phone, value.message],
+  );
+  assert.equal(result.rows[0].result, "received");
+  await asAgent(agentA);
+  const saved = await db.query<{ message: string }>(
+    "select message from public.inquiries where email = 'no-message@example.com'",
+  );
+  assert.equal(saved.rows[0].message, "No message provided.");
+});
+
 test("a preferred viewing date reaches only the listing agent’s existing inbox", async () => {
   const future = new Date();
   future.setUTCDate(future.getUTCDate() + 2);

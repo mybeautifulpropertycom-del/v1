@@ -119,7 +119,7 @@ export function Auth({
           <Brand light />
         </Link>
         <div>
-          <h1>Sell your property 10x faster using our new software.</h1>
+          <h1>Sell your property 10x faster using our all in one software.</h1>
           <p>
             Create beautiful property funnels and walkthrough videos that make
             the right first impression.
@@ -138,7 +138,7 @@ export function Auth({
               : !supabase
                 ? "Take a look around."
                 : mode === "signup"
-                  ? "Make yourself at home."
+                  ? "Present your property properly"
                   : mode === "forgot"
                     ? "Let’s get you back in."
                     : "Welcome home."}
@@ -149,10 +149,10 @@ export function Auth({
               : resetPassword
                 ? "Choose a new password for your account."
                 : mode === "signup"
-                  ? "Create your account. We’ll save a beautiful space for you."
+                  ? "Create your account and choose the theme."
                   : mode === "forgot"
                     ? "Enter your email and we’ll send a password reset link."
-                    : "Sign in to your workspace and pick up where you left off."}
+                    : "Sign in to your workspace."}
           </p>
           {!supabase ? (
             <div className="auth-demo-note">
@@ -177,7 +177,7 @@ export function Auth({
                     autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Olivia Bennett"
+                    placeholder="Your name and last name."
                   />
                 </label>
               )}

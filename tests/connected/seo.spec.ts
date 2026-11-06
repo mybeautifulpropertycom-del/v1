@@ -33,7 +33,7 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
   );
   await page.goto("/register");
   await expect(
-    page.getByRole("heading", { name: "Make yourself at home." }),
+    page.getByRole("heading", { name: "Present your property properly" }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
