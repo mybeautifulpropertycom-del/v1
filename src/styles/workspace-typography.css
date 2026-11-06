@@ -6,13 +6,11 @@
   font-weight: 600;
 }
 .auth-card .auth-signup-title {
-  font-size: 33px;
+  font-size: 30px;
 }
 @media (min-width: 1001px) {
   .auth-card .auth-signup-title {
     width: max-content;
     max-width: calc(50vw - 40px);
-    margin-left: 50%;
-    transform: translateX(-50%);
   }
 }
