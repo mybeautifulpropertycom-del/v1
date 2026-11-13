@@ -3,8 +3,8 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { serverSupabase } from "./supabase";
 
-export const PROPERTY_PACKAGE_CENTS = 9700;
-export const PROPERTY_PACKAGE_CURRENCY = "usd";
+export const PROPERTY_PACKAGE_CENTS = 24900;
+export const PROPERTY_PACKAGE_CURRENCY = "ron";
 export const UUID = /^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i;
 export class BillingError extends Error {
   constructor(
@@ -29,7 +29,7 @@ export function livePaymentsEnabled() {
 }
 export function stripeConfiguration() {
   const mode = checkoutMode();
-  if (mode === "off") throw new BillingError("Checkout is not enabled yet.");
+  if (mode === "off") throw new BillingError("Plățile nu sunt încă activate.");
   const key = process.env.STRIPE_SECRET_KEY?.trim();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -58,7 +58,7 @@ export function stripeConfiguration() {
     !supabaseUrl
   )
     throw new BillingError(
-      "Stripe checkout is not fully configured for this payment mode. Please contact support.",
+      "Plata Stripe nu este complet configurată pentru acest mod. Contactează asistența.",
     );
   return {
     key,
@@ -90,15 +90,15 @@ export function billingDatabase(
 export async function billingUser(request: Request) {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ") || authorization.length > 10000)
-    throw new BillingError("Please sign in to continue.", 401);
+    throw new BillingError("Autentifică-te pentru a continua.", 401);
   const token = authorization.slice(7);
   const db = serverSupabase(token, AbortSignal.timeout(10000));
-  if (!db) throw new BillingError("A connected workspace is required.");
+  if (!db) throw new BillingError("Este necesar un cont conectat.");
   const {
     data: { user },
     error,
   } = await db.auth.getUser(token);
-  if (error || !user) throw new BillingError("Please sign in again.", 401);
+  if (error || !user) throw new BillingError("Autentifică-te din nou.", 401);
   return { user, db };
 }
 export async function readLimitedBody(request: Request, limit: number) {
@@ -112,7 +112,7 @@ export async function readLimitedBody(request: Request, limit: number) {
     size += value.byteLength;
     if (size > limit) {
       await reader.cancel();
-      throw new BillingError("Request is too large.", 413);
+      throw new BillingError("Solicitarea este prea mare.", 413);
     }
     chunks.push(value);
   }
@@ -131,9 +131,32 @@ export function billingFailure(error: unknown) {
   console.warn(JSON.stringify({ event: "stripe_checkout_failed", reference }));
   return billingJson(
     {
-      error: "Checkout could not be completed. Please try again shortly.",
+      error:
+        "Plata nu a putut fi finalizată. Încearcă din nou în câteva momente.",
       reference,
     },
     502,
   );
+}
+
+// Accept historical receipts only as an exact amount/currency pair.
+export function supportedPackage(amount: unknown, currency: unknown): boolean {
+  return (
+    (amount === PROPERTY_PACKAGE_CENTS &&
+      currency === PROPERTY_PACKAGE_CURRENCY) ||
+    (amount === 9700 && currency === "usd")
+  );
+}
+export function requireRomanianOrder(order: {
+  amount?: number;
+  currency?: string;
+}) {
+  if (
+    order.amount !== PROPERTY_PACKAGE_CENTS ||
+    order.currency !== PROPERTY_PACKAGE_CURRENCY
+  )
+    throw new BillingError(
+      "Comanda folosește tariful vechi. Contactează administratorul pentru verificarea actualizării România și închiderea eventualei sesiuni vechi de plată.",
+      409,
+    );
 }

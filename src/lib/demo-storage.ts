@@ -8,7 +8,9 @@ async function database(): Promise<IDBDatabase> {
       request.result.createObjectStore("workspace");
     request.onsuccess = () => resolve(request.result);
     request.onerror = () =>
-      reject(new Error("Local storage is unavailable in this browser."));
+      reject(
+        new Error("Stocarea locală nu este disponibilă în acest browser."),
+      );
   });
 }
 export async function readDemo(): Promise<Workspace> {
@@ -22,7 +24,7 @@ export async function readDemo(): Promise<Workspace> {
     };
     tx.onerror = () => {
       db.close();
-      reject(new Error("We could not load your demo data."));
+      reject(new Error("Nu am putut încărca datele demonstrative."));
     };
   });
 }
@@ -38,7 +40,9 @@ export async function writeDemo(workspace: Workspace): Promise<void> {
     tx.onerror = () => {
       db.close();
       reject(
-        new Error("Local storage is full or unavailable. Try smaller images."),
+        new Error(
+          "Stocarea locală este plină sau indisponibilă. Încearcă imagini mai mici.",
+        ),
       );
     };
   });

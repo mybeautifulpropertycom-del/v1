@@ -47,7 +47,7 @@ export function ViewingDialog({
   );
   const todayKey = localDateKey(today);
   const maxKey = localDateKey(maxDate);
-  const firstWeekday = month.getDay();
+  const firstWeekday = (month.getDay() + 6) % 7;
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const previousDisabled =
     month.getFullYear() === today.getFullYear() &&
@@ -76,15 +76,19 @@ export function ViewingDialog({
     event.preventDefault();
     if (busy || sent) return;
     if (!selected || selected < localDateKey(new Date()) || selected > maxKey) {
-      setStatus("Choose a preferred date in the calendar.");
+      setStatus("Alege data preferată în calendar.");
       return;
     }
     if (form.phone.replace(/\D/g, "").length < 8) {
-      setStatus("Please add a valid phone number so the agent can reach you.");
+      setStatus(
+        "Adaugă un număr de telefon valid pentru a putea fi contactat de agent.",
+      );
       return;
     }
     if (preview) {
-      setStatus("This is a preview. No viewing request has been sent.");
+      setStatus(
+        "Aceasta este o previzualizare. Nu a fost trimisă nicio cerere de vizionare.",
+      );
       return;
     }
     setBusy(true);
@@ -98,17 +102,17 @@ export function ViewingDialog({
       const data = await response.json();
       if (!response.ok)
         throw new Error(
-          data.error || "Your request could not be sent. Please try again.",
+          data.error || "Cererea nu a putut fi trimisă. Încearcă din nou.",
         );
       setSent(true);
       setStatus(
-        `Your request is in ${agentName || "the agent"}’s inbox. They will contact you to confirm the time and availability.`,
+        `Cererea a ajuns la ${agentName || "agent"}. Vei fi contactat pentru confirmarea orei și disponibilității.`,
       );
     } catch (error) {
       setStatus(
         error instanceof Error
           ? error.message
-          : "Your request could not be sent. Please contact the agent directly.",
+          : "Cererea nu a putut fi trimisă. Contactează direct agentul.",
       );
     } finally {
       setBusy(false);
@@ -124,8 +128,14 @@ export function ViewingDialog({
       ArrowRight: 1,
       ArrowUp: -7,
       ArrowDown: 7,
-      Home: -new Date(month.getFullYear(), month.getMonth(), day).getDay(),
-      End: 6 - new Date(month.getFullYear(), month.getMonth(), day).getDay(),
+      Home: -(
+        (new Date(month.getFullYear(), month.getMonth(), day).getDay() + 6) %
+        7
+      ),
+      End:
+        6 -
+        ((new Date(month.getFullYear(), month.getMonth(), day).getDay() + 6) %
+          7),
     };
     if (!(event.key in offsets)) return;
     event.preventDefault();
@@ -175,30 +185,30 @@ export function ViewingDialog({
       <button
         type="button"
         className="viewing-close"
-        aria-label="Close viewing request"
+        aria-label="Închide cererea de vizionare"
         onClick={onClose}
       >
         <X size={21} />
       </button>
       <div className="viewing-intro">
         <span className="estate-eyebrow">
-          {title || "Your next home"} · A visit, just for you
+          {title || "Următoarea ta locuință"} · O vizionare pentru tine
         </span>
         <h2 id="viewing-title">
-          Let’s meet
+          Să ne întâlnim
           <br />
-          <em>at your next home.</em>
+          <em>la viitoarea ta locuință.</em>
         </h2>
         <p id="viewing-description">
-          Choose a day and leave your details. We’ll be in touch to confirm the
-          time and availability.
+          Alege o zi și lasă datele de contact. Revenim pentru a confirma ora și
+          disponibilitatea.
         </p>
       </div>
       <form onSubmit={submit}>
         <div className="viewing-columns">
           <div className="viewing-fields">
             <label>
-              Full name
+              Nume complet
               <input
                 autoFocus
                 required
@@ -206,13 +216,13 @@ export function ViewingDialog({
                 name="name"
                 minLength={2}
                 maxLength={100}
-                placeholder="Your first and last name"
+                placeholder="Numele și prenumele tău"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </label>
             <label>
-              Phone number
+              Număr de telefon
               <input
                 required
                 autoComplete="tel"
@@ -225,7 +235,7 @@ export function ViewingDialog({
               />
             </label>
             <label>
-              Email address
+              Adresă de e-mail
               <input
                 required
                 autoComplete="email"
@@ -238,30 +248,30 @@ export function ViewingDialog({
               />
             </label>
             <label>
-              A little more <span>(optional)</span>
+              Câteva detalii <span>(opțional)</span>
               <textarea
                 rows={2}
                 maxLength={1600}
-                placeholder="Anything you’d like us to know?"
+                placeholder="Ce ai dori să ne mai spui?"
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
             </label>
             <p className="viewing-privacy">
-              A conversation. A visit. A new beginning.
+              O conversație. O vizionare. Un nou început.
               <br />
-              Your details will be used by {agentName || "the agent"} to contact
-              you about this property.
+              Datele tale vor fi folosite de {agentName || "agent"} pentru a te
+              contacta în legătură cu această proprietate.
             </p>
           </div>
           <fieldset className="viewing-calendar" disabled={busy || sent}>
-            <legend className="sr-only">Preferred viewing date</legend>
-            <p>When would you like to visit?</p>
+            <legend className="sr-only">Data preferată pentru vizionare</legend>
+            <p>Când ai dori să vizitezi proprietatea?</p>
             <div className="viewing-month">
               <button
                 type="button"
                 disabled={previousDisabled}
-                aria-label="Previous month"
+                aria-label="Luna anterioară"
                 onClick={() =>
                   setMonth(
                     new Date(month.getFullYear(), month.getMonth() - 1, 1),
@@ -271,7 +281,7 @@ export function ViewingDialog({
                 <ChevronLeft size={17} />
               </button>
               <span aria-live="polite">
-                {month.toLocaleDateString("en-US", {
+                {month.toLocaleDateString("ro-RO", {
                   month: "long",
                   year: "numeric",
                 })}
@@ -279,7 +289,7 @@ export function ViewingDialog({
               <button
                 type="button"
                 disabled={nextDisabled}
-                aria-label="Next month"
+                aria-label="Luna următoare"
                 onClick={() =>
                   setMonth(
                     new Date(month.getFullYear(), month.getMonth() + 1, 1),
@@ -290,7 +300,7 @@ export function ViewingDialog({
               </button>
             </div>
             <div className="viewing-weekdays" aria-hidden="true">
-              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+              {["Lu", "Ma", "Mi", "Jo", "Vi", "Sâ", "Du"].map((day) => (
                 <span key={day}>{day}</span>
               ))}
             </div>
@@ -323,19 +333,17 @@ export function ViewingDialog({
               })}
             </div>
             <p className="viewing-selected" aria-live="polite">
-              {selected
-                ? viewingDateLabel(selected)
-                : "Select your preferred day."}
+              {selected ? viewingDateLabel(selected) : "Alege ziua preferată."}
             </p>
             <small>
-              This is a viewing request. Your agent will confirm your
-              appointment.
+              Aceasta este o cerere de vizionare. Agentul va confirma
+              programarea.
             </small>
           </fieldset>
         </div>
         <div className="honeypot" aria-hidden="true">
           <label>
-            Leave this empty
+            Lasă acest câmp gol
             <input
               tabIndex={-1}
               autoComplete="off"
@@ -347,8 +355,8 @@ export function ViewingDialog({
         <div className="viewing-submit">
           <p>
             {preview
-              ? "Design preview · No request will be sent."
-              : "One step closer to feeling at home."}
+              ? "Previzualizare design · Nu se trimite nicio cerere."
+              : "Cu un pas mai aproape de acasă."}
           </p>
           <button
             type="submit"
@@ -356,10 +364,10 @@ export function ViewingDialog({
             disabled={busy || sent}
           >
             {busy
-              ? "Sending…"
+              ? "Se trimite…"
               : sent
-                ? "Request received"
-                : "Request a private viewing"}
+                ? "Cerere primită"
+                : "Solicită o vizionare privată"}
             {sent ? <Check size={17} /> : <ArrowUpRight size={17} />}
           </button>
         </div>

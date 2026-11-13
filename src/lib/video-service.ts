@@ -13,14 +13,14 @@ export function aiMontageMode() {
 
 /** The stored provider is authoritative; an old engine name is not a provider. */
 export function savedVideoProvider(config: unknown): string {
-  if (!config || typeof config !== "object") return "Not assigned yet";
+  if (!config || typeof config !== "object") return "Neatribuit încă";
   const value = config as Record<string, unknown>;
-  if (value.engine === "photo-montage-v1") return "Original photographs";
+  if (value.engine === "photo-montage-v1") return "Fotografii originale";
   const profile = (value.profile || (value.engine ? null : value)) as Record<
     string,
     unknown
   > | null;
-  if (!profile?.endpoint) return "Not assigned yet";
+  if (!profile?.endpoint) return "Neatribuit încă";
   return profile.provider === "byteplus" ? "BytePlus" : "Higgsfield";
 }
 
@@ -29,7 +29,7 @@ export function configuredVideoProvider(): string {
     case "byteplus-montage":
       return "BytePlus";
     case "photo-montage":
-      return "Original photographs";
+      return "Fotografii originale";
     default:
       return "Higgsfield";
   }

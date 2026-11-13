@@ -6,9 +6,9 @@ export async function adminRequest(
 ) {
   const client = getSupabase();
   if (!client)
-    throw new Error("Sign in to your connected administrator account.");
+    throw new Error("Autentifică-te în contul conectat de administrator.");
   const { data } = await client.auth.getSession();
-  if (!data.session) throw new Error("Please sign in again.");
+  if (!data.session) throw new Error("Autentifică-te din nou.");
   const response = await fetch(`/api/admin/${path}`, {
     method: body ? "POST" : "GET",
     cache: "no-store",
@@ -22,7 +22,7 @@ export async function adminRequest(
   const result = await response.json();
   if (!response.ok)
     throw new Error(
-      result.error || "The administration service is unavailable.",
+      result.error || "Serviciul de administrare nu este disponibil.",
     );
   return result;
 }

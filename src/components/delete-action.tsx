@@ -22,7 +22,7 @@ export function DeleteAction({
       await onDelete();
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Deletion failed. Please try again.",
+        e instanceof Error ? e.message : "Ștergerea a eșuat. Încearcă din nou.",
       );
     } finally {
       pending.current = false;
@@ -39,7 +39,7 @@ export function DeleteAction({
         onClick={remove}
       >
         <Trash2 size={14} />
-        {busy ? "Deleting…" : "Delete"}
+        {busy ? "Deleting…" : "Șterge"}
       </button>
       {error && (
         <span className="delete-error" role="alert">

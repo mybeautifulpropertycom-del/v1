@@ -35,36 +35,39 @@ for (const theme of ["editorial", "minimal", "panorama"]) {
   }) => {
     await page.goto(`/templates/${theme}`);
     await page
-      .getByRole("button", { name: "Enlarge property photo 3", exact: true })
+      .getByRole("button", {
+        name: "Mărește fotografia proprietății 3",
+        exact: true,
+      })
       .first()
       .click();
     const gallery = page.getByRole("dialog", {
-      name: "Property photo gallery",
+      name: "Galeria foto a proprietății",
     });
     const photo = gallery.locator("[data-current-photo]");
     const client = await context.newCDPSession(page);
-    await expect(photo).toHaveAttribute("alt", /view 3$/);
+    await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
     await swipe(client, -180);
-    await expect(photo).toHaveAttribute("alt", /view 4$/);
+    await expect(photo).toHaveAttribute("alt", /fotografia 4$/);
     await swipe(client, 180);
-    await expect(photo).toHaveAttribute("alt", /view 3$/);
+    await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
     await swipe(client, -20);
-    await expect(photo).toHaveAttribute("alt", /view 3$/);
+    await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
     await swipe(client, 0, 160);
-    await expect(photo).toHaveAttribute("alt", /view 3$/);
+    await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
     await swipe(client, -180, 0, true);
-    await expect(photo).toHaveAttribute("alt", /view 3$/);
-    await gallery.getByRole("button", { name: "Next photo" }).tap();
-    await expect(photo).toHaveAttribute("alt", /view 4$/);
-    await gallery.getByRole("button", { name: "Previous photo" }).tap();
+    await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
+    await gallery.getByRole("button", { name: "Fotografia următoare" }).tap();
+    await expect(photo).toHaveAttribute("alt", /fotografia 4$/);
+    await gallery.getByRole("button", { name: "Fotografia anterioară" }).tap();
     await page.keyboard.press("ArrowLeft");
     await page.keyboard.press("ArrowLeft");
-    await expect(photo).toHaveAttribute("alt", /view 1$/);
+    await expect(photo).toHaveAttribute("alt", /fotografia 1$/);
     await swipe(client, 180);
-    await expect(photo).toHaveAttribute("alt", /view 40$/);
+    await expect(photo).toHaveAttribute("alt", /fotografia 40$/);
     await swipe(client, -180);
-    await expect(photo).toHaveAttribute("alt", /view 1$/);
-    await gallery.getByRole("button", { name: "Close gallery" }).tap();
+    await expect(photo).toHaveAttribute("alt", /fotografia 1$/);
+    await gallery.getByRole("button", { name: "Închide galeria" }).tap();
     await expect(gallery).toHaveCount(0);
     await client.detach();
   });
@@ -75,10 +78,15 @@ test("photo changes animate, settle, and respect reduced motion", async ({
 }) => {
   await page.goto("/templates/panorama");
   await page
-    .getByRole("button", { name: "Enlarge property photo 3", exact: true })
+    .getByRole("button", {
+      name: "Mărește fotografia proprietății 3",
+      exact: true,
+    })
     .first()
     .click();
-  const gallery = page.getByRole("dialog", { name: "Property photo gallery" });
+  const gallery = page.getByRole("dialog", {
+    name: "Galeria foto a proprietății",
+  });
   const photo = gallery.locator("[data-current-photo]");
   await expect
     .poll(() =>
@@ -87,15 +95,15 @@ test("photo changes animate, settle, and respect reduced motion", async ({
       ),
     )
     .toBe(true);
-  await gallery.getByRole("button", { name: "Next photo" }).click();
+  await gallery.getByRole("button", { name: "Fotografia următoare" }).click();
   await expect(photo).toHaveClass("photo-incoming");
   await expect(photo).toHaveCSS("animation-duration", "0.38s");
   await expect(gallery.locator(".photo-outgoing")).toHaveCount(0);
   await expect(photo).toHaveCSS("opacity", "1");
   await expect(photo).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await gallery.getByRole("button", { name: "Previous photo" }).click();
-  await expect(photo).toHaveAttribute("alt", /view 3$/);
+  await gallery.getByRole("button", { name: "Fotografia anterioară" }).click();
+  await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
   await expect(gallery.locator(".photo-outgoing")).toHaveCount(0);
   await expect(photo).toHaveCSS("opacity", "1");
 });

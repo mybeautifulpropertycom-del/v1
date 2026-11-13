@@ -1,3 +1,4 @@
+import { requireRomanianOrder } from "./stripe-server";
 import type Stripe from "stripe";
 import {
   billingDatabase,
@@ -18,7 +19,7 @@ export async function embeddedCheckout(
 ) {
   if (config.live && !livePaymentsEnabled())
     throw new BillingError(
-      "Property publication will open when our video service launches.",
+      "Publicarea proprietăților va fi disponibilă după activarea serviciului video.",
     );
   const admin = billingDatabase(config);
   if (config.live) {
@@ -36,17 +37,18 @@ export async function embeddedCheckout(
       });
   if (error || !reservation)
     throw new BillingError(
-      "Publication setup is incomplete. Please contact support.",
+      "Configurarea publicării este incompletă. Contactează asistența.",
     );
   if (config.live && (reservation.published || reservation.paid))
     return billingJson(reservation);
   let order = config.live ? reservation.order : reservation;
   if (!config.live && order.status === "paid")
     return billingJson({ testPaid: true });
+  requireRomanianOrder(order);
   const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
   if (!publishableKey?.startsWith(config.live ? "pk_live_" : "pk_test_"))
     throw new BillingError(
-      "The secure payment form is not configured. Please contact support.",
+      "Formularul securizat de plată nu este configurat. Contactează asistența.",
     );
   const stripe = stripeClient(config.key);
   const table = config.live ? "property_orders" : "stripe_test_orders";
@@ -91,7 +93,7 @@ export async function embeddedCheckout(
       .single();
     if (rotateError || !rotated)
       throw new BillingError(
-        "Your payment session is updating. Please try again shortly.",
+        "Sesiunea de plată se actualizează. Încearcă din nou în câteva momente.",
       );
     order = rotated;
   }
@@ -103,6 +105,7 @@ export async function embeddedCheckout(
   };
   const params: Stripe.Checkout.SessionCreateParams = {
     mode: "payment",
+    locale: "ro",
     ui_mode: "embedded_page",
     redirect_on_completion: "never",
     allowed_payment_method_types: ["card"],
@@ -114,10 +117,10 @@ export async function embeddedCheckout(
           currency: PROPERTY_PACKAGE_CURRENCY,
           unit_amount: PROPERTY_PACKAGE_CENTS,
           product_data: {
-            name: "Property website + presentation video",
+            name: "Site de proprietate + film de prezentare",
             description: config.live
-              ? "Publish this property and receive one presentation video. One payment, no subscription."
-              : "Test checkout only. No real payment, publication or video generation.",
+              ? "Publică proprietatea și primești un film de prezentare. Plată unică de 249 RON, fără abonament."
+              : "Doar plată de test. Fără plată reală, publicare sau generare video.",
           },
         },
       },
@@ -134,7 +137,9 @@ export async function embeddedCheckout(
     throw new BillingError("The payment mode does not match.");
   if (session.status === "complete") return billingJson({ processing: true });
   if (!session.client_secret)
-    throw new BillingError("The secure payment form could not be opened.");
+    throw new BillingError(
+      "Formularul securizat de plată nu a putut fi deschis.",
+    );
   const { data: saved, error: saveError } = await admin
     .from(table)
     .update({ checkout_session_id: session.id })
@@ -145,7 +150,7 @@ export async function embeddedCheckout(
     .maybeSingle();
   if (saveError)
     throw new BillingError(
-      "Your payment session could not be saved. Please try again.",
+      "Sesiunea de plată nu a putut fi salvată. Încearcă din nou.",
     );
   if (!saved) {
     if (session.status === "open")

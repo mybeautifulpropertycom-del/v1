@@ -24,15 +24,15 @@ import {
 import { useWorkspace } from "./workspace-provider";
 
 const nav = [
-  { href: "/dashboard", label: "My properties", icon: Building2 },
+  { href: "/dashboard", label: "Proprietățile mele", icon: Building2 },
   {
     href: "/dashboard/templates",
-    label: "Design templates",
+    label: "Modele de site",
     icon: LayoutTemplate,
   },
-  { href: "/dashboard/video", label: "Video studio", icon: Video },
-  { href: "/dashboard/inquiries", label: "My inbox", icon: Inbox },
-  { href: "/dashboard/profile", label: "My profile", icon: UserRound },
+  { href: "/dashboard/video", label: "Studio video", icon: Video },
+  { href: "/dashboard/inquiries", label: "Mesaje", icon: Inbox },
+  { href: "/dashboard/profile", label: "Profilul meu", icon: UserRound },
 ];
 export function Brand({ light = false }: { light?: boolean }) {
   return (
@@ -59,7 +59,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {menu && (
         <button
           className="sidebar-overlay"
-          aria-label="Close menu"
+          aria-label="Închide meniul"
           onClick={() => setMenu(false)}
         />
       )}
@@ -76,19 +76,19 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Building2 size={17} />
           </span>
           <span>
-            My workspace
+            Spațiul meu de lucru
             <small>
               {demo
-                ? "Demo account"
+                ? "Cont demonstrativ"
                 : isAdmin
                   ? "Administrator"
-                  : "Agent account"}
+                  : "Cont de agent"}
             </small>
           </span>
           <ChevronDown size={14} />
         </div>
-        <span className="nav-caption">YOUR WORKSPACE</span>
-        <nav aria-label="Main navigation">
+        <span className="nav-caption">SPAȚIUL TĂU DE LUCRU</span>
+        <nav aria-label="Navigare principală">
           {isAdmin && (
             <Link
               href="/dashboard/admin"
@@ -96,7 +96,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               onClick={() => setMenu(false)}
             >
               <ShieldCheck size={19} />
-              <span>Administration</span>
+              <span>Administrare</span>
             </Link>
           )}
           {nav.map(({ href, label, icon: Icon }) => (
@@ -105,7 +105,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               href={href}
               aria-label={
                 href === "/dashboard/inquiries" && unreadCount > 0
-                  ? `My inbox, ${unreadCount} unread leads`
+                  ? `Mesaje, ${unreadCount} mesaje necitite`
                   : undefined
               }
               className={`nav-link ${(href === "/dashboard" ? path === href || path.includes("/properties/") : path === href) ? "active" : ""}`}
@@ -124,15 +124,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="sidebar-bottom">
           <div className="sidebar-note">
             <h3>
-              One property.
-              <br />
-              One beautiful first impression.
+              O proprietate.
+              <br />O primă impresie memorabilă.
             </h3>
             <p>
-              Details make the difference. Find a design that feels like home.
+              Detaliile fac diferența. Alege designul potrivit proprietății
+              tale.
             </p>
             <Link href="/dashboard/templates">
-              Find your style <ArrowUpRight size={16} />
+              Alege-ți stilul <ArrowUpRight size={16} />
             </Link>
           </div>
           <div className="account-row">
@@ -140,13 +140,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <AgentAvatar profile={profile} />
             </Link>
             <Link href="/dashboard/profile" className="account-name">
-              {profile.name || "Your profile"}
-              <small>{profile.agency || "Real estate agent"}</small>
+              {profile.name || "Profilul tău"}
+              <small>{profile.agency || "Agent imobiliar"}</small>
             </Link>
             <button
               className="icon-button"
               onClick={signOut}
-              aria-label="Sign out"
+              aria-label="Deconectare"
             >
               <LogOut size={16} />
             </button>
@@ -158,18 +158,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="topbar-left">
             <button
               className="icon-button mobile-menu"
-              aria-label="Open menu"
+              aria-label="Deschide meniul"
               onClick={() => setMenu(true)}
             >
               <Menu size={22} />
             </button>
             <span className="topbar-breadcrumb">
-              Your workspace <span>/</span>{" "}
+              Spațiul tău de lucru <span>/</span>{" "}
               <strong>
                 {path.startsWith("/dashboard/admin")
-                  ? "Administration"
+                  ? "Administrare"
                   : nav.find((n) => n.href === path)?.label ||
-                    "Property editor"}
+                    "Editorul proprietății"}
               </strong>
             </span>
           </div>
@@ -180,7 +180,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </span>
             <button
               className="icon-button help-top"
-              aria-label="Help"
+              aria-label="Ajutor"
               onClick={() => setHelp(true)}
             >
               <CircleHelp size={19} />
@@ -193,20 +193,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {demo && (
           <div className="demo-banner">
             <span className="demo-indicator" />
-            <strong>You’re exploring the demo.</strong>
+            <strong>Explorezi versiunea demo.</strong>
             <span>
-              Changes stay in this browser. Connect Supabase to publish online.
+              Modificările rămân în acest browser. Conectează Supabase pentru
+              publicare online.
             </span>
             <Link href="/login">
-              About accounts <ArrowUpRight size={13} />
+              Despre conturi <ArrowUpRight size={13} />
             </Link>
           </div>
         )}
         <main className="workspace-main">{children}</main>
         <footer className="workspace-footer">
-          <span>A beautiful place for every property.</span>
+          <span>O prezentare frumoasă pentru fiecare proprietate.</span>
           <span>
-            Made for beautiful beginnings <span className="footer-star">✳</span>
+            Pentru începuturi frumoase <span className="footer-star">✳</span>
           </span>
         </footer>
       </div>
@@ -216,49 +217,46 @@ export function Shell({ children }: { children: React.ReactNode }) {
             className="modal"
             role="dialog"
             aria-modal="true"
-            aria-label="How it works"
+            aria-label="Cum funcționează"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               className="icon-button modal-close"
-              aria-label="Close"
+              aria-label="Închide"
               onClick={() => setHelp(false)}
             >
               <X />
             </button>
-            <span className="eyebrow">FROM FIRST IDEA TO FIRST SHOWING</span>
+            <span className="eyebrow">DE LA PRIMA IDEE LA PRIMA VIZIONARE</span>
             <h2>
-              A beautiful listing,
+              O prezentare reușită,
               <br />
-              in a few simple steps.
+              în câțiva pași simpli.
             </h2>
             <ol className="help-steps">
               <li>
-                <strong>Make it yours</strong>
+                <strong>Completează-ți profilul</strong>
                 <p>
-                  Your name, phone, and email automatically appear on every
-                  property website.
+                  Numele, telefonul și e-mailul tău apar automat pe fiecare site
+                  de proprietate.
                 </p>
               </li>
               <li>
-                <strong>Add your property</strong>
+                <strong>Adaugă proprietatea</strong>
                 <p>
-                  Upload your photos and add the price, location, and property
-                  details.
+                  Încarcă fotografiile și adaugă prețul, adresa și detaliile
+                  proprietății.
                 </p>
               </li>
               <li>
-                <strong>Set the scene</strong>
-                <p>
-                  Three distinct designs, each beautifully responsive on every
-                  screen.
-                </p>
+                <strong>Alege designul</strong>
+                <p>Trei designuri distincte, adaptate oricărui ecran.</p>
               </li>
               <li>
-                <strong>Publish and share</strong>
+                <strong>Publică și distribuie</strong>
                 <p>
-                  With a connected account, your public link works for everyone.
-                  Demo previews stay in this browser.
+                  Cu un cont conectat, linkul public poate fi accesat de
+                  oricine. Previzualizările demo rămân în acest browser.
                 </p>
               </li>
             </ol>
@@ -269,14 +267,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 onClick={() => setHelp(false)}
               >
                 <Plus size={16} />
-                Add a property
+                Adaugă o proprietate
               </Link>
               <a
                 href="mailto:contact@mybeautifulproperty.com"
                 className="button secondary"
               >
                 <Mail size={17} />
-                Contact us
+                Contactează-ne
               </a>
             </div>
           </section>

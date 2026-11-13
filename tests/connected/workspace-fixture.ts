@@ -117,7 +117,10 @@ export async function workspace(
         const count = leads.filter((lead) => !lead.read_at).length;
         return route.fulfill({
           status: 200,
-          headers: { "Content-Range": `*/${count}`, "Access-Control-Expose-Headers": "Content-Range" },
+          headers: {
+            "Content-Range": `*/${count}`,
+            "Access-Control-Expose-Headers": "Content-Range",
+          },
         });
       }
       if (route.request().method() === "DELETE") {

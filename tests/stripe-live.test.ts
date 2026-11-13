@@ -38,6 +38,8 @@ beforeEach(() => {
   process.env.STRIPE_SECRET_KEY = "sk_live_fake";
   process.env.STRIPE_LIVE_PAYMENTS_ENABLED = "true";
   order = {
+    amount: 24900,
+    currency: "ron",
     id: orderId,
     property_id: id,
     owner_id: owner,
@@ -102,8 +104,8 @@ globalThis.fetch = async (input, init) => {
         id: "pi_live_one",
         livemode: true,
         status: "succeeded",
-        currency: "usd",
-        amount: 9700,
+        currency: "ron",
+        amount: 24900,
         metadata,
         latest_charge: "ch_live_one",
       });
@@ -112,8 +114,8 @@ globalThis.fetch = async (input, init) => {
         id: "ch_live_one",
         livemode: true,
         paid: true,
-        amount: 9700,
-        currency: "usd",
+        amount: 24900,
+        currency: "ron",
         payment_intent: "pi_live_one",
         amount_refunded: refunded,
         disputed,
@@ -215,8 +217,8 @@ const session = (overrides = {}) => ({
   mode: "payment",
   payment_status: "paid",
   payment_intent: "pi_live_one",
-  currency: "usd",
-  amount_total: 9700,
+  currency: "ron",
+  amount_total: 24900,
   client_reference_id: orderId,
   metadata,
   ...overrides,
@@ -252,7 +254,7 @@ test("live keys can be configured now without enabling charges or the publicatio
   assert.equal(activationCalls, 0);
   assert.equal(stripePosts.length, 0);
 });
-test("live checkout verifies ownership, charges exactly $97 USD, and resumes the same session", async () => {
+test("live checkout verifies ownership, charges exactly 249 RON, and resumes the same session", async () => {
   available = false;
   assert.equal((await POST(req())).status, 404);
   available = true;
@@ -263,8 +265,8 @@ test("live checkout verifies ownership, charges exactly $97 USD, and resumes the
     "https://checkout.stripe.com/c/pay/cs_live_one",
   );
   const params = stripePosts[0];
-  assert.equal(params.get("line_items[0][price_data][unit_amount]"), "9700");
-  assert.equal(params.get("line_items[0][price_data][currency]"), "usd");
+  assert.equal(params.get("line_items[0][price_data][unit_amount]"), "24900");
+  assert.equal(params.get("line_items[0][price_data][currency]"), "ron");
   assert.equal(params.get("payment_intent_data[metadata][order_id]"), orderId);
   assert.equal(params.get("mode"), "payment");
   assert.equal((await POST(req())).status, 200);
@@ -313,7 +315,7 @@ test("verified live payment records entitlement through the atomic database func
   });
 });
 test("refund before checkout completion is resolved from current Stripe state, not the stale event", async () => {
-  refunded = 9700;
+  refunded = 24900;
   assert.equal((await WEBHOOK(webhook())).status, 200);
   assert.equal(applications[0].new_status, "refunded");
   refunded = 3000;
@@ -380,7 +382,7 @@ test("embedded payment uses a fixed-price Stripe iframe session with no external
   assert.equal(params.get("ui_mode"), "embedded_page");
   assert.equal(params.get("redirect_on_completion"), "never");
   assert.equal(params.get("success_url"), null);
-  assert.equal(params.get("line_items[0][price_data][unit_amount]"), "9700");
+  assert.equal(params.get("line_items[0][price_data][unit_amount]"), "24900");
 });
 test("paid publication skips checkout and a missing public key cannot create an embedded charge", async () => {
   const embedded = () =>

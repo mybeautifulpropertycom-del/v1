@@ -27,8 +27,8 @@ globalThis.fetch = async (input, init) => {
         status: "published",
         location:
           mapTemplate === "unmapped"
-            ? "370 Ocean St, Santa Cruz, CA"
-            : "123 Test Street, Austin, TX, USA",
+            ? "București · proprietate demonstrativă"
+            : "Strada Test 123, București, România",
         google_place_id: mapTemplate === "unmapped" ? null : "ChIJ-test-home",
       },
       profile: sample.profile,

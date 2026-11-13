@@ -67,8 +67,8 @@ export function AdminDashboard() {
     await adminRequest("delete", { kind, id });
     notify(
       kind === "account"
-        ? "Account deletion requested. Its properties have been removed; files and the account will be deleted in the background."
-        : "Property deleted. Its photos and video are queued for storage cleanup.",
+        ? "Ștergerea contului a fost solicitată. Proprietățile au fost eliminate; fișierele și contul vor fi șterse în fundal."
+        : "Proprietatea a fost ștearsă. Fotografiile și filmul sunt programate pentru eliminare.",
     );
     setPage(0);
     setRevision((value) => value + 1);
@@ -76,8 +76,8 @@ export function AdminDashboard() {
   if (!isAdmin)
     return (
       <div className="state-screen">
-        <h1>Administrator access required.</h1>
-        <Link href="/dashboard">Return to your workspace</Link>
+        <h1>Este necesar accesul de administrator.</h1>
+        <Link href="/dashboard">Înapoi la spațiul de lucru</Link>
       </div>
     );
   function changeView(next: "accounts" | "properties") {
@@ -89,32 +89,32 @@ export function AdminDashboard() {
   return (
     <section className="admin-console">
       <header>
-        <span className="eyebrow">YOUR PLATFORM</span>
-        <h1>A clear view of every property.</h1>
+        <span className="eyebrow">PLATFORMA TA</span>
+        <h1>Toate proprietățile, într-un singur loc.</h1>
         <p>
-          Review agent accounts and publish selected properties at no charge,
-          including their cinematic walkthrough.
+          Verifică conturile agenților și publică gratuit proprietățile
+          selectate, inclusiv filmul de prezentare.
         </p>
       </header>
       <div className="admin-controls">
-        <div className="admin-tabs" aria-label="Administration views">
+        <div className="admin-tabs" aria-label="Secțiuni de administrare">
           <button
             className="button secondary"
             aria-pressed={view === "accounts"}
             onClick={() => changeView("accounts")}
           >
-            Agent accounts
+            Conturi de agenți
           </button>
           <button
             className="button secondary"
             aria-pressed={view === "properties"}
             onClick={() => changeView("properties")}
           >
-            All properties
+            Toate proprietățile
           </button>
         </div>
         <label>
-          Search {view === "accounts" ? "agents" : "properties"}
+          Caută {view === "accounts" ? "agenți" : "proprietăți"}
           <input
             value={search}
             onChange={(e) => {
@@ -123,15 +123,15 @@ export function AdminDashboard() {
             }}
             placeholder={
               view === "accounts"
-                ? "Name, login email or agency"
-                : "Property name or location"
+                ? "Nume, e-mail de autentificare sau agenție"
+                : "Numele sau adresa proprietății"
             }
           />
         </label>
       </div>
       {owner && (
         <p>
-          Properties belonging to <strong>{owner.name}</strong>.{" "}
+          Proprietățile agentului <strong>{owner.name}</strong>.{" "}
           <button
             className="text-button"
             onClick={() => {
@@ -139,7 +139,7 @@ export function AdminDashboard() {
               setPage(0);
             }}
           >
-            Show all agents
+            Arată toți agenții
           </button>
         </p>
       )}
@@ -149,7 +149,7 @@ export function AdminDashboard() {
         </p>
       )}
       {loading ? (
-        <p role="status">Loading {view}…</p>
+        <p role="status">Se încarcă {view}…</p>
       ) : (
         !error && (
           <>
@@ -160,12 +160,12 @@ export function AdminDashboard() {
                     {(view === "accounts"
                       ? [
                           "Agent",
-                          "Login email",
-                          "Agency / contact",
-                          "Properties",
+                          "E-mail de autentificare",
+                          "Agenție / contact",
+                          "Proprietăți",
                           "",
                         ]
-                      : ["Property", "Agent", "Location", "Status", ""]
+                      : ["Proprietate", "Agent", "Adresă", "Stare", ""]
                     ).map((label, i) => (
                       <th key={i} scope="col">
                         {label}
@@ -178,11 +178,11 @@ export function AdminDashboard() {
                     ? accounts.map((account) => (
                         <tr key={account.id}>
                           <td>
-                            <strong>{account.name || "Unnamed agent"}</strong>
+                            <strong>{account.name || "Agent fără nume"}</strong>
                             <small>
                               {account.last_sign_in_at
-                                ? `Last sign-in: ${new Date(account.last_sign_in_at).toLocaleDateString("en-US")}`
-                                : "No sign-in recorded"}
+                                ? `Ultima autentificare: ${new Date(account.last_sign_in_at).toLocaleDateString("ro-RO")}`
+                                : "Nicio autentificare înregistrată"}
                             </small>
                           </td>
                           <td>{account.login_email}</td>
@@ -195,7 +195,7 @@ export function AdminDashboard() {
                           <td>{account.property_count}</td>
                           <td>
                             {account.deleting ? (
-                              <span role="status">Deletion in progress…</span>
+                              <span role="status">Ștergere în curs…</span>
                             ) : (
                               <>
                                 <button
@@ -210,12 +210,12 @@ export function AdminDashboard() {
                                     setPage(0);
                                   }}
                                 >
-                                  View properties →
+                                  Vezi proprietățile →
                                 </button>
                                 {account.id !== profile.id && (
                                   <DeleteAction
-                                    label={`Delete account ${account.login_email}`}
-                                    confirmation={`Permanently delete ${account.login_email}, all their properties, leads, photos and videos? This cannot be undone. Existing payments are not automatically refunded.`}
+                                    label={`Șterge contul ${account.login_email}`}
+                                    confirmation={`Ștergi definitiv contul ${account.login_email}, toate proprietățile, mesajele, fotografiile și filmele? Acțiunea nu poate fi anulată. Plățile existente nu sunt rambursate automat.`}
                                     onDelete={() =>
                                       remove("account", account.id)
                                     }
@@ -230,7 +230,7 @@ export function AdminDashboard() {
                         <tr key={property.id}>
                           <td>
                             <strong>
-                              {property.title || "Untitled property"}
+                              {property.title || "Proprietate fără titlu"}
                             </strong>
                           </td>
                           <td>
@@ -240,19 +240,19 @@ export function AdminDashboard() {
                           <td>{property.location || "—"}</td>
                           <td>
                             {property.status === "published"
-                              ? "Published"
-                              : "Draft"}
+                              ? "Publicat"
+                              : "Ciornă"}
                           </td>
                           <td>
                             <Link
                               className="text-button"
                               href={`/admin/properties/${property.id}`}
                             >
-                              Review property →
+                              Verifică proprietatea →
                             </Link>
                             <DeleteAction
-                              label={`Delete ${property.title || "property"}`}
-                              confirmation={`Permanently delete ${property.title || "this property"}, its photos and video? Leads remain in the agent's inbox. Existing payments are not automatically refunded.`}
+                              label={`Șterge ${property.title || "proprietatea"}`}
+                              confirmation={`Ștergi definitiv ${property.title || "această proprietate"}, fotografiile și filmul? Mesajele rămân în contul agentului. Plățile existente nu sunt rambursate automat.`}
                               onDelete={() => remove("property", property.id)}
                             />
                           </td>
@@ -261,7 +261,12 @@ export function AdminDashboard() {
                 </tbody>
               </table>
             </div>
-            {!total && <p>No {view} match this search.</p>}
+            {!total && (
+              <p>
+                Nu au fost găsite locuri din categoria {view} corespunzătoare
+                căutării.
+              </p>
+            )}
             <div className="admin-pagination">
               <span>
                 {total} {view}
@@ -271,15 +276,15 @@ export function AdminDashboard() {
                 disabled={page === 0}
                 onClick={() => setPage(page - 1)}
               >
-                Previous
+                Înapoi
               </button>
-              <span>Page {page + 1}</span>
+              <span>Pagina {page + 1}</span>
               <button
                 className="button secondary"
                 disabled={(page + 1) * 25 >= total}
                 onClick={() => setPage(page + 1)}
               >
-                Next
+                Următoarea
               </button>
             </div>
           </>

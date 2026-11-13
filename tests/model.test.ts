@@ -12,11 +12,11 @@ import {
 import { demoWorkspace } from "../src/lib/demo";
 import { validateInquiry } from "../src/lib/validation";
 
-test("new listings use US defaults and cannot publish without required details", () => {
+test("new listings use Romanian defaults and cannot publish without required details", () => {
   const { profile } = demoWorkspace();
   const property = createProperty(profile.id);
-  assert.equal(property.currency, "USD");
-  assert.equal(property.area_unit, "sqft");
+  assert.equal(property.currency, "EUR");
+  assert.equal(property.area_unit, "sqm");
   assert.equal(property.status, "draft");
   assert.equal(publicationErrors(property, profile).length, 6);
 });
@@ -32,17 +32,17 @@ test("a complete property and contact profile can publish in each design", () =>
     publicationErrors({ ...properties[0], price: NaN }, profile).length > 0,
   );
 });
-test("public slugs remain URL safe and prices use US conventions", () => {
+test("public slugs remain URL safe and prices use Romanian conventions", () => {
   assert.equal(slugify("A home / by the beach!"), "a-home-by-the-beach");
   assert.equal(slugify("Casă în oraș"), "casa-in-oras");
   assert.equal(slugify(""), "property");
   assert.equal(
-    formatPrice({ price: 2450000, currency: "USD", transaction: "sale" }),
-    "$2,450,000",
+    formatPrice({ price: 2450000, currency: "EUR", transaction: "sale" }),
+    "2.450.000\u00a0EUR",
   );
   assert.equal(
-    formatPrice({ price: 2500, currency: "USD", transaction: "rent" }),
-    "$2,500 / mo",
+    formatPrice({ price: 2500, currency: "EUR", transaction: "rent" }),
+    "2.500\u00a0EUR / lună",
   );
 });
 test("invalid dimensions and room counts are rejected even for drafts", () => {
@@ -61,7 +61,7 @@ test("invalid dimensions and room counts are rejected even for drafts", () => {
 test("inquiries normalize contact details and reject invalid or oversized inputs", () => {
   const valid = {
     slug: "the-palm-residence",
-    name: " Alex Morgan ",
+    name: " Alex Popescu ",
     email: "ALEX@example.com ",
     phone: "",
     message: "I would love to arrange a showing.",
@@ -71,7 +71,7 @@ test("inquiries normalize contact details and reject invalid or oversized inputs
   assert.equal(result.ok, true);
   if (result.ok) {
     assert.equal(result.value.email, "alex@example.com");
-    assert.equal(result.value.name, "Alex Morgan");
+    assert.equal(result.value.name, "Alex Popescu");
   }
   for (const invalid of [
     null,
@@ -89,14 +89,14 @@ test("inquiries normalize contact details and reject invalid or oversized inputs
 test("contact inquiries accept an omitted or blank message without losing contact details", () => {
   const contact = {
     slug: "published-home",
-    name: "Alex Morgan",
+    name: "Alex Popescu",
     email: "alex@example.com",
     phone: "",
   };
   for (const message of [undefined, "", "   "]) {
     const result = validateInquiry({ ...contact, message });
     assert.ok(result.ok);
-    assert.equal(result.value.message, "No message provided.");
+    assert.equal(result.value.message, "Nu a fost completat niciun mesaj.");
     assert.equal(result.value.email, contact.email);
   }
   for (const message of [null, 123, {}, []])
@@ -120,5 +120,5 @@ test("a property accepts 40 photos and rejects a 41st", () => {
   );
   assert.deepEqual(propertyErrors(property), []);
   property.images.push("https://example.com/41.webp");
-  assert.match(propertyErrors(property).join(" "), /40 photos/);
+  assert.match(propertyErrors(property).join(" "), /40 de fotografii/);
 });

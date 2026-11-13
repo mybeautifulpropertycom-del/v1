@@ -38,7 +38,7 @@ export function Inquiries() {
       if (!active || version !== requestVersion.current) return;
       if (error)
         setError(
-          "Your inbox could not be loaded. Please refresh and try again.",
+          "Mesajele nu au putut fi încărcate. Reîncarcă pagina și încearcă din nou.",
         );
       else {
         setInquiries(data as Inquiry[]);
@@ -79,7 +79,7 @@ export function Inquiries() {
       );
       await refreshUnread();
     } catch {
-      notify("This lead could not be marked as read. Please try again.");
+      notify("Mesajul nu a putut fi marcat ca citit. Încearcă din nou.");
     } finally {
       setMarking(null);
     }
@@ -96,24 +96,24 @@ export function Inquiries() {
       .single();
     if (error || !data)
       throw new Error(
-        "This lead could not be deleted. Please check your connection and try again.",
+        "Mesajul nu a putut fi șters. Verifică conexiunea și încearcă din nou.",
       );
     requestVersion.current++;
     setInquiries((current) => current.filter((item) => item.id !== id));
     await refreshUnread();
-    notify("Lead deleted.");
+    notify("Mesajul a fost șters.");
   }
   return (
     <>
       <div className="page-heading compact">
         <div>
-          <span className="eyebrow">GOOD CONVERSATIONS START HERE</span>
+          <span className="eyebrow">CONVERSAȚIILE BUNE ÎNCEP AICI</span>
           <h1>
-            A new hello.
+            Un mesaj nou.
             <br />
-            <em>A new possibility.</em>
+            <em>O nouă posibilitate.</em>
           </h1>
-          <p>Messages from your property forms.</p>
+          <p>Mesaje primite prin formularele proprietăților.</p>
         </div>
       </div>
       {error ? (
@@ -121,7 +121,7 @@ export function Inquiries() {
           {error}
         </p>
       ) : loading ? (
-        <p className="inline-notice">Opening your inbox…</p>
+        <p className="inline-notice">Se încarcă mesajele…</p>
       ) : inquiries.length ? (
         <div className="inquiries-list">
           {inquiries.map((item) => (
@@ -132,16 +132,16 @@ export function Inquiries() {
               <div className="inquiry-card-head">
                 <div>
                   <h3>{item.name}</h3>
-                  {!item.read_at && <span className="lead-new-label">New</span>}
+                  {!item.read_at && <span className="lead-new-label">Nou</span>}
                   <small>
                     {properties.find((p) => p.id === item.property_id)?.title ||
                       (item.property_id
-                        ? "Property inquiry"
-                        : "Deleted property")}
+                        ? "Solicitare despre proprietate"
+                        : "Proprietate ștearsă")}
                   </small>
                 </div>
                 <small>
-                  {new Date(item.created_at).toLocaleString("en-US", {
+                  {new Date(item.created_at).toLocaleString("ro-RO", {
                     dateStyle: "medium",
                     timeStyle: "short",
                   })}
@@ -155,10 +155,12 @@ export function Inquiries() {
                     className="lead-mark-read"
                     disabled={marking !== null}
                     onClick={() => void markRead(item.id)}
-                    aria-label={`Mark lead from ${item.name} as read`}
+                    aria-label={`Marchează mesajul de la ${item.name} ca citit`}
                   >
                     <Check size={14} />
-                    {marking === item.id ? "Saving…" : "Mark as read"}
+                    {marking === item.id
+                      ? "Se salvează…"
+                      : "Marchează ca citit"}
                   </button>
                 )}
                 <a href={`mailto:${item.email}`}>
@@ -173,33 +175,33 @@ export function Inquiries() {
                 )}
                 {item.property_id && (
                   <Link href={`/dashboard/properties/${item.property_id}`}>
-                    View property <ArrowUpRight size={14} />
+                    Vezi proprietatea <ArrowUpRight size={14} />
                   </Link>
                 )}
                 <DeleteAction
-                  label={`Delete lead from ${item.name}`}
-                  confirmation={`Delete the lead from ${item.name}? Their contact details and message will be permanently removed from your inbox. This cannot be undone.`}
+                  label={`Șterge mesajul de la ${item.name}`}
+                  confirmation={`Ștergi mesajul de la ${item.name}? Datele de contact și mesajul vor fi eliminate definitiv. Acțiunea nu poate fi anulată.`}
                   onDelete={() => deleteInquiry(item.id)}
                 />
               </div>
             </article>
           ))}
           <p className="form-intro">
-            Showing your 100 most recent messages. Replies open in your email or
-            phone app.
+            Sunt afișate cele mai recente 100 de mesaje. Răspunsurile se deschid
+            în aplicația de e-mail sau telefon.
           </p>
         </div>
       ) : (
         <div className="empty-state">
           <Inbox size={37} />
-          <h3>A little quiet. For now.</h3>
+          <h3>Niciun mesaj. Deocamdată.</h3>
           <p>
             {demo
-              ? "This is a demo inbox. Once Supabase is connected, messages from your published property websites will appear here."
-              : "When someone reaches out through a published website, their message will arrive here."}
+              ? "Acestea sunt mesaje demonstrative. După conectarea Supabase, mesajele de pe site-urile publicate vor apărea aici."
+              : "Când cineva te contactează printr-un site publicat, mesajul apare aici."}
           </p>
           <Link className="button secondary" href="/dashboard">
-            Back to my properties <ArrowUpRight size={16} />
+            Înapoi la proprietățile mele <ArrowUpRight size={16} />
           </Link>
         </div>
       )}

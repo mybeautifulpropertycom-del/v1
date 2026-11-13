@@ -55,7 +55,7 @@ export async function mockGoogleMaps(page: Page) {
       failSearch: false,
     });
     let sessionCounter = 0;
-    const point = (lat = 30.2672, lng = -97.7431) => ({
+    const point = (lat = 44.4268, lng = 26.1025) => ({
       toJSON: () => ({ lat, lng }),
       lat: () => lat,
       lng: () => lng,
@@ -63,9 +63,9 @@ export async function mockGoogleMaps(page: Page) {
     class Place {
       id: string;
       location = point();
-      formattedAddress = "123 Test Street, Austin, TX, USA";
+      formattedAddress = "Strada Test 123, București, România";
       addressComponents = [
-        { types: ["country"], shortText: "US" },
+        { types: ["country"], shortText: "RO" },
         { types: ["street_number"], shortText: "123" },
       ];
       types = ["street_address"];
@@ -79,12 +79,12 @@ export async function mockGoogleMaps(page: Page) {
         if (this.id === "ChIJ-canada")
           this.addressComponents[0].shortText = "CA";
         if (this.id === "ChIJ-city") {
-          this.addressComponents = [{ types: ["country"], shortText: "US" }];
+          this.addressComponents = [{ types: ["country"], shortText: "RO" }];
           this.types = ["locality"];
         }
         if (this.id === "ChIJ-template-home") {
           this.addressComponents = [
-            { types: ["country"], shortText: "US" },
+            { types: ["country"], shortText: "RO" },
             {
               types: ["street_number"],
               shortText:
@@ -122,7 +122,7 @@ export async function mockGoogleMaps(page: Page) {
               : n === 0
                 ? "Nearby Elementary School"
                 : "Nearby Learning Centre",
-            location: point(30.27 + n * 0.005, -97.74),
+            location: point(44.43 + n * 0.005, 26.1),
             googleMapsURI: "https://www.google.com/maps",
             attributions: [
               {
@@ -207,7 +207,7 @@ export async function mockGoogleMaps(page: Page) {
                   placePrediction: {
                     placeId: id,
                     text: {
-                      toString: () => "123 Test Street, Austin, TX, USA",
+                      toString: () => "Strada Test 123, București, România",
                     },
                     toPlace: () => new Place({ id }),
                   },

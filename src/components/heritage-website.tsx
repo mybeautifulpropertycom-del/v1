@@ -1,4 +1,5 @@
 "use client";
+import { propertyTypeLabel } from "@/lib/model";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
@@ -103,7 +104,7 @@ export function HeritageWebsite({
   const copy = propertyStory(property);
   const isPreview = preview || sample;
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
-  const size = `${property.area.toLocaleString("en-US")} ${unit}`;
+  const size = `${property.area.toLocaleString("ro-RO")} ${unit}`;
   const photographs = property.images.map((src, index) => ({ src, index }));
   const visiblePhotographs = highlights ? photographs.slice(0, 3) : photographs;
   const secondaryPhoto = property.images[1] || property.images[0];
@@ -111,20 +112,20 @@ export function HeritageWebsite({
   const facts = [
     [
       formatPrice(property),
-      property.transaction === "rent" ? "Monthly rent" : "Offered at",
+      property.transaction === "rent" ? "Chirie lunară" : "Preț",
     ],
-    [String(property.bedrooms), "Bedrooms"],
-    [String(property.bathrooms), "Bathrooms"],
-    [property.area.toLocaleString("en-US"), `${unit} of living space`],
-    [property.type, "Property type"],
+    [String(property.bedrooms), "Dormitoare"],
+    [String(property.bathrooms), "Băi"],
+    [property.area.toLocaleString("ro-RO"), `${unit} suprafață locuibilă`],
+    [propertyTypeLabel(property.type), "Tipul proprietății"],
   ];
   const features = property.amenities.length
     ? property.amenities
     : [
-        property.type,
-        `${property.bedrooms} bedrooms`,
-        `${property.bathrooms} bathrooms`,
-        `${size} of living space`,
+        propertyTypeLabel(property.type),
+        `${property.bedrooms} dormitoare`,
+        `${property.bathrooms} băi`,
+        `${size} suprafață locuibilă`,
       ];
   const tourButton = (className = "heritage-button") => (
     <button
@@ -133,7 +134,7 @@ export function HeritageWebsite({
       aria-haspopup="dialog"
       onClick={() => setViewing(true)}
     >
-      Schedule a tour <ArrowUpRight size={15} />
+      Programează o vizionare <ArrowUpRight size={15} />
     </button>
   );
 
@@ -151,19 +152,19 @@ export function HeritageWebsite({
           >
             <ArrowLeft size={15} />
             {previewBackLink?.label ||
-              (sample ? "Back to collection" : "Back to editor")}
+              (sample ? "Înapoi la colecție" : "Înapoi la editor")}
           </Link>
           <span>
             {sample
-              ? "The Heritage · Design preview · Sample property"
-              : "Saved website preview · Not a public link"}
+              ? "The Heritage · Previzualizare design · Proprietate demonstrativă"
+              : "Previzualizarea site-ului salvat · Nu este un link public"}
           </span>
           {sample ? (
             <Link href="/dashboard/properties/new?template=minimal">
-              Use this design <ArrowUpRight size={14} />
+              Folosește acest design <ArrowUpRight size={14} />
             </Link>
           ) : (
-            <span>A place for your next chapter</span>
+            <span>Un loc pentru următorul tău capitol</span>
           )}
         </div>
       )}
@@ -172,10 +173,10 @@ export function HeritageWebsite({
           <span>{profile.agency || profile.name}</span>
           <Asterisk size={21} strokeWidth={1} />
         </a>
-        <nav aria-label="Property navigation">
-          <a href="#story">The home</a>
-          <a href="#gallery">The rooms</a>
-          <a href="#contact">Your agent</a>
+        <nav aria-label="Navigarea proprietății">
+          <a href="#story">Locuința</a>
+          <a href="#gallery">Încăperile</a>
+          <a href="#contact">Agentul tău</a>
         </nav>
         {tourButton("heritage-nav-tour")}
       </header>
@@ -184,7 +185,7 @@ export function HeritageWebsite({
           className="heritage-hero-stage"
           id="home"
           ref={stage}
-          aria-label="Property introduction"
+          aria-label="Prezentarea proprietății"
         >
           <div className="heritage-hero" ref={cover}>
             <div className="heritage-cover">
@@ -192,25 +193,27 @@ export function HeritageWebsite({
                 <PropertyImage
                   className="heritage-cover-image"
                   src={property.images[0]}
-                  alt={`${property.title} — main view`}
+                  alt={`${property.title} — vedere principală`}
                   fetchPriority="high"
                   sizes="100vw"
                 />
               ) : (
                 <div className="heritage-image-empty">
-                  Your cover photograph will appear here.
+                  Fotografia de copertă va apărea aici.
                 </div>
               )}
             </div>
             <div className="heritage-hero-copy heritage-pad">
               <span className="heritage-kicker">
-                A place to make your own ·{" "}
-                {property.transaction === "rent" ? "For rent" : "For sale"}
+                Un loc pe care să-l numești acasă ·{" "}
+                {property.transaction === "rent"
+                  ? "De închiriat"
+                  : "De vânzare"}
               </span>
               <h1>
                 <EditableText
                   field="title"
-                  value={property.title || "A little character."}
+                  value={property.title || "Un plus de personalitate."}
                   onEdit={onEdit}
                 />
               </h1>
@@ -228,25 +231,27 @@ export function HeritageWebsite({
                 <MapPin size={13} />
                 <EditableText
                   field="location"
-                  value={property.location || "Your property location"}
+                  value={property.location || "Adresa proprietății tale"}
                   onEdit={onEdit}
                 />
               </span>
               <a
                 href="#story"
                 className="heritage-hero-down"
-                aria-label="Discover the home"
+                aria-label="Descoperă locuința"
               >
                 <ArrowDown size={17} />
                 <span>
-                  A NEW CHAPTER
+                  UN NOU CAPITOL
                   <br />
-                  BEGINS HERE
+                  ÎNCEPE AICI
                 </span>
               </a>
               {property.images.length > 0 && (
                 <button type="button" onClick={() => setLightbox(0)}>
-                  <span>View all {property.images.length} photos</span>
+                  <span>
+                    Vezi toate cele {property.images.length} fotografii
+                  </span>
                   <Expand size={13} />
                 </button>
               )}
@@ -266,7 +271,7 @@ export function HeritageWebsite({
           id="story"
         >
           <div className="heritage-section-label">
-            <span>A HOME. A FEELING. A FRESH START.</span>
+            <span>O LOCUINȚĂ. O EMOȚIE. UN NOU ÎNCEPUT.</span>
           </div>
           <div className="heritage-section-heading">
             <h2>
@@ -298,28 +303,28 @@ export function HeritageWebsite({
                 <button
                   type="button"
                   onClick={() => setLightbox(property.images[1] ? 1 : 0)}
-                  aria-label="Explore the home photograph"
+                  aria-label="Descoperă fotografia locuinței"
                 >
                   <PropertyImage
                     src={secondaryPhoto}
-                    alt={`${property.title} — a closer perspective`}
+                    alt={`${property.title} — o privire mai atentă`}
                     loading="lazy"
                   />
                 </button>
               ) : (
                 <div className="heritage-image-empty">
-                  Add a photograph to tell your story.
+                  Adaugă o fotografie care să spună povestea.
                 </div>
               )}
               <figcaption>{property.title}</figcaption>
               <span className="heritage-seal">
                 <Asterisk size={18} strokeWidth={1} />
-                <strong>Your next</strong>
-                <em>chapter</em>
+                <strong>Următorul tău</strong>
+                <em>capitol</em>
               </span>
             </figure>
             <div className="heritage-story-copy">
-              <span className="heritage-kicker">A fresh perspective</span>
+              <span className="heritage-kicker">O perspectivă nouă</span>
               <h2>
                 <EditableText
                   field="copy.storyTitle"
@@ -340,7 +345,7 @@ export function HeritageWebsite({
                   field="copy.storyBody"
                   value={
                     copy.storyBody ||
-                    "Your property’s story will appear here. Add a description in the editor to share what makes it special."
+                    "Povestea proprietății va apărea aici. Adaugă o descriere în editor pentru a spune ce o face deosebită."
                   }
                   onEdit={onEdit}
                 />
@@ -351,7 +356,7 @@ export function HeritageWebsite({
         </section>
         <div
           className="heritage-amenity-strip"
-          aria-label="Property highlights"
+          aria-label="Punctele forte ale proprietății"
         >
           <div className="heritage-amenity-window">
             <div className="heritage-amenity-track">
@@ -370,7 +375,7 @@ export function HeritageWebsite({
           id="gallery"
         >
           <div className="heritage-section-label">
-            <span>EVERY PICTURE, ANOTHER POSSIBILITY</span>
+            <span>FIECARE FOTOGRAFIE, O NOUĂ POSIBILITATE</span>
           </div>
           <div className="heritage-section-heading">
             <h2>
@@ -393,20 +398,20 @@ export function HeritageWebsite({
                 field="copy.galleryBody"
                 value={
                   copy.galleryBody ||
-                  "Take a look around. Arrange a tour to see the details in person."
+                  "Descoperă fotografiile. Programează o vizionare pentru a vedea detaliile la fața locului."
                 }
                 onEdit={onEdit}
               />
             </p>
           </div>
           <div className="heritage-gallery-tools">
-            <div role="group" aria-label="Photograph selection">
+            <div role="group" aria-label="Selecție de fotografii">
               <button
                 type="button"
                 aria-pressed={!highlights}
                 onClick={() => setHighlights(false)}
               >
-                All photographs
+                Toate fotografiile
               </button>
               {photographs.length > 3 && (
                 <button
@@ -414,7 +419,7 @@ export function HeritageWebsite({
                   aria-pressed={highlights}
                   onClick={() => setHighlights(true)}
                 >
-                  First impressions
+                  Prime impresii
                 </button>
               )}
             </div>
@@ -425,11 +430,11 @@ export function HeritageWebsite({
                 <button
                   type="button"
                   onClick={() => setLightbox(index)}
-                  aria-label={`Enlarge property photo ${index + 1}`}
+                  aria-label={`Mărește fotografia proprietății ${index + 1}`}
                 >
                   <PropertyImage
                     src={src}
-                    alt={`${property.title} — view ${index + 1}`}
+                    alt={`${property.title} — fotografia ${index + 1}`}
                     loading="lazy"
                   />
                   <span>
@@ -441,11 +446,11 @@ export function HeritageWebsite({
           </div>
           {!photographs.length && (
             <div className="heritage-gallery-empty">
-              Your property photographs will appear here.
+              Fotografiile proprietății vor apărea aici.
             </div>
           )}
           <div className="heritage-gallery-footer">
-            <p>See the rest in person.</p>
+            <p>Descoperă restul la o vizionare.</p>
             {tourButton("heritage-button heritage-button-outline")}
           </div>
         </section>
@@ -457,18 +462,18 @@ export function HeritageWebsite({
             {detailPhoto ? (
               <PropertyImage
                 src={detailPhoto}
-                alt={`${property.title} — property detail`}
+                alt={`${property.title} — detaliu al proprietății`}
                 loading="lazy"
               />
             ) : (
               <div className="heritage-image-empty">
-                A closer look at your property.
+                O privire mai atentă asupra proprietății.
               </div>
             )}
-            <span>THE DETAILS MAKE THE DIFFERENCE</span>
+            <span>DETALIILE FAC DIFERENȚA</span>
           </div>
           <div className="heritage-details-copy">
-            <span className="heritage-kicker">Thoughtfully yours</span>
+            <span className="heritage-kicker">Detalii pentru tine</span>
             <h2 id="heritage-details-title">
               <EditableText
                 field="copy.detailsTitle"
@@ -506,9 +511,9 @@ export function HeritageWebsite({
           >
             <div className="heritage-film-heading">
               <h2 id="heritage-film-title">
-                Picture your <em>next chapter.</em>
+                Imaginează-ți <em>următorul capitol.</em>
               </h2>
-              <span className="heritage-kicker">THE HOME, IN MOTION</span>
+              <span className="heritage-kicker">LOCUINȚA PRINDE VIAȚĂ</span>
             </div>
             {film?.src && videoPanel}
             {film?.src ? (
@@ -520,7 +525,7 @@ export function HeritageWebsite({
                   playsInline
                   preload="metadata"
                   poster={film.poster || property.images[0]}
-                  aria-label={`${property.title} — property film`}
+                  aria-label={`${property.title} — filmul proprietății`}
                 >
                   <source src={film.src} />
                   {film.captions && (
@@ -529,10 +534,10 @@ export function HeritageWebsite({
                       kind="captions"
                       src={film.captions}
                       srcLang="en"
-                      label="English"
+                      label="Engleză"
                     />
                   )}
-                  Your browser does not support this video.
+                  Browserul tău nu poate reda acest videoclip.
                 </video>
               </>
             ) : videoPanel ? (
@@ -547,11 +552,12 @@ export function HeritageWebsite({
                   />
                 )}
                 <div>
-                  <span className="heritage-kicker">There’s a story here</span>
+                  <span className="heritage-kicker">Aici începe o poveste</span>
                   <Film size={28} strokeWidth={1} />
-                  <p>Your completed property film will appear here.</p>
+                  <p>Filmul proprietății va apărea aici când este gata.</p>
                   <small>
-                    Video layout preview · No film has been generated yet
+                    Previzualizarea secțiunii video · Nu a fost generat încă
+                    niciun film
                   </small>
                 </div>
               </div>
@@ -566,17 +572,17 @@ export function HeritageWebsite({
         >
           <div className="heritage-agent landing-agent">
             <span className="heritage-kicker">
-              The person behind the property
+              Omul din spatele proprietății
             </span>
             <h2 id="heritage-contact-title">
-              A personal <em>introduction.</em>
+              O scurtă <em>prezentare.</em>
             </h2>
             <div className="heritage-agent-profile landing-agent-profile">
               <span className="heritage-agent-monogram">
                 <AgentAvatar profile={profile} />
               </span>
               <div>
-                <strong>{profile.name || "Your agent"}</strong>
+                <strong>{profile.name || "Agentul tău"}</strong>
                 {profile.agency && <span>{profile.agency}</span>}
               </div>
             </div>
@@ -599,15 +605,15 @@ export function HeritageWebsite({
           <div className="heritage-contact-note">
             <Asterisk size={32} strokeWidth={1} />
             <h3>
-              Let’s find a day
+              Să alegem o zi
               <br />
-              <em>to meet.</em>
+              <em>pentru vizionare.</em>
             </h3>
             <p>
-              Choose a preferred day and leave your details.
+              Alege ziua preferată și lasă datele de contact.
               <br />
-              {profile.name || "Your agent"} will confirm the time and
-              availability.
+              {profile.name || "Agentul tău"} va confirma ora și
+              disponibilitatea.
             </p>
             {tourButton()}
           </div>
@@ -618,9 +624,7 @@ export function HeritageWebsite({
         >
           <div className="heritage-setting-layout">
             <div>
-              <span className="heritage-kicker">
-                MAKE ROOM FOR WHAT COMES NEXT
-              </span>
+              <span className="heritage-kicker">FĂ LOC PENTRU CE URMEAZĂ</span>
               <h2>
                 <EditableText
                   field="copy.settingTitle"
@@ -646,22 +650,20 @@ export function HeritageWebsite({
               <dl>
                 <div>
                   <dt>
-                    {property.transaction === "rent"
-                      ? "Monthly rent"
-                      : "Offered at"}
+                    {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
                   </dt>
                   <dd>{formatPrice(property)}</dd>
                 </div>
                 <div>
-                  <dt>Living space</dt>
+                  <dt>Suprafață locuibilă</dt>
                   <dd>{size}</dd>
                 </div>
                 <div>
-                  <dt>Number of bedrooms</dt>
+                  <dt>Număr de dormitoare</dt>
                   <dd>{property.bedrooms}</dd>
                 </div>
                 <div>
-                  <dt>Number of bathrooms</dt>
+                  <dt>Număr de băi</dt>
                   <dd>{property.bathrooms}</dd>
                 </div>
               </dl>
@@ -671,19 +673,19 @@ export function HeritageWebsite({
               {property.images[0] ? (
                 <PropertyImage
                   src={property.images[0]}
-                  alt={`${property.title} — the property`}
+                  alt={`${property.title} — proprietatea`}
                   loading="lazy"
                 />
               ) : (
                 <div className="heritage-image-empty">
-                  Your property photograph will appear here.
+                  Fotografia proprietății va apărea aici.
                 </div>
               )}
               <figcaption>
                 <MapPin size={18} />
                 <span>
-                  {property.location || "Your property location"}
-                  <small>A PLACE FOR YOUR NEXT CHAPTER</small>
+                  {property.location || "Adresa proprietății tale"}
+                  <small>UN LOC PENTRU URMĂTORUL TĂU CAPITOL</small>
                 </span>
               </figcaption>
             </figure>
@@ -695,7 +697,7 @@ export function HeritageWebsite({
           )}
           <div>
             <span className="heritage-kicker">
-              Some things are better in person
+              Unele lucruri merită văzute personal
             </span>
             <h2>
               <EditableText

@@ -1,4 +1,5 @@
 "use client";
+import { propertyTypeLabel } from "@/lib/model";
 import { PropertyImage } from "./property-image";
 import { PriceInput } from "./price-input";
 import { PropertySharing } from "./property-sharing";
@@ -26,7 +27,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { en } from "@/i18n/en";
+import { ro } from "@/i18n/ro";
 import {
   createProperty,
   profileErrors,
@@ -84,7 +85,7 @@ export function PropertyEditor({
   const [published, setPublished] = useState(false);
   const [customAmenity, setCustomAmenity] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
-  const t = en.editor;
+  const t = ro.editor;
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("checkout")) setStep(2);
   }, []);
@@ -161,7 +162,7 @@ export function PropertyEditor({
       return value;
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Your property could not be saved.",
+        e instanceof Error ? e.message : "Proprietatea nu a putut fi salvată.",
       );
       return null;
     } finally {
@@ -178,7 +179,9 @@ export function PropertyEditor({
   async function addFiles(files: FileList | File[] | null) {
     if (!files?.length || uploadLock.current || busy) return;
     if (property.images.length + files.length > MAX_PROPERTY_PHOTOS) {
-      setError("You can add up to 40 photos per property.");
+      setError(
+        "Poți adăuga până la 40 de fotografii pentru fiecare proprietate.",
+      );
       return;
     }
     uploadLock.current = true;
@@ -207,11 +210,13 @@ export function PropertyEditor({
         });
       }
       notify(
-        `${added.length} ${added.length === 1 ? "photo" : "photos"} uploaded and optimized. Save changes to keep them.`,
+        `${added.length} ${added.length === 1 ? "fotografie încărcată și optimizată" : "fotografii încărcate și optimizate"}. Salvează modificările pentru a le păstra.`,
       );
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "A photo could not be uploaded.",
+        e instanceof Error
+          ? e.message
+          : "O fotografie nu a putut fi încărcată.",
       );
     } finally {
       if (added.length) {
@@ -226,7 +231,7 @@ export function PropertyEditor({
   async function copyLink() {
     if (demo) {
       notify(
-        "Demo websites stay in this browser. Connect Supabase to share a public link.",
+        "Site-urile demo rămân în acest browser. Conectează Supabase pentru a distribui un link public.",
       );
       return;
     }
@@ -234,10 +239,10 @@ export function PropertyEditor({
       await navigator.clipboard.writeText(
         `${window.location.origin}${publicPath(property)}`,
       );
-      notify("Your public link is copied.");
+      notify("Linkul public a fost copiat.");
     } catch {
       setError(
-        "Your browser could not copy the link. Open the published website and copy its address.",
+        "Browserul nu a putut copia linkul. Deschide site-ul publicat și copiază adresa.",
       );
     }
   }
@@ -252,42 +257,42 @@ export function PropertyEditor({
   if (id && !existing)
     return (
       <div className="empty-state">
-        <h1>That property isn’t in your workspace.</h1>
+        <h1>Proprietatea nu se află în contul tău.</h1>
         <Link className="button primary" href="/dashboard">
-          Back to properties
+          Înapoi la proprietăți
         </Link>
       </div>
     );
   if (profileErrors(profile).length)
     return (
       <div className="empty-state">
-        <span className="eyebrow">FIRST, A LITTLE INTRODUCTION</span>
-        <h1>Let’s make it yours.</h1>
+        <span className="eyebrow">MAI ÎNTÂI, SĂ NE CUNOAȘTEM</span>
+        <h1>Completează-ți profilul.</h1>
         <p>
-          Add your name, phone, and email. We’ll include them on every property
-          website.
+          Adaugă numele, telefonul și e-mailul. Le includem pe fiecare site de
+          proprietate.
         </p>
         <Link href="/dashboard/profile" className="button primary">
-          Complete my profile <ArrowRight size={17} />
+          Completează profilul <ArrowRight size={17} />
         </Link>
       </div>
     );
   const amenities = [
     ...new Set([
-      "Private garden",
-      "Swimming Pool",
+      "Grădină privată",
+      "Piscină",
       "Spa",
-      "Outdoor terrace",
-      "Outdoor Kitchen",
-      "Two-car garage",
-      "Central Heating",
-      "Solar Panels",
-      "Island Kitchen",
-      "Walk-in closet",
-      "City views",
-      "Sea View",
-      "Elevator",
-      "Fireplace",
+      "Terasă exterioară",
+      "Bucătărie exterioară",
+      "Garaj pentru două mașini",
+      "Încălzire centrală",
+      "Panouri solare",
+      "Bucătărie cu insulă",
+      "Dressing",
+      "Vedere spre oraș",
+      "Vedere spre mare",
+      "Lift",
+      "Șemineu",
       ...property.amenities,
     ]),
   ];
@@ -301,7 +306,7 @@ export function PropertyEditor({
         }}
       >
         <ArrowLeft size={15} />
-        {en.common.back}
+        {ro.common.back}
       </Link>
       <div className="page-heading compact editor-heading">
         <div>
@@ -317,7 +322,7 @@ export function PropertyEditor({
               target="_blank"
             >
               <Eye size={16} />
-              {en.common.preview}
+              {ro.common.preview}
             </Link>
           )}
           <button
@@ -327,10 +332,10 @@ export function PropertyEditor({
           >
             <Save size={16} />
             {preparing
-              ? "Preparing website…"
+              ? "Se pregătește site-ul…"
               : busy
-                ? en.common.saving
-                : en.common.save}
+                ? ro.common.saving
+                : ro.common.save}
           </button>
         </div>
       </div>
@@ -362,12 +367,12 @@ export function PropertyEditor({
               disabled={busy}
               onClick={() => persist(pendingPublish.current, false, true, true)}
             >
-              Continue with my own text
+              Continuă cu textul meu
             </button>
           )}
           <button
             className="icon-button"
-            aria-label="Dismiss error"
+            aria-label="Închide eroarea"
             onClick={() => setError("")}
           >
             <X size={17} />
@@ -376,8 +381,7 @@ export function PropertyEditor({
       )}
       {dirty && property.status === "published" && (
         <div className="inline-notice">
-          This website is published. Saving applies your changes to the live
-          website.
+          Site-ul este publicat. Salvarea aplică modificările pe site-ul public.
         </div>
       )}
       <div className="editor-layout">
@@ -391,11 +395,11 @@ export function PropertyEditor({
                 </div>
                 <div className="field-grid">
                   <label className="full-width">
-                    Property headline
+                    Titlul proprietății
                     <input
                       value={property.title}
                       maxLength={160}
-                      placeholder="A home with a beautiful point of view."
+                      placeholder="O locuință cu o perspectivă deosebită."
                       onChange={(e) => update("title", e.target.value)}
                     />
                   </label>
@@ -418,22 +422,24 @@ export function PropertyEditor({
                     }}
                   />
                   <label>
-                    Property type
+                    Tipul proprietății
                     <select
-                      value={property.type}
+                      value={propertyTypeLabel(property.type)}
                       onChange={(e) =>
                         update("type", e.target.value as Property["type"])
                       }
                     >
                       {["House", "Town House", "Condo", "Penthouse"].map(
                         (v) => (
-                          <option key={v}>{v}</option>
+                          <option key={v} value={v}>
+                            {propertyTypeLabel(v)}
+                          </option>
                         ),
                       )}
                     </select>
                   </label>
                   <label>
-                    Listing type
+                    Tipul ofertei
                     <select
                       value={property.transaction}
                       onChange={(e) =>
@@ -443,12 +449,12 @@ export function PropertyEditor({
                         )
                       }
                     >
-                      <option value="sale">For sale</option>
-                      <option value="rent">For rent</option>
+                      <option value="sale">De vânzare</option>
+                      <option value="rent">De închiriat</option>
                     </select>
                   </label>
                   <label>
-                    Price
+                    Preț
                     <PriceInput
                       value={property.price}
                       currency={property.currency}
@@ -456,7 +462,7 @@ export function PropertyEditor({
                     />
                   </label>
                   <label>
-                    Currency
+                    Monedă
                     <select
                       value={property.currency}
                       onChange={(e) =>
@@ -466,26 +472,27 @@ export function PropertyEditor({
                         )
                       }
                     >
-                      <option value="USD">USD — US Dollar</option>
-                      {property.currency !== "USD" && (
-                        <option value={property.currency} disabled>
-                          {property.currency} — saved currency
+                      <option value="EUR">EUR — Euro</option>
+                      <option value="RON">RON — Leu românesc</option>
+                      {property.currency === "USD" && (
+                        <option value="USD">
+                          USD — Dolar american (existent)
                         </option>
                       )}
                     </select>
                   </label>
                   <label>
-                    Property size
+                    Suprafață
                     <input
                       type="number"
                       min="0"
                       value={property.area || ""}
-                      placeholder="2500"
+                      placeholder="120"
                       onChange={(e) => update("area", Number(e.target.value))}
                     />
                   </label>
                   <label>
-                    Area unit
+                    Unitatea de suprafață
                     <select
                       value={property.area_unit}
                       onChange={(e) =>
@@ -495,12 +502,12 @@ export function PropertyEditor({
                         )
                       }
                     >
-                      <option value="sqft">Square feet (sq ft)</option>
-                      <option value="sqm">Square meters (m²)</option>
+                      <option value="sqft">Picioare pătrate (sq ft)</option>
+                      <option value="sqm">Metri pătrați (m²)</option>
                     </select>
                   </label>
                   <label>
-                    Bedrooms
+                    Dormitoare
                     <input
                       type="number"
                       min="0"
@@ -512,7 +519,7 @@ export function PropertyEditor({
                     />
                   </label>
                   <label>
-                    Bathrooms
+                    Băi
                     <input
                       type="number"
                       min="0"
@@ -532,24 +539,24 @@ export function PropertyEditor({
                   <h2>{t.description}</h2>
                 </div>
                 <label>
-                  Description
+                  Descriere
                   <textarea
                     rows={7}
                     maxLength={12000}
                     value={property.description}
-                    placeholder="Tell us about the home in your own words: its layout, features, recent updates, and what you want visitors to notice…"
+                    placeholder="Descrie locuința în cuvintele tale: compartimentarea, dotările, renovările recente și ce ai vrea să remarce vizitatorii…"
                     onChange={(e) => update("description", e.target.value)}
                   />
                   <small>
-                    {property.description.length.toLocaleString("en-US")} /
-                    12,000 characters. Your notes guide the writing for each
-                    website section. When you save, our AI writing service uses
-                    these notes, your photos and property details to write
-                    clear, natural text. Your notes stay here; you can edit the
-                    website text directly on your page.
+                    {property.description.length.toLocaleString("ro-RO")} /
+                    12.000 de caractere. Notițele tale ghidează textele fiecărei
+                    secțiuni. La salvare, serviciul de redactare AI folosește
+                    aceste notițe, fotografiile și detaliile proprietății pentru
+                    a scrie texte clare. Notițele rămân aici; poți edita textele
+                    site-ului direct pe pagină.
                   </small>
                 </label>
-                <label className="amenity-label">The little extras</label>
+                <label className="amenity-label">Dotări și facilități</label>
                 <div className="amenity-options">
                   {amenities.map((v) => (
                     <button
@@ -567,9 +574,9 @@ export function PropertyEditor({
                 </div>
                 <div className="custom-amenity">
                   <input
-                    aria-label="Custom amenity"
+                    aria-label="Dotare personalizată"
                     maxLength={60}
-                    placeholder="Add another feature…"
+                    placeholder="Adaugă o dotare…"
                     value={customAmenity}
                     onChange={(e) => setCustomAmenity(e.target.value)}
                   />
@@ -587,7 +594,7 @@ export function PropertyEditor({
                       setCustomAmenity("");
                     }}
                   >
-                    Add
+                    Adaugă
                   </button>
                 </div>
               </section>
@@ -600,15 +607,15 @@ export function PropertyEditor({
                 <h2>{t.photography}</h2>
               </div>
               <p className="form-intro">
-                Great photographs make the introduction. Your first photo
-                becomes the cover.
+                Fotografiile bune fac prima impresie. Prima fotografie devine
+                coperta.
               </p>
               {uploading ? (
                 <div className="upload-area uploading" aria-busy="true">
                   <div
                     className="photo-upload-progress"
                     role="progressbar"
-                    aria-label="Uploading photographs"
+                    aria-label="Se încarcă fotografiile"
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={uploadProgress.percent}
@@ -632,12 +639,14 @@ export function PropertyEditor({
                     </svg>
                     <strong>{uploadProgress.percent}%</strong>
                   </div>
-                  <strong>Preparing and uploading your photographs…</strong>
+                  <strong>Se pregătesc și se încarcă fotografiile…</strong>
                   <p role="status">
-                    {uploadProgress.completed} of {uploadProgress.total} photos
-                    uploaded
+                    {uploadProgress.completed} din {uploadProgress.total}{" "}
+                    fotografii încărcate
                   </p>
-                  <small>Optimizing as WebP. Please keep this page open.</small>
+                  <small>
+                    Optimizăm în format WebP. Păstrează pagina deschisă.
+                  </small>
                 </div>
               ) : (
                 <button
@@ -653,11 +662,11 @@ export function PropertyEditor({
                   <span>
                     <Upload size={26} />
                   </span>
-                  <strong>Drop your photos here</strong>
-                  <p>or click to browse your files</p>
+                  <strong>Trage fotografiile aici</strong>
+                  <p>sau apasă pentru a alege fișierele</p>
                   <small>
-                    JPG / JPEG, PNG, WebP · Up to 10 MB each ·{" "}
-                    {property.images.length}/{MAX_PROPERTY_PHOTOS} photos
+                    JPG / JPEG, PNG, WebP · Maximum 10 MB fiecare ·{" "}
+                    {property.images.length}/{MAX_PROPERTY_PHOTOS} fotografii
                   </small>
                 </button>
               )}
@@ -674,16 +683,18 @@ export function PropertyEditor({
                   <div className="image-editor-card" key={image}>
                     <PropertyImage
                       src={image}
-                      alt={`Property photo ${i + 1}`}
+                      alt={`Fotografia proprietății ${i + 1}`}
                       sizes="(max-width: 640px) 45vw, 240px"
                     />
                     <span className="image-order">
-                      {i === 0 ? "Cover photo" : String(i + 1).padStart(2, "0")}
+                      {i === 0
+                        ? "Fotografie de copertă"
+                        : String(i + 1).padStart(2, "0")}
                     </span>
                     <button
                       className="image-remove"
                       disabled={uploading}
-                      aria-label={`Remove photo ${i + 1}`}
+                      aria-label={`Elimină fotografia ${i + 1}`}
                       onClick={() =>
                         update(
                           "images",
@@ -704,7 +715,7 @@ export function PropertyEditor({
                           ])
                         }
                       >
-                        Make cover
+                        Setează drept copertă
                       </button>
                     )}
                   </div>
@@ -713,7 +724,7 @@ export function PropertyEditor({
               {property.images.length === 0 && (
                 <p className="photo-tip">
                   <Sparkles size={16} />
-                  Start with a wide, well-lit photograph of your property.
+                  Începe cu o fotografie panoramică, bine luminată.
                 </p>
               )}
             </section>
@@ -725,8 +736,8 @@ export function PropertyEditor({
                 <h2>{t.design}</h2>
               </div>
               <p className="form-intro">
-                Same property. Three different feelings. Choose the one that
-                tells your story.
+                Aceeași proprietate. Trei stiluri diferite. Alege-l pe cel care
+                spune povestea ta.
               </p>
               <div className="template-choices">
                 {templates.map((template) => (
@@ -763,7 +774,7 @@ export function PropertyEditor({
                 onClick={() => setStep(step - 1)}
               >
                 <ArrowLeft size={16} />
-                Previous
+                Înapoi
               </button>
             ) : (
               <span />
@@ -774,10 +785,10 @@ export function PropertyEditor({
                 onClick={() => goToStep(step + 1)}
               >
                 {preparing
-                  ? "Preparing website…"
+                  ? "Se pregătește site-ul…"
                   : step === 0
-                    ? "Add your photos"
-                    : "Choose your design"}
+                    ? "Adaugă fotografiile"
+                    : "Alege designul"}
                 <ArrowRight size={17} />
               </button>
             ) : (
@@ -790,20 +801,22 @@ export function PropertyEditor({
                 }}
               >
                 <Globe2 size={16} />
-                {preparing ? "Preparing website…" : "Open website editor"}
+                {preparing
+                  ? "Se pregătește site-ul…"
+                  : "Deschide editorul site-ului"}
               </button>
             )}
           </div>
         </fieldset>
         <aside className="editor-aside">
           <div className="editor-preview-card">
-            <span className="eyebrow">YOUR WEBSITE, TAKING SHAPE</span>
+            <span className="eyebrow">SITE-UL TĂU PRINDE CONTUR</span>
             <TemplateMiniature
               template={property.template}
               image={property.images[0]}
             />
-            <h3>{property.title || "Your next beautiful property"}</h3>
-            <p>{property.location || "Somewhere worth calling home"}</p>
+            <h3>{property.title || "Următoarea ta proprietate"}</h3>
+            <p>{property.location || "Un loc căruia să-i spui acasă"}</p>
             <div className="editor-site-link">
               <Globe2 size={14} />
               <span>
@@ -820,7 +833,7 @@ export function PropertyEditor({
                 className="button secondary full-button"
               >
                 <Eye size={15} />
-                Preview saved website
+                Previzualizează site-ul salvat
               </Link>
             )}
             {!demo && !busy && existing?.status === "published" && (
@@ -828,7 +841,8 @@ export function PropertyEditor({
             )}
             {dirty && (
               <small className="unsaved-hint">
-                Save your changes to update the full preview.
+                Salvează modificările pentru a actualiza previzualizarea
+                completă.
               </small>
             )}
           </div>
@@ -853,19 +867,19 @@ export function PropertyEditor({
               {profile.email}
             </span>
             <Link href="/dashboard/profile">
-              Edit contact details <ExternalLink size={12} />
+              Editează datele de contact <ExternalLink size={12} />
             </Link>
           </div>
           {property.status === "published" && (
             <div className="published-card">
               <span>
                 <CheckCircle2 size={19} />
-                {demo ? "Published in demo" : "Your website is live"}
+                {demo ? "Publicat în demo" : "Site-ul tău este publicat"}
               </span>
               <p>
                 {demo
-                  ? "Saved in this browser. Online sharing is available once Supabase and hosting are connected."
-                  : "Your next client is one link away."}
+                  ? "Salvat în acest browser. Distribuirea online este disponibilă după conectarea Supabase și a găzduirii."
+                  : "Următorul tău client este la un link distanță."}
               </p>
               {!demo && (
                 <>
@@ -874,14 +888,14 @@ export function PropertyEditor({
                     onClick={copyLink}
                   >
                     <Copy size={14} />
-                    Copy public link
+                    Copiază linkul public
                   </button>
                   <Link
                     className="text-button"
                     href={publicPath(property)}
                     target="_blank"
                   >
-                    Open published website <ExternalLink size={14} />
+                    Deschide site-ul publicat <ExternalLink size={14} />
                   </Link>
                 </>
               )}
@@ -890,7 +904,7 @@ export function PropertyEditor({
                 disabled={busy}
                 onClick={() => persist(false, true)}
               >
-                Unpublish website
+                Retrage site-ul de la publicare
               </button>
             </div>
           )}

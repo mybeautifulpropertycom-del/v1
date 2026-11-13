@@ -9,7 +9,7 @@ export async function uploadPropertyPhoto(
 ): Promise<void> {
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session)
-    throw new Error("Sign in again to upload your photographs.");
+    throw new Error("Autentifică-te din nou pentru a încărca fotografiile.");
   const origin = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const url = `${origin.replace(/\/$/, "")}/storage/v1/object/property-images/${path}`;
   await new Promise<void>((resolve, reject) => {
@@ -17,7 +17,7 @@ export async function uploadPropertyPhoto(
     const fail = () =>
       reject(
         new Error(
-          "This photograph could not be uploaded. Check your connection and try again.",
+          "Fotografia nu a putut fi încărcată. Verifică conexiunea și încearcă din nou.",
         ),
       );
     request.open("POST", url);

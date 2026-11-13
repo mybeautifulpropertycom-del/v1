@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const id = params.get("id");
     if (id) {
-      if (!UUID.test(id)) throw new BillingError("Choose a property.", 400);
+      if (!UUID.test(id)) throw new BillingError("Alege o proprietate.", 400);
       const { data: property, error } = await admin
         .from("properties")
         .select("*")

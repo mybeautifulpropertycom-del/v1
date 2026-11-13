@@ -7,13 +7,13 @@ export default function Page() {
     <>
       <div className="page-heading compact">
         <div>
-          <span className="eyebrow">THE DESIGN COLLECTION</span>
+          <span className="eyebrow">COLECȚIA DE DESIGNURI</span>
           <h1>
-            A beautiful frame.
+            O prezentare deosebită.
             <br />
-            <em>For an extraordinary home.</em>
+            <em>Pentru o locuință deosebită.</em>
           </h1>
-          <p>Three distinct personalities. One beautiful first impression.</p>
+          <p>Trei stiluri distincte. O primă impresie memorabilă.</p>
         </div>
         <span className="collection-number">01 — 03</span>
       </div>
@@ -29,13 +29,13 @@ export default function Page() {
               <p>{t.description}</p>
               <div>
                 <Link href={`/templates/${t.id}`} className="button secondary">
-                  Explore design <ArrowUpRight size={16} />
+                  Descoperă designul <ArrowUpRight size={16} />
                 </Link>
                 <Link
                   className="text-button"
                   href={`/dashboard/properties/new?template=${t.id}`}
                 >
-                  Use this design <ArrowRight size={15} />
+                  Folosește acest design <ArrowRight size={15} />
                 </Link>
               </div>
             </div>
@@ -45,15 +45,15 @@ export default function Page() {
       <div className="collection-benefits">
         <span>
           <Smartphone size={19} />
-          Beautiful on every screen
+          Frumos pe orice ecran
         </span>
         <span>
           <Check size={19} />
-          Your contact details, automatically
+          Datele tale de contact, adăugate automat
         </span>
         <span>
           <Check size={19} />
-          Switch designs at any time
+          Schimbă designul oricând
         </span>
       </div>
     </>

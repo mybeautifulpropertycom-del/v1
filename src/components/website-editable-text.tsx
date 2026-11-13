@@ -19,10 +19,16 @@ export function EditableText({
     : null;
   const label =
     copyField === "storyBody"
-      ? "Main section description"
+      ? "Descrierea secțiunii principale"
       : copyField
         ? storyFields[copyField].label
-        : `property ${field === "title" ? "headline" : field}`;
+        : (
+            {
+              title: "titlul proprietății",
+              location: "adresa proprietății",
+              description: "descrierea proprietății",
+            } as Record<string, string>
+          )[field];
   const multiline =
     field === "description" ||
     copyField === "storyBody" ||
@@ -36,7 +42,7 @@ export function EditableText({
       contentEditable
       suppressContentEditableWarning
       role="textbox"
-      aria-label={`Edit ${label}`}
+      aria-label={`Editează ${label}`}
       aria-multiline={multiline}
       tabIndex={0}
       onBlur={(e) => {

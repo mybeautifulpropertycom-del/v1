@@ -22,10 +22,12 @@ test("first successful profile completion confirms save then redirects once, lat
   });
   await page.goto("/dashboard/profile");
   await page
-    .getByLabel("Phone number", { exact: true })
+    .getByLabel("Număr de telefon", { exact: true })
     .fill("+1 555 123 4567");
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("saved");
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("salvat");
   await expect(
     page.getByText("Taking you to My properties in 3 seconds…", {
       exact: false,
@@ -34,10 +36,12 @@ test("first successful profile completion confirms save then redirects once, lat
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 6000 });
   await page.goto("/dashboard/profile");
   await page
-    .getByLabel("A short introduction")
+    .getByLabel("O scurtă prezentare")
     .fill("A thoughtful approach to finding your next home.");
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("saved");
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("salvat");
   await page.waitForTimeout(3200);
   await expect(page).toHaveURL(/\/dashboard\/profile$/);
 });
@@ -53,9 +57,11 @@ test("a failed first save never redirects", async ({ page }) => {
   );
   await page.goto("/dashboard/profile");
   await page
-    .getByLabel("Phone number", { exact: true })
+    .getByLabel("Număr de telefon", { exact: true })
     .fill("+1 555 123 4567");
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
   await expect(page.locator(".form-error[role=alert]")).toContainText(
     "not saved",
   );
@@ -103,18 +109,18 @@ test("administrator deletion requires confirmation and shows queued account clea
   });
   await page.goto("/dashboard/admin");
   await expect(
-    page.getByRole("button", { name: "Delete account admin@example.com" }),
+    page.getByRole("button", { name: "Șterge contul admin@example.com" }),
   ).toHaveCount(0);
   page.once("dialog", (dialog) => dialog.dismiss());
   await page
-    .getByRole("button", { name: "Delete account agent@example.com" })
+    .getByRole("button", { name: "Șterge contul agent@example.com" })
     .click();
   expect(requests).toBe(0);
   page.once("dialog", (dialog) => dialog.accept());
   await page
-    .getByRole("button", { name: "Delete account agent@example.com" })
+    .getByRole("button", { name: "Șterge contul agent@example.com" })
     .click();
-  await expect(page.getByText("Deletion in progress…")).toBeVisible();
+  await expect(page.getByText("Ștergere în curs…")).toBeVisible();
   expect(requests).toBe(1);
 });
 
@@ -127,7 +133,7 @@ test("public template players preserve playback controls without download action
     await expect(video).toHaveAttribute("controlslist", "nodownload");
     await expect(video).toHaveAttribute("controls", "");
     await expect(
-      page.getByRole("button", { name: "Download video" }),
+      page.getByRole("button", { name: "Descarcă filmul" }),
     ).toHaveCount(0);
     await expect(video.locator("a")).toHaveCount(0);
   }

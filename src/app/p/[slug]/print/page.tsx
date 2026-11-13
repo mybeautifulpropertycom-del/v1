@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title:
       data?.property.status === "published"
         ? `${data.property.title} — Print`
-        : "Property unavailable",
+        : "Proprietate indisponibilă",
     robots: { index: false, follow: false },
     ...(data?.property.status === "published"
       ? { alternates: { canonical: siteUrl(publicPath(data.property)) } }

@@ -15,9 +15,11 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
   expect(html).toContain('name="robots" content="index, follow"');
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Welcome home." }),
+    page.getByRole("heading", { name: "Bine ai venit." }),
   ).toBeVisible();
-  await expect(page.getByLabel("Email address", { exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel("Adresă de e-mail", { exact: true }),
+  ).toBeVisible();
   await expect(page).toHaveTitle(HOME_TITLE);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
@@ -33,7 +35,7 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
   );
   await page.goto("/register");
   await expect(
-    page.getByRole("heading", { name: "Present your property properly" }),
+    page.getByRole("heading", { name: "Pune-ți proprietatea în valoare" }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",

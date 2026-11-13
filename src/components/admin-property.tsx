@@ -48,7 +48,7 @@ export function AdminProperty({ id }: { id: string }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState(
-    "Administrator complimentary publication",
+    "Publicare gratuită aprobată de administrator",
   );
   const [notice, setNotice] = useState("");
   const refresh = useCallback(async () => {
@@ -71,8 +71,8 @@ export function AdminProperty({ id }: { id: string }) {
   if (!isAdmin)
     return (
       <div className="state-screen">
-        <h1>Administrator access required.</h1>
-        <Link href="/dashboard">Return to your workspace</Link>
+        <h1>Este necesar accesul de administrator.</h1>
+        <Link href="/dashboard">Înapoi la spațiul de lucru</Link>
       </div>
     );
   async function publish() {
@@ -84,10 +84,10 @@ export function AdminProperty({ id }: { id: string }) {
       await adminRequest("publish", { propertyId: id, reason });
       await refresh();
       setNotice(
-        "The property is public. Its included video will appear when it is ready. No payment was collected by this action.",
+        "Proprietatea este publică. Filmul inclus va apărea când este gata. Această acțiune nu a încasat nicio plată.",
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Publication unavailable.");
+      setError(e instanceof Error ? e.message : "Publicare indisponibilă.");
     } finally {
       setBusy(false);
     }
@@ -101,11 +101,13 @@ export function AdminProperty({ id }: { id: string }) {
       await adminRequest("rebuild-film", { propertyId: id });
       await refresh();
       setNotice(
-        "Your new film is queued. The current video stays available until its replacement is ready. No new property payment is required.",
+        "Noul film este în coadă. Filmul actual rămâne disponibil până când cel nou este gata. Nu este necesară o nouă plată pentru proprietate.",
       );
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "The film could not be queued.",
+        e instanceof Error
+          ? e.message
+          : "Filmul nu a putut fi adăugat în coadă.",
       );
     } finally {
       setBusy(false);
@@ -123,10 +125,12 @@ export function AdminProperty({ id }: { id: string }) {
       );
       await refresh();
       setNotice(
-        "Your film is resuming from the rejected scene. Completed scenes are retained; remaining generation uses API credits.",
+        "Filmul se reia de la scena respinsă. Scenele finalizate sunt păstrate; generarea celor rămase folosește credite API.",
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Resume is unavailable.");
+      setError(
+        e instanceof Error ? e.message : "Reluarea nu este disponibilă.",
+      );
     } finally {
       setBusy(false);
     }
@@ -136,19 +140,19 @@ export function AdminProperty({ id }: { id: string }) {
     <>
       <section className="admin-property-toolbar">
         <Link href="/dashboard/admin" className="text-button">
-          ← Administration
+          ← Administrare
         </Link>
         {data && (
           <>
             <div>
-              <span className="eyebrow">ADMINISTRATOR REVIEW</span>
-              <h1>{data.property.title || "Untitled property"}</h1>
+              <span className="eyebrow">VERIFICARE DE CĂTRE ADMINISTRATOR</span>
+              <h1>{data.property.title || "Proprietate fără titlu"}</h1>
               <p>
                 Agent: {data.profile.name} · {data.profile.email}
               </p>
             </div>
             <label>
-              Publication note
+              Notă de publicare
               <input
                 value={reason}
                 maxLength={500}
@@ -161,10 +165,10 @@ export function AdminProperty({ id }: { id: string }) {
               onClick={() => void publish()}
             >
               {busy
-                ? "Publishing…"
+                ? "Se publică…"
                 : data.grant && data.property.status === "published"
-                  ? "Publish again · No charge"
-                  : "Publish at no charge"}
+                  ? "Publică din nou · Gratuit"
+                  : "Publică gratuit"}
             </button>
             {data.property.status === "published" && (
               <Link
@@ -173,21 +177,21 @@ export function AdminProperty({ id }: { id: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                View public website ↗
+                Vezi site-ul public ↗
               </Link>
             )}
             {data.grant && (
               <p>
-                Complimentary publication approved on{" "}
-                {new Date(data.grant.granted_at).toLocaleDateString("en-US")}.{" "}
+                Publicare gratuită aprobată la{" "}
+                {new Date(data.grant.granted_at).toLocaleDateString("ro-RO")}.{" "}
                 {data.grant.reason}
               </p>
             )}
             {data.video?.provider && (
               <p>
-                This video's provider: {data.video.provider}.
+                Furnizorul acestui film: {data.video.provider}.
                 {data.video.nextProvider &&
-                  ` New films use ${data.video.nextProvider}.`}
+                  ` Filmele noi folosesc ${data.video.nextProvider}.`}
               </p>
             )}
             {data.video?.canRebuild &&
@@ -195,39 +199,40 @@ export function AdminProperty({ id }: { id: string }) {
               !data.video.durationRepair &&
               data.video.rebuildUsesCredits && (
                 <p>
-                  Rebuilding generates up to{" "}
-                  {Math.min(data.property.images.length, 23)} new scenes through
-                  your selected video provider and uses your API credits. There
-                  is no new $97 property payment.
+                  Refacerea generează până la{" "}
+                  {Math.min(data.property.images.length, 23)} scene noi prin
+                  furnizorul video selectat și folosește creditele API. Nu
+                  există o nouă plată de 249 RON pentru proprietate.
                 </p>
               )}
             {data.video?.costEstimate && (
               <p>
                 {data.video.durationRepair
-                  ? "Previous generation estimate: $"
-                  : "Estimated video generation: $"}
+                  ? "Estimarea anterioară a generării: $"
+                  : "Cost estimat al generării video: $"}
                 {data.video.costEstimate.usd.toFixed(2)} USD
                 {" · "}
-                {data.video.costEstimate.generatedSeconds}s generated
+                {data.video.costEstimate.generatedSeconds}s generate
                 {" · "}
-                {data.video.costEstimate.finalSeconds}s cinematic walkthrough.{" "}
-                Planning budget: ${data.video.costEstimate.limitUsd.toFixed(2)}{" "}
-                USD. Actual charges depend on the provider’s pricing.
+                {data.video.costEstimate.finalSeconds}s film de prezentare.{" "}
+                Buget de planificare: $
+                {data.video.costEstimate.limitUsd.toFixed(2)} USD. Costurile
+                reale depind de tarifele furnizorului.
               </p>
             )}
             {data.video?.canResume && (
               <div>
                 <p>
-                  Resume keeps the {data.video.completed} completed scenes.
-                  Remaining scenes use API credits. Check the rejection details
-                  before continuing.
+                  Reluarea păstrează cele {data.video.completed} scene
+                  finalizate. Scenele rămase folosesc credite API. Verifică
+                  motivul respingerii înainte de a continua.
                 </p>
                 <button
                   className="button secondary"
                   disabled={busy}
                   onClick={() => void resumeFilm()}
                 >
-                  Resume video · Keep saved scenes
+                  Reia filmul · Păstrează scenele salvate
                 </button>
               </div>
             )}
@@ -238,20 +243,21 @@ export function AdminProperty({ id }: { id: string }) {
                 ) : (
                   <>
                     <p>
-                      Seedance requires at least 4 generated seconds per scene.
-                      Keep your {data.video.completed} completed scenes and the
-                      short cuts in the final edit. Corrected total generation
-                      estimate: ${data.video.durationRepair.usd.toFixed(2)} USD
-                      · {data.video.durationRepair.generatedSeconds}s generated,
-                      including saved scenes. Remaining generation uses API
-                      credits.
+                      Seedance necesită cel puțin 4 secunde generate pe scenă.
+                      Păstrează cele {data.video.completed} scene finalizate și
+                      secvențele scurte din montajul final. Estimarea corectată
+                      a generării totale: $
+                      {data.video.durationRepair.usd.toFixed(2)} USD ·{" "}
+                      {data.video.durationRepair.generatedSeconds}s generate,
+                      inclusiv scenele salvate. Generarea rămasă folosește
+                      credite API.
                     </p>
                     <button
                       className="button secondary"
                       disabled={busy}
                       onClick={() => void resumeFilm(true)}
                     >
-                      Fix duration &amp; resume · Keep saved scenes
+                      Corectează durata și reia · Păstrează scenele salvate
                     </button>
                   </>
                 )}
@@ -266,19 +272,19 @@ export function AdminProperty({ id }: { id: string }) {
                   onClick={() => void rebuildFilm()}
                 >
                   {data.video.rebuildUsesCredits
-                    ? "Rebuild video · Uses API credits"
-                    : "Rebuild video · No property fee"}
+                    ? "Refă filmul · Folosește credite API"
+                    : "Refă filmul · Fără taxă pentru proprietate"}
                 </button>
               )}
             {data.video?.error && <p role="status">{data.video.error}</p>}
             {data.video && (
               <p role="status">
-                Video: {data.video.status}
+                Video: {({queued: "în coadă", processing: "în pregătire", completed: "finalizat", failed: "eșuat", cancelled: "anulat"} as Record<string,string>)[data.video.status] || data.video.status}
                 {data.video.activeScenes
-                  ? ` · ${data.video.activeScenes} generation request${data.video.activeScenes === 1 ? "" : "s"} in progress`
+                  ? ` · ${data.video.activeScenes} solicitări de generare în curs`
                   : ""}
                 {data.video.total
-                  ? ` · ${data.video.completed} of ${data.video.total} scenes ready`
+                  ? ` · ${data.video.completed} din ${data.video.total} scene pregătite`
                   : ""}
                 .
               </p>
@@ -286,8 +292,8 @@ export function AdminProperty({ id }: { id: string }) {
             {issues.length > 0 && (
               <div role="status">
                 <p>
-                  Complete these details in the agent’s workspace before
-                  publishing:
+                  Completează aceste detalii în contul agentului înainte de
+                  publicare:
                 </p>
                 <ul>
                   {issues.map((issue) => (
@@ -298,7 +304,7 @@ export function AdminProperty({ id }: { id: string }) {
             )}
           </>
         )}
-        {!data && !error && <p role="status">Loading property…</p>}
+        {!data && !error && <p role="status">Se încarcă proprietatea…</p>}
         {error && <p role="alert">{error}</p>}
         {notice && <p role="status">{notice}</p>}
       </section>
@@ -309,15 +315,21 @@ export function AdminProperty({ id }: { id: string }) {
           preview
           previewBackLink={{
             href: "/dashboard/admin",
-            label: "Back to administration",
+            label: "Înapoi la administrare",
           }}
           film={data.video?.film || undefined}
           videoPanel={
             data.video && data.video.status !== "completed" ? (
               <PropertyVideoProgressPanel
                 status={data.video.status}
-                progress={{ completed: data.video.completed, total: data.video.total }}
-                needsReview={Boolean(data.video.error) && data.video.status === "processing"}
+                progress={{
+                  completed: data.video.completed,
+                  total: data.video.total,
+                }}
+                needsReview={
+                  Boolean(data.video.error) &&
+                  data.video.status === "processing"
+                }
               />
             ) : undefined
           }

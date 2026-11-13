@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
 import { loadGoogleMaps, withMapsTimeout } from "@/lib/google-maps";
-import { isUSAddress, mapsEnabled, PLACE_ID } from "@/lib/property-location";
+import {
+  isRomanianAddress,
+  mapsEnabled,
+  PLACE_ID,
+} from "@/lib/property-location";
 
 export function PropertyAddressInput({
   value,
@@ -59,9 +63,9 @@ export function PropertyAddressInput({
         const response = await withMapsTimeout(
           places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
             input: value.trim(),
-            includedRegionCodes: ["us"],
-            language: "en",
-            region: "us",
+            includedRegionCodes: ["ro"],
+            language: "ro",
+            region: "ro",
             sessionToken: session.current,
           }),
         );
@@ -74,7 +78,7 @@ export function PropertyAddressInput({
       } catch {
         if (!cancelled && request === revision.current)
           setError(
-            "Address suggestions are unavailable. You can still enter and save the address.",
+            "Sugestiile de adrese nu sunt disponibile. Poți introduce și salva adresa manual.",
           );
       } finally {
         if (!cancelled && request === revision.current) setLoading(false);
@@ -115,7 +119,7 @@ export function PropertyAddressInput({
       )
         return;
       if (
-        !isUSAddress(place) ||
+        !isRomanianAddress(place) ||
         !place.formattedAddress ||
         place.formattedAddress.length > 200 ||
         !PLACE_ID.test(place.id)
@@ -129,7 +133,7 @@ export function PropertyAddressInput({
     } catch {
       if (request === revision.current)
         setError(
-          "This address could not be confirmed. Please try again or enter it manually.",
+          "Adresa nu a putut fi confirmată. Încearcă din nou sau introdu-o manual.",
         );
     } finally {
       session.current = null;
@@ -141,14 +145,14 @@ export function PropertyAddressInput({
   const open = focused && predictions.length > 0;
   return (
     <div className="property-address-field full-width">
-      <label htmlFor={id}>Address</label>
+      <label htmlFor={id}>Adresă</label>
       <input
         ref={input}
         id={id}
         value={value}
         maxLength={200}
         disabled={disabled}
-        placeholder="123 Palm Drive, Beverly Hills, CA"
+        placeholder="Strada Exemplu 12, București"
         autoComplete="off"
         role={enabled ? "combobox" : undefined}
         aria-autocomplete={enabled ? "list" : undefined}
@@ -199,7 +203,7 @@ export function PropertyAddressInput({
           <ul
             id={`${id}-results`}
             role="listbox"
-            aria-label="Suggested US addresses"
+            aria-label="Adrese sugerate din România"
           >
             {predictions.map((prediction, index) => (
               <li
@@ -220,13 +224,13 @@ export function PropertyAddressInput({
       <small id={`${id}-hint`}>
         {enabled
           ? placeId
-            ? "Address selected."
-            : "Search a street address and choose a suggestion to add a map. The address also becomes your public link."
-          : "Enter the property’s address. It appears on the website and becomes its public link when you publish."}
+            ? "Adresa a fost selectată."
+            : "Caută adresa și alege o sugestie pentru a adăuga harta. Adresa devine și linkul public al proprietății."
+          : "Introdu adresa proprietății. Apare pe site și devine linkul public la publicare."}
       </small>
       {enabled && (
         <small role="status">
-          {error || (loading ? "Finding the address…" : "")}
+          {error || (loading ? "Se caută adresa…" : "")}
         </small>
       )}
     </div>

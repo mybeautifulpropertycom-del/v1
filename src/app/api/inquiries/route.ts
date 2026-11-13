@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const body = await request.text();
     if (body.length > 12000)
       return NextResponse.json(
-        { error: "This message is too long." },
+        { error: "Mesajul este prea lung." },
         { status: 413 },
       );
     const result = validateInquiry(JSON.parse(body));
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Contact forms are not connected yet. Please contact the agent directly.",
+            "Formularele de contact nu sunt încă activate. Contactează direct agentul.",
         },
         { status: 503 },
       );
@@ -34,8 +34,7 @@ export async function POST(request: Request) {
     if (error)
       return NextResponse.json(
         {
-          error:
-            "Your message could not be delivered. Please contact the agent directly.",
+          error: "Mesajul nu a putut fi livrat. Contactează direct agentul.",
         },
         { status: 503 },
       );
@@ -44,8 +43,8 @@ export async function POST(request: Request) {
         {
           error:
             data === "rate_limited"
-              ? "You’ve already sent a few messages. Please try again later or contact the agent directly."
-              : "This property is no longer accepting messages.",
+              ? "Ai trimis deja câteva mesaje. Încearcă mai târziu sau contactează direct agentul."
+              : "Această proprietate nu mai acceptă mesaje.",
         },
         { status: data === "rate_limited" ? 429 : 404 },
       );
@@ -61,7 +60,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { error: "Please check your message and try again." },
+      { error: "Verifică mesajul și încearcă din nou." },
       { status: 400 },
     );
   }

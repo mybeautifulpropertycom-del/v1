@@ -1,25 +1,25 @@
-import type { Property, PublicProperty } from "./model";
+import { propertyTypeLabel, type Property, type PublicProperty } from "./model";
 
 export const storyFields = {
-  heroLine: { label: "Opening accent", max: 90 },
-  heroIntro: { label: "Opening introduction", max: 240 },
-  introTitle: { label: "Introduction heading", max: 90 },
-  introAccent: { label: "Introduction accent", max: 90 },
-  introBody: { label: "Introduction text", max: 450 },
-  storyTitle: { label: "Property story heading", max: 90 },
-  storyAccent: { label: "Property story accent", max: 90 },
-  galleryTitle: { label: "Gallery heading", max: 90 },
-  galleryAccent: { label: "Gallery accent", max: 90 },
-  galleryBody: { label: "Gallery introduction", max: 300 },
-  detailsTitle: { label: "Features heading", max: 90 },
-  detailsAccent: { label: "Features accent", max: 90 },
-  detailsBody: { label: "Features introduction", max: 450 },
-  settingTitle: { label: "Location heading", max: 90 },
-  settingAccent: { label: "Location accent", max: 90 },
-  settingBody: { label: "Location introduction", max: 450 },
-  closingTitle: { label: "Invitation heading", max: 90 },
-  closingAccent: { label: "Invitation accent", max: 90 },
-  closingBody: { label: "Invitation text", max: 300 },
+  heroLine: { label: "Subtitlu de deschidere", max: 90 },
+  heroIntro: { label: "Introducere de deschidere", max: 240 },
+  introTitle: { label: "Titlul introducerii", max: 90 },
+  introAccent: { label: "Subtitlul introducerii", max: 90 },
+  introBody: { label: "Textul introducerii", max: 450 },
+  storyTitle: { label: "Titlul poveștii proprietății", max: 90 },
+  storyAccent: { label: "Subtitlul poveștii proprietății", max: 90 },
+  galleryTitle: { label: "Titlul galeriei", max: 90 },
+  galleryAccent: { label: "Subtitlul galeriei", max: 90 },
+  galleryBody: { label: "Introducerea galeriei", max: 300 },
+  detailsTitle: { label: "Titlul dotărilor", max: 90 },
+  detailsAccent: { label: "Subtitlul dotărilor", max: 90 },
+  detailsBody: { label: "Introducerea dotărilor", max: 450 },
+  settingTitle: { label: "Titlul locației", max: 90 },
+  settingAccent: { label: "Subtitlul locației", max: 90 },
+  settingBody: { label: "Introducerea locației", max: 450 },
+  closingTitle: { label: "Titlul invitației", max: 90 },
+  closingAccent: { label: "Subtitlul invitației", max: 90 },
+  closingBody: { label: "Textul invitației", max: 300 },
 } as const;
 export type StoryField = keyof typeof storyFields;
 export type StoryContent = Record<StoryField, string> & { captions: string[] };
@@ -128,11 +128,12 @@ export function propertyStory(
       galleryAccent: /^\d+ photographs\. A closer look\.$/.test(
         saved.galleryAccent,
       )
-        ? "Another perspective."
+        ? "O altă perspectivă."
         : saved.galleryAccent,
       captions: saved.captions.map((caption, index) =>
-        caption === `${p.title || p.type} · Photograph ${index + 1}`
-          ? p.title || p.type
+        caption ===
+        `${p.title || p.type} · Photograph ${index + 1}`
+          ? p.title || propertyTypeLabel(p.type)
           : caption,
       ),
       storyBody:
@@ -140,46 +141,50 @@ export function propertyStory(
           ? p.website_copy.description
           : p.description,
     };
-  const location = p.location.trim() || "your chosen location";
-  const type = p.type.toLowerCase();
-  const size = `${p.area.toLocaleString("en-US")} ${p.area_unit === "sqm" ? "m²" : "sq ft"}`;
+  const location = p.location.trim() || "locația aleasă";
+  const size = `${p.area.toLocaleString("ro-RO")} ${p.area_unit === "sqm" ? "m²" : "sq ft"}`;
   const rooms =
     p.type === "Land"
-      ? "Land"
-      : `${p.bedrooms} bedrooms · ${p.bathrooms} bathrooms`;
+      ? "Teren"
+      : `${p.bedrooms} dormitoare · ${p.bathrooms} băi`;
   const features = p.amenities.slice(0, 3).join(" · ");
   const summary =
     p.description.trim().split(/\n\s*\n/)[0] ||
-    `${p.type} ${p.transaction === "rent" ? "for rent" : "for sale"} in ${location}.`;
+    `${propertyTypeLabel(p.type)} ${p.transaction === "rent" ? "de închiriat" : "de vânzare"} în ${location}.`;
   return {
     storyBody: p.description,
     heroLine:
-      p.transaction === "rent" ? "Your next address." : "Your next chapter.",
+      p.transaction === "rent"
+        ? "Următoarea ta adresă."
+        : "Următorul tău capitol.",
     heroIntro: `${rooms}${p.area > 0 ? ` · ${size}` : ""}\n${location}`,
     introTitle:
-      p.type === "Land" ? "Room for possibility." : "Space to settle.",
-    introAccent: "Make it yours.",
+      p.type === "Land" ? "Loc pentru planurile tale." : "Spațiu pentru acasă.",
+    introAccent: "Un loc al tău.",
     introBody:
       summary.length > 300
         ? `${summary.slice(0, 297).replace(/\s+\S*$/, "")}…`
         : summary,
-    storyTitle: "A closer look.",
+    storyTitle: "O privire mai atentă.",
     storyAccent:
-      p.transaction === "rent" ? "A place to settle in." : "A new beginning.",
-    galleryTitle: `Explore this ${type}.`,
-    galleryAccent: "Another perspective.",
-    galleryBody: `Explore the photographs of this ${type}. Arrange a tour to see the details in person.`,
-    detailsTitle: p.amenities[0] || `Discover the ${type}.`,
-    detailsAccent: "Thoughtful details.",
+      p.transaction === "rent"
+        ? "Un loc în care să te simți acasă."
+        : "Un nou început.",
+    galleryTitle: `Descoperă proprietatea.`,
+    galleryAccent: "O altă perspectivă.",
+    galleryBody: `Descoperă fotografiile proprietății. Programează o vizionare pentru a vedea detaliile personal.`,
+    detailsTitle: p.amenities[0] || `Descoperă detaliile.`,
+    detailsAccent: "Detalii atent alese.",
     detailsBody:
-      features || `${rooms}${p.area > 0 ? `, across ${size}.` : "."}`,
-    settingTitle: "The setting.",
-    settingAccent: "A sense of place.",
-    settingBody: `Explore this ${type} in ${location}. Contact the listing agent for more about the property and to arrange a visit.`,
-    closingTitle: "Come take a look.",
-    closingAccent: "See it yourself.",
-    closingBody: `Take the next step with this ${type} in ${location}. Schedule a tour with the listing agent and see how it feels in person.`,
-    captions: p.images.map(() => p.title || p.type),
+      features ||
+      `${rooms}${p.area > 0 ? `, pe o suprafață de ${size}.` : "."}`,
+    settingTitle: "Împrejurimi.",
+    settingAccent: "Descoperă zona.",
+    settingBody: `Proprietatea se află în ${location}. Contactează agentul pentru detalii și o vizionare.`,
+    closingTitle: "Vino să descoperi.",
+    closingAccent: "Programează o vizionare.",
+    closingBody: `Descoperă personal această proprietate din ${location}. Programează o vizionare cu agentul.`,
+    captions: p.images.map(() => p.title || propertyTypeLabel(p.type)),
   };
 }
 
@@ -189,32 +194,44 @@ export function propertyOpeningAccent(p: Listing, prepared: string): string {
   const clean = prepared.trim();
   if (
     clean.split(/\s+/).length === 3 &&
-    !/^your next (chapter|address)\.?$/i.test(clean)
+    !/^(?:your next (?:chapter|address)|următorul tău capitol|următoarea ta adresă)\.?$/i.test(
+      clean,
+    )
   )
     return clean;
 
   const features: Record<string, string> = {
-    "private garden": "Private Garden Living",
-    "swimming pool": "Swim, Relax, Repeat",
-    "outdoor terrace": "Your Outdoor Terrace",
-    "outdoor kitchen": "Cook, Dine, Gather",
-    "two-car garage": "Two-Car Garage Space",
-    "island kitchen": "Around The Island",
-    "walk-in closet": "Walk-in Wardrobe Space",
-    "city views": "City View Living",
-    "sea view": "Sea View Living",
-    fireplace: "Around The Fireplace",
+    "grădină privată": "Cu grădină privată",
+    piscină: "Piscină pentru relaxare",
+    "terasă exterioară": "Terasa ta exterioară",
+    "bucătărie exterioară": "Bucătărie în aer liber",
+    "garaj pentru două mașini": "Garaj pentru două mașini",
+    "bucătărie cu insulă": "Bucătărie cu insulă",
+    dressing: "Dressing pentru garderobă",
+    "vedere spre oraș": "Vedere spre oraș",
+    "vedere spre mare": "Vedere spre mare",
+    șemineu: "În jurul șemineului",
+    "private garden": "Cu grădină privată",
+    "swimming pool": "Piscină pentru relaxare",
+    "outdoor terrace": "Terasa ta exterioară",
+    "outdoor kitchen": "Bucătărie în aer liber",
+    "two-car garage": "Garaj pentru două mașini",
+    "island kitchen": "Bucătărie cu insulă",
+    "walk-in closet": "Dressing pentru garderobă",
+    "city views": "Vedere spre oraș",
+    "sea view": "Vedere spre mare",
+    fireplace: "În jurul șemineului",
   };
   for (const amenity of p.amenities) {
     const key = amenity.trim().toLowerCase();
     if (Object.hasOwn(features, key)) return features[key];
   }
   const homes: Record<Listing["type"], string> = {
-    Condo: "Your Condo Home",
-    House: "Your Next House",
-    "Town House": "Your Townhouse Home",
-    Penthouse: "Your Penthouse Home",
-    Land: "Your Next Plot",
+    Condo: "Apartamentul tău viitor",
+    House: "Viitoarea ta casă",
+    "Town House": "Casă în ansamblu",
+    Penthouse: "Penthouse pentru tine",
+    Land: "Teren pentru planuri",
   };
   return homes[p.type];
 }
@@ -228,7 +245,7 @@ export function applyPropertyStory(
 ): Property {
   if (source !== propertyStorySource(property))
     throw new Error(
-      "The property changed while its website was being prepared. Save your changes and try again.",
+      "Proprietatea s-a modificat în timpul pregătirii site-ului. Salvează modificările și încearcă din nou.",
     );
   // Preserve the agent's notes. A new listing with no description can use the
   // generated main introduction to meet the existing publication requirement.
@@ -257,7 +274,9 @@ export function editWebsiteCopy(
   const { storyBody, ...content } = propertyStory(property);
   const max = field === "storyBody" ? 12000 : storyFields[field].max;
   if (!value.trim() || value.length > max)
-    throw new Error(`Use between 1 and ${max} characters for this section.`);
+    throw new Error(
+      `Folosește între 1 și ${max} de caractere pentru această secțiune.`,
+    );
   return {
     ...property,
     website_copy: {

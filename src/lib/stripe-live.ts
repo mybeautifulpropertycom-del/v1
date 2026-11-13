@@ -1,3 +1,5 @@
+import { supportedPackage } from "./stripe-server";
+import { requireRomanianOrder } from "./stripe-server";
 // Server-only live purchase handling. Sandbox orders cannot grant these rights.
 import type Stripe from "stripe";
 import {
@@ -72,7 +74,7 @@ export async function createLiveCheckout(
 ) {
   if (!livePaymentsEnabled())
     throw new BillingError(
-      "Purchases will open when the presentation-video service launches.",
+      "Plățile vor fi disponibile după activarea serviciului de filme de prezentare.",
     );
   const admin = billingDatabase(config);
   await activate(admin);
@@ -88,9 +90,7 @@ export async function createLiveCheckout(
     agent_id: ownerId,
   });
   if (error || !order)
-    throw new BillingError(
-      "Your purchase could not be prepared. Please try again.",
-    );
+    throw new BillingError("Plata nu a putut fi pregătită. Încearcă din nou.");
   // The complimentary grant may have committed between the initial access
   // read and the reservation lock. Recheck after reserving; a later grant
   // rotates the attempt and is caught by the session-save fence below.
@@ -106,11 +106,12 @@ export async function createLiveCheckout(
   if (nowAllowed) return liveBillingStatus(config, propertyId, ownerId);
   if (order.status === "refunded" || order.status === "disputed")
     throw new BillingError(
-      "Please contact support about this property's payment before purchasing again.",
+      "Contactează asistența despre plata acestei proprietăți înainte de a plăti din nou.",
       409,
     );
   if (order.status === "paid")
     return billingJson({ paid: true, allowed: true });
+  requireRomanianOrder(order);
   const stripe = stripeClient(config.key);
   if (order.checkout_session_id) {
     const previous = await stripe.checkout.sessions.retrieve(
@@ -141,6 +142,7 @@ export async function createLiveCheckout(
   const session = await stripe.checkout.sessions.create(
     {
       mode: "payment",
+      locale: "ro",
       allowed_payment_method_types: ["card"],
       adaptive_pricing: { enabled: false },
       line_items: [
@@ -150,9 +152,9 @@ export async function createLiveCheckout(
             currency: PROPERTY_PACKAGE_CURRENCY,
             unit_amount: PROPERTY_PACKAGE_CENTS,
             product_data: {
-              name: "Property website + presentation video",
+              name: "Site de proprietate + film de prezentare",
               description:
-                "One property website and one presentation video. One-time payment of $97 USD; no subscription.",
+                "Un site de proprietate și un film de prezentare. Plată unică de 249 RON; fără abonament.",
             },
           },
         },
@@ -183,9 +185,7 @@ export async function createLiveCheckout(
     .select("id")
     .maybeSingle();
   if (saveError)
-    throw new BillingError(
-      "Your checkout could not be saved. Please try again.",
-    );
+    throw new BillingError("Plata nu a putut fi salvată. Încearcă din nou.");
   if (!saved) {
     // An administrator may have granted publication while Stripe was creating
     // this session. Never return a payable URL after the attempt was fenced.
@@ -209,8 +209,7 @@ export async function synchronizeLiveIntent(
   const { order_id, property_id, owner_id } = intent.metadata;
   if (
     !intent.livemode ||
-    intent.amount !== PROPERTY_PACKAGE_CENTS ||
-    intent.currency !== PROPERTY_PACKAGE_CURRENCY ||
+    !supportedPackage(intent.amount, intent.currency) ||
     !UUID.test(order_id || "") ||
     !UUID.test(property_id || "") ||
     !UUID.test(owner_id || "")
@@ -227,8 +226,8 @@ export async function synchronizeLiveIntent(
     !charge.livemode ||
     reference(charge.payment_intent) !== intentId ||
     !charge.paid ||
-    charge.amount !== PROPERTY_PACKAGE_CENTS ||
-    charge.currency !== PROPERTY_PACKAGE_CURRENCY
+    charge.amount !== intent.amount ||
+    charge.currency !== intent.currency
   )
     throw new BillingError("The charge does not match this purchase.", 400);
   let status = charge.amount_refunded >= charge.amount ? "refunded" : "paid";
@@ -257,6 +256,8 @@ export async function synchronizeLiveIntent(
       "The purchase record is not available; retry delivery.",
     );
   if (
+    order.amount !== intent.amount ||
+    order.currency !== intent.currency ||
     (order.property_id && order.property_id !== property_id) ||
     (order.owner_id && order.owner_id !== owner_id)
   )
@@ -285,8 +286,7 @@ export async function recordLiveSession(
   if (
     !session.livemode ||
     session.mode !== "payment" ||
-    session.amount_total !== PROPERTY_PACKAGE_CENTS ||
-    session.currency !== PROPERTY_PACKAGE_CURRENCY ||
+    !supportedPackage(session.amount_total, session.currency) ||
     session.client_reference_id !== session.metadata.order_id ||
     !intentId
   )

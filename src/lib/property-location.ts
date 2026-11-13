@@ -1,29 +1,29 @@
 // Persist only the agent-confirmed address and Google's place ID. Coordinates,
 // nearby results and photo URLs are fetched on demand, never stored in our DB.
 export const PLACE_ID = /^[A-Za-z0-9_-]{1,512}$/;
-export const NEARBY_RADIUS_METERS = 4828; // About three miles.
+export const NEARBY_RADIUS_METERS = 5000; // Five kilometres.
 export const NEARBY_LIMIT = 6;
 export const nearbyCategories = [
   {
     id: "schools",
-    label: "Schools",
+    label: "Școli",
     types: ["primary_school", "secondary_school"],
   },
   {
     id: "childcare",
-    label: "Childcare",
+    label: "Grădinițe",
     types: ["preschool", "child_care_agency"],
   },
-  { id: "restaurants", label: "Restaurants", types: ["restaurant"] },
-  { id: "parks", label: "Parks", types: ["park"] },
+  { id: "restaurants", label: "Restaurante", types: ["restaurant"] },
+  { id: "parks", label: "Parcuri", types: ["park"] },
   {
     id: "shopping",
-    label: "Shopping",
+    label: "Cumpărături",
     types: ["supermarket", "grocery_store", "shopping_mall"],
   },
   {
     id: "culture",
-    label: "Culture",
+    label: "Cultură",
     types: ["museum", "art_gallery", "tourist_attraction"],
   },
 ] as const;
@@ -37,14 +37,14 @@ export function mapsEnabled() {
   );
 }
 
-export function isUSAddress(place: {
+export function isRomanianAddress(place: {
   addressComponents?: { types: string[]; shortText: string | null }[];
   types?: string[];
 }) {
   const components = place.addressComponents || [];
   return (
     components.some(
-      (c) => c.types.includes("country") && c.shortText === "US",
+      (c) => c.types.includes("country") && c.shortText === "RO",
     ) &&
     (components.some((c) => c.types.includes("street_number")) ||
       (place.types || []).some((type) =>
@@ -53,7 +53,7 @@ export function isUSAddress(place: {
   );
 }
 
-export function distanceMiles(
+export function distanceKilometers(
   a: { lat: number; lng: number },
   b: { lat: number; lng: number },
 ) {
@@ -63,7 +63,7 @@ export function distanceMiles(
   const h =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
-  return 3958.7613 * 2 * Math.asin(Math.sqrt(Math.min(1, h)));
+  return 6371.0088 * 2 * Math.asin(Math.sqrt(Math.min(1, h)));
 }
 
 export function mapsLink(address: string, placeId?: string | null) {

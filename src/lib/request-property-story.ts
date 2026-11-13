@@ -25,7 +25,7 @@ async function request(property: Property): Promise<Property> {
   const supabase = getSupabase();
   if (!supabase)
     throw new Error(
-      "Automatic descriptions are available in a connected workspace.",
+      "Descrierile automate sunt disponibile într-un cont conectat.",
     );
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -38,7 +38,7 @@ async function request(property: Property): Promise<Property> {
           () =>
             reject(
               new Error(
-                "Your sign-in session did not respond. Refresh the page and sign in again.",
+                "Sesiunea de autentificare nu a răspuns. Reîncarcă pagina și autentifică-te din nou.",
               ),
             ),
           8000,
@@ -47,7 +47,7 @@ async function request(property: Property): Promise<Property> {
     ]);
     clearTimeout(timer);
     if (!session)
-      throw new Error("Please sign in again to prepare your website.");
+      throw new Error("Autentifică-te din nou pentru a pregăti site-ul.");
     const response = await fetch("/api/property-story", {
       method: "POST",
       headers: {
@@ -63,8 +63,8 @@ async function request(property: Property): Promise<Property> {
     } catch {
       throw new Error(
         response.status === 504
-          ? "Preparing the website took too long. Please try again shortly."
-          : "The writing service returned an unreadable response. Please try again.",
+          ? "Pregătirea site-ului a durat prea mult. Încearcă din nou în câteva momente."
+          : "Serviciul de redactare a returnat un răspuns care nu poate fi citit. Încearcă din nou.",
       );
     }
     if (!response.ok) {
@@ -78,23 +78,23 @@ async function request(property: Property): Promise<Property> {
           ? result.reference
           : "";
       throw new Error(
-        `${typeof result.error === "string" ? result.error : "The website descriptions could not be prepared."}${code ? ` (${code})` : ""}${reference ? ` Reference: ${reference}` : ""}`,
+        `${typeof result.error === "string" ? result.error : "Textele site-ului nu au putut fi pregătite."}${code ? ` (${code})` : ""}${reference ? ` Reference: ${reference}` : ""}`,
       );
     }
     const draft = parseStoryDraft(result.draft, property.images.length);
     if (!draft || typeof result.source !== "string")
       throw new Error(
-        "The website descriptions could not be read. Please try again.",
+        "Textele site-ului nu au putut fi citite. Încearcă din nou.",
       );
     return applyPropertyStory(property, draft, result.source);
   } catch (e) {
     if (e instanceof TypeError)
       throw new Error(
-        "We could not reach the writing service. Your property details are saved. Please try again.",
+        "Nu am putut contacta serviciul de redactare. Detaliile proprietății sunt salvate. Încearcă din nou.",
       );
     if (e instanceof Error && e.name === "TimeoutError")
       throw new Error(
-        "Preparing the website took too long. Your property details are saved. Please try again shortly.",
+        "Pregătirea site-ului a durat prea mult. Detaliile proprietății sunt salvate. Încearcă din nou în câteva momente.",
       );
     throw e;
   } finally {

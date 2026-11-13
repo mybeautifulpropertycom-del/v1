@@ -1,4 +1,5 @@
 "use client";
+import { propertyTypeLabel } from "@/lib/model";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
@@ -32,26 +33,26 @@ import { PropertyPhotoDialog } from "./property-photo-dialog";
 export type PropertyFilm = { src: string; poster?: string; captions?: string };
 
 const SCROLL_GALLERY_CAPTIONS = [
-  ["Imagine", "living here."],
-  ["Make room", "for your next chapter."],
-  ["Come home", "to your own space."],
-  ["Stay a little.", "Look a little closer."],
-  ["A new address.", "A new beginning."],
-  ["Picture", "your everyday here."],
-  ["Bring your plans.", "Make this yours."],
-  ["Find a place", "to put down roots."],
-  ["Your next move", "could start here."],
-  ["Think of the people", "you’d welcome here."],
-  ["A place to return to.", "A place to call yours."],
-  ["Take your time.", "See what feels right."],
-  ["Let yourself", "feel at home."],
-  ["A fresh start", "with room for you."],
-  ["Turn a possibility", "into your home."],
-  ["See the details.", "Imagine the days."],
-  ["Where could", "your story begin?"],
-  ["Imagine the moment", "you get the keys."],
-  ["There’s more", "to discover here."],
-  ["See it in person.", "Picture what comes next."],
+  ["Imaginează-ți", "cum ar fi să locuiești aici."],
+  ["Fă loc", "următorului tău capitol."],
+  ["Vino acasă", "în spațiul tău."],
+  ["Mai rămâi puțin.", "Privește mai atent."],
+  ["O nouă adresă.", "Un nou început."],
+  ["Imaginează-ți", "viața de zi cu zi aici."],
+  ["Vino cu planurile tale.", "Transformă acest loc în acasă."],
+  ["Găsește un loc", "în care să prinzi rădăcini."],
+  ["Următoarea ta mutare", "ar putea începe aici."],
+  ["Gândește-te la oamenii", "pe care i-ai primi aici."],
+  ["Un loc în care să revii.", "Un loc al tău."],
+  ["Privește în tihnă.", "Descoperă ce ți se potrivește."],
+  ["Dă-ți voie să te", "simți acasă."],
+  ["Un nou început", "cu loc pentru tine."],
+  ["Transformă o posibilitate", "în casa ta."],
+  ["Descoperă detaliile.", "Imaginează-ți zilele aici."],
+  ["Unde ar putea", "începe povestea ta?"],
+  ["Imaginează-ți momentul", "în care primești cheile."],
+  ["Mai sunt multe", "de descoperit aici."],
+  ["Descoperă locul personal.", "Imaginează-ți ce urmează."],
 ] as const;
 
 function ScrollGallery({ images, title }: { images: string[]; title: string }) {
@@ -111,18 +112,20 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
     >
       <div className="estate-scroll-heading estate-pad">
         <div>
-          <span className="estate-eyebrow">A home, one moment at a time</span>
+          <span className="estate-eyebrow">
+            O locuință, descoperită pas cu pas
+          </span>
           <h2 id="scroll-gallery-title">
-            Let your curiosity
+            Lasă curiozitatea
             <br />
-            <em>lead the way.</em>
+            <em>să te îndrume.</em>
           </h2>
         </div>
         <div>
           <p>
-            Some details are best discovered slowly.
+            Unele detalii merită descoperite în tihnă.
             <br />
-            Stay a little. Take it all in.
+            Mai rămâi puțin. Descoperă fiecare detaliu.
           </p>
         </div>
       </div>
@@ -135,7 +138,7 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
           <div
             className="estate-scenes"
             role="group"
-            aria-label="Property photographs"
+            aria-label="Fotografiile proprietății"
           >
             {images.map((image, index) => {
               const caption = SCROLL_GALLERY_CAPTIONS[index];
@@ -153,24 +156,22 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
                     Math.abs(index - scrollState.active) <= 1) && (
                     <PropertyImage
                       src={image}
-                      alt={`${title} — view ${index + 1}`}
+                      alt={`${title} — fotografia ${index + 1}`}
                       loading="lazy"
                       sizes="100vw"
                     />
                   )}
                   <div className="estate-scene-copy">
-                    <span className="estate-eyebrow">
-                      A different perspective
-                    </span>
+                    <span className="estate-eyebrow">O altă perspectivă</span>
                     <h3>
                       {caption[0]}
                       <br />
                       <em>{caption[1]}</em>
                     </h3>
                     <p>
-                      There’s more to a home than a first impression.
+                      O locuință înseamnă mai mult decât prima impresie.
                       <br />
-                      Picture yourself here.
+                      Imaginează-te aici.
                     </p>
                   </div>
                 </div>
@@ -214,7 +215,9 @@ export function EditorialWebsite({
     event.preventDefault();
     if (busy || sent) return;
     if (isPreview) {
-      setStatus("This is a preview. No message has been sent.");
+      setStatus(
+        "Aceasta este o previzualizare. Nu a fost trimis niciun mesaj.",
+      );
       return;
     }
     setBusy(true);
@@ -229,17 +232,17 @@ export function EditorialWebsite({
       if (!response.ok)
         throw new Error(
           data.error ||
-            "Your message could not be sent. Please try again or contact the agent directly.",
+            "Mesajul nu a putut fi trimis. Încearcă din nou sau contactează direct agentul.",
         );
       setSent(true);
       setStatus(
-        "Your message is in the agent’s inbox. They can contact you using the details you provided.",
+        "Mesajul a ajuns la agent. Te poate contacta folosind datele pe care le-ai oferit.",
       );
     } catch (error) {
       setStatus(
         error instanceof Error
           ? error.message
-          : "Your message could not be sent.",
+          : "Mesajul nu a putut fi trimis.",
       );
     } finally {
       setBusy(false);
@@ -272,19 +275,19 @@ export function EditorialWebsite({
           >
             <ArrowLeft size={15} />
             {previewBackLink?.label ||
-              (sample ? "Back to collection" : "Back to editor")}
+              (sample ? "Înapoi la colecție" : "Înapoi la editor")}
           </Link>
           <span>
             {sample
-              ? "The Editorial · Design preview · Sample property"
-              : "Saved website preview · Not a public link"}
+              ? "The Editorial · Previzualizare design · Proprietate demonstrativă"
+              : "Previzualizarea site-ului salvat · Nu este un link public"}
           </span>
           {sample ? (
             <Link href="/dashboard/properties/new?template=editorial">
-              Use this design <ArrowUpRight size={14} />
+              Folosește acest design <ArrowUpRight size={14} />
             </Link>
           ) : (
-            <span>Made for your next chapter</span>
+            <span>Pentru următorul tău capitol</span>
           )}
         </div>
       )}
@@ -294,52 +297,50 @@ export function EditorialWebsite({
             {property.images[0] ? (
               <PropertyImage
                 src={property.images[0]}
-                alt={`${property.title} — main view`}
+                alt={`${property.title} — vedere principală`}
                 fetchPriority="high"
                 sizes="100vw"
               />
             ) : (
               <div className="estate-photo-empty">
-                Your cover photograph will appear here.
+                Fotografia de copertă va apărea aici.
               </div>
             )}
           </div>
           <header className="estate-nav estate-pad">
             <a href="#home" className="estate-wordmark">
               {profile.agency || profile.name}
-              <span>A MORE PERSONAL WAY HOME</span>
+              <span>UN DRUM MAI PERSONAL SPRE ACASĂ</span>
             </a>
-            <nav aria-label="Property navigation">
-              <a href="#story">The residence</a>
-              <a href="#gallery">The gallery</a>
-              <a href="#contact">Your agent</a>
+            <nav aria-label="Navigarea proprietății">
+              <a href="#story">Locuința</a>
+              <a href="#gallery">Galerie</a>
+              <a href="#contact">Agentul tău</a>
             </nav>
-            {viewingButton("Arrange a viewing", "estate-nav-cta")}
+            {viewingButton("Programează o vizionare", "estate-nav-cta")}
           </header>
           <div className="estate-hero-content estate-pad">
             <span className="estate-eyebrow">
               <span className="estate-dot" />
-              {property.type} ·{" "}
-              {property.transaction === "sale"
-                ? "Offered for sale"
-                : "Offered for rent"}
+              {propertyTypeLabel(property.type)} ·{" "}
+              {property.transaction === "sale" ? "De vânzare" : "De închiriat"}
             </span>
             <h1>
               <EditableText
                 field="title"
-                value={property.title || "A place to call home."}
+                value={property.title || "Un loc căruia să-i spui acasă."}
                 onEdit={onEdit}
               />
             </h1>
             <p>
-              Some places you visit.
+              Unele locuri le vizitezi.
               <br />
-              <em>Others, you call home.</em>
+              <em>Altora le spui acasă.</em>
             </p>
             <div className="estate-hero-actions">
-              {viewingButton("Find your next chapter")}
+              {viewingButton("Descoperă următorul capitol")}
               <a href="#gallery" className="estate-text-link">
-                Explore the residence <ArrowDown size={16} />
+                Descoperă locuința <ArrowDown size={16} />
               </a>
             </div>
           </div>
@@ -348,7 +349,7 @@ export function EditorialWebsite({
               <MapPin size={14} />
               <EditableText
                 field="location"
-                value={property.location || "Your property location"}
+                value={property.location || "Adresa proprietății tale"}
                 onEdit={onEdit}
               />
             </span>
@@ -359,7 +360,7 @@ export function EditorialWebsite({
                 onClick={() => setLightbox(0)}
               >
                 <Expand size={16} />
-                View all {property.images.length} photos
+                Vezi toate cele {property.images.length} fotografii
               </button>
             )}
           </div>
@@ -388,7 +389,7 @@ export function EditorialWebsite({
                 field="copy.introBody"
                 value={
                   copy.introBody ||
-                  "Tell the story of your property. Add a description in the editor to bring this space to life."
+                  "Spune povestea proprietății. Adaugă o descriere în editor pentru a da viață acestui spațiu."
                 }
                 onEdit={onEdit}
               />
@@ -398,31 +399,29 @@ export function EditorialWebsite({
             <div>
               <dt>
                 <Square size={16} />
-                Living space
+                Suprafață locuibilă
               </dt>
               <dd>
-                {property.area.toLocaleString("en-US")} <small>{unit}</small>
+                {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
               </dd>
             </div>
             <div>
               <dt>
                 <BedDouble size={17} />
-                Bedrooms
+                Dormitoare
               </dt>
               <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
             </div>
             <div>
               <dt>
                 <Bath size={17} />
-                Bathrooms
+                Băi
               </dt>
               <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
             </div>
             <div>
               <dt>
-                {property.transaction === "rent"
-                  ? "Monthly rent"
-                  : "Offered at"}
+                {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
               </dt>
               <dd>{formatPrice(property)}</dd>
             </div>
@@ -438,19 +437,19 @@ export function EditorialWebsite({
               <>
                 <PropertyImage
                   src={property.images[1] || property.images[0]}
-                  alt={`${property.title} — a closer perspective`}
+                  alt={`${property.title} — o privire mai atentă`}
                   loading="lazy"
                 />
                 <button
                   type="button"
                   onClick={() => setLightbox(property.images[1] ? 1 : 0)}
                 >
-                  A LITTLE CLOSER TO HOME <Expand size={15} />
+                  CU UN PAS MAI APROAPE DE ACASĂ <Expand size={15} />
                 </button>
               </>
             ) : (
               <div className="estate-photo-empty">
-                Add your property photographs.
+                Adaugă fotografiile proprietății.
               </div>
             )}
           </div>
@@ -479,38 +478,41 @@ export function EditorialWebsite({
             </p>
             <dl className="estate-specifications">
               <div>
-                <dt>Living area</dt>
+                <dt>Suprafață locuibilă</dt>
                 <dd>
-                  {property.area.toLocaleString("en-US")} {unit}
+                  {property.area.toLocaleString("ro-RO")} {unit}
                 </dd>
               </div>
               <div>
-                <dt>Bedrooms</dt>
+                <dt>Dormitoare</dt>
                 <dd>{property.bedrooms}</dd>
               </div>
               <div>
-                <dt>Bathrooms</dt>
+                <dt>Băi</dt>
                 <dd>{property.bathrooms}</dd>
               </div>
               <div>
-                <dt>Property type</dt>
-                <dd>{property.type}</dd>
+                <dt>Tipul proprietății</dt>
+                <dd>{propertyTypeLabel(property.type)}</dd>
               </div>
               <div>
-                <dt>Location</dt>
+                <dt>Adresă</dt>
                 <dd>{property.location || "—"}</dd>
               </div>
               <div>
                 <dt>
                   {property.transaction === "rent"
-                    ? "Monthly rent"
-                    : "Asking price"}
+                    ? "Chirie lunară"
+                    : "Preț solicitat"}
                 </dt>
                 <dd>{formatPrice(property)}</dd>
               </div>
             </dl>
             {property.amenities.length > 0 && (
-              <ul className="estate-amenities" aria-label="Property amenities">
+              <ul
+                className="estate-amenities"
+                aria-label="Dotările proprietății"
+              >
                 {property.amenities.map((amenity) => (
                   <li key={amenity}>
                     <span className="estate-amenity-mark" aria-hidden="true">
@@ -521,7 +523,7 @@ export function EditorialWebsite({
                 ))}
               </ul>
             )}
-            {viewingButton("Experience it in person")}
+            {viewingButton("Descoperă proprietatea la o vizionare")}
           </div>
         </section>
         <section
@@ -546,19 +548,19 @@ export function EditorialWebsite({
                 </em>
               </h2>
             </div>
-            <p>Explore the photographs of this house.</p>
+            <p>Descoperă fotografiile acestei locuințe.</p>
           </div>
           <div className="estate-gallery-grid">
             {property.images.map((image, index) => (
               <button
                 key={`${image}-${index}`}
                 type="button"
-                aria-label={`Enlarge property photo ${index + 1}`}
+                aria-label={`Mărește fotografia proprietății ${index + 1}`}
                 onClick={() => setLightbox(index)}
               >
                 <PropertyImage
                   src={image}
-                  alt={`${property.title} — view ${index + 1}`}
+                  alt={`${property.title} — fotografia ${index + 1}`}
                   loading="lazy"
                 />
                 <span>
@@ -569,7 +571,7 @@ export function EditorialWebsite({
           </div>
           {!property.images.length && (
             <p className="estate-gallery-empty">
-              Your property photographs will appear here.
+              Fotografiile proprietății vor apărea aici.
             </p>
           )}
         </section>
@@ -582,12 +584,13 @@ export function EditorialWebsite({
             <div className="estate-section-heading">
               <div>
                 <h2 id="film-title">
-                  Before you step <em>inside.</em>
+                  Înainte să pășești <em>înăuntru.</em>
                 </h2>
               </div>
               <p>
-                A different way to see it.
-                <br />A little closer to being here.
+                Un alt fel de a descoperi locuința.
+                <br />
+                Mai aproape de o vizită.
               </p>
             </div>
             {film?.src && videoPanel}
@@ -600,7 +603,7 @@ export function EditorialWebsite({
                 playsInline
                 preload="metadata"
                 poster={film.poster || property.images[0]}
-                aria-label={`${property.title} — property film`}
+                aria-label={`${property.title} — filmul proprietății`}
               >
                 <source src={film.src} />
                 {film.captions && (
@@ -609,10 +612,10 @@ export function EditorialWebsite({
                     kind="captions"
                     src={film.captions}
                     srcLang="en"
-                    label="English"
+                    label="Engleză"
                   />
                 )}
-                Your browser does not support this video.
+                Browserul tău nu poate reda acest videoclip.
               </video>
             ) : videoPanel ? (
               videoPanel
@@ -627,16 +630,17 @@ export function EditorialWebsite({
                 ) : null}
                 <div>
                   <Film size={30} strokeWidth={1} />
-                  <span>YOUR PROPERTY, IN MOTION</span>
+                  <span>PROPRIETATEA TA PRINDE VIAȚĂ</span>
                   <h3>
-                    A story worth <em>watching.</em>
+                    O poveste care merită <em>văzută.</em>
                   </h3>
-                  <p>Your completed property film will appear here.</p>
+                  <p>Filmul proprietății va apărea aici când este gata.</p>
                   <small>
-                    Video layout preview · No film has been generated yet
+                    Previzualizarea secțiunii video · Nu a fost generat încă
+                    niciun film
                   </small>
                 </div>
-                <span className="estate-film-mark">THE PROPERTY FILM</span>
+                <span className="estate-film-mark">FILMUL PROPRIETĂȚII</span>
               </div>
             )}
           </section>
@@ -648,16 +652,16 @@ export function EditorialWebsite({
         >
           <div className="estate-agent landing-agent">
             <h2>
-              Let’s connect.
+              Hai să discutăm.
               <br />
-              <em>Feel at home.</em>
+              <em>Simte-te acasă.</em>
             </h2>
             <div className="estate-agent-person landing-agent-profile">
               <span className="estate-agent-monogram">
                 <AgentAvatar profile={profile} />
               </span>
               <div>
-                <strong>{profile.name || "Your agent"}</strong>
+                <strong>{profile.name || "Agentul tău"}</strong>
                 {profile.agency && <span>{profile.agency}</span>}
               </div>
             </div>
@@ -678,32 +682,35 @@ export function EditorialWebsite({
                 </a>
               )}
             </div>
-            {viewingButton("Let’s find a day to meet", "estate-text-link")}
+            {viewingButton(
+              "Să alegem o zi pentru vizionare",
+              "estate-text-link",
+            )}
           </div>
           <form className="estate-inquiry" onSubmit={submit}>
             <span className="estate-eyebrow">
-              Every chapter starts with hello
+              Fiecare început pornește cu un salut
             </span>
             <h3>
-              Let’s make it <em>personal.</em>
+              Hai să ne <em>cunoaștem.</em>
             </h3>
-            <p>A question, a thought, a possibility. We’d love to hear it.</p>
+            <p>Ai o întrebare sau vrei mai multe detalii? Scrie-ne.</p>
             <label>
-              Your name
+              Numele tău
               <input
                 required
                 name="name"
                 autoComplete="name"
                 minLength={2}
                 maxLength={100}
-                placeholder="Your first and last name"
+                placeholder="Numele și prenumele tău"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </label>
             <div className="estate-field-pair">
               <label>
-                Email address
+                Adresă de e-mail
                 <input
                   required
                   type="email"
@@ -716,7 +723,7 @@ export function EditorialWebsite({
                 />
               </label>
               <label>
-                Phone <span>(optional)</span>
+                Telefon <span>(opțional)</span>
                 <input
                   type="tel"
                   name="phone"
@@ -729,19 +736,19 @@ export function EditorialWebsite({
               </label>
             </div>
             <label>
-              Your message (optional)
+              Mesajul tău (opțional)
               <textarea
                 minLength={10}
                 maxLength={2000}
                 rows={3}
-                placeholder="I’d love to know a little more about this home…"
+                placeholder="Aș vrea să aflu mai multe despre această locuință…"
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
             </label>
             <div className="honeypot" aria-hidden="true">
               <label>
-                Leave this empty
+                Lasă acest câmp gol
                 <input
                   tabIndex={-1}
                   autoComplete="off"
@@ -758,20 +765,22 @@ export function EditorialWebsite({
               disabled={busy || sent}
             >
               {busy
-                ? "Sending…"
+                ? "Se trimite…"
                 : sent
-                  ? "Message received"
+                  ? "Mesaj primit"
                   : isPreview
-                    ? "Try the contact form"
-                    : "Send a little hello"}
+                    ? "Încearcă formularul de contact"
+                    : "Trimite un mesaj"}
               {sent ? <Check size={17} /> : <ArrowUpRight size={17} />}
             </button>
             <small>
-              By sending, you agree to be contacted by{" "}
-              {profile.name || "the agent"} about this property.
+              Prin trimitere, ești de acord să fii contactat de{" "}
+              {profile.name || "agent"} în legătură cu această proprietate.
             </small>
             {isPreview && (
-              <small>Preview only. This form does not send messages.</small>
+              <small>
+                Doar previzualizare. Acest formular nu trimite mesaje.
+              </small>
             )}
             {status && (
               <p className="estate-form-status" role="status">
@@ -790,7 +799,9 @@ export function EditorialWebsite({
             />
           )}
           <div className="estate-invitation-content">
-            <span className="estate-eyebrow">Your next chapter is waiting</span>
+            <span className="estate-eyebrow">
+              Următorul tău capitol te așteaptă
+            </span>
             <h2>
               <EditableText
                 field="copy.closingTitle"
@@ -813,10 +824,10 @@ export function EditorialWebsite({
                 onEdit={onEdit}
               />
             </p>
-            {viewingButton("Arrange your private viewing")}
+            {viewingButton("Programează o vizionare privată")}
             <span className="estate-invitation-note">
-              <CalendarDays size={15} />A day that works for you. A home that
-              feels like you.
+              <CalendarDays size={15} />O zi potrivită pentru tine. O locuință
+              în care să te simți acasă.
             </span>
             <p className="estate-invitation-price">{formatPrice(property)}</p>
           </div>

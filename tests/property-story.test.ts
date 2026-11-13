@@ -23,10 +23,10 @@ test("each listing has factual copy and old photo analysis cannot survive change
   const houseCopy = propertyStory(house);
   const condoCopy = propertyStory(condo);
   assert.notEqual(houseCopy.introBody, condoCopy.introBody);
-  assert.match(condoCopy.heroIntro, /2 bedrooms · 2 bathrooms · 1,450 sq ft/);
-  assert.match(condoCopy.settingBody, /Austin/);
-  assert.equal(condoCopy.detailsTitle, "Private balcony");
-  assert.ok(!JSON.stringify(condoCopy).includes("Private garden"));
+  assert.match(condoCopy.heroIntro, /2 dormitoare · 2 băi · 135 m²/);
+  assert.match(condoCopy.settingBody, /Cluj-Napoca/);
+  assert.equal(condoCopy.detailsTitle, "Balcon privat");
+  assert.ok(!JSON.stringify(condoCopy).includes("Grădină privată"));
   const stored = {
     ...condo,
     website_copy: {
@@ -47,7 +47,7 @@ test("each listing has factual copy and old photo analysis cannot survive change
   ])
     assert.equal(savedPropertyStory(changed), null);
   const land = propertyStory({ ...condo, type: "Land" });
-  assert.doesNotMatch(land.heroIntro, /bedrooms|bathrooms/);
+  assert.doesNotMatch(land.heroIntro, /dormitoare|băi/);
 });
 
 test("story output requires bounded text and exactly one caption per analyzed image", () => {
@@ -161,7 +161,15 @@ test("vision request sends each image in order, excludes agent data, and validat
     {
       status: "completed",
       output: [
-        { type: "message", content: [{ type: "refusal", refusal: "No" }] },
+        {
+          type: "message",
+          content: [
+            {
+              type: "refusal",
+              refusal: "Nu au fost găsite locuri din categoria",
+            },
+          ],
+        },
       ],
     },
     {

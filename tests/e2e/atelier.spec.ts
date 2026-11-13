@@ -10,7 +10,10 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
     await mosaic.evaluate((node) => node.getBoundingClientRect().top),
   ).toBeLessThan(200);
   await mosaic
-    .getByRole("button", { name: "Enlarge property photo 3", exact: true })
+    .getByRole("button", {
+      name: "Mărește fotografia proprietății 3",
+      exact: true,
+    })
     .click();
   await expect(page.locator(".lightbox>span")).toHaveText("3 / 40");
   await page.keyboard.press("ArrowRight");
@@ -19,14 +22,19 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
     mosaic.getByRole("button", {
-      name: "Enlarge property photo 3",
+      name: "Mărește fotografia proprietății 3",
       exact: true,
     }),
   ).toBeFocused();
   const gallery = page.locator(".atelier-photo-grid");
   await expect(gallery.locator("figure")).toHaveCount(40);
   await expect(gallery.locator("figcaption")).toHaveCount(0);
-  await gallery.getByRole("button", { name: "Enlarge property photo 4", exact: true }).click();
+  await gallery
+    .getByRole("button", {
+      name: "Mărește fotografia proprietății 4",
+      exact: true,
+    })
+    .click();
   await expect(page.locator(".lightbox>span")).toHaveText("4 / 40");
   await page.keyboard.press("Escape");
 });
@@ -35,19 +43,19 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   page,
 }) => {
   await page.goto("/templates/panorama");
-  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Meniu", exact: true }).click();
   await expect(page.locator("#atelier-menu")).toBeVisible();
   await page
     .locator("#atelier-menu")
-    .getByRole("link", { name: "The details" })
+    .getByRole("link", { name: "Detalii" })
     .click();
   await expect(page.locator("#atelier-menu")).toHaveCount(0);
   await expect(page.locator(".atelier-extras ul")).toContainText(
-    "Private garden",
+    "Grădină privată",
   );
   await expect(page.locator(".atelier-extras li").first()).toBeVisible();
   await expect(page.locator("#details details")).toHaveCount(0);
-  await expect(page.locator(".atelier-spec-grid")).toContainText("3,250");
+  await expect(page.locator(".atelier-spec-grid")).toContainText("302");
   await expect(page.locator(".atelier-invitation-background")).toHaveCSS(
     "opacity",
     "0.15",
@@ -58,7 +66,7 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   );
   await page
     .locator(".atelier-intro")
-    .getByRole("button", { name: "Schedule a tour" })
+    .getByRole("button", { name: "Programează o vizionare" })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCSS(
@@ -72,7 +80,7 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   await expect(page.locator(".atelier-details-copy > p")).toHaveCount(0);
   await expect(
     page.locator(".atelier-contact input[name=phone]"),
-  ).toHaveAccessibleName("Phone");
+  ).toHaveAccessibleName("Telefon");
   await expect(page.locator(".atelier-contact input[name=name]")).toHaveCSS(
     "padding-left",
     "20px",
@@ -84,7 +92,8 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".atelier-film video")).toBeVisible();
   await expect(page.locator(".atelier-film video source")).toHaveAttribute(
-    "src", "/videos/template-property-tour.mp4",
+    "src",
+    "/videos/template-property-tour.mp4",
   );
   expect(
     await page
@@ -110,7 +119,7 @@ test("Atelier fits phones and keeps the tour action available without blocking i
   ).toBe(true);
   await page
     .locator(".atelier-mobile-tour")
-    .getByRole("button", { name: "Schedule a tour" })
+    .getByRole("button", { name: "Programează o vizionare" })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");

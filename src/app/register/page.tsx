@@ -1,7 +1,7 @@
 import { Auth } from "@/components/auth";
 
 export const metadata = {
-  title: "Create your account",
+  title: "Creează-ți contul",
   robots: { index: false },
 };
 

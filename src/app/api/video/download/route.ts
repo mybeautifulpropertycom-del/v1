@@ -15,10 +15,10 @@ export async function POST(request: Request) {
     try {
       body = JSON.parse(await readLimitedBody(request, 1024));
     } catch {
-      throw new BillingError("Choose your property.", 400);
+      throw new BillingError("Alege proprietatea ta.", 400);
     }
     if (!UUID.test(body?.propertyId || ""))
-      throw new BillingError("Choose your property.", 400);
+      throw new BillingError("Alege proprietatea ta.", 400);
     const { data: property, error } = await db
       .from("properties")
       .select("id,status")
@@ -27,12 +27,12 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (error || !property)
       throw new BillingError(
-        "This property is not available in your account.",
+        "Proprietatea nu este disponibilă în contul tău.",
         404,
       );
     if (property.status !== "published")
       throw new BillingError(
-        "Publish this property before downloading its video.",
+        "Publică proprietatea înainte de a descărca filmul.",
         409,
       );
     const admin = lifecycleDatabase();
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       { listing_id: property.id, agent_id: user.id },
     );
     if (accessError || access !== true)
-      throw new BillingError("Publication access is required.", 403);
+      throw new BillingError("Este necesar dreptul de publicare.", 403);
     const { data: job, error: jobError } = await admin
       .from("property_video_jobs")
       .select("order_id,video_url,status")
@@ -49,7 +49,10 @@ export async function POST(request: Request) {
       .eq("owner_id", user.id)
       .maybeSingle();
     if (jobError || !job?.video_url || job.status === "cancelled")
-      throw new BillingError("Your video is not ready to download yet.", 409);
+      throw new BillingError(
+        "Filmul nu este încă pregătit pentru descărcare.",
+        409,
+      );
     const url = new URL(job.video_url);
     const base = `/storage/v1/object/public/property-videos/`;
     const expected = `${user.id}/${job.order_id}/`;
@@ -65,14 +68,14 @@ export async function POST(request: Request) {
       url.password
     )
       throw new BillingError(
-        "The saved video is not available for download.",
+        "Filmul salvat nu este disponibil pentru descărcare.",
         409,
       );
     const { data: signed, error: signingError } = await admin.storage
       .from("property-videos")
       .createSignedUrl(path, 60, { download: "my-beautiful-property.mp4" });
     if (signingError || !signed?.signedUrl)
-      throw new BillingError("Your download could not be prepared.");
+      throw new BillingError("Descărcarea nu a putut fi pregătită.");
     return billingJson({ url: signed.signedUrl });
   } catch (error) {
     return adminFailure(error);

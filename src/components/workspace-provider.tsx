@@ -49,9 +49,9 @@ export function useWorkspace(): WorkspaceContext {
 
 async function optimizeImage(file: File, maxSide = 2000): Promise<Blob> {
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
-    throw new Error("Choose a JPG, PNG, or WebP image.");
+    throw new Error("Alege o imagine JPG, PNG sau WebP.");
   if (file.size > 10 * 1024 * 1024)
-    throw new Error("Each image can be up to 10 MB.");
+    throw new Error("Fiecare imagine poate avea maximum 10 MB.");
   const bitmap = await createImageBitmap(file);
   const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
@@ -60,7 +60,7 @@ async function optimizeImage(file: File, maxSide = 2000): Promise<Blob> {
   const context = canvas.getContext("2d");
   if (!context) {
     bitmap.close();
-    throw new Error("This browser could not process the image.");
+    throw new Error("Browserul nu a putut procesa imaginea.");
   }
   context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
@@ -69,7 +69,7 @@ async function optimizeImage(file: File, maxSide = 2000): Promise<Blob> {
       (blob) =>
         blob?.type === "image/webp"
           ? resolve(blob)
-          : reject(new Error("The image could not be processed.")),
+          : reject(new Error("Imaginea nu a putut fi procesată.")),
       "image/webp",
       0.86,
     ),
@@ -124,7 +124,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         ]);
         if (profileResult.error || propertyResult.error)
           throw new Error(
-            "We could not load your workspace. Check your Supabase migration and connection.",
+            "Nu am putut încărca spațiul de lucru. Verifică conexiunea și configurarea Supabase.",
           );
         if (active) {
           setIsAdmin(!adminResult.error && adminResult.data === true);
@@ -136,7 +136,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         if (active)
           setError(
-            e instanceof Error ? e.message : "The connection is unavailable.",
+            e instanceof Error ? e.message : "Conexiunea nu este disponibilă.",
           );
       }
     }
@@ -164,7 +164,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         .single();
       if (error)
         throw new Error(
-          "Your property could not be refreshed. Please reload the page.",
+          "Proprietatea nu a putut fi actualizată. Reîncarcă pagina.",
         );
       const property = data as Property;
       commit({
@@ -202,7 +202,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         .single();
       if (error)
         throw new Error(
-          "Your profile was not saved. Check your connection and try again.",
+          "Profilul nu a fost salvat. Verifică conexiunea și încearcă din nou.",
         );
       profile = { ...profile, profile_completed_at: data.profile_completed_at };
     }
@@ -238,8 +238,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (error)
         throw new Error(
           error.code === "P0402"
-            ? "Complete the $97 payment in Website design before publishing this property."
-            : "Your property was not saved. Check the details and your connection, then try again.",
+            ? "Finalizează plata de 249 RON în secțiunea Designul site-ului înainte de publicarea proprietății."
+            : "Proprietatea nu a fost salvată. Verifică detaliile și conexiunea, apoi încearcă din nou.",
         );
       Object.assign(nextProperty, data);
     }
@@ -270,8 +270,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           onProgress?.(1);
           resolve(reader.result as string);
         };
-        reader.onerror = () =>
-          reject(new Error("We could not read this image."));
+        reader.onerror = () => reject(new Error("Nu am putut citi imaginea."));
         reader.readAsDataURL(blob);
       });
     const path = `${stateRef.current!.profile.id}/${propertyId}/${crypto.randomUUID()}.webp`;
@@ -288,7 +287,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result));
         reader.onerror = () =>
-          reject(new Error("The photo could not be read."));
+          reject(new Error("Fotografia nu a putut fi citită."));
         reader.readAsDataURL(blob);
       });
     const path = `${stateRef.current!.profile.id}/${crypto.randomUUID()}.webp`;
@@ -297,7 +296,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       .upload(path, blob, { contentType: "image/webp", upsert: false });
     if (error)
       throw new Error(
-        "Your profile photo could not be uploaded. Check that profile photo storage has been set up, then try again.",
+        "Fotografia de profil nu a putut fi încărcată. Verifică configurarea stocării și încearcă din nou.",
       );
     return supabase.storage.from("agent-avatars").getPublicUrl(path).data
       .publicUrl;
@@ -306,7 +305,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   async function deleteProperty(property: Property) {
     const owner = stateRef.current!.profile.id;
     if (property.owner_id !== owner)
-      throw new Error("This property is not in your workspace.");
+      throw new Error("Proprietatea nu se află în contul tău.");
     const supabase = getSupabase();
     if (supabase) {
       const { data, error } = await supabase.rpc("delete_owned_property", {
@@ -314,7 +313,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       });
       if (error || data !== true)
         throw new Error(
-          "Your property could not be deleted. Check the account tools database update and your connection, then try again.",
+          "Proprietatea nu a putut fi ștearsă. Verifică actualizarea bazei de date și conexiunea, apoi încearcă din nou.",
         );
     }
     const next = {
@@ -326,7 +325,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     if (!supabase) await writeDemo(next);
     commit(next);
     notify(
-      "Property deleted. Its public page is no longer available. Your leads remain in your inbox.",
+      "Proprietatea a fost ștearsă. Pagina publică nu mai este disponibilă. Mesajele rămân în inbox.",
     );
     if (supabase) {
       // Remove only saved images in this owner's exact property folder.
@@ -357,11 +356,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
             .remove(paths);
           if (error)
             notify(
-              "Property deleted. Some saved photos could not be removed from storage.",
+              "Proprietatea a fost ștearsă. Unele fotografii nu au putut fi eliminate din stocare.",
             );
         } catch {
           notify(
-            "Property deleted. Some saved photos could not be removed from storage.",
+            "Proprietatea a fost ștearsă. Unele fotografii nu au putut fi eliminate din stocare.",
           );
         }
       }
@@ -373,7 +372,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     if (supabase) {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        notify("Sign out failed. Please try again.");
+        notify("Deconectarea a eșuat. Încearcă din nou.");
         return;
       }
     }
@@ -384,10 +383,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     return (
       <div className="state-screen">
         <div className="brand-symbol">m.</div>
-        <h1>Let’s get you reconnected.</h1>
+        <h1>Să restabilim conexiunea.</h1>
         <p>{error}</p>
         <button className="button primary" onClick={() => location.reload()}>
-          Try again
+          Încearcă din nou
         </button>
       </div>
     );
@@ -396,7 +395,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       <div className="state-screen">
         <div className="brand-symbol">m.</div>
         <LoaderCircle className="spin" />
-        <p>Getting your workspace ready…</p>
+        <p>Se pregătește spațiul de lucru…</p>
       </div>
     );
   return (
@@ -422,10 +421,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         <div className="toast" role="status">
           <Check size={18} />
           {toast}
-          <button
-            onClick={() => setToast("")}
-            aria-label="Dismiss notification"
-          >
+          <button onClick={() => setToast("")} aria-label="Închide notificarea">
             <X size={16} />
           </button>
         </div>

@@ -45,29 +45,43 @@ export type PublicProperty = Omit<
 >;
 export type PublicProfile = Omit<Profile, "id">;
 
+export function propertyTypeLabel(type: string): string {
+  return (
+    (
+      {
+        Condo: "Apartament",
+        House: "Casă",
+        "Town House": "Casă înșiruită",
+        Penthouse: "Penthouse",
+        Land: "Teren",
+      } as Record<string, string>
+    )[type] || type
+  );
+}
+
 export const templates = [
   {
     id: "editorial" as const,
     name: "The Editorial",
-    tag: "WARM & IMMERSIVE",
+    tag: "CALD ȘI PRIMITOR",
     description:
-      "Cinematic photography, and a personal invitation. A home to fall in love with.",
+      "Fotografii cinematografice și o invitație personală. O locuință de care să te îndrăgostești.",
     color: "#e9eee5",
   },
   {
     id: "minimal" as const,
     name: "The Heritage",
-    tag: "CHARACTER & CHARM",
+    tag: "PERSONALITATE ȘI FARMEC",
     description:
-      "A warm feel. An immersive opening, an album of photographs, and room for a new beginning.",
+      "O atmosferă caldă. O deschidere captivantă, un album de fotografii și loc pentru un nou început.",
     color: "#f5f2e7",
   },
   {
     id: "panorama" as const,
     name: "The Atelier",
-    tag: "A NEW PERSPECTIVE",
+    tag: "O NOUĂ PERSPECTIVĂ",
     description:
-      "An opening gallery and considered details. An invitation to see things differently.",
+      "O galerie de deschidere și detalii atent alese. O invitație la o nouă perspectivă.",
     color: "#e9e5dc",
   },
 ];
@@ -112,11 +126,11 @@ export function createProperty(ownerId: string): Property {
 
 export function profileErrors(profile: Profile): string[] {
   const errors: string[] = [];
-  if (profile.name.trim().length < 2) errors.push("Add your full name.");
+  if (profile.name.trim().length < 2) errors.push("Adaugă numele complet.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email))
-    errors.push("Add a valid email address.");
+    errors.push("Adaugă o adresă de e-mail validă.");
   if (profile.phone.replace(/\D/g, "").length < 8)
-    errors.push("Add a valid phone number.");
+    errors.push("Adaugă un număr de telefon valid.");
   return errors;
 }
 
@@ -126,15 +140,15 @@ export function publicationErrors(
 ): string[] {
   const errors = profileErrors(profile);
   if (property.title.trim().length < 5)
-    errors.push("The headline needs at least 5 characters.");
-  if (!property.location.trim()) errors.push("Add the property address.");
+    errors.push("Titlul trebuie să conțină cel puțin 5 caractere.");
+  if (!property.location.trim()) errors.push("Adaugă adresa proprietății.");
   if (property.description.trim().length < 30)
-    errors.push("Add a description of at least 30 characters.");
+    errors.push("Adaugă o descriere de cel puțin 30 de caractere.");
   if (!Number.isFinite(property.price) || property.price <= 0)
-    errors.push("The price must be greater than zero.");
+    errors.push("Prețul trebuie să fie mai mare decât zero.");
   if (!Number.isFinite(property.area) || property.area <= 0)
-    errors.push("Add the property size.");
-  if (!property.images.length) errors.push("Add at least one photo.");
+    errors.push("Adaugă suprafața proprietății.");
+  if (!property.images.length) errors.push("Adaugă cel puțin o fotografie.");
   return errors;
 }
 
@@ -145,19 +159,19 @@ export function propertyErrors(property: Property): string[] {
     property.price < 0 ||
     property.price > 999999999999
   )
-    errors.push("Enter a valid, nonnegative price.");
+    errors.push("Introdu un preț valid, mai mare sau egal cu zero.");
   if (
     !Number.isFinite(property.area) ||
     property.area < 0 ||
     property.area > 999999999
   )
-    errors.push("Enter a valid, nonnegative property size.");
+    errors.push("Introdu o suprafață validă, mai mare sau egală cu zero.");
   if (
     !Number.isInteger(property.bedrooms) ||
     property.bedrooms < 0 ||
     property.bedrooms > 100
   )
-    errors.push("Bedrooms must be a whole number between 0 and 100.");
+    errors.push("Numărul de dormitoare trebuie să fie întreg, între 0 și 100.");
   if (
     !Number.isFinite(property.bathrooms) ||
     property.bathrooms < 0 ||
@@ -165,26 +179,26 @@ export function propertyErrors(property: Property): string[] {
     !Number.isInteger(property.bathrooms * 2)
   )
     errors.push(
-      "Bathrooms must be between 0 and 100, in half-bath increments.",
+      "Numărul de băi trebuie să fie între 0 și 100, în pași de 0,5.",
     );
   if (
     property.title.length > 160 ||
     property.location.length > 200 ||
     property.description.length > 12000
   )
-    errors.push("The headline, address, or description is too long.");
+    errors.push("Titlul, adresa sau descrierea este prea lungă.");
   if (
     property.images.length > MAX_PROPERTY_PHOTOS ||
     property.amenities.length > 30
   )
-    errors.push("Use up to 40 photos and 30 amenities.");
+    errors.push("Folosește maximum 40 de fotografii și 30 de dotări.");
   return errors;
 }
 
 export function formatPrice(
   p: Pick<Property, "price" | "currency" | "transaction">,
 ): string {
-  return `${new Intl.NumberFormat(locale, { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}${p.transaction === "rent" ? " / mo" : ""}`;
+  return `${new Intl.NumberFormat(locale, { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}${p.transaction === "rent" ? " / lună" : ""}`;
 }
 
 export function publicPath(

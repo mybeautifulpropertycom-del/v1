@@ -6,9 +6,12 @@ export function PropertySharing({ property }: { property: Property }) {
   const links = propertyShareLinks(property);
   if (!links) return null;
   return (
-    <section className="property-sharing" aria-label="Share published property">
+    <section
+      className="property-sharing"
+      aria-label="Distribuie proprietatea publicată"
+    >
       <h4>
-        <Share2 size={15} /> Share your property
+        <Share2 size={15} /> Distribuie proprietatea
       </h4>
       <div className="property-share-links">
         <a href={links.facebook} target="_blank" rel="noopener noreferrer">
@@ -30,7 +33,7 @@ export function PropertySharing({ property }: { property: Property }) {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <Printer size={15} /> Save as PDF
+        <Printer size={15} /> Salvează ca PDF
       </a>
     </section>
   );

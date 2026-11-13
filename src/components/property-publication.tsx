@@ -37,7 +37,7 @@ type PublicationStatus = {
 };
 async function request(id: string, method: "GET" | "POST", retryVideo = false) {
   const { data } = await getSupabase()!.auth.getSession();
-  if (!data.session) throw new Error("Please sign in again.");
+  if (!data.session) throw new Error("Autentifică-te din nou.");
   const response = await fetch(
     retryVideo
       ? "/api/video/retry"
@@ -57,7 +57,7 @@ async function request(id: string, method: "GET" | "POST", retryVideo = false) {
   const body = await response.json();
   if (!response.ok)
     throw new Error(
-      body.error || "Publication is temporarily unavailable. Please try again.",
+      body.error || "Publicarea este temporar indisponibilă. Încearcă din nou.",
     );
   return body;
 }
@@ -82,7 +82,10 @@ function PaymentForm({
       try {
         const stripe = await loadStripe(publishableKey);
         if (!active) return;
-        if (!stripe) throw new Error("The secure payment form could not load.");
+        if (!stripe)
+          throw new Error(
+            "Formularul securizat de plată nu a putut fi încărcat.",
+          );
         checkout = await stripe.createEmbeddedCheckoutPage({
           clientSecret,
           onComplete: () => callbacks.current.onComplete(),
@@ -97,7 +100,7 @@ function PaymentForm({
           callbacks.current.onError(
             error instanceof Error
               ? error.message
-              : "The secure payment form could not load.",
+              : "Formularul securizat de plată nu a putut fi încărcat.",
           );
       }
     })();
@@ -110,7 +113,7 @@ function PaymentForm({
     <div
       className="publish-payment-frame"
       ref={root}
-      aria-label="Secure Stripe payment form"
+      aria-label="Formular securizat de plată Stripe"
     />
   );
 }
@@ -148,7 +151,7 @@ function Modal({
         className="publish-dialog-close"
         type="button"
         onClick={onClose}
-        aria-label="Close publication dialog"
+        aria-label="Închide fereastra de publicare"
       >
         <X size={22} />
       </button>
@@ -232,7 +235,7 @@ export function usePropertyPublication(options: {
         }
         if (result?.mode !== "live" && result?.paid) {
           setError(
-            "Test payment confirmed. Your property remains a private draft.",
+            "Plata de test a fost confirmată. Proprietatea rămâne o ciornă privată.",
           );
           setPhase("error");
           return;
@@ -240,14 +243,14 @@ export function usePropertyPublication(options: {
         if (attempts++ < 30) timer = setTimeout(poll, 2000);
         else {
           setError(
-            "Your payment is still being confirmed. Your draft is saved. Check the status shortly; you do not need to pay again.",
+            "Plata este în curs de confirmare. Ciorna este salvată. Verifică starea în câteva momente; nu trebuie să plătești din nou.",
           );
           setPhase("error");
         }
       } catch (e) {
         if (active) {
           setError(
-            e instanceof Error ? e.message : "Confirmation is unavailable.",
+            e instanceof Error ? e.message : "Confirmarea este indisponibilă.",
           );
           setPhase("error");
         }
@@ -284,7 +287,7 @@ export function usePropertyPublication(options: {
       const property = await current.current.prepare();
       if (!property)
         throw new Error(
-          "Review the property details and save your changes, then try again.",
+          "Verifică detaliile proprietății și salvează modificările, apoi încearcă din nou.",
         );
       if (attempt !== generation.current) return;
       if (current.current.demo) {
@@ -294,7 +297,8 @@ export function usePropertyPublication(options: {
       const result = administrator.current
         ? await adminRequest("publish", {
             propertyId: property.id,
-            reason: "Administrator publication from the property editor",
+            reason:
+              "Publicare de către administrator din editorul proprietății",
           })
         : await request(property.id, "POST");
       if (attempt !== generation.current) return;
@@ -319,18 +323,19 @@ export function usePropertyPublication(options: {
         setPhase("confirming");
       } else if (result.testPaid) {
         setError(
-          "Test payment confirmed. Your property remains a private draft.",
+          "Plata de test a fost confirmată. Proprietatea rămâne o ciornă privată.",
         );
         setPhase("error");
       } else if (result.clientSecret && result.publishableKey) {
         setStatus((s) => ({ ...s, mode: result.mode }));
         setPayment(result);
         setPhase("payment");
-      } else throw new Error("The secure payment form could not be opened.");
+      } else
+        throw new Error("Formularul securizat de plată nu a putut fi deschis.");
     } catch (e) {
       if (attempt === generation.current) {
         setError(
-          e instanceof Error ? e.message : "Publication is unavailable.",
+          e instanceof Error ? e.message : "Publicarea nu este disponibilă.",
         );
         setPhase("error");
       }
@@ -374,7 +379,7 @@ export function usePropertyPublication(options: {
                   setStatus((s) => ({ ...s, videoStatus: "queued" }));
                 } catch (e) {
                   setVideoError(
-                    e instanceof Error ? e.message : "Please try again.",
+                    e instanceof Error ? e.message : "Încearcă din nou.",
                   );
                 } finally {
                   setRetrying(false);
@@ -382,8 +387,8 @@ export function usePropertyPublication(options: {
               }}
             >
               {retrying
-                ? "Queuing your video…"
-                : "Retry video · No extra charge"}
+                ? "Filmul este adăugat în coadă…"
+                : "Reîncearcă filmul · Fără cost suplimentar"}
             </button>
           )}
         {videoError && <p role="alert">{videoError}</p>}
@@ -391,11 +396,11 @@ export function usePropertyPublication(options: {
     ) : (
       <div className="property-video-prompt">
         <Film size={30} strokeWidth={1.3} />
-        <h3>Bring your property to life.</h3>
+        <h3>Dă viață proprietății tale.</h3>
         <p>
           {options.property?.status === "published"
-            ? "Your video will appear here automatically when it’s ready."
-            : "Publish your property to generate a cinematic walkthrough from your photos. Your video will appear here automatically when it’s ready."}
+            ? "Filmul va apărea automat aici când este gata."
+            : "Publică proprietatea pentru a genera un film de prezentare din fotografiile tale. Filmul va apărea automat aici când este gata."}
         </p>
         {options.property?.status !== "published" && (
           <button
@@ -405,7 +410,7 @@ export function usePropertyPublication(options: {
             onClick={() => void publish()}
           >
             <Globe2 size={16} />
-            Publish Property
+            Publică proprietatea
           </button>
         )}
       </div>
@@ -415,62 +420,62 @@ export function usePropertyPublication(options: {
       <div className="publish-dialog-heading">
         <span className="eyebrow">
           {status.mode === "test"
-            ? "STRIPE TEST MODE"
-            : "A BEAUTIFUL FIRST IMPRESSION"}
+            ? "MOD DE TEST STRIPE"
+            : "O PRIMĂ IMPRESIE MEMORABILĂ"}
         </span>
         <h2 id="publish-dialog-title">
           {phase === "success"
-            ? "Your property is live."
-            : "Ready for its next chapter."}
+            ? "Proprietatea este publicată."
+            : "Pregătită pentru următorul capitol."}
         </h2>
-        <p>{options.property?.title || "Your property website"}</p>
+        <p>{options.property?.title || "Site-ul proprietății tale"}</p>
       </div>
       {phase !== "success" && (
         <div className="publish-offer">
           <div>
             <strong>
               {isAdmin || status.allowed ? (
-                "Included"
+                "Inclus"
               ) : (
                 <>
-                  $97 <small>USD</small>
+                  249 <small>RON</small>
                 </>
               )}
             </strong>
             <span>
               {isAdmin
-                ? "Administrator publication · No charge"
+                ? "Publicare de către administrator · Gratuit"
                 : status.allowed
-                  ? "No additional publication payment"
-                  : "One-time payment · No subscription"}
+                  ? "Fără o plată suplimentară pentru publicare"
+                  : "Plată unică · Fără abonament"}
             </span>
           </div>
           <ul>
             <li>
               <Check size={16} />
-              Your published property website
+              Site-ul publicat al proprietății
             </li>
             <li>
               <Check size={16} />
-              One cinematic walkthrough from your photos
+              Un film de prezentare din fotografiile tale
             </li>
             <li>
               <Check size={16} />
-              Ongoing edits to this property website
+              Posibilitatea de a edita în continuare site-ul proprietății
             </li>
           </ul>
           <p>
             {isAdmin || status.allowed
-              ? "Your website will publish at no charge. Your included video will be added when it’s ready."
-              : "Your website publishes after payment is confirmed. Your video will be added when it’s ready."}
+              ? "Site-ul va fi publicat gratuit. Filmul inclus va fi adăugat când este gata."
+              : "Site-ul se publică după confirmarea plății. Filmul va fi adăugat când este gata."}
           </p>
         </div>
       )}
       {phase === "loading" && (
         <p className="publish-status" role="status">
           {isAdmin
-            ? "Saving and publishing your property at no charge…"
-            : "Saving your website and preparing publication…"}
+            ? "Se salvează și se publică gratuit proprietatea…"
+            : "Se salvează site-ul și se pregătește publicarea…"}
         </p>
       )}
       {phase === "payment" && payment && (
@@ -488,13 +493,13 @@ export function usePropertyPublication(options: {
           />
           <p className="publish-secure">
             <LockKeyhole size={14} />
-            Secure payment powered by Stripe
+            Plată securizată prin Stripe
           </p>
         </>
       )}
       {phase === "confirming" && (
         <p className="publish-status" role="status">
-          Confirming your payment and publishing your property…
+          Se confirmă plata și se publică proprietatea…
         </p>
       )}
       {phase === "error" && (
@@ -508,20 +513,23 @@ export function usePropertyPublication(options: {
               setPhase("confirming");
             }}
           >
-            Check payment status
+            Verifică starea plății
           </button>
           <button
             type="button"
             className="text-button"
             onClick={() => void publish()}
           >
-            Try again
+            Încearcă din nou
           </button>
         </div>
       )}
       {phase === "demo" && (
         <div className="publish-status">
-          <p>This is a browser demo. No payment or video will be generated.</p>
+          <p>
+            Aceasta este o demonstrație în browser. Nu se efectuează plăți și nu
+            se generează filme.
+          </p>
           <button
             className="button primary"
             onClick={async () => {
@@ -530,24 +538,24 @@ export function usePropertyPublication(options: {
                 setPhase("success");
               } catch (e) {
                 setError(
-                  e instanceof Error ? e.message : "Publication failed.",
+                  e instanceof Error ? e.message : "Publicarea a eșuat.",
                 );
                 setPhase("error");
               }
             }}
           >
-            Publish in demo
+            Publică în demo
           </button>
         </div>
       )}
       {phase === "success" && (
         <div className="publish-success">
           <Check size={32} />
-          <p role="status">Your property website is published.</p>
+          <p role="status">Site-ul proprietății a fost publicat.</p>
           <p>
             {status.videoStatus
-              ? "Your included video will appear on the website when it is ready."
-              : "Your website is ready to share."}
+              ? "Filmul inclus va apărea pe site când este gata."
+              : "Site-ul este pregătit pentru distribuire."}
           </p>
           {!options.demo && (
             <a
@@ -556,11 +564,11 @@ export function usePropertyPublication(options: {
               target="_blank"
               rel="noopener noreferrer"
             >
-              View live website <ExternalLink size={16} />
+              Vezi site-ul publicat <ExternalLink size={16} />
             </a>
           )}
           <button type="button" className="button secondary" onClick={close}>
-            Back to editing
+            Înapoi la editare
           </button>
         </div>
       )}

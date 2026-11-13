@@ -10,7 +10,9 @@ test("drafts hide sharing; published listings share saved data and hide controls
     title: "Saved listing title",
   });
   await page.goto(`/dashboard/properties/${id}`);
-  const share = page.getByRole("region", { name: "Share published property" });
+  const share = page.getByRole("region", {
+    name: "Distribuie proprietatea publicată",
+  });
   await expect(share).toBeVisible();
   await expect(share.getByRole("link", { name: "Facebook" })).toHaveAttribute(
     "href",
@@ -31,9 +33,9 @@ test("drafts hide sharing; published listings share saved data and hide controls
   expect(url.searchParams.get("url")).toMatch(/\/saved-public-address$/);
   expect(url.searchParams.get("text")).toBe("Saved listing title");
   await expect(
-    share.getByRole("link", { name: "Save as PDF" }),
+    share.getByRole("link", { name: "Salvează ca PDF" }),
   ).toHaveAttribute("href", `/p/${state.property.slug}/print`);
-  await page.getByLabel("Property headline").fill("Unsaved headline");
+  await page.getByLabel("Titlul proprietății").fill("Unsaved headline");
   expect(
     new URL(
       (await share
@@ -42,7 +44,10 @@ test("drafts hide sharing; published listings share saved data and hide controls
     ).searchParams.get("text"),
   ).toBe("Saved listing title");
   await page
-    .getByRole("button", { name: "Unpublish website", exact: true })
+    .getByRole("button", {
+      name: "Retrage site-ul de la publicare",
+      exact: true,
+    })
     .click();
   await expect(share).toHaveCount(0);
   await page.reload();
@@ -54,9 +59,11 @@ test("a new draft has no sharing or PDF controls", async ({ page }) => {
   await page.goto(`/dashboard/properties/${id}`);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(
-    page.getByRole("region", { name: "Share published property" }),
+    page.getByRole("region", { name: "Distribuie proprietatea publicată" }),
   ).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Save as PDF" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Salvează ca PDF" })).toHaveCount(
+    0,
+  );
 });
 
 test("published print view produces a PDF with photos and hides interactive controls on paper", async ({
@@ -81,7 +88,7 @@ test("published print view produces a PDF with photos and hides interactive cont
     /\/print-test-address$/,
   );
   await page
-    .getByRole("button", { name: "Print / Save as PDF", exact: true })
+    .getByRole("button", { name: "Imprimă / Salvează ca PDF", exact: true })
     .click();
   await expect(page.locator("body")).toHaveAttribute(
     "data-print-called",
@@ -112,7 +119,7 @@ test("published print view produces a PDF with photos and hides interactive cont
 test("unpublished or missing print pages are unavailable", async ({ page }) => {
   await page.goto("/p/unpublished-home/print");
   await expect(
-    page.getByRole("heading", { name: "This door isn’t open." }),
+    page.getByRole("heading", { name: "Această pagină nu este disponibilă." }),
   ).toBeVisible();
   await expect(page.locator(".property-print")).toHaveCount(0);
 });

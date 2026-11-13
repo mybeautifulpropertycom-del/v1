@@ -19,13 +19,14 @@ export const getPublished = cache(
       property_slug: slug,
     });
     if (error)
-      throw new Error("The property service is temporarily unavailable.");
+      throw new Error("Serviciul de proprietăți este temporar indisponibil.");
     return data;
   },
 );
 
 export async function publishedMetadata(slug: string): Promise<Metadata> {
   const data = await getPublished(slug);
-  if (!data) return { title: "Property unavailable", robots: { index: false } };
+  if (!data)
+    return { title: "Proprietate indisponibilă", robots: { index: false } };
   return propertyMetadata(data.property);
 }

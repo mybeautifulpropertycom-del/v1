@@ -7,11 +7,11 @@ export async function platformAdmin(request: Request) {
   const { user, db } = await billingUser(request);
   const { data: allowed, error } = await db.rpc("is_platform_admin");
   if (error || allowed !== true)
-    throw new BillingError("Administrator access is required.", 403);
+    throw new BillingError("Este necesar accesul de administrator.", 403);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key)
-    throw new BillingError("The administration service is not configured.");
+    throw new BillingError("Serviciul de administrare nu este configurat.");
   const admin = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
@@ -28,7 +28,7 @@ export function adminFailure(error: unknown) {
   return billingJson(
     {
       error:
-        "This administration action could not be completed. Please try again.",
+        "Acțiunea de administrare nu a putut fi finalizată. Încearcă din nou.",
     },
     503,
   );

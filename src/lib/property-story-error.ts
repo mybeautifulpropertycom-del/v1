@@ -1,22 +1,22 @@
 export const storyErrorMessages = {
   AI_AUTH:
-    "AI writing could not connect with the configured API key. Please ask the site administrator to check the key.",
+    "Serviciul de redactare AI nu s-a putut conecta cu cheia API configurată. Cere administratorului să verifice cheia.",
   AI_CREDITS:
-    "AI writing has no available API credit. The site administrator needs to check OpenAI API billing and project limits.",
+    "Serviciul de redactare AI nu mai are credite API. Administratorul trebuie să verifice facturarea OpenAI și limitele proiectului.",
   AI_BUSY:
-    "AI writing is temporarily busy. Please wait a minute and try again.",
+    "Serviciul de redactare AI este ocupat momentan. Așteaptă un minut și încearcă din nou.",
   AI_MODEL:
-    "The configured writing model is unavailable for this API account. Please contact support.",
+    "Modelul de redactare nu este disponibil pentru contul API configurat. Contactează asistența.",
   AI_PHOTO:
-    "The writing service could not read a property photo. Check that your uploaded photos open correctly, then try again.",
+    "Serviciul de redactare nu a putut citi o fotografie. Verifică dacă fotografiile încărcate se deschid corect și încearcă din nou.",
   AI_REQUEST:
-    "The writing service rejected the request format. Please contact support with the reference below.",
+    "Serviciul de redactare a respins formatul solicitării. Contactează asistența și oferă referința de mai jos.",
   AI_TIMEOUT:
-    "The writing service took too long to respond. Your saved property has not changed. Please try again shortly.",
+    "Serviciul de redactare a răspuns prea lent. Proprietatea salvată nu s-a modificat. Încearcă din nou în câteva momente.",
   AI_OUTPUT:
-    "The writing service could not complete all website descriptions. Your saved photos and property details are safe. Please try again.",
+    "Serviciul de redactare nu a putut finaliza toate textele. Fotografiile și detaliile salvate sunt în siguranță. Încearcă din nou.",
   AI_UNAVAILABLE:
-    "AI writing is temporarily unavailable. Your saved property has not changed. Please try again later.",
+    "Redactarea AI este temporar indisponibilă. Proprietatea salvată nu s-a modificat. Încearcă mai târziu.",
 } as const;
 export type StoryErrorCode = keyof typeof storyErrorMessages;
 export type StoryOutputDiagnostic = {

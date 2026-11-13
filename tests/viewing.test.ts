@@ -13,7 +13,7 @@ test("viewing dates validate actual calendar days and the one-year request windo
   assert.equal(validViewingDate("2029-01-01", now), false);
   assert.equal(validViewingDate("2027-03-01T12:00:00Z", now), false);
   assert.equal(validViewingDate({ date: "2027-03-02" }, now), false);
-  assert.equal(viewingDateLabel("2026-11-01"), "Sunday, November 1, 2026");
+  assert.equal(viewingDateLabel("2026-11-01"), "duminică, 1 noiembrie 2026");
 });
 
 test("viewing requests preserve the preferred date in the existing private inbox message", () => {
@@ -22,7 +22,7 @@ test("viewing requests preserve the preferred date in the existing private inbox
   const preferredDate = date.toISOString().slice(0, 10);
   const result = validateInquiry({
     slug: "the-garden-residence",
-    name: "Alex Morgan",
+    name: "Alex Popescu",
     email: "ALEX@example.com",
     phone: "+1 (202) 555-0100",
     message: "An afternoon visit would be lovely.",
@@ -32,9 +32,12 @@ test("viewing requests preserve the preferred date in the existing private inbox
   assert.equal(result.ok, true);
   if (!result.ok) return;
   assert.equal(result.value.email, "alex@example.com");
-  assert.match(result.value.message, /Viewing request/);
+  assert.match(result.value.message, /Cerere de vizionare/);
   assert.ok(result.value.message.includes(preferredDate));
-  assert.match(result.value.message, /Time and availability to be confirmed/);
+  assert.match(
+    result.value.message,
+    /Ora și disponibilitatea vor fi confirmate/,
+  );
   assert.match(result.value.message, /An afternoon visit would be lovely/);
   assert.equal(result.value.slug, "the-garden-residence");
 });
@@ -44,7 +47,7 @@ test("viewing requests need a valid date and phone; ordinary inquiry messages ar
   date.setUTCDate(date.getUTCDate() + 1);
   const base = {
     slug: "the-garden-residence",
-    name: "Alex Morgan",
+    name: "Alex Popescu",
     email: "alex@example.com",
     phone: "+1 (202) 555-0100",
     message: "",

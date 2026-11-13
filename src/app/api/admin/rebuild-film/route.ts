@@ -27,10 +27,10 @@ export async function POST(request: Request) {
     try {
       body = JSON.parse(await readLimitedBody(request, 1024));
     } catch {
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     }
     if (typeof body?.propertyId !== "string" || !UUID.test(body.propertyId))
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     const { data, error } = await admin.rpc("admin_rebuild_property_film", {
       listing_id: body.propertyId,
       actor_id: user.id,
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     });
     if (error) {
       if (error.code === "42501")
-        throw new BillingError("Administrator access is required.", 403);
+        throw new BillingError("Este necesar accesul de administrator.", 403);
       if (error.code === "P0409")
         throw new BillingError(
           "Rebuilding is available for finished or failed films with publication access. A film may already be processing.",

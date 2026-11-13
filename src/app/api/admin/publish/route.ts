@@ -21,11 +21,11 @@ export async function POST(request: Request) {
     try {
       body = JSON.parse(await readLimitedBody(request, 2048));
     } catch {
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     }
     const id = body?.propertyId;
     if (typeof id !== "string" || !UUID.test(id))
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     const reason =
       typeof body.reason === "string"
         ? body.reason.trim()
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     );
     if (publishError) {
       if (publishError.code === "42501")
-        throw new BillingError("Administrator access is required.", 403);
+        throw new BillingError("Este necesar accesul de administrator.", 403);
       if (publishError.code === "P0409")
         throw new BillingError(
           "Checkout changed while you were publishing. Refresh and try again.",

@@ -1,4 +1,5 @@
 "use client";
+import { propertyTypeLabel } from "@/lib/model";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -50,21 +51,21 @@ function PropertyCard({
         {property.images[0] ? (
           <img
             src={property.images[0]}
-            alt={property.title || "Untitled property"}
+            alt={property.title || "Proprietate fără titlu"}
           />
         ) : (
           <span className="image-placeholder">
             <ImagePlus size={35} />
-            Add your first photo
+            Adaugă prima fotografie
           </span>
         )}
         <span className={`status-badge ${property.status}`}>
           <span />
           {property.status === "published"
             ? demo
-              ? "Published in demo"
-              : "Published"
-            : "Draft"}
+              ? "Publicat în demo"
+              : "Publicat"
+            : "Ciornă"}
         </span>
         <span className="image-count">
           <LayoutGrid size={12} />
@@ -73,36 +74,36 @@ function PropertyCard({
       </Link>
       <div className="property-card-body">
         <div className="property-type">
-          {property.type}
+          {propertyTypeLabel(property.type)}
           <span>
-            {property.transaction === "sale" ? "For sale" : "For rent"}
+            {property.transaction === "sale" ? "De vânzare" : "De închiriat"}
           </span>
         </div>
         <Link href={`/dashboard/properties/${property.id}`}>
-          <h3>{property.title || "Untitled property"}</h3>
+          <h3>{property.title || "Proprietate fără titlu"}</h3>
         </Link>
         <p className="location">
           <MapPin size={14} />
-          {property.location || "Location not added"}
+          {property.location || "Adresă necompletată"}
         </p>
         <div className="property-features">
           <span>
             <BedDouble size={15} />
-            {property.bedrooms} beds
+            {property.bedrooms} dormitoare
           </span>
           <span>
             <Bath size={15} />
-            {property.bathrooms} baths
+            {property.bathrooms} băi
           </span>
           <span>
             <Square size={14} />
-            {property.area.toLocaleString("en-US")}{" "}
+            {property.area.toLocaleString("ro-RO")}{" "}
             {property.area_unit === "sqm" ? "m²" : "sq ft"}
           </span>
         </div>
         <div className="card-price-row">
           <strong>
-            {property.price ? formatPrice(property) : "Price not added"}
+            {property.price ? formatPrice(property) : "Preț necompletat"}
           </strong>
           <span className="template-label">
             {template.name.replace("The ", "")}
@@ -112,20 +113,20 @@ function PropertyCard({
       <div className="property-card-footer">
         <Link href={`/preview/${property.id}`}>
           <FilePenLine size={15} />
-          Edit website
+          Editează site-ul
         </Link>
         <Link
           href={`/preview/${property.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Preview ${property.title} (opens in a new tab)`}
-          title="Open preview in a new tab"
+          aria-label={`Previzualizează ${property.title} (se deschide într-o filă nouă)`}
+          title="Deschide previzualizarea într-o filă nouă"
         >
           <ExternalLink size={15} />
         </Link>
         <DeleteAction
-          label={`Delete ${property.title || "property"}`}
-          confirmation={`Delete “${property.title || "Untitled property"}”? This permanently removes the property and its published page. Your leads will remain in your inbox. This cannot be undone.`}
+          label={`Șterge ${property.title || "proprietatea"}`}
+          confirmation={`Ștergi „${property.title || "Proprietate fără titlu"}”? Proprietatea și pagina publică vor fi eliminate definitiv. Mesajele rămân în inbox. Acțiunea nu poate fi anulată.`}
           onDelete={() => deleteProperty(property)}
         />
       </div>
@@ -148,14 +149,14 @@ export function Dashboard() {
         (tab === "all" || p.status === tab) &&
         (type === "all" || p.type === type) &&
         `${p.title} ${p.location}`
-          .toLocaleLowerCase("en-US")
-          .includes(query.toLocaleLowerCase("en-US")),
+          .toLocaleLowerCase("ro-RO")
+          .includes(query.toLocaleLowerCase("ro-RO")),
     )
     .sort((a, b) =>
       sort === "price"
         ? b.price - a.price
         : sort === "name"
-          ? a.title.localeCompare(b.title, "en-US")
+          ? a.title.localeCompare(b.title, "ro-RO")
           : b.created_at.localeCompare(a.created_at),
     );
   const complete = profileErrors(profile).length === 0;
@@ -164,16 +165,17 @@ export function Dashboard() {
       <div className="page-heading">
         <div>
           <span className="eyebrow">
-            <span className="tiny-sun">✳</span> YOUR NEXT CHAPTER STARTS HERE
+            <span className="tiny-sun">✳</span> URMĂTORUL TĂU CAPITOL ÎNCEPE
+            AICI
           </span>
           <h1>
-            Beautifully presented.
+            O prezentare deosebită.
             <br />
-            <em>Impossible to overlook.</em>
+            <em>Greu de trecut cu vederea.</em>
           </h1>
           <p>
-            Welcome back, {profile.name.split(" ")[0] || "there"}. Let's make your
-            next listing unforgettable.
+            Bine ai revenit, {profile.name.split(" ")[0] || "there"}. Hai să
+            pregătim următoarea ta proprietate.
           </p>
         </div>
         <Link
@@ -181,28 +183,28 @@ export function Dashboard() {
           className="button primary"
         >
           <Plus size={18} />
-          Add a property
+          Adaugă o proprietate
         </Link>
       </div>
       {!complete && (
         <Link href="/dashboard/profile" className="onboarding-callout">
           <span className="step-number">01</span>
           <div>
-            <strong>First, let’s make this space yours.</strong>
+            <strong>Mai întâi, completează-ți profilul.</strong>
             <p>
-              Complete your contact details. We’ll add them to every property
-              website.
+              Completează datele de contact. Le adăugăm pe fiecare site de
+              proprietate.
             </p>
           </div>
           <ArrowRight size={22} />
         </Link>
       )}
-      <section className="stats-grid" aria-label="Property overview">
+      <section className="stats-grid" aria-label="Prezentarea proprietăților">
         <div className="stat-card">
           <div>
-            <span>Your properties</span>
+            <span>Proprietățile tale</span>
             <strong>{String(properties.length).padStart(2, "0")}</strong>
-            <small>Each with a story to tell</small>
+            <small>Fiecare are o poveste</small>
           </div>
           <span className="stat-icon peach">
             <Building2 size={21} />
@@ -210,13 +212,15 @@ export function Dashboard() {
         </div>
         <div className="stat-card">
           <div>
-            <span>Websites {demo ? "published in demo" : "published"}</span>
+            <span>Site-uri {demo ? "publicate în demo" : "published"}</span>
             <strong>
               {String(published).padStart(2, "0")}
               <i className="stat-live">{demo ? "DEMO" : "LIVE"}</i>
             </strong>
             <small>
-              {demo ? "Ready for a closer look" : "Ready to be discovered"}
+              {demo
+                ? "Pregătite pentru descoperire"
+                : "Pregătite pentru vizitatori"}
             </small>
           </div>
           <span className="stat-icon sage">
@@ -225,11 +229,11 @@ export function Dashboard() {
         </div>
         <div className="stat-card">
           <div>
-            <span>In the making</span>
+            <span>În pregătire</span>
             <strong>
               {String(properties.length - published).padStart(2, "0")}
             </strong>
-            <small>Good things take a little care</small>
+            <small>Detaliile bune cer puțină atenție</small>
           </div>
           <span className="stat-icon lavender">
             <FilePenLine size={21} />
@@ -239,12 +243,12 @@ export function Dashboard() {
       <section className="collection-section">
         <div className="section-heading">
           <div className="section-title">
-            <h2>My properties</h2>
+            <h2>Proprietățile mele</h2>
             <span className="count-pill">{properties.length}</span>
           </div>
           <div className="view-toggle">
             <button
-              aria-label="Grid view"
+              aria-label="Vizualizare grilă"
               aria-pressed={layout === "grid"}
               className={layout === "grid" ? "selected" : ""}
               onClick={() => setLayout("grid")}
@@ -252,7 +256,7 @@ export function Dashboard() {
               <LayoutGrid size={17} />
             </button>
             <button
-              aria-label="List view"
+              aria-label="Vizualizare listă"
               aria-pressed={layout === "list"}
               className={layout === "list" ? "selected" : ""}
               onClick={() => setLayout("list")}
@@ -262,11 +266,11 @@ export function Dashboard() {
           </div>
         </div>
         <div className="collection-toolbar">
-          <div className="tabs" role="tablist" aria-label="Property status">
+          <div className="tabs" role="tablist" aria-label="Starea proprietății">
             {[
-              ["all", "All", properties.length],
-              ["published", "Published", published],
-              ["draft", "Drafts", properties.length - published],
+              ["all", "Toate", properties.length],
+              ["published", "Publicat", published],
+              ["draft", "Ciorne", properties.length - published],
             ].map(([value, label, count]) => (
               <button
                 key={value}
@@ -284,20 +288,23 @@ export function Dashboard() {
             <label className="search-field">
               <Search size={16} />
               <input
-                aria-label="Search properties"
-                placeholder="Search properties…"
+                aria-label="Caută proprietăți"
+                placeholder="Caută proprietăți…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
               {query && (
-                <button aria-label="Clear search" onClick={() => setQuery("")}>
+                <button
+                  aria-label="Șterge căutarea"
+                  onClick={() => setQuery("")}
+                >
                   <X size={13} />
                 </button>
               )}
             </label>
             <button
               className={`filter-button ${filters ? "selected" : ""}`}
-              aria-label="Filter and sort"
+              aria-label="Filtrare și sortare"
               aria-expanded={filters}
               onClick={() => setFilters(!filters)}
             >
@@ -308,20 +315,22 @@ export function Dashboard() {
         {filters && (
           <div className="filter-panel">
             <label>
-              Property type
+              Tipul proprietății
               <select value={type} onChange={(e) => setType(e.target.value)}>
-                <option value="all">All types</option>
+                <option value="all">Toate tipurile</option>
                 {["Condo", "House", "Town House", "Penthouse"].map((t) => (
-                  <option key={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {propertyTypeLabel(t)}
+                  </option>
                 ))}
               </select>
             </label>
             <label>
-              Sort by
+              Sortează după
               <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                <option value="recent">Newest first</option>
-                <option value="price">Price: high to low</option>
-                <option value="name">Name: A–Z</option>
+                <option value="recent">Cele mai noi</option>
+                <option value="price">Preț descrescător</option>
+                <option value="name">Nume: A–Z</option>
               </select>
             </label>
             <button
@@ -332,7 +341,7 @@ export function Dashboard() {
                 setQuery("");
               }}
             >
-              Reset filters
+              Resetează filtrele
             </button>
           </div>
         )}
@@ -349,13 +358,13 @@ export function Dashboard() {
             <Building2 size={35} />
             <h3>
               {properties.length
-                ? "No properties found."
-                : "A new story starts here."}
+                ? "Nu am găsit proprietăți."
+                : "O nouă poveste începe aici."}
             </h3>
             <p>
               {properties.length
-                ? "Try a different search or adjust your filters."
-                : "Add your first property and turn it into a memorable first impression."}
+                ? "Încearcă altă căutare sau modifică filtrele."
+                : "Adaugă prima proprietate și creează o prezentare memorabilă."}
             </p>
             {!properties.length && (
               <Link
@@ -365,7 +374,7 @@ export function Dashboard() {
                 }
               >
                 <Plus size={16} />
-                Start here
+                Începe aici
               </Link>
             )}
           </div>
@@ -373,18 +382,20 @@ export function Dashboard() {
       </section>
       <section className="design-strip">
         <div className="design-strip-copy">
-          <span className="eyebrow">THREE STYLES. ENDLESS POSSIBILITIES.</span>
+          <span className="eyebrow">
+            TREI STILURI. NENUMĂRATE POSIBILITĂȚI.
+          </span>
           <h2>
-            Every home deserves
-            <br />a beautiful <em>first impression.</em>
+            Fiecare locuință merită
+            <br />o primă impresie <em>deosebită.</em>
           </h2>
           <p>
-            You bring the property.
+            Tu aduci proprietatea.
             <br />
-            We have the perfect frame.
+            Noi pregătim prezentarea.
           </p>
           <Link href="/dashboard/templates">
-            Explore the collection <ArrowUpRight size={17} />
+            Descoperă colecția <ArrowUpRight size={17} />
           </Link>
         </div>
         <div className="design-strip-templates">
@@ -404,14 +415,14 @@ export function Dashboard() {
           <Video size={21} />
         </span>
         <div>
-          <strong>Your photos in motion.</strong>
+          <strong>Fotografiile tale prind viață.</strong>
           <span>
-            Bring your properties to life. Transform your photos into a
-            walkthrough video.
+            Pune proprietățile în valoare. Transformă fotografiile într-un film
+            de prezentare.
           </span>
         </div>
         <Link href="/dashboard/video">
-          Open video studio <ArrowRight size={16} />
+          Deschide studioul video <ArrowRight size={16} />
         </Link>
       </div>
     </>

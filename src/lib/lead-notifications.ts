@@ -67,17 +67,17 @@ export function leadEmailPayload(
   inboxUrl: string,
 ): LeadEmailPayload {
   const d = job.details;
-  const subject = `New inquiry: ${d.propertyTitle}`
+  const subject = `Solicitare nouă: ${d.propertyTitle}`
     .replace(/[\r\n]/g, " ")
     .slice(0, 180);
-  const text = `Hello ${d.agentName || "there"},\n\nYou have a new inquiry for ${d.propertyTitle}.\n\nName: ${d.name}\nEmail: ${d.email}\nPhone: ${d.phone || "Not provided"}\n\n${d.message}\n\nOpen My inbox: ${inboxUrl}\n\nMy Beautiful Property`;
+  const text = `Bună, ${d.agentName || ""},\n\nAi o solicitare nouă pentru ${d.propertyTitle}.\n\nNume: ${d.name}\nEmail: ${d.email}\nTelefon: ${d.phone || "Necompletat"}\n\n${d.message}\n\nDeschide mesajele: ${inboxUrl}\n\nMy Beautiful Property`;
   return {
     from: "My Beautiful Property <account@mybeautifulproperty.com>",
     to: [job.recipient],
     reply_to: d.email,
     subject,
     text,
-    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#253c30;max-width:600px;margin:auto;padding:28px"><p style="font-size:12px;letter-spacing:2px">MY BEAUTIFUL PROPERTY</p><h1 style="font-size:26px">A new hello. A new possibility.</h1><p>Hello ${escapeHtml(d.agentName || "there")},</p><p>You have a new inquiry for <strong>${escapeHtml(d.propertyTitle)}</strong>.</p><p><strong>Name:</strong> ${escapeHtml(d.name)}<br><strong>Email:</strong> ${escapeHtml(d.email)}<br><strong>Phone:</strong> ${escapeHtml(d.phone || "Not provided")}</p><p style="white-space:pre-wrap;background:#f7f7f1;padding:18px;border-radius:8px">${escapeHtml(d.message)}</p><p><a href="${escapeHtml(inboxUrl)}" style="display:inline-block;background:#d96947;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px">Open My inbox</a></p><p style="font-size:12px;color:#727a70">You received this notification because someone contacted you through your property website.</p></div>`,
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#253c30;max-width:600px;margin:auto;padding:28px"><p style="font-size:12px;letter-spacing:2px">MY BEAUTIFUL PROPERTY</p><h1 style="font-size:26px">Un mesaj nou. O nouă posibilitate.</h1><p>Bună, ${escapeHtml(d.agentName || "")},</p><p>Ai o solicitare nouă pentru <strong>${escapeHtml(d.propertyTitle)}</strong>.</p><p><strong>Nume:</strong> ${escapeHtml(d.name)}<br><strong>Email:</strong> ${escapeHtml(d.email)}<br><strong>Telefon:</strong> ${escapeHtml(d.phone || "Necompletat")}</p><p style="white-space:pre-wrap;background:#f7f7f1;padding:18px;border-radius:8px">${escapeHtml(d.message)}</p><p><a href="${escapeHtml(inboxUrl)}" style="display:inline-block;background:#d96947;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px">Deschide mesajele</a></p><p style="font-size:12px;color:#727a70">Ai primit această notificare deoarece cineva te-a contactat prin site-ul proprietății.</p></div>`,
   };
 }
 

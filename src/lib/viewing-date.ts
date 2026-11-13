@@ -4,7 +4,7 @@ export function localDateKey(date: Date): string {
 }
 
 export function viewingDateLabel(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("ro-RO", {
     weekday: "long",
     month: "long",
     day: "numeric",

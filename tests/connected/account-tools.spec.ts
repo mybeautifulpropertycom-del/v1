@@ -17,11 +17,13 @@ test("profile uploads use owned storage and the saved portrait survives a reload
   const state = await workspace(page);
   await page.goto("/dashboard/profile");
   await page
-    .getByLabel("Profile photo", { exact: true })
+    .getByLabel("Fotografie de profil", { exact: true })
     .setInputFiles(path.join(process.cwd(), "public/images/villa.jpg"));
   await expect(page.locator(".profile-preview-avatar img")).toBeVisible();
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("saved");
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("salvat");
   expect(state.uploads).toBe(1);
   expect(state.profile.avatar_url).toContain(`/agent-avatars/${owner}/`);
   await page.reload();
@@ -29,9 +31,11 @@ test("profile uploads use owned storage and the saved portrait survives a reload
     "src",
     state.profile.avatar_url!,
   );
-  await page.getByRole("button", { name: "Remove photo" }).click();
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("saved");
+  await page.getByRole("button", { name: "Elimină fotografia" }).click();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("salvat");
   await page.reload();
   await expect(page.locator(".profile-preview-avatar img")).toHaveCount(0);
 });
@@ -44,7 +48,7 @@ test("deleting a property removes its page entry and saved photos but keeps its 
   page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("button", {
-      name: `Delete ${state.property.title}`,
+      name: `Șterge ${state.property.title}`,
       exact: true,
     })
     .click();
@@ -54,19 +58,19 @@ test("deleting a property removes its page entry and saved photos but keeps its 
   await page.goto("/dashboard/inquiries");
   await expect(page.getByRole("heading", { name: lead.name })).toBeVisible();
   await expect(
-    page.getByText("Deleted property", { exact: true }),
+    page.getByText("Proprietate ștearsă", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "View property" })).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole("link", { name: "Vezi proprietatea" }),
+  ).toHaveCount(0);
   page.once("dialog", (dialog) => dialog.dismiss());
   await page
-    .getByRole("button", { name: `Delete lead from ${lead.name}` })
+    .getByRole("button", { name: `Șterge mesajul de la ${lead.name}` })
     .click();
   await expect(page.getByRole("heading", { name: lead.name })).toBeVisible();
   page.once("dialog", (dialog) => dialog.accept());
   await page
-    .getByRole("button", { name: `Delete lead from ${lead.name}` })
+    .getByRole("button", { name: `Șterge mesajul de la ${lead.name}` })
     .click();
   await expect(page.locator(".inquiry-card")).toHaveCount(0);
   expect(state.leads).toHaveLength(0);
@@ -86,13 +90,13 @@ test("a failed deletion keeps the lead visible and offers another attempt", asyn
   await page.goto("/dashboard/inquiries");
   page.once("dialog", (dialog) => dialog.accept());
   await page
-    .getByRole("button", { name: `Delete lead from ${lead.name}` })
+    .getByRole("button", { name: `Șterge mesajul de la ${lead.name}` })
     .click();
   await expect(page.locator(".delete-error")).toContainText(
     "could not be deleted",
   );
   await expect(page.getByRole("heading", { name: lead.name })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: `Delete lead from ${lead.name}` }),
+    page.getByRole("button", { name: `Șterge mesajul de la ${lead.name}` }),
   ).toBeEnabled();
 });

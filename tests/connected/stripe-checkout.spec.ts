@@ -76,19 +76,19 @@ test("the private website can be edited before payment; both Publish buttons ope
   await page.goto(`/preview/${id}`);
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Save website" }),
+    page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   expect(setup.state.property.status).toBe("draft");
   const buttons = page.getByRole("button", {
-    name: "Publish Property",
+    name: "Publică proprietatea",
     exact: true,
   });
   await expect(buttons).toHaveCount(2);
   await buttons.first().click();
-  await expect(page.getByRole("dialog")).toContainText("$97");
+  await expect(page.getByRole("dialog")).toContainText("249 RON");
   await expect(page.getByRole("dialog")).toContainText(
-    "One cinematic walkthrough from your photos",
+    "Un film de prezentare din fotografiile tale",
   );
   await expect(
     page.getByRole("button", { name: "Complete secure payment" }),
@@ -98,7 +98,9 @@ test("the private website can be edited before payment; both Publish buttons ope
     type: "jpeg",
     quality: 65,
   });
-  await page.getByRole("button", { name: "Close publication dialog" }).click();
+  await page
+    .getByRole("button", { name: "Închide fereastra de publicare" })
+    .click();
   expect(setup.state.property.status).toBe("draft");
   await buttons.last().click();
   await expect(
@@ -113,29 +115,31 @@ test("completed embedded checkout waits for server publication, shows the live l
   const setup = await fixture(page);
   await page.goto(`/preview/${id}`);
   await expect(
-    page.getByRole("button", { name: "Save website" }),
+    page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
   await page
     .locator(".inline-edit-toolbar")
-    .getByRole("button", { name: "Publish Property" })
+    .getByRole("button", { name: "Publică proprietatea" })
     .click();
   await page.getByRole("button", { name: "Complete secure payment" }).click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Your property website is published.",
+    "Site-ul proprietății a fost publicat.",
     { timeout: 10000 },
   );
   await expect(
-    page.getByRole("dialog").getByRole("link", { name: "View live website" }),
+    page
+      .getByRole("dialog")
+      .getByRole("link", { name: "Vezi site-ul publicat" }),
   ).toHaveAttribute("href", "/123-palm-drive");
   expect(setup.state.property.status).toBe("published");
-  await page.getByRole("button", { name: "Back to editing" }).click();
+  await page.getByRole("button", { name: "Înapoi la editare" }).click();
   await expect(page.locator(".property-video-prompt")).toContainText(
     "Your video is queued",
   );
   await expect(
     page
       .locator(".inline-edit-toolbar")
-      .getByRole("button", { name: "Publish Property" }),
+      .getByRole("button", { name: "Publică proprietatea" }),
   ).toHaveCount(0);
 });
 test("an unavailable payment configuration leaves the saved draft and shows an error without pretending to be in test mode", async ({
@@ -147,22 +151,24 @@ test("an unavailable payment configuration leaves the saved draft and shows an e
       status: 503,
       json: {
         error:
-          "The secure payment form is not configured. Please contact support.",
+          "Formularul securizat de plată nu este configurat. Contactează asistența.",
       },
     }),
   );
   await page.goto(`/preview/${id}`);
   await expect(
-    page.getByRole("button", { name: "Save website" }),
+    page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
   await page
     .locator(".inline-edit-toolbar")
-    .getByRole("button", { name: "Publish Property" })
+    .getByRole("button", { name: "Publică proprietatea" })
     .click();
   await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
     "not configured",
   );
-  await expect(page.getByRole("dialog")).not.toContainText("STRIPE TEST MODE");
+  await expect(page.getByRole("dialog")).not.toContainText(
+    "MOD DE TEST STRIPE",
+  );
   expect(state.property.status).toBe("draft");
 });
 test("choosing a template opens the private website editor before any checkout", async ({
@@ -170,13 +176,15 @@ test("choosing a template opens the private website editor before any checkout",
 }) => {
   const setup = await fixture(page);
   await page.goto(`/dashboard/properties/${id}`);
-  await page.getByRole("button", { name: /Website design/ }).click();
-  await page.getByRole("button", { name: "Open website editor" }).click();
+  await page.getByRole("button", { name: /Designul site-ului/ }).click();
+  await page
+    .getByRole("button", { name: "Deschide editorul site-ului" })
+    .click();
   await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
   await expect(
     page
       .locator(".inline-edit-toolbar")
-      .getByRole("button", { name: "Publish Property" }),
+      .getByRole("button", { name: "Publică proprietatea" }),
   ).toBeVisible();
   expect(setup.posts).toBe(0);
   expect(setup.state.property.status).toBe("draft");
@@ -189,11 +197,11 @@ test("publication modal fits a mobile viewport and Escape returns to the saved e
   const setup = await fixture(page);
   await page.goto(`/preview/${id}`);
   await expect(
-    page.getByRole("button", { name: "Save website" }),
+    page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
   await page
     .locator(".inline-edit-toolbar")
-    .getByRole("button", { name: "Publish Property" })
+    .getByRole("button", { name: "Publică proprietatea" })
     .click();
   await expect(
     page.getByRole("button", { name: "Complete secure payment" }),
@@ -260,16 +268,18 @@ test("an uncertain generation explains the delay without offering another paid s
   );
   await page.goto(`/preview/${id}`);
   await expect(page.locator(".property-video-prompt")).toContainText(
-    "needs a status check",
+    "necesită o verificare",
   );
   await expect(page.locator(".property-video-prompt")).toContainText(
-    "contact support",
+    "Contactează asistența",
   );
   await expect(page.locator(".property-video-prompt button")).toHaveCount(0);
 });
 
 for (const template of ["editorial", "minimal", "panorama"] as const) {
-  test(`${template}: scene progress updates to the completed film without a reload or generation request`, async ({ page }) => {
+  test(`${template}: scene progress updates to the completed film without a reload or generation request`, async ({
+    page,
+  }) => {
     await page.clock.install();
     const { state } = await fixture(page);
     state.property.status = "published";
@@ -278,24 +288,42 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     let scenesReady = 3;
     let generationRequests = 0;
     page.on("request", (request) => {
-      if (request.method() === "POST" && /\/api\/(video|billing)/.test(request.url())) generationRequests++;
+      if (
+        request.method() === "POST" &&
+        /\/api\/(video|billing)/.test(request.url())
+      )
+        generationRequests++;
     });
-    const src = "https://browser-test.supabase.co/storage/v1/object/public/property-videos/finished.mp4";
-    await page.route("**/api/billing/checkout**", (route) => route.fulfill({ json: {
-      published: true,
-      paid: true,
-      videoStatus: completed ? "completed" : "processing",
-      videoProgress: { completed: scenesReady, total: 11 },
-      film: completed ? { src } : null,
-    } }));
+    const src =
+      "https://browser-test.supabase.co/storage/v1/object/public/property-videos/finished.mp4";
+    await page.route("**/api/billing/checkout**", (route) =>
+      route.fulfill({
+        json: {
+          published: true,
+          paid: true,
+          videoStatus: completed ? "completed" : "processing",
+          videoProgress: { completed: scenesReady, total: 11 },
+          film: completed ? { src } : null,
+        },
+      }),
+    );
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`/preview/${id}`);
-    await expect(page.locator(".property-video-status-strip")).toHaveText("Video: processing · 3 of 11 scenes ready");
+    await expect(page.locator(".property-video-status-strip")).toHaveText(
+      "Video: în pregătire · 3 din 11 scene pregătite",
+    );
     const panel = page.locator(".property-video-prompt");
-    await expect(panel).toContainText("Your video will appear here automatically when it’s ready.");
-    await expect(panel.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "3");
+    await expect(panel).toContainText(
+      "Filmul va apărea automat aici când este gata.",
+    );
+    await expect(panel.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "3",
+    );
     await expect(panel.locator(".property-video-spinner")).toBeVisible();
-    await expect(page.locator("body")).not.toContainText("Estimated video generation");
+    await expect(page.locator("body")).not.toContainText(
+      "Estimated video generation",
+    );
     await expect(page.locator("body")).not.toContainText("API credits");
     if (template === "panorama") {
       await panel.scrollIntoViewIfNeeded();
@@ -303,31 +331,55 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     }
     scenesReady = 11;
     await page.clock.fastForward(15001);
-    await expect(page.locator(".property-video-status-strip")).toHaveText("Video: processing · 11 of 11 scenes ready");
-    await expect(panel).toContainText("All scenes are ready. We’re finishing your film.");
+    await expect(page.locator(".property-video-status-strip")).toHaveText(
+      "Video: în pregătire · 11 din 11 scene pregătite",
+    );
+    await expect(panel).toContainText(
+      "Toate scenele sunt pregătite. Finalizăm filmul.",
+    );
     await expect(page.locator("#film video")).toHaveCount(0);
     completed = true;
     await page.clock.fastForward(15001);
-    await expect(page.locator(".property-video-status-strip")).toHaveText("Video: completed · 11 of 11 scenes ready");
-    await expect(page.locator("#film video source")).toHaveAttribute("src", src);
+    await expect(page.locator(".property-video-status-strip")).toHaveText(
+      "Video: finalizat · 11 din 11 scene pregătite",
+    );
+    await expect(page.locator("#film video source")).toHaveAttribute(
+      "src",
+      src,
+    );
     await expect(panel).toHaveCount(0);
     expect(generationRequests).toBe(0);
   });
 }
 
-test("a stopped video shows its saved progress without a loading animation or provider diagnostics", async ({ page }) => {
+test("a stopped video shows its saved progress without a loading animation or provider diagnostics", async ({
+  page,
+}) => {
   const { state } = await fixture(page);
   state.property.status = "published";
-  await page.route("**/api/billing/checkout**", (route) => route.fulfill({ json: {
-    published: true,
-    videoStatus: "failed",
-    videoProgress: { completed: 3, total: 11 },
-    canRetryVideo: false,
-    videoError: "Internal provider diagnostics should stay out of the agent view",
-  } }));
+  await page.route("**/api/billing/checkout**", (route) =>
+    route.fulfill({
+      json: {
+        published: true,
+        videoStatus: "failed",
+        videoProgress: { completed: 3, total: 11 },
+        canRetryVideo: false,
+        videoError:
+          "Internal provider diagnostics should stay out of the agent view",
+      },
+    }),
+  );
   await page.goto(`/preview/${id}`);
-  await expect(page.locator(".property-video-status-strip")).toHaveText("Video: failed · 3 of 11 scenes ready");
-  await expect(page.locator(".property-video-prompt")).toContainText("contact support");
-  await expect(page.locator(".property-video-spinner, .property-video-emblem.is-working")).toHaveCount(0);
-  await expect(page.locator("body")).not.toContainText("Internal provider diagnostics");
+  await expect(page.locator(".property-video-status-strip")).toHaveText(
+    "Video: eșuat · 3 din 11 scene pregătite",
+  );
+  await expect(page.locator(".property-video-prompt")).toContainText(
+    "Contactează asistența",
+  );
+  await expect(
+    page.locator(".property-video-spinner, .property-video-emblem.is-working"),
+  ).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText(
+    "Internal provider diagnostics",
+  );
 });

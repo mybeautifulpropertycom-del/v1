@@ -44,7 +44,7 @@ test("Heritage highlights loop as text, pause on hover, and remain fully readabl
   page,
 }) => {
   await page.goto("/templates/minimal");
-  const strip = page.getByLabel("Property highlights");
+  const strip = page.getByLabel("Punctele forte ale proprietății");
   await expect(strip.locator("svg")).toHaveCount(0);
   await expect(strip.locator("ul").first().locator("li")).toHaveText(
     demoWorkspace().properties[0].amenities,
@@ -71,7 +71,7 @@ test("Heritage highlights loop as text, pause on hover, and remain fully readabl
   await expect(strip.locator("ul").last()).toBeHidden();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
-    page.getByText("A HOME. A FEELING. A FRESH START.", { exact: true }),
+    page.getByText("O LOCUINȚĂ. O EMOȚIE. UN NOU ÎNCEPUT.", { exact: true }),
   ).toBeVisible();
   await expect(
     page.locator(".heritage-setting-layout figcaption small"),
@@ -117,34 +117,34 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
   await expect(
     page.locator(".heritage-story .heritage-section-heading h2"),
   ).toContainText("Windows onto a new day.");
+  await expect(page.locator(".heritage-photo-grid figcaption")).toHaveCount(0);
   await expect(
-    page.locator(".heritage-photo-grid figcaption"),
-  ).toHaveCount(0);
-  await expect(
-    page.getByLabel("Property highlights").locator("ul").first(),
-  ).not.toContainText("Private garden");
-  await page.getByRole("button", { name: "Edit on page" }).click();
+    page.getByLabel("Punctele forte ale proprietății").locator("ul").first(),
+  ).not.toContainText("Grădină privată");
+  await page.getByRole("button", { name: "Editează pe pagină" }).click();
   await page
-    .getByRole("textbox", { name: "Edit Introduction heading", exact: true })
+    .getByRole("textbox", { name: "Editează Titlul introducerii", exact: true })
     .fill("Your Austin story.");
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
-    page.getByText("Your website changes are saved.", { exact: true }),
+    page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.goto("/preview/demo-apartment");
   await expect(
     page.locator(".heritage-story .heritage-section-heading h2"),
   ).toContainText("Your Austin story.");
   await page.goto("/dashboard/properties/demo-apartment");
-  await page.getByLabel(/^Address/).fill("Portland, OR");
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByLabel(/^Adresă/).fill("Portland, OR");
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
   await expect(
-    page.getByText("Your changes are saved.", { exact: true }),
+    page.getByText("Modificările au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.goto("/preview/demo-apartment");
-  await expect(page.locator(".heritage-setting-layout figcaption")).toContainText(
-    "Portland, OR",
-  );
+  await expect(
+    page.locator(".heritage-setting-layout figcaption"),
+  ).toContainText("Portland, OR");
   await expect(
     page.locator(".heritage-story .heritage-section-heading h2"),
   ).not.toContainText("Your Austin story.");
@@ -161,32 +161,32 @@ test("every Schedule a tour CTA opens the calendar and sample requests never sen
   });
   await page.goto("/templates/minimal");
   const triggers = page.getByRole("button", {
-    name: "Schedule a tour",
+    name: "Programează o vizionare",
     exact: true,
   });
   expect(await triggers.count()).toBeGreaterThan(3);
   for (const trigger of await triggers.all()) {
     await trigger.click();
-    const dialog = page.getByRole("dialog", { name: /Let’s meet/ });
+    const dialog = page.getByRole("dialog", { name: /Să ne întâlnim/ });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel("Full name")).toBeFocused();
+    await expect(dialog.getByLabel("Nume complet")).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(trigger).toBeFocused();
   }
   await triggers.first().click();
-  const dialog = page.getByRole("dialog", { name: /Let’s meet/ });
-  await dialog.getByLabel("Full name").fill("Alex Morgan");
-  await dialog.getByLabel("Phone number").fill("+1 (202) 555-0100");
-  await dialog.getByLabel("Email address").fill("alex@example.com");
+  const dialog = page.getByRole("dialog", { name: /Să ne întâlnim/ });
+  await dialog.getByLabel("Nume complet").fill("Alex Popescu");
+  await dialog.getByLabel("Număr de telefon").fill("+1 (202) 555-0100");
+  await dialog.getByLabel("Adresă de e-mail").fill("alex@example.com");
   await dialog
-    .getByRole("button", { name: "Sunday, October 25, 2026", exact: true })
+    .getByRole("button", { name: "duminică, 25 octombrie 2026", exact: true })
     .click();
   await dialog
-    .getByRole("button", { name: "Request a private viewing" })
+    .getByRole("button", { name: "Solicită o vizionare privată" })
     .click();
   await expect(dialog.getByRole("status")).toHaveText(
-    "This is a preview. No viewing request has been sent.",
+    "Aceasta este o previzualizare. Nu a fost trimisă nicio cerere de vizionare.",
   );
   expect(submissions).toBe(0);
 });
@@ -197,19 +197,30 @@ test("Heritage gallery filters real photographs and opens the right image", asyn
   await page.goto("/templates/minimal");
   await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(40);
   await page
-    .getByRole("button", { name: "First impressions", exact: true })
+    .getByRole("button", { name: "Prime impresii", exact: true })
     .click();
   await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(3);
   await page
-    .getByRole("button", { name: "Enlarge property photo 3", exact: true })
+    .getByRole("button", {
+      name: "Mărește fotografia proprietății 3",
+      exact: true,
+    })
     .click();
-  const dialog = page.getByRole("dialog", { name: "Property photo gallery" });
-  await expect(dialog.locator("[data-current-photo]")).toHaveAttribute("alt", /view 3$/);
+  const dialog = page.getByRole("dialog", {
+    name: "Galeria foto a proprietății",
+  });
+  await expect(dialog.locator("[data-current-photo]")).toHaveAttribute(
+    "alt",
+    /fotografia 3$/,
+  );
   await page.keyboard.press("ArrowRight");
-  await expect(dialog.locator("[data-current-photo]")).toHaveAttribute("alt", /view 4$/);
+  await expect(dialog.locator("[data-current-photo]")).toHaveAttribute(
+    "alt",
+    /fotografia 4$/,
+  );
   await page.keyboard.press("Escape");
   await page
-    .getByRole("button", { name: "All photographs", exact: true })
+    .getByRole("button", { name: "Toate fotografiile", exact: true })
     .click();
   await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(40);
   const ids = await page
@@ -222,19 +233,21 @@ test("Heritage uses saved listing data, supports inline edits, and fits phones",
   page,
 }) => {
   await page.goto("/preview/demo-apartment");
-  await expect(page.locator(".heritage-hero h1")).toHaveText("The Sunlit Loft");
-  await expect(page.locator(".heritage-facts")).toContainText("$875,000");
-  await expect(page.locator(".heritage-facts")).toContainText("1,450");
-  await expect(page.locator(".heritage-agent")).toContainText("Olivia Bennett");
-  await page.getByRole("button", { name: "Edit on page" }).click();
+  await expect(page.locator(".heritage-hero h1")).toHaveText(
+    "Apartamentul luminos",
+  );
+  await expect(page.locator(".heritage-facts")).toContainText("875.000");
+  await expect(page.locator(".heritage-facts")).toContainText("135");
+  await expect(page.locator(".heritage-agent")).toContainText("Olivia Popescu");
+  await page.getByRole("button", { name: "Editează pe pagină" }).click();
   const headline = page.getByRole("textbox", {
-    name: "Edit property headline",
+    name: "Editează titlul proprietății",
   });
   await headline.fill("The Lantern House");
   await headline.press("Tab");
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(page.getByRole("status")).toContainText(
-    "Your website changes are saved.",
+    "Modificările site-ului au fost salvate.",
   );
   await page.reload();
   await expect(page.locator(".heritage-hero h1")).toHaveText(
@@ -261,7 +274,7 @@ test("Heritage uses saved listing data, supports inline edits, and fits phones",
     ).toBe(true);
   }
   await page
-    .getByRole("button", { name: "Schedule a tour", exact: true })
+    .getByRole("button", { name: "Programează o vizionare", exact: true })
     .last()
     .click();
   const dialog = page.getByRole("dialog");
@@ -269,9 +282,9 @@ test("Heritage uses saved listing data, supports inline edits, and fits phones",
     await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth),
   ).toBe(true);
   await dialog
-    .getByRole("button", { name: "Request a private viewing" })
+    .getByRole("button", { name: "Solicită o vizionare privată" })
     .scrollIntoViewIfNeeded();
   await expect(
-    dialog.getByRole("button", { name: "Request a private viewing" }),
+    dialog.getByRole("button", { name: "Solicită o vizionare privată" }),
   ).toBeVisible();
 });

@@ -1,6 +1,6 @@
 # My Beautiful Property
 
-A first working edition of a real estate SaaS for the US market. English UI, USD and square feet by default, three property website designs, and a Supabase integration prepared for real accounts.
+Versiune pentru România: interfață în română, prețuri în EUR și suprafețe în m² implicit, trei modele de site și integrare Supabase. Pachetul site + film de prezentare costă 249 RON, plată unică. Vezi [instrucțiunile pentru România](docs/ROMANIA.md), inclusiv verificarea actualizării bazei de date înainte de publicare. Documentele istorice despre integrarea inițială pot menționa tariful anterior de 97 USD.
 
 ## Run locally
 

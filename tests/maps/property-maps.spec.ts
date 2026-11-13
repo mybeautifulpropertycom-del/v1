@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { mockGoogleMaps, blockGoogle } from "../fixtures/google-maps-browser";
 import { workspace, id } from "../connected/workspace-fixture";
 
-test("US address selection persists; editing it clears the pin, without blocking manual saving", async ({
+test("Romanian address selection persists; editing it clears the pin, without blocking manual saving", async ({
   page,
 }) => {
   await mockGoogleMaps(page);
@@ -15,52 +15,56 @@ test("US address selection persists; editing it clears the pin, without blocking
   );
   await page.goto(`/dashboard/properties/${id}`);
   expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
-  const address = page.getByRole("combobox", { name: "Address", exact: true });
+  const address = page.getByRole("combobox", { name: "Adresă", exact: true });
   await expect(
     page.getByText(
-      "Search a street address and choose a suggestion to add a map. The address also becomes your public link.",
+      "Caută adresa și alege o sugestie pentru a adăuga harta. Adresa devine și linkul public al proprietății.",
     ),
   ).toBeVisible();
   await address.fill("123 Test");
   await expect(
-    page.getByRole("listbox", { name: "Suggested US addresses" }),
+    page.getByRole("listbox", { name: "Adrese sugerate din România" }),
   ).toBeVisible();
   await address.press("ArrowDown");
   await address.press("Enter");
-  await expect(address).toHaveValue("123 Test Street, Austin, TX, USA");
+  await expect(address).toHaveValue("Strada Test 123, București, România");
   await expect(
-    page.getByText("Address selected.", { exact: true }),
+    page.getByText("Adresa a fost selectată.", { exact: true }),
   ).toBeVisible();
   await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
   const requests = await page.evaluate(() => window.__mapsTest);
   expect(requests.autocomplete).toHaveLength(1);
-  expect(requests.autocomplete[0].includedRegionCodes).toEqual(["us"]);
+  expect(requests.autocomplete[0].includedRegionCodes).toEqual(["ro"]);
   expect(requests.photos).toBe(0);
   expect(requests.maps).toBe(0);
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
   await expect
     .poll(() => state.property.google_place_id)
     .toBe("ChIJ-test-home");
   await page.reload();
-  await expect(address).toHaveValue("123 Test Street, Austin, TX, USA");
-  await address.fill("456 Another Street, Austin, TX");
+  await expect(address).toHaveValue("Strada Test 123, București, România");
+  await address.fill("Strada Exemplu 456, București");
   await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
   await expect.poll(() => state.property.google_place_id).toBe(null);
-  expect(state.property.location).toBe("456 Another Street, Austin, TX");
+  expect(state.property.location).toBe("Strada Exemplu 456, București");
 });
 
-test("non-US/city selections and stale asynchronous selections never create a pin", async ({
+test("non-Romanian/city selections and stale asynchronous selections never create a pin", async ({
   page,
 }) => {
   await mockGoogleMaps(page);
   await workspace(page);
   await page.goto(`/dashboard/properties/${id}`);
-  const address = page.getByRole("combobox", { name: "Address", exact: true });
+  const address = page.getByRole("combobox", { name: "Adresă", exact: true });
   for (const query of ["Canada address", "City only"]) {
     await address.fill(query);
     await page
-      .getByRole("listbox", { name: "Suggested US addresses" })
+      .getByRole("listbox", { name: "Adrese sugerate din România" })
       .getByRole("option")
       .click();
     await expect(
@@ -79,12 +83,12 @@ test("non-US/city selections and stale asynchronous selections never create a pi
   });
   await address.fill("123 Slow");
   await page
-    .getByRole("listbox", { name: "Suggested US addresses" })
+    .getByRole("listbox", { name: "Adrese sugerate din România" })
     .getByRole("option")
     .click();
   await address.fill("Different address");
   await page
-    .getByRole("heading", { name: /A new story|Make every detail/ })
+    .getByRole("heading", { name: /O nouă poveste|Fiecare detaliu/ })
     .click();
   await expect(address).toHaveValue("Different address");
   await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
@@ -97,7 +101,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await mockGoogleMaps(page);
     await page.goto(`/map-test-${template}`);
     const section = page.getByRole("region", {
-      name: "Explore the neighborhood.",
+      name: "Descoperă cartierul.",
     });
     await expect(section).toBeVisible();
     expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
@@ -106,10 +110,10 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     ).toHaveCount(0);
     await section.scrollIntoViewIfNeeded();
     await expect(
-      section.getByText("Your next home", { exact: true }),
+      section.getByText("Următoarea ta locuință", { exact: true }),
     ).toBeVisible();
     await expect(
-      section.getByRole("button", { name: "Schools", exact: true }),
+      section.getByRole("button", { name: "Școli", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
     await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
     const requests = await page.evaluate(() => window.__mapsTest);
@@ -119,7 +123,9 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     expect(requests.searches[0].fields).not.toContain("*");
     expect(requests.photos).toBe(0);
     expect(
-      requests.details.filter((request) => request.fields.includes("photos")),
+      requests.details.filter((request) =>
+        request.fields.includes("photos"),
+      ),
     ).toHaveLength(0);
     await expect(
       section.getByRole("link", { name: "Open in Google Maps" }),
@@ -133,7 +139,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       "primary_school",
       "secondary_school",
     ]);
-    expect(requests.searches[0].fields).not.toContain("photos");
+    expect(requests.searches[0].fields).not.toContain("fotografii");
     await expect(section.locator(".neighbourhood-cards img")).toHaveCount(0);
     await expect(
       section.getByRole("link", { name: "Local data provider" }),
@@ -144,7 +150,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       .boundingBox();
     expect(mapBox!.x + mapBox!.width).toBeLessThan(panelBox!.x);
     await section
-      .getByRole("button", { name: "Restaurants", exact: true })
+      .getByRole("button", { name: "Restaurante", exact: true })
       .click();
     await expect(
       section.getByRole("button", { name: "1 Nearby Restaurant" }),
@@ -156,11 +162,11 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect(
       section.locator(".neighbourhood-card.is-selected"),
     ).toHaveCount(1);
-    await section.getByRole("button", { name: "Parks", exact: true }).click();
+    await section.getByRole("button", { name: "Parcuri", exact: true }).click();
     await expect(
-      section.getByText("No parks were returned nearby. Try another category."),
+      section.getByText("Nu au fost găsite locuri din categoria parcuri în apropiere. Încearcă altă categorie."),
     ).toBeVisible();
-    await section.getByRole("button", { name: "Schools", exact: true }).click();
+    await section.getByRole("button", { name: "Școli", exact: true }).click();
     await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
     expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(
       3,
@@ -200,14 +206,14 @@ test("quota errors keep the property page usable and let the visitor retry", asy
   await mockGoogleMaps(page);
   await page.goto("/map-test-editorial");
   const section = page.getByRole("region", {
-    name: "Explore the neighborhood.",
+    name: "Descoperă cartierul.",
   });
   await page.evaluate(() => {
     window.__mapsTest.failSearch = true;
   });
   await section.scrollIntoViewIfNeeded();
   await expect(section.getByRole("status")).toContainText(
-    "Nearby places could not be loaded",
+    "Locurile din apropiere nu au putut fi încărcate",
   );
   await expect(
     section.getByRole("link", { name: "Open in Google Maps" }),
@@ -216,7 +222,7 @@ test("quota errors keep the property page usable and let the visitor retry", asy
     window.__mapsTest.failSearch = false;
   });
   await section
-    .getByRole("button", { name: "Retry places", exact: true })
+    .getByRole("button", { name: "Reîncarcă locurile", exact: true })
     .click();
   await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
 });
@@ -227,20 +233,20 @@ test("a blocked Google script offers an in-page retry without external navigatio
   await blockGoogle(page);
   await page.goto("/map-test-minimal");
   const section = page.getByRole("region", {
-    name: "Explore the neighborhood.",
+    name: "Descoperă cartierul.",
   });
   await section.scrollIntoViewIfNeeded();
   await expect(section.getByRole("status")).toContainText(
-    "The map is unavailable",
+    "Harta nu este disponibilă",
   );
   await expect(
     section.getByRole("link", { name: "Open in Google Maps" }),
   ).toHaveCount(0);
   await expect(
-    section.getByRole("button", { name: "Retry map", exact: true }),
+    section.getByRole("button", { name: "Reîncarcă harta", exact: true }),
   ).toBeEnabled();
   await expect(
-    page.getByRole("heading", { name: /A personal introduction/ }),
+    page.getByRole("heading", { name: /O scurtă prezentare/ }),
   ).toBeVisible();
 });
 
@@ -254,87 +260,18 @@ test("old listings without a selected place keep their existing layout", async (
 });
 
 for (const template of ["editorial", "minimal", "panorama"]) {
-  test(`${template}: design samples locate the Santa Cruz address and show nearby places`, async ({
+  test(`${template}: fictional design samples never search for an address or display a false map pin`, async ({
     page,
   }) => {
     await mockGoogleMaps(page);
     await page.goto(`/templates/${template}`);
-    const section = page.getByRole("region", {
-      name: "Explore the neighborhood.",
-    });
-    await expect(section.locator(".neighbourhood-heading p")).toHaveText(
-      "370 Ocean St, Santa Cruz, CA",
-    );
-    await expect(page.locator("main")).not.toContainText("Beverly Hills");
-    expect(
-      await page.evaluate(() => window.__mapsTest.textSearches.length),
-    ).toBe(0);
-    await section.scrollIntoViewIfNeeded();
-    await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
-    await expect(
-      section.getByRole("button", { name: "Schools", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator(`.website-${template}`)).toBeVisible();
+    await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
     const requests = await page.evaluate(() => window.__mapsTest);
-    expect(requests.textSearches).toHaveLength(1);
-    expect(requests.textSearches[0]).toMatchObject({
-      textQuery: "370 Ocean St, Santa Cruz, CA, USA",
-      fields: ["id"],
-      maxResultCount: 1,
-      region: "us",
-    });
-    expect(requests.details).toEqual([
-      {
-        id: "ChIJ-template-home",
-        fields: ["location", "addressComponents", "types"],
-      },
-    ]);
-    expect(requests.maps).toBe(1);
-    await section
-      .getByRole("button", { name: "Restaurants", exact: true })
-      .click();
-    await expect(
-      section.getByRole("button", { name: "1 Nearby Restaurant" }),
-    ).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await section.scrollIntoViewIfNeeded();
-    expect(
-      await page.evaluate(() => window.__mapsTest.textSearches.length),
-    ).toBe(1);
-  });
-}
-
-for (const result of ["empty", "wrong-address"] as const) {
-  test(`template address lookup rejects ${result} results and allows a retry`, async ({
-    page,
-  }) => {
-    await mockGoogleMaps(page);
-    await page.goto("/templates/minimal");
-    await page.evaluate((result) => {
-      window.__mapsTest.templateAddressResult = result;
-    }, result);
-    const section = page.getByRole("region", {
-      name: "Explore the neighborhood.",
-    });
-    await section.scrollIntoViewIfNeeded();
-    await expect(section.getByRole("status")).toContainText(
-      "The map is unavailable",
-    );
-    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(0);
-    expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(
-      0,
-    );
-    expect(
-      await page.evaluate(() => window.__mapsTest.textSearches.length),
-    ).toBe(1);
-    await page.evaluate(() => {
-      window.__mapsTest.templateAddressResult = "match";
-    });
-    await section.getByRole("button", { name: "Retry map" }).click();
-    await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
-    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);
-    expect(
-      await page.evaluate(() => window.__mapsTest.textSearches.length),
-    ).toBe(2);
+    expect(requests.imports).toHaveLength(0);
+    expect(requests.textSearches).toHaveLength(0);
+    expect(requests.maps).toBe(0);
+    expect(requests.searches).toHaveLength(0);
   });
 }
 
@@ -357,13 +294,13 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       ),
     ).toBeVisible();
     const section = page.getByRole("region", {
-      name: "Explore the neighborhood.",
+      name: "Descoperă cartierul.",
     });
     await expect(section).toBeVisible();
     expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
     await section.scrollIntoViewIfNeeded();
     await expect(
-      section.getByRole("button", { name: "Schools", exact: true }),
+      section.getByRole("button", { name: "Școli", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
     await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
     expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);

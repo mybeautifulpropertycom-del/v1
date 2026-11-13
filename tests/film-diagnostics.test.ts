@@ -36,11 +36,11 @@ test("provider display distinguishes saved provider from legacy engine and unass
   );
   assert.equal(
     savedVideoProvider({ engine: "higgsfield-montage-v1" }),
-    "Not assigned yet",
+    "Neatribuit încă",
   );
   assert.equal(
     savedVideoProvider({ engine: "photo-montage-v1" }),
-    "Original photographs",
+    "Fotografii originale",
   );
-  assert.equal(savedVideoProvider(null), "Not assigned yet");
+  assert.equal(savedVideoProvider(null), "Neatribuit încă");
 });

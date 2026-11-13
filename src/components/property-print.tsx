@@ -1,3 +1,4 @@
+import { propertyTypeLabel } from "@/lib/model";
 import {
   formatPrice,
   publicPath,
@@ -31,8 +32,8 @@ export function PropertyPrint({
       <article>
         <header className="property-print-heading">
           <p>
-            {property.type}{" "}
-            {property.transaction === "rent" ? "for rent" : "for sale"}
+            {propertyTypeLabel(property.type)}{" "}
+            {property.transaction === "rent" ? "de închiriat" : "de vânzare"}
           </p>
           <h1>{property.title}</h1>
           <p>{property.location}</p>
@@ -51,19 +52,19 @@ export function PropertyPrint({
           {property.type !== "Land" && (
             <>
               <div>
-                <dt>Bedrooms</dt>
+                <dt>Dormitoare</dt>
                 <dd>{property.bedrooms}</dd>
               </div>
               <div>
-                <dt>Bathrooms</dt>
+                <dt>Băi</dt>
                 <dd>{property.bathrooms}</dd>
               </div>
             </>
           )}
           <div>
-            <dt>Area</dt>
+            <dt>Suprafață</dt>
             <dd>
-              {property.area.toLocaleString("en-US")}{" "}
+              {property.area.toLocaleString("ro-RO")}{" "}
               {property.area_unit === "sqm" ? "m²" : "sq ft"}
             </dd>
           </div>
@@ -81,7 +82,7 @@ export function PropertyPrint({
         )}
         {property.amenities.length > 0 && (
           <section className="property-print-section">
-            <h2>Features</h2>
+            <h2>Dotări</h2>
             <ul>
               {property.amenities.map((amenity) => (
                 <li key={amenity}>{amenity}</li>
@@ -101,7 +102,7 @@ export function PropertyPrint({
                   src={image}
                   alt={
                     copy.captions[index + 1] ||
-                    `${property.title} — view ${index + 2}`
+                    `${property.title} — fotografia ${index + 2}`
                   }
                   loading="eager"
                 />
@@ -111,7 +112,7 @@ export function PropertyPrint({
           </div>
         </section>
         <footer className="property-print-contact">
-          <h2>Schedule a private tour</h2>
+          <h2>Programează o vizionare privată</h2>
           {profile.name && (
             <p>
               <strong>{profile.name}</strong>
@@ -132,7 +133,8 @@ export function PropertyPrint({
             <a href={url}>{url}</a>
           </p>
           <small>
-            View the website for current details, availability and video.
+            Vizitează site-ul pentru detalii actualizate, disponibilitate și
+            film.
           </small>
         </footer>
       </article>

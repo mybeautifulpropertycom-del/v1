@@ -12,7 +12,7 @@ type MapsWindow = Window & {
 export function withMapsTimeout<T>(promise: Promise<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(
-      () => reject(new Error("Google Maps did not respond. Please try again.")),
+      () => reject(new Error("Google Maps nu a răspuns. Încearcă din nou.")),
       15000,
     );
     promise.then(resolve, reject).finally(() => clearTimeout(timeout));
@@ -21,7 +21,7 @@ export function withMapsTimeout<T>(promise: Promise<T>): Promise<T> {
 
 export function loadGoogleMaps(): Promise<typeof google.maps> {
   if (typeof window === "undefined" || !mapsEnabled())
-    return Promise.reject(new Error("Maps are not available."));
+    return Promise.reject(new Error("Hărțile nu sunt disponibile."));
   const browser = window as MapsWindow;
   if (browser.google?.maps?.importLibrary)
     return Promise.resolve(browser.google.maps);
@@ -34,7 +34,9 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
       script.remove();
       loading = undefined;
       reject(
-        new Error("Google Maps could not load. You can still use the address."),
+        new Error(
+          "Google Maps nu a putut fi încărcat. Poți folosi în continuare adresa.",
+        ),
       );
     }
     browser.mbpGoogleMapsReady = () => {
@@ -49,8 +51,8 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
     const params = new URLSearchParams({
       key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!.trim(),
       v: "quarterly",
-      language: "en",
-      region: "US",
+      language: "ro",
+      region: "RO",
       loading: "async",
       callback: "mbpGoogleMapsReady",
     });

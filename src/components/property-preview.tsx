@@ -52,7 +52,7 @@ export function PropertyPreview({ id }: { id: string }) {
           setDirty(true);
           setEditing(true);
           notify(
-            "Your page descriptions are ready. Review them in place, then save your website.",
+            "Textele paginii sunt pregătite. Verifică-le, apoi salvează site-ul.",
           );
         })
         .catch((error) => {
@@ -60,7 +60,7 @@ export function PropertyPreview({ id }: { id: string }) {
             setError(
               error instanceof Error
                 ? error.message
-                : "Your page descriptions could not be prepared.",
+                : "Textele paginii nu au putut fi pregătite.",
             );
         })
         .finally(() => {
@@ -105,7 +105,7 @@ export function PropertyPreview({ id }: { id: string }) {
       setError(
         error instanceof Error
           ? error.message
-          : "This text could not be updated.",
+          : "Textul nu a putut fi actualizat.",
       );
       return;
     }
@@ -127,11 +127,11 @@ export function PropertyPreview({ id }: { id: string }) {
       }
       setProperty(value);
       setDirty(false);
-      notify("Your website changes are saved.");
+      notify("Modificările site-ului au fost salvate.");
       return value;
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Your changes could not be saved.",
+        e instanceof Error ? e.message : "Modificările nu au putut fi salvate.",
       );
       return null;
     } finally {
@@ -159,10 +159,10 @@ export function PropertyPreview({ id }: { id: string }) {
   if (!property)
     return (
       <div className="state-screen">
-        <h1>This preview isn’t available.</h1>
-        <p>Save your property first, then open the preview.</p>
+        <h1>Previzualizarea nu este disponibilă.</h1>
+        <p>Salvează mai întâi proprietatea, apoi deschide previzualizarea.</p>
         <Link href="/dashboard" className="button primary">
-          Back to properties
+          Înapoi la proprietăți
         </Link>
       </div>
     );
@@ -173,10 +173,10 @@ export function PropertyPreview({ id }: { id: string }) {
           <Pencil size={16} />
           <span>
             {editing
-              ? "Click any highlighted section text to edit it."
-              : "Make it yours, right on the page."}
+              ? "Apasă pe textul unei secțiuni evidențiate pentru a-l edita."
+              : "Editează textele direct pe pagină."}
             {editing && property.status === "published" && (
-              <small>Saving updates your published website.</small>
+              <small>Salvarea actualizează site-ul publicat.</small>
             )}
           </span>
         </div>
@@ -185,11 +185,11 @@ export function PropertyPreview({ id }: { id: string }) {
             className="text-button"
             href={`/dashboard/properties/${id}`}
             onClick={(e) => {
-              if (dirty && !confirm("Leave without saving your changes?"))
+              if (dirty && !confirm("Pleci fără să salvezi modificările?"))
                 e.preventDefault();
             }}
           >
-            Property details
+            Detaliile proprietății
           </Link>
           {editing ? (
             <>
@@ -197,7 +197,7 @@ export function PropertyPreview({ id }: { id: string }) {
                 className="button secondary"
                 disabled={busy || preparing}
                 onClick={() => {
-                  if (!dirty || confirm("Discard your unsaved changes?")) {
+                  if (!dirty || confirm("Renunți la modificările nesalvate?")) {
                     setProperty(savedProperty);
                     setDirty(false);
                     setEditing(false);
@@ -205,7 +205,7 @@ export function PropertyPreview({ id }: { id: string }) {
                   }
                 }}
               >
-                Done editing
+                Încheie editarea
               </button>
               <button
                 className="button primary"
@@ -213,7 +213,7 @@ export function PropertyPreview({ id }: { id: string }) {
                 onClick={save}
               >
                 <Save size={14} />
-                {busy ? "Saving…" : "Save website"}
+                {busy ? "Se salvează…" : "Salvează site-ul"}
               </button>
             </>
           ) : (
@@ -223,7 +223,7 @@ export function PropertyPreview({ id }: { id: string }) {
               onClick={() => setEditing(true)}
             >
               <Pencil size={14} />
-              Edit on page
+              Editează pe pagină
             </button>
           )}
           {!demo &&
@@ -236,7 +236,7 @@ export function PropertyPreview({ id }: { id: string }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              View live website <ExternalLink size={15} />
+              Vezi site-ul publicat <ExternalLink size={15} />
             </Link>
           ) : (
             <button
@@ -245,7 +245,7 @@ export function PropertyPreview({ id }: { id: string }) {
               onClick={() => void publication.publish()}
             >
               <Globe2 size={16} />
-              Publish Property
+              Publică proprietatea
             </button>
           )}
         </div>
@@ -256,7 +256,7 @@ export function PropertyPreview({ id }: { id: string }) {
       {publication.dialog}
       {preparing && (
         <div className="inline-notice" role="status">
-          Preparing the descriptions for your page…
+          Se pregătesc textele paginii…
         </div>
       )}
       {error && (
@@ -270,7 +270,7 @@ export function PropertyPreview({ id }: { id: string }) {
                 setRetry((value) => value + 1);
               }}
             >
-              Try again
+              Încearcă din nou
             </button>
           )}
         </div>

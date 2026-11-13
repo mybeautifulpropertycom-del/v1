@@ -19,7 +19,7 @@ export function PriceInput({
     value: number;
     currency: string;
   } | null>(null);
-  const prefix = new Intl.NumberFormat("en-US", { style: "currency", currency })
+  const symbol = new Intl.NumberFormat("ro-RO", { style: "currency", currency })
     .formatToParts(0)
     .find((part) => part.type === "currency")!.value;
   const raw =
@@ -31,7 +31,7 @@ export function PriceInput({
   function format(amount: string) {
     if (!amount) return "";
     const [whole, fraction] = amount.split(".");
-    return `${prefix}${(whole || "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${fraction === undefined ? "" : `.${fraction}`}`;
+    return `${(whole || "0").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}${fraction === undefined ? "" : `,${fraction}`} ${symbol}`;
   }
   const display = format(raw);
   useLayoutEffect(() => {
@@ -46,15 +46,15 @@ export function PriceInput({
       type="text"
       inputMode="decimal"
       value={display}
-      placeholder={`${prefix}1,250,000`}
+      placeholder={`1.250.000 ${symbol}`}
       onKeyDown={(event) => {
         const element = event.currentTarget;
         const position = element.selectionStart;
         if (position === null || position !== element.selectionEnd) return;
         // Deleting next to a generated separator should delete a digit, not get stuck.
-        if (event.key === "Backspace" && element.value[position - 1] === ",")
+        if (event.key === "Backspace" && element.value[position - 1] === ".")
           element.setSelectionRange(position - 1, position - 1);
-        if (event.key === "Delete" && element.value[position] === ",")
+        if (event.key === "Delete" && element.value[position] === ".")
           element.setSelectionRange(position + 1, position + 1);
       }}
       onChange={(event) => {
@@ -62,12 +62,14 @@ export function PriceInput({
         const logicalPosition = (
           text
             .slice(0, event.currentTarget.selectionStart ?? text.length)
-            .match(/[\d.]/g) || []
+            .match(/[\d,]/g) || []
         ).length;
-        const unprefixed = text.trim().startsWith(prefix)
-          ? text.trim().slice(prefix.length)
-          : text.trim();
-        const cleaned = unprefixed.replace(/[,\s]/g, "");
+        const cleaned = text
+          .trim()
+          .replace(symbol, "")
+          .replace(currency, "")
+          .replace(/[.\s]/g, "")
+          .replace(",", ".");
         if (!/^\d*(?:\.\d{0,2})?$/.test(cleaned)) return;
         const amount = cleaned.replace(/^0+(?=\d)/, "");
         const number = Number(amount || 0);
@@ -76,7 +78,7 @@ export function PriceInput({
         let position = formatted.length,
           seen = 0;
         for (let i = 0; i < formatted.length; i++) {
-          if (/[\d.]/.test(formatted[i]) && ++seen >= logicalPosition) {
+          if (/[\d,]/.test(formatted[i]) && ++seen >= logicalPosition) {
             position = i + 1;
             break;
           }

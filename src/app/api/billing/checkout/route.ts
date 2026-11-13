@@ -1,3 +1,4 @@
+import { requireRomanianOrder } from "@/lib/stripe-server";
 import { videoEnabled } from "@/lib/video-service";
 import {
   publicPath,
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
     const config = stripeConfiguration();
     const id = new URL(request.url).searchParams.get("propertyId");
     if (!id || !UUID.test(id))
-      throw new BillingError("Choose a property.", 400);
+      throw new BillingError("Alege o proprietate.", 400);
     const { data: property, error } = await db
       .from("properties")
       .select("*")
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
       ]);
       if (jobError || orderError)
         throw new BillingError(
-          "Publication setup is incomplete. Please contact support.",
+          "Configurarea publicării este incompletă. Contactează asistența.",
         );
       const state = await response.json();
       return billingJson({
@@ -147,10 +148,10 @@ export async function POST(request: Request) {
       id = parsed?.propertyId;
       embedded = parsed?.embedded === true;
     } catch {
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     }
     if (typeof id !== "string" || !UUID.test(id))
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     const [{ data: property, error }, { data: profile, error: profileError }] =
       await Promise.all([
         db
@@ -163,11 +164,11 @@ export async function POST(request: Request) {
       ]);
     if (error || !property)
       throw new BillingError(
-        "This property is not available in your workspace.",
+        "Proprietatea nu este disponibilă în contul tău.",
         404,
       );
     if (profileError || !profile)
-      throw new BillingError("Complete your agent profile first.", 400);
+      throw new BillingError("Completează mai întâi profilul de agent.", 400);
     const errors = publicationErrors(property as Property, profile as Profile);
     if (errors.length) throw new BillingError(errors.join(" "), 400);
     if (embedded) return await embeddedCheckout(config, id, user.id);
@@ -180,6 +181,7 @@ export async function POST(request: Request) {
     if (reservationError || !order)
       throw new BillingError("The Stripe test database setup is incomplete.");
     if (order.status === "paid") return billingJson({ paid: true });
+    requireRomanianOrder(order);
     const stripe = stripeClient(config.key);
     // A paid session may arrive before its webhook. Do not offer another charge.
     if (order.checkout_session_id) {
@@ -200,6 +202,7 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
+        locale: "ro",
         allowed_payment_method_types: ["card"],
         adaptive_pricing: { enabled: false },
         line_items: [
@@ -209,9 +212,9 @@ export async function POST(request: Request) {
               currency: PROPERTY_PACKAGE_CURRENCY,
               unit_amount: PROPERTY_PACKAGE_CENTS,
               product_data: {
-                name: "Property website + presentation video",
+                name: "Site de proprietate + film de prezentare",
                 description:
-                  "One property. One-time payment of $97 USD. Test checkout only; no real payment or video order.",
+                  "O proprietate. Plată unică de 249 RON. Doar plată de test; fără plată reală sau comandă video.",
               },
             },
           },

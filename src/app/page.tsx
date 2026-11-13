@@ -13,7 +13,7 @@ export default function Home() {
             "@type": "WebSite",
             name: SITE_NAME,
             url: siteUrl("/"),
-            inLanguage: "en-US",
+            inLanguage: "ro-RO",
           }),
         }}
       />

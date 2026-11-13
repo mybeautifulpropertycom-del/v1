@@ -101,20 +101,20 @@ test("admin reviews an agent's property, publishes at no charge and sees its vid
   const setup = await admin(page);
   await page.goto("/dashboard/admin");
   await expect(
-    page.getByRole("link", { name: "Administration", exact: true }),
+    page.getByRole("link", { name: "Administrare", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText("agent@example.com", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "View properties" }).click();
-  await page.getByRole("link", { name: "Review property" }).click();
+  await page.getByRole("button", { name: "Vezi proprietățile" }).click();
+  await page.getByRole("link", { name: "Verifică proprietatea" }).click();
   await expect(page).toHaveURL(new RegExp(`/admin/properties/${id}$`));
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
-  await page.getByLabel("Publication note").fill("Complimentary showcase");
-  await page.getByRole("button", { name: "Publish at no charge" }).click();
-  await expect(page.getByText("Video: queued.", { exact: true })).toBeVisible();
+  await page.getByLabel("Notă de publicare").fill("Complimentary showcase");
+  await page.getByRole("button", { name: "Publică gratuit" }).click();
+  await expect(page.getByText("Video: în coadă.", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "View public website" }),
+    page.getByRole("link", { name: "Vezi site-ul public" }),
   ).toHaveAttribute("href", `/p/${setup.state.property.slug}`);
   expect(setup.calls).toBe(1);
   await page.screenshot({
@@ -130,18 +130,18 @@ test("admin's own editor publishes directly without requesting a payment session
   const setup = await admin(page);
   await page.goto(`/preview/${id}`);
   await expect(
-    page.getByRole("button", { name: "Save website" }),
+    page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
   await page
     .locator(".inline-edit-toolbar")
-    .getByRole("button", { name: "Publish Property" })
+    .getByRole("button", { name: "Publică proprietatea" })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Your property website is published.",
+    "Site-ul proprietății a fost publicat.",
   );
-  await expect(page.getByRole("dialog")).not.toContainText("$97");
+  await expect(page.getByRole("dialog")).not.toContainText("249 RON");
   expect(setup.calls).toBe(1);
-  await page.getByRole("button", { name: "Back to editing" }).click();
+  await page.getByRole("button", { name: "Înapoi la editare" }).click();
   await expect(page.locator(".property-video-prompt")).toContainText(
     "Your video is queued",
   );
@@ -158,10 +158,12 @@ test("ordinary agents have neither the admin navigation nor client access to the
   });
   await page.goto("/dashboard/admin");
   await expect(
-    page.getByRole("heading", { name: "Administrator access required." }),
+    page.getByRole("heading", {
+      name: "Este necesar accesul de administrator.",
+    }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Administration", exact: true }),
+    page.getByRole("link", { name: "Administrare", exact: true }),
   ).toHaveCount(0);
   expect(requests).toBe(0);
 });
@@ -218,12 +220,12 @@ test("admin rebuild keeps the current public film while the replacement is queue
   await page.goto(`/admin/properties/${id}`);
   await expect(page.locator("#film video source")).toHaveAttribute("src", src);
   await page
-    .getByRole("button", { name: "Rebuild video · Uses API credits" })
+    .getByRole("button", { name: "Refă filmul · Folosește credite API" })
     .click();
-  await expect(page.getByText("Video: queued.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Video: în coadă.", { exact: true })).toBeVisible();
   await expect(page.locator("#film video source")).toHaveAttribute("src", src);
   await expect(
-    page.getByRole("button", { name: "Rebuild video · Uses API credits" }),
+    page.getByRole("button", { name: "Refă filmul · Folosește credite API" }),
   ).toHaveCount(0);
   await expect(page.getByText(/current video stays available/)).toBeVisible();
 });

@@ -964,7 +964,7 @@ test("a contact request without a message reaches the existing inbox", async () 
   const saved = await db.query<{ message: string }>(
     "select message from public.inquiries where email = 'no-message@example.com'",
   );
-  assert.equal(saved.rows[0].message, "No message provided.");
+  assert.equal(saved.rows[0].message, "Nu a fost completat niciun mesaj.");
 });
 
 test("a preferred viewing date reaches only the listing agent’s existing inbox", async () => {
@@ -2531,5 +2531,37 @@ test("two-scene BytePlus window locks reservations, preserves order, and reconci
     await assert.rejects(ahead(2), /permission denied/);
   } finally {
     await database.close();
+  }
+});
+
+test("Romania migration is repeatable, defaults to 249 RON and preserves historical USD receipts", async () => {
+  await db.exec("reset role; begin");
+  try {
+    const migration = await readFile(
+      new URL(
+        "../supabase/migrations/202611130001_romania_package.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    await db.exec(migration);
+    await db.exec(migration);
+    for (const table of ["property_orders", "stripe_test_orders"]) {
+      const inserted = await db.query<{ amount: number; currency: string }>(
+        `insert into ${table} default values returning amount,currency`,
+      );
+      assert.deepEqual(inserted.rows[0], { amount: 24900, currency: "ron" });
+      await db.exec(
+        `insert into ${table}(amount,currency,status) values(9700,'usd','paid')`,
+      );
+      await db.exec("savepoint bad_pair");
+      await assert.rejects(
+        db.exec(`insert into ${table}(amount,currency) values(9700,'ron')`),
+        /check constraint/,
+      );
+      await db.exec("rollback to savepoint bad_pair");
+    }
+  } finally {
+    await db.exec("rollback");
   }
 });

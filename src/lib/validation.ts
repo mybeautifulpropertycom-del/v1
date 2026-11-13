@@ -11,15 +11,15 @@ export function validateInquiry(
   input: unknown,
 ): { ok: true; value: Inquiry } | { ok: false; error: string } {
   if (!input || typeof input !== "object" || Array.isArray(input))
-    return { ok: false, error: "Invalid message." };
+    return { ok: false, error: "Mesaj nevalid." };
   const value = input as Record<string, unknown>;
   if (value.website)
-    return { ok: false, error: "Please leave the website field empty." };
+    return { ok: false, error: "Lasă câmpul pentru site gol." };
   for (const key of ["slug", "name", "email", "phone"])
     if (typeof value[key] !== "string")
-      return { ok: false, error: "Please complete the contact form." };
+      return { ok: false, error: "Completează formularul de contact." };
   if (value.message !== undefined && typeof value.message !== "string")
-    return { ok: false, error: "Please check your message." };
+    return { ok: false, error: "Verifică mesajul." };
   const result: Inquiry = {
     slug: (value.slug as string).trim(),
     name: (value.name as string).trim(),
@@ -31,7 +31,7 @@ export function validateInquiry(
     if (!validViewingDate(value.preferredDate))
       return {
         ok: false,
-        error: "Choose a valid preferred date within the next year.",
+        error: "Alege o dată validă în următorul an.",
       };
     if (
       result.phone.replace(/\D/g, "").length < 8 ||
@@ -39,13 +39,14 @@ export function validateInquiry(
     )
       return {
         ok: false,
-        error: "Add a phone number and keep your note under 1,600 characters.",
+        error:
+          "Adaugă un număr de telefon și limitează mesajul la 1.600 de caractere.",
       };
-    result.message = `Viewing request\nPreferred date: ${viewingDateLabel(value.preferredDate)} (${value.preferredDate})\nTime and availability to be confirmed by the agent.${result.message ? `\n\n${result.message}` : ""}`;
+    result.message = `Cerere de vizionare\nData preferată: ${viewingDateLabel(value.preferredDate)} (${value.preferredDate})\nOra și disponibilitatea vor fi confirmate de agent.${result.message ? `\n\n${result.message}` : ""}`;
   }
   // Keep optional contact requests compatible with the inbox's non-empty
   // message constraint, without attributing a written message to the visitor.
-  if (!result.message) result.message = "No message provided.";
+  if (!result.message) result.message = "Nu a fost completat niciun mesaj.";
   if (
     !/^[a-z0-9-]{1,110}$/.test(result.slug) ||
     result.name.length < 2 ||
@@ -59,7 +60,7 @@ export function validateInquiry(
     return {
       ok: false,
       error:
-        "Add a valid name and email. If you include a message, use 10 to 2,000 characters.",
+        "Adaugă un nume și un e-mail valide. Dacă incluzi un mesaj, folosește între 10 și 2.000 de caractere.",
     };
   return { ok: true, value: result };
 }

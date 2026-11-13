@@ -36,6 +36,7 @@ for (const count of [1, 16, 40]) {
       assert.equal(url, "https://api.openai.com/v1/responses");
       const request = JSON.parse(String(init?.body));
       const keys = images.map((_, i) => `photo_${i}`);
+      assert.deepEqual(request.text.format.schema.required, ["photos"]);
       const schema = request.text.format.schema.properties.photos;
       assert.equal(schema.type, "object");
       assert.equal(schema.additionalProperties, false);

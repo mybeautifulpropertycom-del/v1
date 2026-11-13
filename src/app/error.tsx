@@ -2,11 +2,11 @@
 export default function Error({ reset }: { reset: () => void }) {
   return (
     <div className="state-screen">
-      <span className="eyebrow">A SMALL PAUSE</span>
-      <h1>Let’s try that again.</h1>
-      <p>We couldn’t load this page. Please try again in a moment.</p>
+      <span className="eyebrow">O MICĂ PAUZĂ</span>
+      <h1>Să încercăm din nou.</h1>
+      <p>Nu am putut încărca pagina. Încearcă din nou peste câteva momente.</p>
       <button className="button primary" onClick={reset}>
-        Try again
+        Încearcă din nou
       </button>
     </div>
   );

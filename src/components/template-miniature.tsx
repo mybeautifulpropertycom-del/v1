@@ -14,7 +14,7 @@ export function TemplateMiniature({
       <div className="template-miniature miniature-atelier" aria-hidden="true">
         <div className="mini-nav">
           <span>{templateName.toUpperCase()} ↗</span>
-          <span>MENU +</span>
+          <span>MENIU +</span>
         </div>
         <div className="mini-atelier-gallery">
           <PropertyImage src={image} alt="" sizes="320px" />
@@ -25,11 +25,11 @@ export function TemplateMiniature({
           </div>
         </div>
         <div className="mini-atelier-title">
-          A different perspective.<em>A place to call home.</em>
+          O altă perspectivă.<em>Un loc căruia să-i spui acasă.</em>
         </div>
         <div className="mini-atelier-facts">
-          <span>THOUGHTFULLY CONSIDERED</span>
-          <span>EXPLORE ↗</span>
+          <span>ATENȚIE LA FIECARE DETALIU</span>
+          <span>DESCOPERĂ ↗</span>
         </div>
       </div>
     );
@@ -44,32 +44,34 @@ export function TemplateMiniature({
       </div>
       <div className="mini-content">
         <div className="mini-copy">
-          <span>A FRESH PERSPECTIVE</span>
+          <span>O PERSPECTIVĂ NOUĂ</span>
           <strong>
             {template === "editorial" ? (
               <>
-                A home.
-                <br />A new chapter.
+                O locuință.
+                <br />
+                Un nou capitol.
               </>
             ) : template === "minimal" ? (
               <>
-                A little character.
-                <br />A new beginning.
+                Un plus de personalitate.
+                <br />
+                Un nou început.
               </>
             ) : (
               <>
-                Extraordinary.
+                Deosebită.
                 <br />
-                Every day.
+                În fiecare zi.
               </>
             )}
           </strong>
-          <i>EXPLORE THE PROPERTY ↗</i>
+          <i>DESCOPERĂ PROPRIETATEA ↗</i>
         </div>
         <PropertyImage src={image} alt="" sizes="480px" />
       </div>
       <div className="mini-bottom">
-        <span>DESIGNED FOR LIVING</span>
+        <span>GÂNDITĂ PENTRU A FI LOCUITĂ</span>
         <span>01 — 03</span>
       </div>
     </div>

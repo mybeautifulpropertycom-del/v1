@@ -13,34 +13,34 @@ test("viewing calendar selects a day, blocks past days, keeps focus in the modal
   });
   await page.goto("/templates/editorial");
   const trigger = page.getByRole("button", {
-    name: "Arrange a viewing",
+    name: "Programează o vizionare",
     exact: true,
   });
   await trigger.click();
-  const dialog = page.getByRole("dialog", { name: /Let’s meet/ });
+  const dialog = page.getByRole("dialog", { name: /Să ne întâlnim/ });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByLabel("Full name")).toBeFocused();
+  await expect(dialog.getByLabel("Nume complet")).toBeFocused();
   await expect(
-    dialog.getByRole("button", { name: "Previous month" }),
+    dialog.getByRole("button", { name: "Luna anterioară" }),
   ).toBeDisabled();
   await expect(
     dialog.getByRole("button", {
-      name: "Friday, October 23, 2026",
+      name: "vineri, 23 octombrie 2026",
       exact: true,
     }),
   ).toBeDisabled();
-  await dialog.getByLabel("Full name").fill("Alex Morgan");
-  await dialog.getByLabel("Phone number").fill("+1 (202) 555-0100");
-  await dialog.getByLabel("Email address").fill("alex@example.com");
+  await dialog.getByLabel("Nume complet").fill("Alex Popescu");
+  await dialog.getByLabel("Număr de telefon").fill("+1 (202) 555-0100");
+  await dialog.getByLabel("Adresă de e-mail").fill("alex@example.com");
   await dialog
-    .getByRole("button", { name: "Request a private viewing" })
+    .getByRole("button", { name: "Solicită o vizionare privată" })
     .click();
   await expect(dialog.getByRole("status")).toHaveText(
-    "Choose a preferred date in the calendar.",
+    "Alege data preferată în calendar.",
   );
-  await dialog.getByRole("button", { name: "Next month" }).click();
+  await dialog.getByRole("button", { name: "Luna următoare" }).click();
   const day = dialog.getByRole("button", {
-    name: "Sunday, November 1, 2026",
+    name: "duminică, 1 noiembrie 2026",
     exact: true,
   });
   await day.click();
@@ -48,22 +48,22 @@ test("viewing calendar selects a day, blocks past days, keeps focus in the modal
   await day.press("ArrowRight");
   await expect(
     dialog.getByRole("button", {
-      name: "Monday, November 2, 2026",
+      name: "luni, 2 noiembrie 2026",
       exact: true,
     }),
   ).toBeFocused();
   const submit = dialog.getByRole("button", {
-    name: "Request a private viewing",
+    name: "Solicită o vizionare privată",
   });
   await submit.click();
   await expect(dialog.getByRole("status")).toHaveText(
-    "This is a preview. No viewing request has been sent.",
+    "Aceasta este o previzualizare. Nu a fost trimisă nicio cerere de vizionare.",
   );
   expect(submissions).toBe(0);
   await submit.focus();
   await page.keyboard.press("Tab");
   await expect(
-    dialog.getByRole("button", { name: "Close viewing request" }),
+    dialog.getByRole("button", { name: "Închide cererea de vizionare" }),
   ).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
@@ -76,24 +76,24 @@ test("calendar handles December to January and the maximum year of requests", as
   await page.clock.install({ time: new Date("2026-12-31T16:00:00Z") });
   await page.goto("/templates/editorial");
   await page
-    .getByRole("button", { name: "Arrange a viewing", exact: true })
+    .getByRole("button", { name: "Programează o vizionare", exact: true })
     .click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: "Next month" }).click();
+  await dialog.getByRole("button", { name: "Luna următoare" }).click();
   await expect(
     dialog.getByRole("button", {
-      name: "Friday, January 1, 2027",
+      name: "vineri, 1 ianuarie 2027",
       exact: true,
     }),
   ).toBeEnabled();
   for (let i = 0; i < 11; i++)
-    await dialog.getByRole("button", { name: "Next month" }).click();
+    await dialog.getByRole("button", { name: "Luna următoare" }).click();
   await expect(
-    dialog.getByRole("button", { name: "Next month" }),
+    dialog.getByRole("button", { name: "Luna următoare" }),
   ).toBeDisabled();
   await expect(
     dialog.getByRole("button", {
-      name: "Friday, December 31, 2027",
+      name: "vineri, 31 decembrie 2027",
       exact: true,
     }),
   ).toBeEnabled();
@@ -124,7 +124,7 @@ test("the pinned photographs change on scroll and remain separate from the compl
   });
   await expect(page.locator(".estate-scene.is-active img")).toHaveAttribute(
     "alt",
-    /view 2$/,
+    /fotografia 2$/,
   );
   await expect(page.locator(".estate-scroll-sticky")).toHaveCSS(
     "position",
@@ -143,12 +143,12 @@ test("the pinned photographs change on scroll and remain separate from the compl
   await expect(scroll).not.toContainText("SCROLL TO DISCOVER");
   await expect(page.locator(".estate-gallery-grid > button")).toHaveCount(40);
   const photo = page.getByRole("button", {
-    name: "Enlarge property photo 3",
+    name: "Mărește fotografia proprietății 3",
     exact: true,
   });
   await photo.click();
   await expect(
-    page.getByRole("dialog", { name: "Property photo gallery" }),
+    page.getByRole("dialog", { name: "Galeria foto a proprietății" }),
   ).toBeVisible();
   await expect(page.locator(".lightbox > span")).toHaveText("3 / 40");
   await page.keyboard.press("Escape");
@@ -192,7 +192,7 @@ test("mobile pins 20 photographs while reduced motion keeps normal scrolling", a
     }, index);
     await expect(page.locator(".estate-scene.is-active img")).toHaveAttribute(
       "alt",
-      new RegExp(`view ${index + 1}$`),
+      new RegExp(`fotografia ${index + 1}$`),
     );
     await expect(page.locator(".estate-scroll-sticky")).toHaveCSS(
       "position",
@@ -214,19 +214,19 @@ test("mobile pins 20 photographs while reduced motion keeps normal scrolling", a
     (await page.locator(".estate-scroll-sticky").boundingBox())!.y,
   ).toBeLessThan(0);
   await page
-    .getByRole("button", { name: "Arrange a viewing", exact: true })
+    .getByRole("button", { name: "Programează o vizionare", exact: true })
     .click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   expect(
     await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth),
   ).toBe(true);
-  await dialog.getByRole("button", { name: "Next month" }).click();
+  await dialog.getByRole("button", { name: "Luna următoare" }).click();
   await dialog
-    .getByRole("button", { name: "Request a private viewing" })
+    .getByRole("button", { name: "Solicită o vizionare privată" })
     .scrollIntoViewIfNeeded();
   await expect(
-    dialog.getByRole("button", { name: "Request a private viewing" }),
+    dialog.getByRole("button", { name: "Solicită o vizionare privată" }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   expect(

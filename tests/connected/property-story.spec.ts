@@ -24,12 +24,12 @@ test("Tell the story notes are saved before generation and updated notes refresh
   });
   for (let i = 0; i < notes.length; i++) {
     await page.goto(`/dashboard/properties/${id}`);
-    await page.getByLabel("Description", { exact: false }).fill(notes[i]);
+    await page.getByLabel("Descriere", { exact: false }).fill(notes[i]);
     await page
-      .getByRole("button", { name: "Save changes", exact: true })
+      .getByRole("button", { name: "Salvează modificările", exact: true })
       .click();
     await expect(
-      page.getByText("Your changes are saved.", { exact: true }),
+      page.getByText("Modificările au fost salvate.", { exact: true }),
     ).toBeVisible();
     expect(state.property.description).toBe(notes[i]);
     await page.goto(`/preview/${id}`);
@@ -64,18 +64,22 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
   await expect(
     page.getByText("A story of its own.", { exact: true }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
   await expect(
-    page.getByText("Your changes are saved.", { exact: true }),
+    page.getByText("Modificările au fost salvate.", { exact: true }),
   ).toBeVisible();
   expect(state.property.description).toBe(notes);
   expect(state.property.website_copy?.description).toBe(draft.description);
   expect(state.property.website_copy?.content.introBody).toBe(
     draft.content.introBody,
   );
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
   await expect(
-    page.getByRole("button", { name: "Save changes", exact: true }),
+    page.getByRole("button", { name: "Salvează modificările", exact: true }),
   ).toBeEnabled();
   await page.goto(`/preview/${id}`);
   await expect(page.locator(".heritage-story-copy > p")).toHaveText(
@@ -91,15 +95,15 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
     draft.content.closingBody,
   );
   expect(requests).toBe(1);
-  await page.getByRole("button", { name: "Edit on page" }).click();
+  await page.getByRole("button", { name: "Editează pe pagină" }).click();
   const custom =
     "Your personal introduction belongs right here. Visit to explore this home for yourself.";
   await page
-    .getByRole("textbox", { name: "Edit Introduction text", exact: true })
+    .getByRole("textbox", { name: "Editează Textul introducerii", exact: true })
     .fill(custom);
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
-    page.getByText("Your website changes are saved.", { exact: true }),
+    page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
@@ -110,13 +114,13 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
   );
   expect(requests).toBe(1);
   expect(state.property.description).toBe(notes);
-  await page.getByRole("button", { name: "Edit on page" }).click();
+  await page.getByRole("button", { name: "Editează pe pagină" }).click();
   await page
-    .getByRole("textbox", { name: "Edit property location", exact: true })
+    .getByRole("textbox", { name: "Editează adresa proprietății", exact: true })
     .fill("Portland, OR");
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
-    page.getByText("Your website changes are saved.", { exact: true }),
+    page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   expect(state.property.location).toBe("Portland, OR");
   expect(requests).toBe(2);
@@ -140,12 +144,12 @@ test("private preview prepares text in place but only saves it on request", asyn
     draft.description,
   );
   await expect(
-    page.getByRole("button", { name: "Save website" }),
+    page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
   expect(JSON.stringify(state.property)).toBe(original);
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
-    page.getByText("Your website changes are saved.", { exact: true }),
+    page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   expect(state.property.website_copy?.description).toBe(draft.description);
   expect(state.property.status).toBe("draft");
@@ -167,8 +171,8 @@ test("choosing a design saves photos and prepares the page without a separate AI
     });
   });
   await page.goto(`/dashboard/properties/${id}`);
-  await page.getByRole("button", { name: "Add your photos" }).click();
-  await page.getByRole("button", { name: "Choose your design" }).click();
+  await page.getByRole("button", { name: "Adaugă fotografiile" }).click();
+  await page.getByRole("button", { name: "Alege designul" }).click();
   await expect(page.locator(".template-choices")).toBeVisible();
   expect(state.property.website_copy?.description).toBe(
     storyFixture(state.property).description,
@@ -190,26 +194,28 @@ test("missing configuration keeps the draft saved, shows a useful error, and all
     }),
   );
   await page.goto(`/dashboard/properties/${id}`);
-  await page.getByLabel(/^Address/).fill("Austin, TX");
-  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByLabel(/^Adresă/).fill("Austin, TX");
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
   await expect(page.locator(".editor-error")).toContainText(
     "AI_NOT_CONFIGURED",
   );
   await expect(
-    page.getByRole("button", { name: "Save changes", exact: true }),
+    page.getByRole("button", { name: "Salvează modificările", exact: true }),
   ).toBeEnabled();
   expect(state.property.location).toBe("Austin, TX");
   expect(state.property.status).toBe("draft");
   expect(state.property.website_copy).toBeUndefined();
-  await page.getByRole("button", { name: "Continue with my own text" }).click();
+  await page.getByRole("button", { name: "Continuă cu textul meu" }).click();
   await expect(
-    page.getByText("Your changes are saved.", { exact: true }),
+    page.getByText("Modificările au fost salvate.", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Add your photos" }).click();
-  await page.getByRole("button", { name: "Choose your design" }).click();
+  await page.getByRole("button", { name: "Adaugă fotografiile" }).click();
+  await page.getByRole("button", { name: "Alege designul" }).click();
   await expect(page.locator(".template-choices")).toBeVisible();
   await page
-    .getByRole("button", { name: "Open website editor", exact: true })
+    .getByRole("button", { name: "Deschide editorul site-ului", exact: true })
     .click();
   await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
   await expect(page.locator(".inline-edit-toolbar")).toBeVisible();
@@ -240,7 +246,9 @@ test("private preview reports a platform timeout and lets the agent retry in pla
   await expect(page.locator(".inline-edit-error")).toContainText(
     "Preparing the website took too long.",
   );
-  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Încearcă din nou", exact: true })
+    .click();
   await expect(page.locator(".heritage-story-copy > p")).toHaveText(
     storyFixture(state.property).description,
   );
@@ -258,7 +266,7 @@ test("a network failure ends loading and preserves the saved listing", async ({
     "We could not reach the writing service.",
   );
   await expect(
-    page.getByRole("button", { name: "Edit on page" }),
+    page.getByRole("button", { name: "Editează pe pagină" }),
   ).toBeEnabled();
   expect(JSON.stringify(state.property)).toBe(original);
 });
@@ -283,9 +291,9 @@ test("Editorial displays independent introduction, main story and invitation par
   await expect(page.locator(".estate-invitation-copy")).toHaveText(
     draft.content.closingBody,
   );
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
-    page.getByText("Your website changes are saved.", { exact: true }),
+    page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(page.locator(".estate-details-copy > p")).toHaveText(
@@ -313,15 +321,15 @@ test("Atelier uses separate photo-based paragraphs and saves inline section edit
   await expect(page.locator(".atelier-details-copy > p")).toHaveCount(0);
   await page
     .getByRole("textbox", {
-      name: "Edit Main section description",
+      name: "Editează Descrierea secțiunii principale",
       exact: true,
     })
     .fill(
       "A personal perspective on this home. Come and discover it for yourself.",
     );
-  await page.getByRole("button", { name: "Save website" }).click();
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
-    page.getByText("Your website changes are saved.", { exact: true }),
+    page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(page.locator(".atelier-story-copy > p")).toHaveText(

@@ -8,12 +8,12 @@ export default function Page() {
     <>
       <div className="page-heading compact">
         <div>
-          <span className="eyebrow">YOUR PROPERTIES, IN MOTION</span>
+          <span className="eyebrow">PROPRIETĂȚILE TALE PRIND VIAȚĂ</span>
           <h1>
-            A story worth <em>watching.</em>
+            O poveste care merită <em>văzută.</em>
           </h1>
           <p>
-            One cinematic walkthrough video included with every published property.
+            Un film de prezentare inclus pentru fiecare proprietate publicată.
           </p>
         </div>
       </div>
@@ -31,22 +31,22 @@ export default function Page() {
               <div>
                 <span className="eyebrow">
                   {property.status === "published"
-                    ? "YOUR PROPERTY FILM"
-                    : "BRING YOUR PROPERTY TO LIFE"}
+                    ? "FILMUL PROPRIETĂȚII TALE"
+                    : "DĂ VIAȚĂ PROPRIETĂȚII TALE"}
                 </span>
-                <h2>{property.title || "Your next property"}</h2>
+                <h2>{property.title || "Următoarea ta proprietate"}</h2>
                 <p>
                   {property.status === "published"
-                    ? "Open your website editor to view your cinematic walkthrough or follow its progress."
-                    : "Publish property to generate video. Turn your saved photographs into a presentation that helps buyers imagine being there."}
+                    ? "Deschide editorul site-ului pentru a vedea filmul sau a urmări progresul."
+                    : "Publică proprietatea pentru a genera filmul. Transformă fotografiile salvate într-o prezentare pentru viitorii cumpărători."}
                 </p>
                 <Link
                   className="button primary"
                   href={`/preview/${property.id}${property.status === "published" ? "#film" : ""}`}
                 >
                   {property.status === "published"
-                    ? "View website & video"
-                    : "Publish Property"}
+                    ? "Vezi site-ul și filmul"
+                    : "Publică proprietatea"}
                   <ArrowUpRight size={16} />
                 </Link>
               </div>
@@ -56,14 +56,14 @@ export default function Page() {
       ) : (
         <div className="empty-state">
           <Film size={35} />
-          <h2>Your next story starts with a property.</h2>
+          <h2>Următoarea poveste începe cu o proprietate.</h2>
           <p>
-            Add the details and photographs, then preview your website before
-            publishing.
+            Adaugă detaliile și fotografiile, apoi previzualizează site-ul
+            înainte de publicare.
           </p>
           <Link className="button primary" href="/dashboard/properties/new">
             <Plus size={16} />
-            Add a property
+            Adaugă o proprietate
           </Link>
         </div>
       )}

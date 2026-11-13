@@ -22,13 +22,16 @@ export async function POST(request: Request) {
     try {
       id = JSON.parse(await readLimitedBody(request, 1024)).propertyId;
     } catch {
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     }
     if (typeof id !== "string" || !UUID.test(id))
-      throw new BillingError("Choose a saved property.", 400);
+      throw new BillingError("Alege o proprietate salvată.", 400);
     const config = stripeConfiguration();
     if (!config.live)
-      throw new BillingError("A paid property is required.", 400);
+      throw new BillingError(
+        "Este necesară o proprietate cu pachet achitat.",
+        400,
+      );
     const { data, error } = await billingDatabase(config).rpc(
       "retry_property_video",
       {
@@ -38,11 +41,11 @@ export async function POST(request: Request) {
     );
     if (error)
       throw new BillingError(
-        "Your video could not be queued. Please try again.",
+        "Filmul nu a putut fi adăugat în coadă. Încearcă din nou.",
       );
     if (!data)
       throw new BillingError(
-        "Retry is unavailable. Wait one minute after a failure; after three attempts, please contact support.",
+        "Reîncercarea nu este disponibilă. Așteaptă un minut după o eroare; după trei încercări, contactează asistența.",
         409,
       );
     if (videoEnabled()) after(wakeVideoWorker);

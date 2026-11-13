@@ -28,12 +28,12 @@ export function PropertyPrintControls({ publicUrl }: { publicUrl: string }) {
       ).some((image) => !image.complete || image.naturalWidth === 0);
       if (missing)
         setNotice(
-          "Some photos have not loaded. You can cancel printing and try again when they are available.",
+          "Unele fotografii nu s-au încărcat. Poți anula imprimarea și reîncerca după ce devin disponibile.",
         );
       window.print();
     } catch {
       setNotice(
-        "Printing could not open. Use your browser’s Print menu, then choose Save as PDF.",
+        "Imprimarea nu a putut fi deschisă. Folosește meniul Imprimare al browserului și alege Salvează ca PDF.",
       );
     } finally {
       clearTimeout(timer);
@@ -43,10 +43,10 @@ export function PropertyPrintControls({ publicUrl }: { publicUrl: string }) {
   return (
     <div className="property-print-toolbar">
       <div>
-        <strong>Your property, ready to share</strong>
+        <strong>Proprietatea ta, pregătită pentru distribuire</strong>
         <p>
-          Choose “Save as PDF” as the destination in your browser’s print
-          dialog. Video and interactive forms are available on the website.
+          Alege „Salvează ca PDF” în fereastra de imprimare a browserului.
+          Filmul și formularele interactive sunt disponibile pe site.
         </p>
         {notice && <p role="status">{notice}</p>}
       </div>
@@ -57,10 +57,10 @@ export function PropertyPrintControls({ publicUrl }: { publicUrl: string }) {
         disabled={busy}
       >
         <Printer size={16} />
-        {busy ? "Preparing photos…" : "Print / Save as PDF"}
+        {busy ? "Se pregătesc fotografiile…" : "Imprimă / Salvează ca PDF"}
       </button>
       <a className="text-button" href={publicUrl}>
-        View published website
+        Vezi site-ul publicat
       </a>
     </div>
   );

@@ -41,7 +41,7 @@ test("unread badge refreshes, read status survives reload, and deleting a lead r
   await expect(page.locator(".inquiry-card")).toHaveCount(2);
   page.once("dialog", (dialog) => dialog.accept());
   await page
-    .getByRole("button", { name: "Delete lead from New Buyer", exact: true })
+    .getByRole("button", { name: "Șterge mesajul de la New Buyer", exact: true })
     .click();
   await expect(page.locator(".inbox-unread-badge")).toHaveCount(0);
   await expect(page.locator(".inquiry-card")).toHaveCount(1);

@@ -38,6 +38,8 @@ beforeEach(() => {
   stripeCalls = [];
   keys = [];
   order = {
+    amount: 24900,
+    currency: "ron",
     id: orderId,
     owner_id: owner,
     property_id: propertyId,
@@ -136,8 +138,8 @@ const payment = (overrides = {}) => ({
   object: "checkout.session",
   livemode: false,
   mode: "payment",
-  amount_total: 9700,
-  currency: "usd",
+  amount_total: 24900,
+  currency: "ron",
   payment_status: "paid",
   client_reference_id: orderId,
   metadata: {
@@ -187,7 +189,7 @@ test("checkout authenticates ownership and rejects live keys without creating a 
   assert.equal((await CHECKOUT(request())).status, 503);
   assert.equal(stripeCalls.length, 0);
 });
-test("checkout fixes the USD price server-side and reuses a session across retries", async () => {
+test("checkout fixes the RON price server-side and reuses a session across retries", async () => {
   const response = await CHECKOUT(
     request({ propertyId, amount: 1, currency: "eur", ownerId: "attacker" }),
   );
@@ -197,8 +199,8 @@ test("checkout fixes the USD price server-side and reuses a session across retri
     "https://checkout.stripe.com/c/pay/cs_test_one",
   );
   const params = stripeCalls[0];
-  assert.equal(params.get("line_items[0][price_data][unit_amount]"), "9700");
-  assert.equal(params.get("line_items[0][price_data][currency]"), "usd");
+  assert.equal(params.get("line_items[0][price_data][unit_amount]"), "24900");
+  assert.equal(params.get("line_items[0][price_data][currency]"), "ron");
   assert.equal(params.get("mode"), "payment");
   assert.equal(params.get("adaptive_pricing[enabled]"), "false");
   assert.equal(params.get("metadata[owner_id]"), owner);
@@ -282,4 +284,33 @@ test("test receipts survive property deletion without recreating the property", 
   assert.equal((await WEBHOOK(webhook())).status, 200);
   assert.equal(order.status, "paid");
   assert.equal(order.property_id, null);
+});
+
+test("old USD checkout cannot be offered as a new 249 RON purchase", async () => {
+  order.amount = 9700;
+  order.currency = "usd";
+  const response = await CHECKOUT(request({ propertyId }));
+  assert.equal(response.status, 409);
+  assert.equal(stripeCalls.length, 0);
+});
+
+test("historical USD receipts remain valid only against the exact stored order", async () => {
+  order.amount = 9700;
+  order.currency = "usd";
+  assert.equal(
+    (await WEBHOOK(webhook(payment({ amount_total: 24900, currency: "ron" }))))
+      .status,
+    400,
+  );
+  assert.equal(
+    (await WEBHOOK(webhook(payment({ amount_total: 9700, currency: "ron" }))))
+      .status,
+    400,
+  );
+  assert.equal(
+    (await WEBHOOK(webhook(payment({ amount_total: 9700, currency: "usd" }))))
+      .status,
+    200,
+  );
+  assert.equal(order.status, "paid");
 });

@@ -20,17 +20,14 @@ export default async function Page({
         ...data.properties[0],
         location: TEMPLATE_LOCATION,
         google_place_id: null,
-        description: data.properties[0].description.replaceAll(
-          "Beverly Hills",
-          "Santa Cruz",
-        ),
+        description: data.properties[0].description,
         images: templatePhotos,
         template: selectedTemplate.id,
       }}
       profile={{
         ...data.profile,
         agency: selectedTemplate.name,
-        phone: "+1 (209) 274-8650",
+        phone: "+40 700 000 000",
         avatar_url: "/images/template-agent.jpg",
       }}
       film={{

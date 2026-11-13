@@ -20,14 +20,17 @@ export async function POST(request: Request) {
   ]);
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ") || authorization.length > 10000)
-    return json({ error: "Sign in to create a property story." }, 401);
+    return json(
+      { error: "Autentifică-te pentru a pregăti textele proprietății." },
+      401,
+    );
   const token = authorization.slice(7);
   const supabase = serverSupabase(token, deadline);
   if (!supabase)
     return json(
       {
         error:
-          "Photo-based writing is available in a connected agent workspace.",
+          "Redactarea pe baza fotografiilor este disponibilă într-un cont de agent conectat.",
       },
       503,
     );
@@ -40,13 +43,13 @@ export async function POST(request: Request) {
     if (authError?.name === "AuthRetryableFetchError")
       throw new PropertyStoryError("AI_UNAVAILABLE", 503);
     if (authError || !user)
-      return json({ error: "Please sign in again." }, 401);
+      return json({ error: "Autentifică-te din nou." }, 401);
     const apiKey = process.env.OPENAI_API_KEY?.trim();
     if (!apiKey)
       return json(
         {
           error:
-            "Automatic website descriptions are not enabled yet. Your property details are saved. Please contact support.",
+            "Descrierile automate nu sunt încă activate. Detaliile proprietății sunt salvate. Contactează asistența.",
           code: "AI_NOT_CONFIGURED",
         },
         503,
@@ -74,13 +77,13 @@ export async function POST(request: Request) {
     try {
       id = JSON.parse(body)?.propertyId;
     } catch {
-      return json({ error: "Choose a saved property." }, 400);
+      return json({ error: "Alege o proprietate salvată." }, 400);
     }
     if (
       typeof id !== "string" ||
       !/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)
     )
-      return json({ error: "Choose a saved property." }, 400);
+      return json({ error: "Alege o proprietate salvată." }, 400);
     const { data, error } = await supabase
       .from("properties")
       .select("*")
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
       throw new PropertyStoryError("AI_UNAVAILABLE", 503);
     if (error || !data)
       return json(
-        { error: "This property is not available in your workspace." },
+        { error: "Proprietatea nu este disponibilă în contul tău." },
         404,
       );
     const property = data as Property;
@@ -104,7 +107,7 @@ export async function POST(request: Request) {
       return json(
         {
           error:
-            "Upload and save this property's photos before creating its story.",
+            "Încarcă și salvează fotografiile proprietății înainte de a pregăti textele.",
         },
         400,
       );
@@ -117,7 +120,7 @@ export async function POST(request: Request) {
       return json(
         {
           error:
-            "Photo-based writing is not fully configured yet. Your property can still be edited manually.",
+            "Redactarea pe baza fotografiilor nu este complet configurată. Poți edita proprietatea manual.",
         },
         503,
       );
@@ -126,8 +129,8 @@ export async function POST(request: Request) {
         {
           error:
             reservation === "daily_limit"
-              ? "You’ve reached today's limit of five stories. Please try tomorrow."
-              : "Please wait a minute before creating another story.",
+              ? "Ai atins limita de cinci generări de astăzi. Încearcă din nou mâine."
+              : "Așteaptă un minut înainte de o nouă generare.",
         },
         429,
       );

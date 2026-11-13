@@ -1,3 +1,4 @@
+import { supportedPackage } from "@/lib/stripe-server";
 import { videoEnabled } from "@/lib/video-service";
 import { after } from "next/server";
 import { wakeVideoWorker } from "@/lib/higgsfield-worker";
@@ -58,8 +59,7 @@ export async function POST(request: Request) {
     if (
       session.livemode ||
       session.mode !== "payment" ||
-      session.amount_total !== PROPERTY_PACKAGE_CENTS ||
-      session.currency !== PROPERTY_PACKAGE_CURRENCY ||
+      !supportedPackage(session.amount_total, session.currency) ||
       session.client_reference_id !== order_id ||
       !UUID.test(order_id || "") ||
       !UUID.test(property_id || "") ||
@@ -77,6 +77,8 @@ export async function POST(request: Request) {
     // A property/account may have been deleted while Checkout was open. Keep
     // the test receipt, without ever recreating or publishing that property.
     if (
+      order.amount !== session.amount_total ||
+      order.currency !== session.currency ||
       (order.property_id && order.property_id !== property_id) ||
       (order.owner_id && order.owner_id !== owner_id)
     )

@@ -76,7 +76,7 @@ export function PropertyPhotoDialog({
     <dialog
       ref={ref}
       className="property-photo-dialog lightbox"
-      aria-label="Property photo gallery"
+      aria-label="Galeria foto a proprietății"
       onPointerDown={(e) => {
         if (e.isPrimary) suppressClick.current = false;
         if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
@@ -153,7 +153,7 @@ export function PropertyPhotoDialog({
       <button
         type="button"
         className="lightbox-close"
-        aria-label="Close gallery"
+        aria-label="Închide galeria"
         onClick={onClose}
       >
         <X size={26} />
@@ -161,7 +161,7 @@ export function PropertyPhotoDialog({
       <button
         type="button"
         className="lightbox-prev"
-        aria-label="Previous photo"
+        aria-label="Fotografia anterioară"
         onClick={() => navigate(-1)}
       >
         <ChevronLeft size={30} />
@@ -208,12 +208,12 @@ export function PropertyPhotoDialog({
         sizes="100vw"
         loading="eager"
         src={images[index]}
-        alt={`${title} — view ${index + 1}`}
+        alt={`${title} — fotografia ${index + 1}`}
       />
       <button
         type="button"
         className="lightbox-next"
-        aria-label="Next photo"
+        aria-label="Fotografia următoare"
         onClick={() => navigate(1)}
       >
         <ChevronRight size={30} />

@@ -14,7 +14,7 @@ export function OwnerVideoDownload({ propertyId }: { propertyId: string }) {
       const session = client
         ? (await client.auth.getSession()).data.session
         : null;
-      if (!session) throw new Error("Sign in to download your video.");
+      if (!session) throw new Error("Autentifică-te pentru a descărca filmul.");
       const response = await fetch("/api/video/download", {
         method: "POST",
         headers: {
@@ -26,7 +26,7 @@ export function OwnerVideoDownload({ propertyId }: { propertyId: string }) {
       });
       const result = await response.json();
       if (!response.ok)
-        throw new Error(result.error || "Download unavailable.");
+        throw new Error(result.error || "Descărcare indisponibilă.");
       const link = document.createElement("a");
       link.href = result.url;
       link.download = "my-beautiful-property.mp4";
@@ -38,7 +38,7 @@ export function OwnerVideoDownload({ propertyId }: { propertyId: string }) {
       setError(
         e instanceof Error
           ? e.message
-          : "Download unavailable. Please try again.",
+          : "Descărcare indisponibilă. Încearcă din nou.",
       );
     } finally {
       setBusy(false);
@@ -48,7 +48,7 @@ export function OwnerVideoDownload({ propertyId }: { propertyId: string }) {
     <span className="delete-action-wrap">
       <button className="button secondary" onClick={download} disabled={busy}>
         <Download size={15} />
-        {busy ? "Preparing download…" : "Download video"}
+        {busy ? "Se pregătește descărcarea…" : "Descarcă filmul"}
       </button>
       {error && <small role="alert">{error}</small>}
     </span>

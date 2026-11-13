@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
 import { MAX_PROFILE_BIO_LENGTH, profileErrors } from "@/lib/model";
-import { en } from "@/i18n/en";
+import { ro } from "@/i18n/ro";
 
 export function ProfileEditor() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export function ProfileEditor() {
     const timer = setTimeout(() => router.push("/dashboard"), 3000);
     return () => clearTimeout(timer);
   }, [redirecting, router]);
-  const t = en.profile;
+  const t = ro.profile;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (uploading || busy || redirecting) return;
@@ -50,7 +50,7 @@ export function ProfileEditor() {
       if (firstCompletion) setRedirecting(true);
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Your profile could not be saved.",
+        e instanceof Error ? e.message : "Profilul nu a putut fi salvat.",
       );
     } finally {
       setBusy(false);
@@ -82,7 +82,7 @@ export function ProfileEditor() {
             </span>
             <div>
               <label>
-                Profile photo
+                Fotografie de profil
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -101,7 +101,7 @@ export function ProfileEditor() {
                       setError(
                         e instanceof Error
                           ? e.message
-                          : "Your photo could not be uploaded.",
+                          : "Fotografia nu a putut fi încărcată.",
                       );
                     } finally {
                       setUploading(false);
@@ -112,8 +112,8 @@ export function ProfileEditor() {
               </label>
               <small>
                 {uploading
-                  ? "Uploading your photo…"
-                  : "JPG, PNG or WebP, up to 10 MB. Save changes to update your photo."}
+                  ? "Se încarcă fotografia…"
+                  : "JPG, PNG sau WebP, maximum 10 MB. Salvează modificările pentru a actualiza fotografia."}
               </small>
               {form.avatar_url && (
                 <button
@@ -125,7 +125,7 @@ export function ProfileEditor() {
                     setSaved(false);
                   }}
                 >
-                  Remove photo
+                  Elimină fotografia
                 </button>
               )}
             </div>
@@ -137,7 +137,7 @@ export function ProfileEditor() {
                 required
                 autoComplete="name"
                 maxLength={100}
-                placeholder="Your name"
+                placeholder="Numele tău"
                 value={form.name}
                 onChange={(e) => {
                   setSaved(false);
@@ -150,7 +150,7 @@ export function ProfileEditor() {
               <input
                 autoComplete="organization"
                 maxLength={120}
-                placeholder="Your brokerage"
+                placeholder="Agenția ta imobiliară"
                 value={form.agency}
                 onChange={(e) => setForm({ ...form, agency: e.target.value })}
               />
@@ -186,7 +186,7 @@ export function ProfileEditor() {
                 maxLength={MAX_PROFILE_BIO_LENGTH}
                 aria-describedby="profile-bio-hint"
                 aria-invalid={form.bio.length > MAX_PROFILE_BIO_LENGTH}
-                placeholder="A few words about you and your approach..."
+                placeholder="Câteva cuvinte despre tine și felul în care lucrezi..."
                 value={form.bio}
                 onChange={(e) => {
                   setSaved(false);
@@ -194,10 +194,10 @@ export function ProfileEditor() {
                 }}
               />
               <small id="profile-bio-hint">
-                {form.bio.length} / {MAX_PROFILE_BIO_LENGTH} characters.{" "}
+                {form.bio.length} / {MAX_PROFILE_BIO_LENGTH} caractere.{" "}
                 {form.bio.length > MAX_PROFILE_BIO_LENGTH
-                  ? "Please shorten your introduction before saving."
-                  : "Keep it warm, personal, and true."}
+                  ? "Scurtează prezentarea înainte de salvare."
+                  : "Scrie simplu, personal și sincer."}
               </small>
             </label>
           </div>
@@ -209,32 +209,34 @@ export function ProfileEditor() {
           <div className="form-actions">
             <span>
               <ShieldCheck size={15} />
-              Your public contact details
+              Datele tale publice de contact
             </span>
             <button
               className="button primary"
               disabled={busy || uploading || redirecting}
             >
               <Save size={16} />
-              {busy ? en.common.saving : en.common.save}
+              {busy ? ro.common.saving : ro.common.save}
             </button>
           </div>
           {saved && !redirecting && (
             <Link className="success-next" href="/dashboard/properties/new">
-              Your profile is ready. Add your first property{" "}
+              Profilul este pregătit. Adaugă prima proprietate{" "}
               <ArrowRight size={17} />
             </Link>
           )}
         </form>
         <aside>
           <div className="profile-preview">
-            <span className="eyebrow">A FAMILIAR FACE ON EVERY PAGE</span>
+            <span className="eyebrow">
+              O PREZENȚĂ FAMILIARĂ PE FIECARE PAGINĂ
+            </span>
             <div className="profile-preview-avatar">
               <AgentAvatar profile={form} />
             </div>
-            <h2>{form.name || "Your name here"}</h2>
-            <span>{form.agency || "Your brokerage"}</span>
-            <p>{form.bio || "Your personal introduction will appear here."}</p>
+            <h2>{form.name || "Numele tău aici"}</h2>
+            <span>{form.agency || "Agenția ta imobiliară"}</span>
+            <p>{form.bio || "Prezentarea ta va apărea aici."}</p>
             <div className="preview-contact">
               <span>
                 <Mail size={16} />
@@ -242,7 +244,7 @@ export function ProfileEditor() {
               </span>
               <span>
                 <Phone size={16} />
-                {form.phone || "Your phone number"}
+                {form.phone || "Numărul tău de telefon"}
               </span>
             </div>
           </div>

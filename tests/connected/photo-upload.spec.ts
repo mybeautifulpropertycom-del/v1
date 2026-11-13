@@ -41,7 +41,7 @@ test("uploads JPEG, PNG and WebP as resized WebP with visible progress and prese
     );
   });
   await page.goto(`/dashboard/properties/${id}`);
-  await page.getByRole("button", { name: /Photography/ }).click();
+  await page.getByRole("button", { name: /Fotografii/ }).click();
   await page.locator("input[type=file]").setInputFiles([
     { name: "exterior.jpg", mimeType: "image/jpeg", buffer },
     { name: "interior.png", mimeType: "image/png", buffer: png },
@@ -49,12 +49,12 @@ test("uploads JPEG, PNG and WebP as resized WebP with visible progress and prese
   ]);
   await expect.poll(() => uploaded).toBe(1);
   await expect(
-    page.getByRole("progressbar", { name: "Uploading photographs" }),
+    page.getByRole("progressbar", { name: "Se încarcă fotografiile" }),
   ).toBeVisible();
   expect(
     Number(await page.getByRole("progressbar").getAttribute("aria-valuenow")),
   ).toBeLessThan(100);
-  await expect(page.getByText("0 of 3 photos uploaded")).toBeVisible();
+  await expect(page.getByText("0 din 3 fotografii încărcate")).toBeVisible();
   release!();
   await expect(page.locator(".image-editor-card")).toHaveCount(3);
   await expect(page.getByRole("progressbar")).toHaveCount(0);
@@ -102,12 +102,14 @@ test("40-photo galleries use responsive lazy images and the pinned story only mo
   );
   await expect(page.locator(".estate-scene img")).toHaveCount(2);
   await page.goto(`/dashboard/properties/${id}`);
-  await page.getByRole("button", { name: /Photography/ }).click();
-  await expect(page.locator(".upload-area")).toContainText("40/40 photos");
+  await page.getByRole("button", { name: /Fotografii/ }).click();
+  await expect(page.locator(".upload-area")).toContainText("40/40 fotografii");
   await page
     .locator("input[type=file]")
     .setInputFiles("public/images/villa.jpg");
   await expect(
-    page.getByText("You can add up to 40 photos per property."),
+    page.getByText(
+      "Poți adăuga până la 40 de fotografii pentru fiecare proprietate.",
+    ),
   ).toBeVisible();
 });

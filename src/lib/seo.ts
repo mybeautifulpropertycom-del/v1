@@ -3,9 +3,9 @@ import { publicPath, type PublicProperty } from "./model";
 
 export const SITE_NAME = "My Beautiful Property";
 export const HOME_TITLE =
-  "My Beautiful Property - Sell Your Property 10x Faster";
+  "My Beautiful Property — Site-uri și filme de prezentare imobiliară";
 export const HOME_DESCRIPTION =
-  "Sell your property 10x faster using My Beautiful Property app. Add your details, property information and the images. Our app make the rest.";
+  "Creează un site dedicat proprietății tale și un film de prezentare. Adaugă detaliile și fotografiile, alege designul și publică pentru 249 RON.";
 
 export function siteOrigin(): string {
   const url = new URL(
@@ -75,7 +75,7 @@ export function homeMetadata(): Metadata {
     openGraph: {
       type: "website",
       siteName: SITE_NAME,
-      locale: "en_US",
+      locale: "ro_RO",
       title: HOME_TITLE,
       description: HOME_DESCRIPTION,
       url: siteUrl("/"),
@@ -105,7 +105,7 @@ export function propertyMetadata(property: PublicProperty): Metadata {
     openGraph: {
       type: "website",
       siteName: SITE_NAME,
-      locale: "en_US",
+      locale: "ro_RO",
       url,
       title,
       description,
@@ -129,7 +129,7 @@ export function propertyJsonLd(property: PublicProperty) {
     name: property.title,
     description: property.description,
     image: property.images.map((image) => siteUrl(image)),
-    inLanguage: "en-US",
+    inLanguage: "ro-RO",
     about: {
       "@type": "Place",
       name: property.title,

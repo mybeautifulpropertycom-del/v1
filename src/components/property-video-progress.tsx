@@ -29,9 +29,24 @@ export function PropertyVideoStatus({
       )}
       <span>
         Video:{" "}
-        {needsReview ? "needs attention" : working ? "processing" : status}
+        {needsReview
+          ? "necesită verificare"
+          : working
+            ? "în pregătire"
+            : (
+                {
+                  completed: "finalizat",
+                  failed: "eșuat",
+                  cancelled: "anulat",
+                  queued: "în coadă",
+                  processing: "în pregătire",
+                  not_ordered: "necomandat",
+                  delivered: "livrat",
+                  pending: "în așteptare",
+                } as Record<string, string>
+              )[status] || status}
         {progress && progress.total > 0
-          ? ` · ${progress.completed} of ${progress.total} scenes ready`
+          ? ` · ${progress.completed} din ${progress.total} scene pregătite`
           : ""}
       </span>
     </div>
@@ -61,21 +76,21 @@ export function PropertyVideoProgressPanel({
       </div>
       <h3>
         {needsReview
-          ? "Your video needs a status check."
+          ? "Starea filmului necesită o verificare."
           : status === "failed"
-            ? "Your video needs attention."
+            ? "Filmul necesită verificare."
             : status === "queued"
-              ? "Your video is queued."
+              ? "Filmul este în coadă."
               : status === "completed"
-                ? "Your property film is ready."
-                : "Your property, in motion."}
+                ? "Filmul proprietății este gata."
+                : "Proprietatea ta prinde viață."}
       </h3>
       <p>
         {needsReview || status === "failed"
-          ? "Your website remains live. Please contact support if you need help finishing your video."
+          ? "Site-ul rămâne publicat. Contactează asistența dacă ai nevoie de ajutor pentru finalizarea filmului."
           : status === "completed"
-            ? "Your completed film is ready to view."
-            : "Your video will appear here automatically when it’s ready. You can leave this page while we finish it."}
+            ? "Filmul finalizat poate fi vizionat."
+            : "Filmul va apărea automat aici când este gata. Poți părăsi pagina în timp ce îl finalizăm."}
       </p>
       <PropertyVideoStatus
         status={status}
@@ -86,7 +101,7 @@ export function PropertyVideoProgressPanel({
         <div
           className="property-video-progress-track"
           role="progressbar"
-          aria-label="Scenes ready"
+          aria-label="Scene pregătite"
           aria-valuemin={0}
           aria-valuemax={progress.total}
           aria-valuenow={Math.min(progress.completed, progress.total)}
@@ -100,7 +115,7 @@ export function PropertyVideoProgressPanel({
       )}
       {finishing && (
         <p className="property-video-finishing">
-          All scenes are ready. We’re finishing your film.
+          Toate scenele sunt pregătite. Finalizăm filmul.
         </p>
       )}
       {children}

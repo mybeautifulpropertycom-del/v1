@@ -3,9 +3,9 @@ export function FooterBrand() {
     <a
       href="/"
       className="footer-brand"
-      aria-label="My Beautiful Property home"
+      aria-label="Pagina principală My Beautiful Property"
     >
-      <span className="footer-brand-credit">Made beautiful with</span>
+      <span className="footer-brand-credit">Creat cu</span>
       <span className="footer-brand-name">
         <img src="/icon.svg" alt="" width={20} height={20} />
         <strong>my beautiful property.</strong>

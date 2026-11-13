@@ -277,3 +277,12 @@ commit;
 select 'MBP_ACCOUNT_LIFECYCLE_READY' as status;
 `,
 );
+
+const romaniaPackage = await readFile(
+  new URL("202611130001_romania_package.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-romania.sql", import.meta.url),
+  `-- Existing installations only: inspect the current schema first. Safe to rerun.\n-- Does not charge payments or modify paid receipts or active checkout sessions.\nbegin;\n${romaniaPackage.trim()}\ncommit;\nselect 'MBP_ROMANIA_READY' as status;\n`,
+);

@@ -71,7 +71,7 @@ export function Auth({
         });
         if (error) throw error;
         setMessage(
-          "If an account exists for this email, a reset link is on its way. Check your inbox.",
+          "Dacă există un cont cu acest e-mail, vei primi un link de resetare. Verifică mesajele primite.",
         );
       } else if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
@@ -86,7 +86,7 @@ export function Auth({
         if (data.session) router.replace("/dashboard/profile");
         else
           setMessage(
-            "Check your inbox to confirm your email. Then sign in and make your profile yours.",
+            "Verifică e-mailul pentru a confirma adresa. Apoi autentifică-te și completează profilul.",
           );
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -97,10 +97,25 @@ export function Auth({
         router.replace("/dashboard");
       }
     } catch (e) {
+      const code =
+        e && typeof e === "object" && "code" in e ? String(e.code) : "";
+      const errors: Record<string, string> = {
+        invalid_credentials: "Adresa de e-mail sau parola este incorectă.",
+        email_not_confirmed:
+          "Confirmă adresa de e-mail înainte de autentificare.",
+        weak_password: "Alege o parolă mai sigură, de cel puțin 8 caractere.",
+        user_already_exists: "Există deja un cont cu această adresă de e-mail.",
+        over_email_send_rate_limit:
+          "Au fost trimise prea multe e-mailuri. Așteaptă puțin și încearcă din nou.",
+        over_request_rate_limit:
+          "Prea multe încercări. Așteaptă puțin și încearcă din nou.",
+        same_password: "Parola nouă trebuie să fie diferită de cea actuală.",
+        otp_expired:
+          "Linkul a expirat. Solicită un nou e-mail de confirmare sau resetare.",
+      };
       setError(
-        e instanceof Error
-          ? e.message
-          : "We couldn’t complete that request. Please try again.",
+        errors[code] ||
+          "Nu am putut finaliza solicitarea. Verifică datele și conexiunea, apoi încearcă din nou.",
       );
     } finally {
       setBusy(false);
@@ -114,24 +129,27 @@ export function Auth({
   return (
     <div className="login-layout">
       <div className="login-visual">
-        <img src={photos.villa} alt="A thoughtfully designed modern home" />
+        <img src={photos.villa} alt="O locuință modernă, atent amenajată" />
         <Link href="/">
           <Brand light />
         </Link>
         <div>
-          <h1>Sell your property 10x faster using our all in one software.</h1>
+          <h1>
+            Prezintă-ți proprietatea cu un site dedicat și un film de
+            prezentare.
+          </h1>
           <p>
-            Create beautiful property funnels and walkthrough videos that make
-            the right first impression.
+            Creează site-uri pentru proprietăți și filme de prezentare care
+            atrag atenția de la prima vizită.
           </p>
         </div>
         <span className="eyebrow">
-          BUILT FOR AGENTS. MADE FOR BEAUTIFUL HOMES.
+          PENTRU AGENȚI IMOBILIARI. PENTRU LOCUINȚE DEOSEBITE.
         </span>
       </div>
       <main className="login-panel">
         <div className="auth-card">
-          <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+          <span className="eyebrow">URMĂTORUL TĂU CAPITOL ÎNCEPE AICI</span>
           <h2
             className={
               !resetPassword && supabase && mode === "signup"
@@ -140,42 +158,43 @@ export function Auth({
             }
           >
             {resetPassword
-              ? "A fresh start."
+              ? "Un nou început."
               : !supabase
-                ? "Take a look around."
+                ? "Descoperă aplicația."
                 : mode === "signup"
-                  ? "Present your property properly"
+                  ? "Pune-ți proprietatea în valoare"
                   : mode === "forgot"
-                    ? "Let’s get you back in."
-                    : "Welcome home."}
+                    ? "Recuperează accesul la cont."
+                    : "Bine ai venit."}
           </h2>
           <p>
             {!supabase
-              ? "Explore the first edition of My Beautiful Property. Your next beautiful listing is just a few clicks away."
+              ? "Descoperă My Beautiful Property. Următoarea ta proprietate este la doar câteva clicuri distanță."
               : resetPassword
-                ? "Choose a new password for your account."
+                ? "Alege o parolă nouă pentru contul tău."
                 : mode === "signup"
-                  ? "Create your account and choose the theme."
+                  ? "Creează-ți contul și alege designul."
                   : mode === "forgot"
-                    ? "Enter your email and we’ll send a password reset link."
-                    : "Sign in to your workspace."}
+                    ? "Introdu adresa de e-mail și îți trimitem un link de resetare a parolei."
+                    : "Autentifică-te în contul tău."}
           </p>
           {!supabase ? (
             <div className="auth-demo-note">
               <p>
-                You’re in demo mode. Explore the designs, edit properties, and
-                save changes in this browser. Real accounts and public sharing
-                will be available once Supabase is connected.
+                Ești în modul demonstrativ. Explorează designurile, editează
+                proprietăți și salvează modificările în acest browser. Conturile
+                reale și distribuirea publică sunt disponibile după conectarea
+                serviciului Supabase.
               </p>
               <Link href="/dashboard" className="button primary full-button">
-                Explore the demo <ArrowRight size={17} />
+                Explorează versiunea demo <ArrowRight size={17} />
               </Link>
             </div>
           ) : (
             <form onSubmit={submit}>
               {!resetPassword && mode === "signup" && (
                 <label>
-                  Full name
+                  Nume complet
                   <input
                     required
                     minLength={2}
@@ -183,13 +202,13 @@ export function Auth({
                     autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name and last name"
+                    placeholder="Numele și prenumele tău"
                   />
                 </label>
               )}
               {!resetPassword && (
                 <label>
-                  Email address
+                  Adresă de e-mail
                   <input
                     type="email"
                     required
@@ -203,7 +222,7 @@ export function Auth({
               )}
               {(resetPassword || mode !== "forgot") && (
                 <label>
-                  Password
+                  Parolă
                   <input
                     type="password"
                     required
@@ -216,7 +235,7 @@ export function Auth({
                     value={password}
                     maxLength={128}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder="Cel puțin 8 caractere"
                   />
                 </label>
               )}
@@ -226,7 +245,7 @@ export function Auth({
                   className="auth-forgot"
                   onClick={() => changeMode("forgot")}
                 >
-                  Forgot your password?
+                  Ai uitat parola?
                 </button>
               )}
               <button
@@ -234,19 +253,19 @@ export function Auth({
                 disabled={busy || (resetPassword && !recoveryReady)}
               >
                 {busy
-                  ? "One moment…"
+                  ? "Un moment…"
                   : resetPassword
-                    ? "Save new password"
+                    ? "Salvează parola nouă"
                     : mode === "signup"
-                      ? "Create my account"
+                      ? "Creează contul"
                       : mode === "forgot"
-                        ? "Send reset link"
-                        : "Sign in"}
+                        ? "Trimite linkul de resetare"
+                        : "Autentificare"}
                 <ArrowRight size={16} />
               </button>
               {resetPassword && !recoveryReady && (
                 <p className="inline-notice">
-                  Open the reset link from your email to continue.
+                  Deschide linkul de resetare din e-mail pentru a continua.
                 </p>
               )}
             </form>
@@ -265,22 +284,24 @@ export function Auth({
             <div className="auth-switch">
               {mode === "login" ? (
                 <>
-                  New around here?{" "}
+                  Nu ai încă un cont?{" "}
                   <button onClick={() => changeMode("signup")}>
-                    Create an account
+                    Creează un cont
                   </button>
                 </>
               ) : (
                 <>
-                  Already have an account?{" "}
-                  <button onClick={() => changeMode("login")}>Sign in</button>
+                  Ai deja un cont?{" "}
+                  <button onClick={() => changeMode("login")}>
+                    Autentificare
+                  </button>
                 </>
               )}
             </div>
           )}
         </div>
         <span className="login-panel-footer">
-          A BEAUTIFUL PLACE FOR EVERY PROPERTY.
+          O PREZENTARE FRUMOASĂ PENTRU FIECARE PROPRIETATE.
         </span>
       </main>
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import { propertyTypeLabel } from "@/lib/model";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
@@ -72,7 +73,7 @@ export function AtelierWebsite({
       className={className}
       onClick={() => setViewing(true)}
     >
-      Schedule a tour <ArrowUpRight size={17} />
+      Programează o vizionare <ArrowUpRight size={17} />
     </button>
   );
   const photo = (src: string, index: number, className = "") => (
@@ -81,11 +82,13 @@ export function AtelierWebsite({
       className={className}
       key={`${src}-${index}`}
       onClick={() => setLightbox(index)}
-      aria-label={`Enlarge property photo ${index + 1}`}
+      aria-label={`Mărește fotografia proprietății ${index + 1}`}
     >
       <PropertyImage
         src={src}
-        alt={copy.captions[index] || `${property.title} — view ${index + 1}`}
+        alt={
+          copy.captions[index] || `${property.title} — fotografia ${index + 1}`
+        }
         loading="lazy"
       />
       <span className="atelier-expand">
@@ -96,7 +99,9 @@ export function AtelierWebsite({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (preview || sample) {
-      setStatus("This is a preview. No message has been sent.");
+      setStatus(
+        "Aceasta este o previzualizare. Nu a fost trimis niciun mesaj.",
+      );
       return;
     }
     setBusy(true);
@@ -111,15 +116,15 @@ export function AtelierWebsite({
       if (!response.ok)
         throw new Error(
           data.error ||
-            "Your message could not be sent. Please try again or contact the agent directly.",
+            "Mesajul nu a putut fi trimis. Încearcă din nou sau contactează direct agentul.",
         );
       setSent(true);
       setStatus(
-        "Your message is in the agent’s inbox. They can contact you using the details you provided.",
+        "Mesajul a ajuns la agent. Te poate contacta folosind datele pe care le-ai oferit.",
       );
     } catch (e) {
       setStatus(
-        e instanceof Error ? e.message : "Your message could not be sent.",
+        e instanceof Error ? e.message : "Mesajul nu a putut fi trimis.",
       );
     } finally {
       setBusy(false);
@@ -140,16 +145,16 @@ export function AtelierWebsite({
           >
             <ArrowLeft size={15} />
             {previewBackLink?.label ||
-              (sample ? "Back to collection" : "Back to editor")}
+              (sample ? "Înapoi la colecție" : "Înapoi la editor")}
           </Link>
           <span>
             {sample
-              ? "Design preview · Sample property"
-              : "Saved website preview · Not a public link"}
+              ? "Previzualizare design · Proprietate demonstrativă"
+              : "Previzualizarea site-ului salvat · Nu este un link public"}
           </span>
           {sample && (
             <Link href="/dashboard/properties/new?template=panorama">
-              Use this design <ArrowUpRight size={14} />
+              Folosește acest design <ArrowUpRight size={14} />
             </Link>
           )}
         </div>
@@ -161,14 +166,14 @@ export function AtelierWebsite({
             <ArrowUpRight size={17} />
           </span>
           <span>
-            {profile.agency || profile.name || "Your agent"}
-            <small>A MORE PERSONAL PERSPECTIVE</small>
+            {profile.agency || profile.name || "Agentul tău"}
+            <small>O PERSPECTIVĂ MAI PERSONALĂ</small>
           </span>
         </a>
-        <nav aria-label="Property navigation">
-          <a href="#residence">The residence</a>
-          <a href="#gallery">Photographs</a>
-          <a href="#contact">Your agent</a>
+        <nav aria-label="Navigarea proprietății">
+          <a href="#residence">Locuința</a>
+          <a href="#gallery">Fotografii</a>
+          <a href="#contact">Agentul tău</a>
         </nav>
         <button
           className="atelier-menu-button"
@@ -176,26 +181,26 @@ export function AtelierWebsite({
           aria-controls="atelier-menu"
           onClick={() => setMenu(!menu)}
         >
-          {menu ? "Close" : "Menu"}
+          {menu ? "Închide" : "Meniu"}
           {menu ? <X size={18} /> : <Plus size={18} />}
         </button>
         {menu && (
           <nav
             id="atelier-menu"
             className="atelier-menu"
-            aria-label="More property links"
+            aria-label="Mai multe secțiuni ale proprietății"
           >
             <a href="#residence" onClick={() => setMenu(false)}>
-              The residence <ArrowUpRight />
+              Locuința <ArrowUpRight />
             </a>
             <a href="#details" onClick={() => setMenu(false)}>
-              The details <ArrowUpRight />
+              Detalii <ArrowUpRight />
             </a>
             <a href="#gallery" onClick={() => setMenu(false)}>
-              All photographs <ArrowUpRight />
+              Toate fotografiile <ArrowUpRight />
             </a>
             <a href="#contact" onClick={() => setMenu(false)}>
-              Meet your agent <ArrowUpRight />
+              Cunoaște agentul <ArrowUpRight />
             </a>
             {tour()}
           </nav>
@@ -204,33 +209,35 @@ export function AtelierWebsite({
       <main>
         <section
           className={`atelier-mosaic ${side.length ? "" : "atelier-mosaic-single"}`}
-          aria-label="Property photographs"
+          aria-label="Fotografiile proprietății"
         >
           {property.images[0] ? (
             <button
               className="atelier-cover"
               onClick={() => setLightbox(0)}
-              aria-label="Enlarge property photo 1"
+              aria-label="Mărește prima fotografie a proprietății"
             >
               <PropertyImage
                 src={property.images[0]}
-                alt={`${property.title} — cover photograph`}
+                alt={`${property.title} — fotografie de copertă`}
                 fetchPriority="high"
                 sizes="100vw"
               />
               <span className="atelier-cover-label">
-                {property.type}
+                {propertyTypeLabel(property.type)}
                 <span>
-                  {property.transaction === "rent" ? "FOR RENT" : "FOR SALE"}
+                  {property.transaction === "rent"
+                    ? "DE ÎNCHIRIAT"
+                    : "DE VÂNZARE"}
                 </span>
               </span>
               <span className="atelier-cover-note">
-                A first look. <ArrowUpRight size={18} />
+                O primă privire. <ArrowUpRight size={18} />
               </span>
             </button>
           ) : (
             <div className="atelier-no-photo">
-              Your property photographs belong here.
+              Aici vor apărea fotografiile proprietății tale.
             </div>
           )}
           {side.length > 0 && (
@@ -251,7 +258,7 @@ export function AtelierWebsite({
               onClick={() => setLightbox(0)}
             >
               <Expand size={14} />
-              View all {property.images.length} photos
+              Vezi toate cele {property.images.length} fotografii
             </button>
           )}
         </section>
@@ -261,19 +268,19 @@ export function AtelierWebsite({
               <MapPin size={13} />
               <EditableText
                 field="location"
-                value={property.location || "Property location"}
+                value={property.location || "Adresa proprietății"}
                 onEdit={onEdit}
               />
             </span>
             <a href="#details" className="atelier-text-link">
-              Discover the details <ArrowRight size={16} />
+              Descoperă detaliile <ArrowRight size={16} />
             </a>
           </div>
           <div className="atelier-title-row">
             <h1>
               <EditableText
                 field="title"
-                value={property.title || "A different perspective."}
+                value={property.title || "O altă perspectivă."}
                 onEdit={onEdit}
               />
               <em className="atelier-opening-accent">
@@ -288,29 +295,29 @@ export function AtelierWebsite({
           <dl className="atelier-facts">
             <div>
               <dt>
-                {property.transaction === "rent"
-                  ? "Monthly rent"
-                  : "Offered at"}
+                {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
               </dt>
               <dd>{formatPrice(property)}</dd>
             </div>
             <div>
-              <dt>Bedrooms</dt>
+              <dt>Dormitoare</dt>
               <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
             </div>
             <div>
-              <dt>Bathrooms</dt>
+              <dt>Băi</dt>
               <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
             </div>
             <div>
-              <dt>Living space</dt>
+              <dt>Suprafață locuibilă</dt>
               <dd>
-                {property.area.toLocaleString("en-US")} <small>{unit}</small>
+                {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
               </dd>
             </div>
             <div>
-              <dt>Property type</dt>
-              <dd className="atelier-type">{property.type}</dd>
+              <dt>Tipul proprietății</dt>
+              <dd className="atelier-type">
+                {propertyTypeLabel(property.type)}
+              </dd>
             </div>
           </dl>
         </section>
@@ -323,29 +330,29 @@ export function AtelierWebsite({
                 "atelier-story-photo",
               )
             ) : (
-              <div className="atelier-no-photo">A closer perspective</div>
+              <div className="atelier-no-photo">O privire mai atentă</div>
             )}
             <figcaption>
-              <span>A CLOSER PERSPECTIVE</span>
+              <span>O PRIVIRE MAI ATENTĂ</span>
               <span>{property.location}</span>
             </figcaption>
           </figure>
           <div className="atelier-story-copy">
-            <span className="atelier-kicker">FEEL AT HOME</span>
+            <span className="atelier-kicker">SIMTE-TE ACASĂ</span>
             <h2>
               {text("storyTitle")}
               <em>{text("storyAccent")}</em>
             </h2>
             <p>{text("storyBody")}</p>
             <a className="atelier-round-link" href="#gallery">
-              <span>Explore every angle</span>
+              <span>Descoperă fiecare unghi</span>
               <ArrowUpRight size={24} />
             </a>
           </div>
         </section>
         <section className="atelier-details atelier-pad" id="details">
           <div className="atelier-details-heading">
-            <span className="atelier-kicker">EVERYDAY DETAILS</span>
+            <span className="atelier-kicker">DETALII DE ZI CU ZI</span>
             <h2>
               {text("detailsTitle")}
               <em>{text("detailsAccent")}</em>
@@ -354,39 +361,37 @@ export function AtelierWebsite({
           <div className="atelier-details-copy">
             <dl className="atelier-spec-grid">
               <div>
-                <dt>Living area</dt>
+                <dt>Suprafață locuibilă</dt>
                 <dd>
-                  {property.area.toLocaleString("en-US")} <small>{unit}</small>
+                  {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
                 </dd>
               </div>
               <div>
-                <dt>Property type</dt>
-                <dd>{property.type}</dd>
+                <dt>Tipul proprietății</dt>
+                <dd>{propertyTypeLabel(property.type)}</dd>
               </div>
               <div>
-                <dt>Bedrooms</dt>
+                <dt>Dormitoare</dt>
                 <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
               </div>
               <div>
-                <dt>Bathrooms</dt>
+                <dt>Băi</dt>
                 <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
               </div>
               <div className="atelier-spec-location">
-                <dt>Location</dt>
+                <dt>Adresă</dt>
                 <dd>{property.location}</dd>
               </div>
               <div>
                 <dt>
-                  {property.transaction === "rent"
-                    ? "Monthly rent"
-                    : "Offered at"}
+                  {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
                 </dt>
                 <dd>{formatPrice(property)}</dd>
               </div>
             </dl>
             {property.amenities.length > 0 && (
               <div className="atelier-extras">
-                <h3>Thoughtful extras</h3>
+                <h3>Dotări atent alese</h3>
                 <ul>
                   {property.amenities.map((amenity) => (
                     <li key={amenity}>{amenity}</li>
@@ -400,12 +405,10 @@ export function AtelierWebsite({
             {detail ? (
               photo(detail, property.images[2] ? 2 : property.images[1] ? 1 : 0)
             ) : (
-              <div className="atelier-no-photo">
-                The details make the difference.
-              </div>
+              <div className="atelier-no-photo">Detaliile fac diferența.</div>
             )}
             <span>
-              THE DETAILS MAKE THE DIFFERENCE <ArrowUpRight size={18} />
+              DETALIILE FAC DIFERENȚA <ArrowUpRight size={18} />
             </span>
           </div>
         </section>
@@ -423,18 +426,16 @@ export function AtelierWebsite({
           </div>
           <div className="atelier-photo-grid">
             {property.images.map((src, index) => (
-              <figure key={`${src}-${index}`}>
-                {photo(src, index)}
-              </figure>
+              <figure key={`${src}-${index}`}>{photo(src, index)}</figure>
             ))}
           </div>
-          {!property.images.length && <p>Your photographs will appear here.</p>}
+          {!property.images.length && <p>Fotografiile tale vor apărea aici.</p>}
         </section>
         {(film?.src || isPreview) && (
           <section className="atelier-film atelier-pad" id="film">
             <div className="atelier-film-heading">
               <h2>
-                Step inside.<em>Feel at home.</em>
+                Pășește înăuntru.<em>Simte-te acasă.</em>
               </h2>
             </div>
             {film?.src && videoPanel}
@@ -446,7 +447,7 @@ export function AtelierWebsite({
                 playsInline
                 preload="metadata"
                 poster={film.poster || property.images[0]}
-                aria-label={`${property.title} — property film`}
+                aria-label={`${property.title} — filmul proprietății`}
               >
                 <source src={film.src} />
                 {film.captions && (
@@ -454,7 +455,7 @@ export function AtelierWebsite({
                     kind="captions"
                     src={film.captions}
                     srcLang="en"
-                    label="English"
+                    label="Engleză"
                     default
                   />
                 )}
@@ -473,9 +474,10 @@ export function AtelierWebsite({
                 }
               >
                 <Film size={32} strokeWidth={1} />
-                <p>Your completed property film will appear here.</p>
+                <p>Filmul proprietății va apărea aici când este gata.</p>
                 <small>
-                  Video layout preview · No film has been generated yet
+                  Previzualizarea secțiunii video · Nu a fost generat încă
+                  niciun film
                 </small>
               </div>
             )}
@@ -485,7 +487,7 @@ export function AtelierWebsite({
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
             <h2>
-              Let’s connect.<em>Meet your agent.</em>
+              Hai să discutăm.<em>Cunoaște agentul.</em>
             </h2>
             <div className="landing-agent-profile">
               <span className="atelier-avatar">
@@ -516,23 +518,23 @@ export function AtelierWebsite({
             {tour()}
           </div>
           <form className="landing-inquiry" onSubmit={submit}>
-            <h3>A beautiful beginning.</h3>
-            <p>Tell us a little about yourself. We’ll take it from here.</p>
+            <h3>Un început frumos.</h3>
+            <p>Spune-ne câteva cuvinte despre tine. Revenim cu detalii.</p>
             <label>
-              Your name
+              Numele tău
               <input
                 required
                 name="name"
                 autoComplete="name"
                 maxLength={100}
-                placeholder="Alex Morgan"
+                placeholder="Alex Popescu"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </label>
             <div className="field-grid">
               <label>
-                Email address
+                Adresă de e-mail
                 <input
                   type="email"
                   required
@@ -545,7 +547,7 @@ export function AtelierWebsite({
                 />
               </label>
               <label>
-                Phone
+                Telefon
                 <input
                   type="tel"
                   name="phone"
@@ -558,19 +560,19 @@ export function AtelierWebsite({
               </label>
             </div>
             <label>
-              Your message (optional)
+              Mesajul tău (opțional)
               <textarea
                 minLength={10}
                 maxLength={2000}
                 rows={3}
-                placeholder="I’d love to learn more about this home…"
+                placeholder="Aș vrea să aflu mai multe despre această locuință…"
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
             </label>
             <div className="honeypot" aria-hidden="true">
               <label>
-                Leave this empty
+                Lasă acest câmp gol
                 <input
                   tabIndex={-1}
                   autoComplete="off"
@@ -583,21 +585,21 @@ export function AtelierWebsite({
             </div>
             <button className="landing-button" disabled={busy || sent}>
               {busy
-                ? "Sending…"
+                ? "Se trimite…"
                 : sent
-                  ? "Message received"
+                  ? "Mesaj primit"
                   : preview || sample
-                    ? "Try the contact form"
-                    : "Let’s connect"}
+                    ? "Încearcă formularul de contact"
+                    : "Trimite mesajul"}
               {sent ? <Check size={17} /> : <ArrowUpRight size={17} />}
             </button>
             <small>
-              By sending, you agree to be contacted by{" "}
-              {profile.name || "the agent"} about this property.
+              Prin trimitere, ești de acord să fii contactat de{" "}
+              {profile.name || "agent"} în legătură cu această proprietate.
             </small>
             {(preview || sample) && (
               <small className="preview-form-note">
-                Preview only. This form does not send messages.
+                Doar previzualizare. Acest formular nu trimite mesaje.
               </small>
             )}
             {status && (
@@ -620,7 +622,9 @@ export function AtelierWebsite({
               aria-hidden="true"
             />
           )}
-          <span className="atelier-kicker">YOUR NEXT CHAPTER, IN PERSON</span>
+          <span className="atelier-kicker">
+            URMĂTORUL CAPITOL ÎNCEPE CU O VIZITĂ
+          </span>
           <h2>
             {text("closingTitle")}
             <em>{text("closingAccent")}</em>
@@ -628,7 +632,7 @@ export function AtelierWebsite({
           <p>{text("closingBody")}</p>
           {tour()}
           <span className="atelier-invitation-footnote">
-            One conversation. A new perspective.
+            O conversație. O nouă perspectivă.
           </span>
         </section>
       </main>
@@ -647,7 +651,7 @@ export function AtelierWebsite({
         <span>
           {formatPrice(property)}
           <small>
-            {property.transaction === "rent" ? "Monthly rent" : "Offered at"}
+            {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
           </small>
         </span>
         {tour()}

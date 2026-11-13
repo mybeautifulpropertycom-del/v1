@@ -19,7 +19,7 @@ export function AgentAvatar({
       <img
         className="agent-avatar-image"
         src={url}
-        alt={`${profile.name || "Your agent"} — profile photo`}
+        alt={`${profile.name || "Agentul tău"} — profile photo`}
         onError={() => setFailed(url)}
       />
     );

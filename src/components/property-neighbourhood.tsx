@@ -2,10 +2,9 @@
 import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import type { PublicProperty } from "@/lib/model";
 import { loadGoogleMaps, withMapsTimeout } from "@/lib/google-maps";
-import { isTemplateAddress, TEMPLATE_LOCATION } from "@/lib/template-location";
 import {
-  distanceMiles,
-  isUSAddress,
+  distanceKilometers,
+  isRomanianAddress,
   mapsEnabled,
   nearbyCategories,
   NEARBY_LIMIT,
@@ -18,7 +17,6 @@ import {
 type MappedProperty = Pick<PublicProperty, "location" | "google_place_id">;
 export function PropertyNeighbourhood({
   property,
-  sample = false,
 }: {
   property: MappedProperty;
   sample?: boolean;
@@ -26,29 +24,18 @@ export function PropertyNeighbourhood({
   const hasSavedPlace = Boolean(
     property.google_place_id && PLACE_ID.test(property.google_place_id),
   );
-  // Only the fixed design demonstration may look up an address automatically.
-  // Real listings still require the agent's confirmed address selection.
-  const resolveTemplateAddress =
-    !hasSavedPlace && sample && property.location === TEMPLATE_LOCATION;
-  if (!mapsEnabled() || (!hasSavedPlace && !resolveTemplateAddress))
-    return null;
+  // Only agent-confirmed addresses get a map. Sample photos have no verified location.
+  if (!mapsEnabled() || !hasSavedPlace) return null;
   // Remount on address changes: a pending request must never populate a new listing.
   return (
     <Neighbourhood
       key={`${property.google_place_id}:${property.location}`}
       property={property}
-      resolveTemplateAddress={resolveTemplateAddress}
     />
   );
 }
 
-function Neighbourhood({
-  property,
-  resolveTemplateAddress,
-}: {
-  property: MappedProperty;
-  resolveTemplateAddress: boolean;
-}) {
+function Neighbourhood({ property }: { property: MappedProperty }) {
   const heading = useId();
   const section = useRef<HTMLElement>(null);
   const startMap = useRef<() => void>(() => {});
@@ -75,7 +62,9 @@ function Neighbourhood({
   // Register lifetime cleanup before a visitor can start the first request.
   useLayoutEffect(() => {
     const failed = () =>
-      setError("The map is unavailable right now. Please try again shortly.");
+      setError(
+        "Harta nu este disponibilă momentan. Încearcă din nou în câteva momente.",
+      );
     window.addEventListener("mbp-maps-error", failed);
     return () => {
       currentRequest.current++;
@@ -139,25 +128,12 @@ function Neighbourhood({
         ]),
       );
       if (request !== currentRequest.current) return;
-      let placeId = property.google_place_id;
-      if (resolveTemplateAddress) {
-        const response = await withMapsTimeout(
-          placesLibrary.Place.searchByText({
-            textQuery: `${TEMPLATE_LOCATION}, USA`,
-            fields: ["id"],
-            maxResultCount: 1,
-            language: "en",
-            region: "us",
-          }),
-        );
-        if (request !== currentRequest.current) return;
-        placeId = response.places[0]?.id;
-      }
+      const placeId = property.google_place_id;
       if (!placeId || !PLACE_ID.test(placeId))
-        throw new Error("The address could not be located.");
+        throw new Error("Adresa nu a putut fi localizată.");
       const home = new placesLibrary.Place({
         id: placeId,
-        requestedLanguage: "en",
+        requestedLanguage: "ro",
       });
       await withMapsTimeout(
         home.fetchFields({
@@ -165,12 +141,8 @@ function Neighbourhood({
         }),
       );
       if (request !== currentRequest.current || !mapContainer.current) return;
-      if (
-        !home.location ||
-        !isUSAddress(home) ||
-        (resolveTemplateAddress && !isTemplateAddress(home))
-      )
-        throw new Error("The address could not be located.");
+      if (!home.location || !isRomanianAddress(home))
+        throw new Error("Adresa nu a putut fi localizată.");
       homePlaceId.current = home.id;
       centre.current = home.location.toJSON();
       map.current = new mapsLibrary.Map(mapContainer.current, {
@@ -184,11 +156,11 @@ function Neighbourhood({
       });
       const label = document.createElement("div");
       label.className = "neighbourhood-home-pin";
-      label.textContent = "Your next home";
+      label.textContent = "Următoarea ta locuință";
       homeMarker.current = new markerLibrary.AdvancedMarkerElement({
         map: map.current,
         position: centre.current,
-        title: "Your next home",
+        title: "Următoarea ta locuință",
         content: label,
         zIndex: 100,
       });
@@ -199,7 +171,9 @@ function Neighbourhood({
         if (homeMarker.current) homeMarker.current.map = null;
         map.current = null;
         mapContainer.current?.replaceChildren();
-        setError("The map is unavailable right now. Please try again shortly.");
+        setError(
+          "Harta nu este disponibilă momentan. Încearcă din nou în câteva momente.",
+        );
       }
     } finally {
       opening.current = false;
@@ -246,8 +220,8 @@ function Neighbourhood({
               radius: NEARBY_RADIUS_METERS,
             },
             rankPreference: "DISTANCE",
-            language: "en",
-            region: "us",
+            language: "ro",
+            region: "ro",
           }),
         );
         nearby = response.places.filter(
@@ -270,7 +244,7 @@ function Neighbourhood({
         const marker = new AdvancedMarkerElement({
           map: map.current,
           position: place.location,
-          title: place.displayName || "Nearby place",
+          title: place.displayName || "Loc din apropiere",
           content: label,
         });
         marker.addListener("click", () => focusPlace(place));
@@ -285,7 +259,9 @@ function Neighbourhood({
       setPlaces(nearby);
     } catch {
       if (request === currentRequest.current)
-        setError("Nearby places could not be loaded. Try this category again.");
+        setError(
+          "Locurile din apropiere nu au putut fi încărcate. Încearcă din nou categoria.",
+        );
     } finally {
       searching.current = false;
       if (request === currentRequest.current) setBusy(false);
@@ -299,8 +275,10 @@ function Neighbourhood({
       aria-labelledby={heading}
     >
       <div className="neighbourhood-heading">
-        <span className="neighbourhood-kicker">AROUND YOUR NEXT HOME</span>
-        <h2 id={heading}>Explore the neighborhood.</h2>
+        <span className="neighbourhood-kicker">
+          ÎN APROPIEREA VIITOAREI TALE LOCUINȚE
+        </span>
+        <h2 id={heading}>Descoperă cartierul.</h2>
         <p>{property.location}</p>
       </div>
       <div className="neighbourhood-layout">
@@ -308,11 +286,11 @@ function Neighbourhood({
           <div
             ref={mapContainer}
             className="neighbourhood-map"
-            aria-label="Property and nearby places map"
+            aria-label="Harta proprietății și a locurilor din apropiere"
           />
           {!ready && (
             <div className="neighbourhood-map-status">
-              <p role="status">{error || "Loading the neighborhood map…"}</p>
+              <p role="status">{error || "Se încarcă harta cartierului…"}</p>
               {error && (
                 <button
                   type="button"
@@ -320,18 +298,18 @@ function Neighbourhood({
                   disabled={busy}
                   onClick={() => void openMap()}
                 >
-                  Retry map
+                  Reîncarcă harta
                 </button>
               )}
             </div>
           )}
         </div>
         <div className="neighbourhood-panel">
-          <h3>Everyday places, close to home.</h3>
+          <h3>Locuri utile, aproape de casă.</h3>
           <div
             className="neighbourhood-categories"
             role="group"
-            aria-label="Explore nearby places"
+            aria-label="Descoperă locurile din apropiere"
           >
             {nearbyCategories.map((item) => (
               <button
@@ -346,15 +324,18 @@ function Neighbourhood({
             ))}
           </div>
           <p className="neighbourhood-note">
-            Up to {NEARBY_LIMIT} nearby places within approximately 3 miles.{" "}
-            Distances are straight-line estimates.
+            Până la {NEARBY_LIMIT} locuri în apropiere, pe o rază de aproximativ
+            5 km. Distanțele sunt estimate în linie dreaptă.
           </p>
           <div className="neighbourhood-results" aria-busy={busy}>
-            {ready && busy && <p role="status">Finding nearby places…</p>}
+            {ready && busy && (
+              <p role="status">Se caută locuri din apropiere…</p>
+            )}
             {ready && !busy && !places.length && !error && (
               <p role="status">
-                No {category.label.toLowerCase()} were returned nearby. Try
-                another category.
+                Nu au fost găsite locuri din categoria{" "}
+                {category.label.toLowerCase()} în apropiere. Încearcă altă
+                categorie.
               </p>
             )}
             {ready && error && (
@@ -366,7 +347,7 @@ function Neighbourhood({
                   disabled={busy}
                   onClick={() => void explore(category)}
                 >
-                  Retry places
+                  Reîncarcă locurile
                 </button>
               </div>
             )}
@@ -385,14 +366,16 @@ function Neighbourhood({
                       <span className="neighbourhood-place-number">
                         {index + 1}
                       </span>
-                      <span>{place.displayName || "Nearby place"}</span>
+                      <span>{place.displayName || "Loc din apropiere"}</span>
                     </button>
                     <p>
-                      {distanceMiles(
+                      {distanceKilometers(
                         centre.current!,
                         place.location!.toJSON(),
-                      ).toFixed(1)}{" "}
-                      mi away
+                      ).toLocaleString("ro-RO", {
+                        maximumFractionDigits: 1,
+                      })}{" "}
+                      km distanță
                     </p>
                     {place.attributions?.map((attribution, i) => (
                       <small key={i}>
@@ -416,7 +399,7 @@ function Neighbourhood({
           </div>
           {ready && (
             <p className="neighbourhood-note neighbourhood-source">
-              Places from Google Maps. Results may be incomplete.
+              Locuri din Google Maps. Rezultatele pot fi incomplete.
             </p>
           )}
         </div>

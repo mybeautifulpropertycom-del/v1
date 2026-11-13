@@ -71,7 +71,7 @@ test("print route serves only published data and excludes itself from indexing",
     );
     assert.equal(
       (await generateMetadata(params)).title,
-      "Property unavailable",
+      "Proprietate indisponibilă",
     );
   }
 });

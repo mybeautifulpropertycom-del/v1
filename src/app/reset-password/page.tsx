@@ -1,6 +1,6 @@
 import { Auth } from "@/components/auth";
 export const metadata = {
-  title: "Reset your password",
+  title: "Resetează parola",
   robots: { index: false },
 };
 export default function Page() {
