@@ -174,7 +174,7 @@ export function ProfileEditor() {
                 type="tel"
                 autoComplete="tel"
                 maxLength={30}
-                placeholder="+1 (212) 555-0100"
+                placeholder="+40 700 000 000"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />

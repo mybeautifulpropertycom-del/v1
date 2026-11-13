@@ -1,4 +1,3 @@
-import { supportedPackage } from "@/lib/stripe-server";
 import { videoEnabled } from "@/lib/video-service";
 import { after } from "next/server";
 import { wakeVideoWorker } from "@/lib/higgsfield-worker";
@@ -9,8 +8,7 @@ import {
   billingFailure,
   BillingError,
   billingJson,
-  PROPERTY_PACKAGE_CENTS,
-  PROPERTY_PACKAGE_CURRENCY,
+  supportedPackage,
   readLimitedBody,
   stripeClient,
   stripeConfiguration,

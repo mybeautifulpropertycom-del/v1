@@ -134,7 +134,7 @@ test("completed embedded checkout waits for server publication, shows the live l
   expect(setup.state.property.status).toBe("published");
   await page.getByRole("button", { name: "Înapoi la editare" }).click();
   await expect(page.locator(".property-video-prompt")).toContainText(
-    "Your video is queued",
+    "Filmul este în coadă",
   );
   await expect(
     page
@@ -164,7 +164,7 @@ test("an unavailable payment configuration leaves the saved draft and shows an e
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
   await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
-    "not configured",
+    "nu este configurat",
   );
   await expect(page.getByRole("dialog")).not.toContainText(
     "MOD DE TEST STRIPE",

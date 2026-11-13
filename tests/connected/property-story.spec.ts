@@ -244,7 +244,7 @@ test("private preview reports a platform timeout and lets the agent retry in pla
   });
   await page.goto(`/preview/${id}`);
   await expect(page.locator(".inline-edit-error")).toContainText(
-    "Preparing the website took too long.",
+    "Pregătirea site-ului a durat prea mult.",
   );
   await page
     .getByRole("button", { name: "Încearcă din nou", exact: true })
@@ -263,7 +263,7 @@ test("a network failure ends loading and preserves the saved listing", async ({
   await page.route("**/api/property-story", (route) => route.abort());
   await page.goto(`/preview/${id}`);
   await expect(page.locator(".inline-edit-error")).toContainText(
-    "We could not reach the writing service.",
+    "Nu am putut contacta serviciul de redactare.",
   );
   await expect(
     page.getByRole("button", { name: "Editează pe pagină" }),

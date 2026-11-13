@@ -64,7 +64,7 @@ test("uploads JPEG, PNG and WebP as resized WebP with visible progress and prese
     .locator("input[type=file]")
     .setInputFiles({ name: "more.jpeg", mimeType: "image/jpeg", buffer });
   await expect(
-    page.getByText(/This photograph could not be uploaded/),
+    page.getByText(/Fotografia nu a putut fi încărcată/),
   ).toBeVisible();
   await expect(page.locator(".image-editor-card")).toHaveCount(3);
   await expect(page.getByRole("progressbar")).toHaveCount(0);

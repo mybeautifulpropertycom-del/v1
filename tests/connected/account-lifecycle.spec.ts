@@ -63,7 +63,7 @@ test("a failed first save never redirects", async ({ page }) => {
     .getByRole("button", { name: "Salvează modificările", exact: true })
     .click();
   await expect(page.locator(".form-error[role=alert]")).toContainText(
-    "not saved",
+    "nu a fost salvat",
   );
   await page.waitForTimeout(3200);
   await expect(page).toHaveURL(/\/dashboard\/profile$/);

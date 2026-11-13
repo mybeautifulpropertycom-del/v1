@@ -128,6 +128,7 @@ test("vision request sends each image in order, excludes agent data, and validat
     const context = JSON.parse(request.input[0].content[0].text);
     assert.equal(context.agent_story, property.description.trim());
     assert.ok(request.instructions.includes(storyVoiceInstructions));
+    assert.match(request.instructions, /Romanian with correct diacritics/);
     assert.deepEqual(context.section_photographs.introBody, [1]);
     assert.deepEqual(context.section_photographs.description, [2]);
     assert.deepEqual(context.section_photographs.detailsBody, [3]);
@@ -408,6 +409,7 @@ test("overlong copy receives one text-only repair and valid fields cannot be ove
       assert.equal(request.input[0].content.length, 1);
       assert.equal(request.input[0].content[0].type, "input_text");
       assert.ok(request.instructions.includes(storyVoiceInstructions));
+      assert.match(request.instructions, /Romanian with correct diacritics/);
       assert.equal(
         JSON.parse(request.input[0].content[0].text).agent_story,
         property.description.trim(),

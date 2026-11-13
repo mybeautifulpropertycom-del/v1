@@ -17,12 +17,12 @@ test("unread badge refreshes, read status survives reload, and deleting a lead r
   await page.goto("/dashboard");
   await expect(page.locator(".inbox-unread-badge")).toHaveText("1");
   await page
-    .getByRole("link", { name: "My inbox, 1 unread leads", exact: true })
+    .getByRole("link", { name: "Mesaje, 1 mesaje necitite", exact: true })
     .click();
   await expect(page.locator(".inquiry-unread")).toHaveCount(1);
   await page
     .getByRole("button", {
-      name: "Mark lead from Alex Buyer as read",
+      name: "Marchează mesajul de la Alex Buyer ca citit",
       exact: true,
     })
     .click();
@@ -41,7 +41,10 @@ test("unread badge refreshes, read status survives reload, and deleting a lead r
   await expect(page.locator(".inquiry-card")).toHaveCount(2);
   page.once("dialog", (dialog) => dialog.accept());
   await page
-    .getByRole("button", { name: "Șterge mesajul de la New Buyer", exact: true })
+    .getByRole("button", {
+      name: "Șterge mesajul de la New Buyer",
+      exact: true,
+    })
     .click();
   await expect(page.locator(".inbox-unread-badge")).toHaveCount(0);
   await expect(page.locator(".inquiry-card")).toHaveCount(1);

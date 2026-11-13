@@ -112,7 +112,9 @@ test("admin reviews an agent's property, publishes at no charge and sees its vid
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
   await page.getByLabel("Notă de publicare").fill("Complimentary showcase");
   await page.getByRole("button", { name: "Publică gratuit" }).click();
-  await expect(page.getByText("Video: în coadă.", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Video: în coadă.", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Vezi site-ul public" }),
   ).toHaveAttribute("href", `/p/${setup.state.property.slug}`);
@@ -143,7 +145,7 @@ test("admin's own editor publishes directly without requesting a payment session
   expect(setup.calls).toBe(1);
   await page.getByRole("button", { name: "Înapoi la editare" }).click();
   await expect(page.locator(".property-video-prompt")).toContainText(
-    "Your video is queued",
+    "Filmul este în coadă",
   );
 });
 
@@ -222,10 +224,12 @@ test("admin rebuild keeps the current public film while the replacement is queue
   await page
     .getByRole("button", { name: "Refă filmul · Folosește credite API" })
     .click();
-  await expect(page.getByText("Video: în coadă.", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Video: în coadă.", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator("#film video source")).toHaveAttribute("src", src);
   await expect(
     page.getByRole("button", { name: "Refă filmul · Folosește credite API" }),
   ).toHaveCount(0);
-  await expect(page.getByText(/current video stays available/)).toBeVisible();
+  await expect(page.getByText(/Filmul actual rămâne disponibil/)).toBeVisible();
 });

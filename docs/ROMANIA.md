@@ -28,3 +28,9 @@ npm run dev
 Fără configurație Supabase, aplicația pornește în modul demonstrativ. Profilul, proprietățile și adresele demonstrative sunt fictive. Fotografiile de exemplu nu stabilesc o adresă reală; nu plasăm un indicator pe hartă pentru acestea. Adresele reale sugerate prin Google Maps sunt limitate la România, iar distanțele sunt afișate în kilometri.
 
 Folosește checkout-ul izolat existent; nu crea un Git worktree fără o cerere explicită. Costurile furnizorilor video rămân în USD, separat de prețul în RON al pachetului.
+
+## Verificări locale
+
+Buildul și verificarea TypeScript au trecut. Au trecut 212 teste unitare/bază de date, 29 de scenarii demo în browser, 14 scenarii pentru hărți și 41 de scenarii cu servicii simulate (inclusiv Stripe). Așteptările textuale au fost actualizate pentru română și verificările afectate au fost rerulate. Testul tactil pentru închiderea galeriei Editorial este intermitent și a trecut la rerulare; același comportament exista înaintea localizării.
+
+Aceste rezultate nu reprezintă o verificare a unui proiect Supabase sau Stripe real. Nu s-au efectuat plăți reale, apeluri video plătite ori modificări de infrastructură.

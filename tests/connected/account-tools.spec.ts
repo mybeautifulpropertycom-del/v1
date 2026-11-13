@@ -93,7 +93,7 @@ test("a failed deletion keeps the lead visible and offers another attempt", asyn
     .getByRole("button", { name: `Șterge mesajul de la ${lead.name}` })
     .click();
   await expect(page.locator(".delete-error")).toContainText(
-    "could not be deleted",
+    "nu a putut fi șters",
   );
   await expect(page.getByRole("heading", { name: lead.name })).toBeVisible();
   await expect(

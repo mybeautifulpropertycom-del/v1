@@ -229,7 +229,7 @@ export function ViewingDialog({
                 name="phone"
                 type="tel"
                 maxLength={30}
-                placeholder="+1 (555) 000-0000"
+                placeholder="+40 700 000 000"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
