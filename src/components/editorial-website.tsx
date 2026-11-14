@@ -1,5 +1,6 @@
 "use client";
 import { propertyTypeLabel } from "@/lib/model";
+import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
@@ -646,6 +647,7 @@ export function EditorialWebsite({
           </section>
         )}
         <PropertyNeighbourhood property={property} sample={sample} />
+        <PropertyMortgage property={property} />
         <section
           className="estate-contact estate-pad estate-space"
           id="contact"

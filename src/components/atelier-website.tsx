@@ -1,5 +1,6 @@
 "use client";
 import { propertyTypeLabel } from "@/lib/model";
+import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
@@ -484,6 +485,7 @@ export function AtelierWebsite({
           </section>
         )}
         <PropertyNeighbourhood property={property} sample={sample} />
+        <PropertyMortgage property={property} />
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
             <h2>
