@@ -12,6 +12,27 @@ Doar dacă actualizarea lipsește, fișierul `supabase/sql-editor-romania.sql` c
 
 Nu s-au executat migrări pe un serviciu Supabase real și nu s-a făcut nicio publicare Vercel în această sesiune. Configurarea existentă de autentificare, stocare și plăți trebuie păstrată. Configurarea e-mailurilor Supabase și a limbii din șabloanele sale se face separat în proiectul Supabase; textele aplicației și notificările proprii sunt în română.
 
+## Corecție pentru o configurație parțială a plăților
+
+Dacă valorile implicite sunt deja `24900` / `ron`, dar o operație eșuează cu
+`property_orders_amount_check`, verificarea valorilor implicite nu este suficientă:
+restricțiile vechi pot fi încă active. Fișierul
+`supabase/sql-editor-romania-billing-repair.sql` înlocuiește numai restricțiile și
+valorile implicite ale celor două registre de plăți, într-o tranzacție. Păstrează
+combinațiile istorice `9700` / `usd` și noua combinație `24900` / `ron`; respinge
+combinațiile amestecate. Nu modifică nicio comandă existentă și nu pornește plăți
+sau generări video. Poate fi rerulat.
+
+După repararea regulilor, o comandă veche neplătită trebuie analizată separat.
+Reprețuirea ei se limitează la identificatorul verificat, starea `pending`, vechea
+sumă/monedă și absența unei sesiuni Stripe, a unui PaymentIntent și a datei de
+plată. Orice sesiune existentă sau plată incertă trebuie reconciliată în Stripe
+înainte de schimbarea comenzii. Nu șterge registrele de plăți.
+
+Rezultatul scriptului semnalează și dacă funcțiile de rezervare/publicare
+menționează explicit suma `9700`. Dacă semnalul este `true`, inspectează funcția
+instalată înainte de lansare; scriptul nu suprascrie funcții personalizate.
+
 ## Dezvoltare
 
 Din `/workspace/v1`, cu Node.js 24:

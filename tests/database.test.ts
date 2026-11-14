@@ -2534,6 +2534,100 @@ test("two-scene BytePlus window locks reservations, preserves order, and reconci
   }
 });
 
+test("Romania billing repair handles changed defaults with legacy checks without rewriting orders", async () => {
+  await db.exec("reset role; begin");
+  try {
+    // Reproduce production: RON defaults exist but the old USD-only checks remain.
+    for (const table of ["property_orders", "stripe_test_orders"]) {
+      await db.exec(`
+        alter table ${table} drop constraint ${table}_package_check;
+        alter table ${table} add constraint ${table}_amount_check check(amount=9700);
+        alter table ${table} add constraint ${table}_currency_check check(currency='usd');
+        insert into ${table}(amount,currency,status) values(9700,'usd','paid');
+        insert into ${table}(amount,currency) values(9700,'usd');
+        insert into ${table}(amount,currency,checkout_session_id)
+          values(9700,'usd','cs_legacy_do_not_change');
+        savepoint legacy_check;
+      `);
+      await assert.rejects(
+        db.exec(`insert into ${table} default values`),
+        /amount_check/,
+      );
+      await db.exec("rollback to savepoint legacy_check");
+    }
+    const snapshots = await Promise.all(
+      ["property_orders", "stripe_test_orders"].map((table) =>
+        db.query(`select * from ${table} order by id`),
+      ),
+    );
+    const repair = await readFile(
+      new URL(
+        "../supabase/sql-editor-romania-billing-repair.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    // The SQL Editor wrapper owns its transaction; use the body within this test's rollback.
+    const body = repair.replace(/^begin;$/m, "").replace(/^commit;$/m, "");
+    await db.exec(body);
+    await db.exec(body);
+    for (const [index, table] of [
+      "property_orders",
+      "stripe_test_orders",
+    ].entries()) {
+      assert.deepEqual(
+        (await db.query(`select * from ${table} order by id`)).rows,
+        snapshots[index].rows,
+        "Repair must preserve paid, pending and open-session orders exactly",
+      );
+      const created = await db.query<{ amount: number; currency: string }>(
+        `insert into ${table} default values returning amount,currency`,
+      );
+      assert.deepEqual(created.rows[0], { amount: 24900, currency: "ron" });
+      for (const [amount, currency] of [
+        [9700, "ron"],
+        [24900, "usd"],
+        [1, "ron"],
+      ]) {
+        await db.exec("savepoint invalid_package");
+        await assert.rejects(
+          db.query(`insert into ${table}(amount,currency) values($1,$2)`, [
+            amount,
+            currency,
+          ]),
+          /check constraint/,
+        );
+        await db.exec("rollback to savepoint invalid_package");
+      }
+      const repriced = await db.query<{ amount: number; currency: string }>(`
+        update ${table} set amount=24900,currency='ron',attempt=attempt+1
+        where status='pending' and checkout_session_id is null
+          and paid_at is null and amount=9700 and currency='usd'
+        returning amount,currency
+      `);
+      assert.deepEqual(repriced.rows, [{ amount: 24900, currency: "ron" }]);
+      assert.equal(
+        (
+          await db.query(
+            `select id from ${table} where status='paid' and amount=9700 and currency='usd'`,
+          )
+        ).rows.length,
+        1,
+      );
+      assert.equal(
+        (
+          await db.query(
+            `select id from ${table} where checkout_session_id='cs_legacy_do_not_change' and amount=9700 and currency='usd'`,
+          )
+        ).rows.length,
+        1,
+      );
+    }
+  } finally {
+    await db.exec("rollback");
+  }
+});
+
 test("Romania migration is repeatable, defaults to 249 RON and preserves historical USD receipts", async () => {
   await db.exec("reset role; begin");
   try {
