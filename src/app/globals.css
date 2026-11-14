@@ -4462,10 +4462,23 @@ fieldset.editor-content {
   flex-shrink: 0;
 }
 .publish-payment-frame {
-  min-height: 280px;
+  min-height: 180px;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
+}
+.publish-payment-form {
+  margin-top: 26px;
+}
+.publish-pay-button {
+  width: 100%;
+  margin-top: 20px;
+  justify-content: center;
+}
+.publish-card-error {
+  color: #a54837;
+  font-size: 14px;
+  line-height: 1.6;
 }
 .publish-secure {
   display: flex;

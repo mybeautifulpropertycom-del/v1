@@ -22,6 +22,8 @@ let order: Record<string, unknown>,
   disputed = false,
   refunded = 0,
   disputeStatus = "needs_response";
+let customerPosts: URLSearchParams[] = [];
+let previousSession: Record<string, unknown>;
 let stripePosts: URLSearchParams[] = [],
   applications: Record<string, unknown>[] = [];
 let POST: typeof import("../src/app/api/billing/checkout/route").POST;
@@ -55,6 +57,16 @@ beforeEach(() => {
   activationCalls = refunded = 0;
   disputeStatus = "needs_response";
   stripePosts = [];
+  customerPosts = [];
+  previousSession = {
+    id: "cs_live_one",
+    livemode: true,
+    status: "open",
+    ui_mode: "embedded_page",
+    payment_status: "unpaid",
+    client_secret: "cs_live_one_secret_fake",
+    url: "https://checkout.stripe.com/c/pay/cs_live_one",
+  };
   applications = [];
 });
 const metadata = {
@@ -76,12 +88,25 @@ globalThis.fetch = async (input, init) => {
     headers = new Headers(init?.headers);
   if (url.hostname === "api.stripe.com") {
     assert.equal(headers.get("authorization"), "Bearer sk_live_fake");
+    if (
+      url.pathname === "/v1/customers" ||
+      url.pathname === "/v1/customers/cus_profile"
+    ) {
+      customerPosts.push(new URLSearchParams(String(init?.body)));
+      if (url.pathname === "/v1/customers")
+        assert.equal(
+          headers.get("idempotency-key"),
+          `mbp-card-customer-${orderId}-${order.attempt}`,
+        );
+      return Response.json({ id: "cus_profile" });
+    }
     if (url.pathname === "/v1/checkout/sessions" && method === "POST") {
       stripePosts.push(new URLSearchParams(String(init?.body)));
       assert.ok(
-        [`mbp-live-${orderId}-1`, `mbp-embedded-live-${orderId}-1`].includes(
-          headers.get("idempotency-key")!,
-        ),
+        [
+          `mbp-live-${orderId}-${order.attempt}`,
+          `mbp-card-live-${orderId}-${order.attempt}`,
+        ].includes(headers.get("idempotency-key")!),
       );
       return Response.json({
         id: "cs_live_one",
@@ -126,12 +151,7 @@ globalThis.fetch = async (input, init) => {
         has_more: false,
       });
     if (url.pathname === "/v1/checkout/sessions/cs_live_one")
-      return Response.json({
-        id: "cs_live_one",
-        livemode: true,
-        status: "open",
-        url: "https://checkout.stripe.com/c/pay/cs_live_one",
-      });
+      return Response.json(previousSession);
     throw Error(`Unexpected Stripe route ${url.pathname}`);
   }
   assert.equal(url.hostname, "live-tests.supabase.co");
@@ -194,7 +214,11 @@ globalThis.fetch = async (input, init) => {
   if (method === "PATCH") {
     if (fenceCheckout) return Response.json([]);
     order = { ...order, ...JSON.parse(String(init?.body)) };
-    return Response.json([order]);
+    return Response.json(
+      headers.get("accept")?.includes("application/vnd.pgrst.object")
+        ? order
+        : [order],
+    );
   }
   return Response.json(order);
 };
@@ -365,12 +389,17 @@ test("webhooks keep processing when sales are paused and failed saves are retrya
   assert.equal(applications.length, 1);
 });
 
-test("embedded payment uses a fixed-price Stripe iframe session with no external redirect", async () => {
+test("card checkout uses the saved profile, disables Link and saving, and fixes the price", async () => {
   const response = await POST(
     new Request("https://app.example/api/billing/checkout", {
       method: "POST",
       headers: { authorization: "Bearer user-token" },
-      body: JSON.stringify({ propertyId: id, embedded: true }),
+      body: JSON.stringify({
+        propertyId: id,
+        embedded: true,
+        email: "forged@example.com",
+        name: "Forged contact",
+      }),
     }),
   );
   assert.equal(response.status, 200);
@@ -379,8 +408,24 @@ test("embedded payment uses a fixed-price Stripe iframe session with no external
   assert.equal(body.publishableKey, "pk_live_fake");
   assert.equal(body.url, undefined);
   const params = stripePosts[0];
-  assert.equal(params.get("ui_mode"), "embedded_page");
-  assert.equal(params.get("redirect_on_completion"), "never");
+  assert.equal(params.get("ui_mode"), "elements");
+  assert.equal(params.get("redirect_on_completion"), null);
+  assert.equal(params.get("customer"), "cus_profile");
+  assert.equal(params.get("wallet_options[link][display]"), "never");
+  assert.equal(
+    params.get("saved_payment_method_options[payment_method_save]"),
+    "disabled",
+  );
+  assert.equal(params.get("payment_intent_data[setup_future_usage]"), null);
+  assert.equal(params.get("allowed_payment_method_types[0]"), "card");
+  assert.equal(
+    params.get("return_url"),
+    `https://www.mybeautifulproperty.com/preview/${id}`,
+  );
+  for (const field of ["name", "email", "phone"] as const) {
+    assert.equal(customerPosts[0].get(field), demo.profile[field].trim());
+    assert.equal(body.billingDetails[field], demo.profile[field].trim());
+  }
   assert.equal(params.get("success_url"), null);
   assert.equal(params.get("line_items[0][price_data][unit_amount]"), "24900");
 });
@@ -437,3 +482,54 @@ for (const embedded of [false, true]) {
     assert.equal(expiredSessions, 1);
   });
 }
+
+for (const oldMode of ["embedded_page", "hosted_page"]) {
+  test(`an open ${oldMode} session is expired before creating card checkout`, async () => {
+    order.checkout_session_id = "cs_live_one";
+    previousSession.ui_mode = oldMode;
+    const response = await POST(
+      new Request("https://app.example/api/billing/checkout", {
+        method: "POST",
+        headers: { authorization: "Bearer user-token" },
+        body: JSON.stringify({ propertyId: id, embedded: true }),
+      }),
+    );
+    assert.equal(response.status, 200);
+    assert.equal(expiredSessions, 1);
+    assert.equal(order.attempt, 2);
+    assert.equal(stripePosts.length, 1);
+    assert.equal(stripePosts[0].get("ui_mode"), "elements");
+  });
+}
+test("an existing card session is reused and its customer is refreshed from the saved profile", async () => {
+  order.checkout_session_id = "cs_live_one";
+  previousSession.ui_mode = "elements";
+  previousSession.customer = "cus_profile";
+  const response = await POST(
+    new Request("https://app.example/api/billing/checkout", {
+      method: "POST",
+      headers: { authorization: "Bearer user-token" },
+      body: JSON.stringify({ propertyId: id, embedded: true }),
+    }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).clientSecret, "cs_live_one_secret_fake");
+  assert.equal(stripePosts.length, 0);
+  assert.equal(expiredSessions, 0);
+  assert.equal(customerPosts[0].get("name"), demo.profile.name);
+});
+test("a completed old embedded session waits for reconciliation instead of offering another charge", async () => {
+  order.checkout_session_id = "cs_live_one";
+  previousSession.status = "complete";
+  const response = await POST(
+    new Request("https://app.example/api/billing/checkout", {
+      method: "POST",
+      headers: { authorization: "Bearer user-token" },
+      body: JSON.stringify({ propertyId: id, embedded: true }),
+    }),
+  );
+  assert.deepEqual(await response.json(), { processing: true });
+  assert.equal(expiredSessions, 0);
+  assert.equal(stripePosts.length, 0);
+  assert.equal(customerPosts.length, 0);
+});

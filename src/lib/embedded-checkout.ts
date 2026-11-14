@@ -1,5 +1,6 @@
 import { requireRomanianOrder } from "./stripe-server";
 import type Stripe from "stripe";
+import type { Profile } from "./model";
 import {
   billingDatabase,
   billingJson,
@@ -16,7 +17,13 @@ export async function embeddedCheckout(
   config: ReturnType<typeof stripeConfiguration>,
   propertyId: string,
   ownerId: string,
+  profile: Profile,
 ) {
+  const billingDetails = {
+    name: profile.name.trim(),
+    email: profile.email.trim(),
+    phone: profile.phone.trim(),
+  };
   if (config.live && !livePaymentsEnabled())
     throw new BillingError(
       "Publicarea proprietăților va fi disponibilă după activarea serviciului video.",
@@ -66,15 +73,24 @@ export async function embeddedCheckout(
       return billingJson({ processing: true });
     if (
       previous.status === "open" &&
-      previous.ui_mode === "embedded_page" &&
-      previous.client_secret
-    )
+      previous.ui_mode === "elements" &&
+      previous.client_secret &&
+      previous.customer
+    ) {
+      await stripe.customers.update(
+        typeof previous.customer === "string"
+          ? previous.customer
+          : previous.customer.id,
+        billingDetails,
+      );
       return billingJson({
         clientSecret: previous.client_secret,
         publishableKey,
         mode: config.live ? "live" : "test",
+        billingDetails,
       });
-    // Close an old hosted/open session before replacing it, so two payable
+    }
+    // Close an old hosted/embedded-page session before replacing it, so two payable
     // sessions cannot remain open for the same property.
     if (previous.status === "open")
       await stripe.checkout.sessions.expire(previous.id);
@@ -103,11 +119,20 @@ export async function embeddedCheckout(
     property_id: propertyId,
     owner_id: ownerId,
   };
+  // A customer supplies the saved profile's name and contact details without
+  // collecting them again. Creating a customer does not save the payment method.
+  const customer = await stripe.customers.create(
+    { ...billingDetails, metadata: { owner_id: ownerId, order_id: order.id } },
+    { idempotencyKey: `mbp-card-customer-${order.id}-${order.attempt}` },
+  );
   const params: Stripe.Checkout.SessionCreateParams = {
     mode: "payment",
     locale: "ro",
-    ui_mode: "embedded_page",
-    redirect_on_completion: "never",
+    ui_mode: "elements",
+    customer: customer.id,
+    return_url: `${config.origin}/preview/${propertyId}`,
+    wallet_options: { link: { display: "never" } },
+    saved_payment_method_options: { payment_method_save: "disabled" },
     allowed_payment_method_types: ["card"],
     adaptive_pricing: { enabled: false },
     line_items: [
@@ -131,7 +156,7 @@ export async function embeddedCheckout(
     expires_at: Math.floor(new Date(order.expires_at).getTime() / 1000),
   };
   const session = await stripe.checkout.sessions.create(params, {
-    idempotencyKey: `mbp-embedded-${config.live ? "live" : "test"}-${order.id}-${order.attempt}`,
+    idempotencyKey: `mbp-card-${config.live ? "live" : "test"}-${order.id}-${order.attempt}`,
   });
   if (session.livemode !== config.live)
     throw new BillingError("The payment mode does not match.");
@@ -161,5 +186,6 @@ export async function embeddedCheckout(
     clientSecret: session.client_secret,
     publishableKey,
     mode: config.live ? "live" : "test",
+    billingDetails,
   });
 }

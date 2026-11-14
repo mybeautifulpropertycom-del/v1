@@ -171,7 +171,8 @@ export async function POST(request: Request) {
       throw new BillingError("Completează mai întâi profilul de agent.", 400);
     const errors = publicationErrors(property as Property, profile as Profile);
     if (errors.length) throw new BillingError(errors.join(" "), 400);
-    if (embedded) return await embeddedCheckout(config, id, user.id);
+    if (embedded)
+      return await embeddedCheckout(config, id, user.id, profile as Profile);
     if (config.live) return await createLiveCheckout(config, id, user.id);
     const admin = billingDatabase(config);
     const { data: order, error: reservationError } = await admin.rpc(

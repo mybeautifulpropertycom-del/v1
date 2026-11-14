@@ -27,6 +27,11 @@ async function fixture(page: Page) {
           clientSecret: "cs_live_browser_secret_fake",
           publishableKey: "pk_live_browser",
           mode: "live",
+          billingDetails: {
+            name: "Saved Agent",
+            email: "saved@example.com",
+            phone: "+40700123456",
+          },
         },
       });
     }
@@ -49,7 +54,29 @@ async function fixture(page: Page) {
   await page.route("https://js.stripe.com/**", (route) =>
     route.fulfill({
       contentType: "application/javascript",
-      body: `window.Stripe=function(){return {createEmbeddedCheckoutPage:async function(options){let root;return {mount:function(node){root=node;const button=document.createElement('button');button.textContent='Complete secure payment';button.onclick=function(){window.__paymentCompleted=true;options.onComplete();};node.appendChild(button);},destroy:function(){if(root)root.innerHTML='';}};}};};`,
+      body: `window.Stripe=function(){return {initCheckoutElementsSdk:function(options){
+        window.__checkoutOptions=options;
+        return {
+          loadActions:async function(){return {type:'success',actions:{getSession:function(){return {billingAddress:null};},confirm:async function(args){
+            window.__confirmArguments=args;
+            window.__confirmCalls=(window.__confirmCalls||0)+1;
+            if(window.__holdConfirmation)await new Promise(resolve=>{window.__resolveConfirmation=resolve;});
+            if(window.__declinePayment){window.__declinePayment=false;return {type:'error',error:{message:'Cardul a fost refuzat.'}};}
+            window.__paymentCompleted=true;
+            return {type:'success',session:{status:{type:'complete'}}};
+          }}};},
+          createPaymentElement:function(options){
+            window.__paymentOptions=options;
+            let root;const handlers={};
+            return {
+              update:function(options){window.__paymentDefaults=options;},
+              on:function(event,handler){handlers[event]=handler;},
+              mount:function(node){root=node;node.innerHTML='<label>Numărul cardului<input aria-label="Numărul cardului" placeholder="1234 1234 1234 1234" /></label><label>Expirare<input aria-label="Expirare" placeholder="LL / AA" /></label><label>CVC<input aria-label="CVC" placeholder="CVC" /></label>';if(handlers.change)handlers.change({value:{billingDetails:{address:{country:'RO',postalCode:'105400'}}}});if(handlers.ready)handlers.ready();},
+              destroy:function(){if(root)root.innerHTML='';window.__elementDestroyed=true;}
+            };
+          }
+        };
+      }};};`,
     }),
   );
   await page.exposeFunction("markPaid", () => {
@@ -87,11 +114,37 @@ test("the private website can be edited before payment; both Publish buttons ope
   await expect(buttons).toHaveCount(2);
   await buttons.first().click();
   await expect(page.getByRole("dialog")).toContainText("249 RON");
-  await expect(page.getByRole("dialog")).toContainText(
-    "Un film de prezentare din fotografiile tale",
+  await expect(page.getByRole("dialog")).not.toContainText(
+    "Site de proprietate + film de prezentare",
   );
+  await expect(page.getByRole("dialog")).not.toContainText("Plată unică");
+  await expect(page.getByRole("dialog").getByRole("textbox")).toHaveCount(3);
+  expect(
+    await page.evaluate(() => ({
+      options: (window as any).__checkoutOptions,
+      payment: (window as any).__paymentOptions,
+      defaults: (window as any).__paymentDefaults,
+    })),
+  ).toMatchObject({
+    options: {
+      defaultValues: {
+        email: "saved@example.com",
+        phoneNumber: "+40700123456",
+      },
+      elementsOptions: {
+        savedPaymentMethod: { enableSave: "never", enableRedisplay: "never" },
+      },
+    },
+    payment: {
+      fields: {
+        billingDetails: { name: "never", email: "never", phone: "never" },
+      },
+      wallets: { applePay: "never", googlePay: "never", link: "never" },
+    },
+    defaults: { defaultValues: { billingDetails: { name: "Saved Agent" } } },
+  });
   await expect(
-    page.getByRole("button", { name: "Complete secure payment" }),
+    page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeVisible();
   await page.screenshot({
     path: "/tmp/mbp-publish-desktop.jpg",
@@ -104,7 +157,7 @@ test("the private website can be edited before payment; both Publish buttons ope
   expect(setup.state.property.status).toBe("draft");
   await buttons.last().click();
   await expect(
-    page.getByRole("button", { name: "Complete secure payment" }),
+    page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
   expect(setup.posts).toBe(2);
@@ -121,7 +174,7 @@ test("completed embedded checkout waits for server publication, shows the live l
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
-  await page.getByRole("button", { name: "Complete secure payment" }).click();
+  await page.getByRole("button", { name: "Plătește 249 RON" }).click();
   await expect(page.getByRole("dialog")).toContainText(
     "Site-ul proprietății a fost publicat.",
     { timeout: 10000 },
@@ -204,7 +257,7 @@ test("publication modal fits a mobile viewport and Escape returns to the saved e
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
   await expect(
-    page.getByRole("button", { name: "Complete secure payment" }),
+    page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeVisible();
   const box = await page.getByRole("dialog").boundingBox();
   expect(box!.x).toBeGreaterThanOrEqual(0);
@@ -382,4 +435,78 @@ test("a stopped video shows its saved progress without a loading animation or pr
   await expect(page.locator("body")).not.toContainText(
     "Internal provider diagnostics",
   );
+});
+
+test("a declined card keeps the form and retries without reserving another checkout", async ({
+  page,
+}) => {
+  const setup = await fixture(page);
+  await page.goto(`/preview/${id}`);
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publică proprietatea" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Plătește 249 RON" }),
+  ).toBeEnabled();
+  await page.evaluate(() => {
+    (window as any).__declinePayment = true;
+  });
+  await page.getByRole("button", { name: "Plătește 249 RON" }).click();
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+    "Cardul a fost refuzat.",
+  );
+  expect(setup.state.property.status).toBe("draft");
+  expect(setup.posts).toBe(1);
+  expect(
+    await page.evaluate(() => (window as any).__confirmArguments),
+  ).toMatchObject({
+    email: "saved@example.com",
+    phoneNumber: "+40700123456",
+    savePaymentMethod: false,
+    redirect: "if_required",
+    billingAddress: {
+      name: "Saved Agent",
+      address: { country: "RO", postal_code: "105400" },
+    },
+  });
+  await page.getByRole("button", { name: "Plătește 249 RON" }).click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Site-ul proprietății a fost publicat.",
+    { timeout: 10000 },
+  );
+  expect(setup.posts).toBe(1);
+});
+
+test("repeated submission confirms once and waits for server publication", async ({
+  page,
+}) => {
+  const setup = await fixture(page);
+  await page.goto(`/preview/${id}`);
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publică proprietatea" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Plătește 249 RON" }),
+  ).toBeEnabled();
+  await page.evaluate(() => {
+    (window as any).__holdConfirmation = true;
+    const form = document.querySelector<HTMLFormElement>(
+      ".publish-payment-form",
+    )!;
+    form.requestSubmit();
+    form.requestSubmit();
+  });
+  await expect(
+    page.getByRole("button", { name: "Se procesează plata…" }),
+  ).toBeDisabled();
+  expect(await page.evaluate(() => (window as any).__confirmCalls)).toBe(1);
+  expect(setup.state.property.status).toBe("draft");
+  await page.evaluate(() => (window as any).__resolveConfirmation());
+  await expect(page.getByRole("dialog")).toContainText(
+    "Site-ul proprietății a fost publicat.",
+    { timeout: 10000 },
+  );
+  expect(setup.posts).toBe(1);
 });

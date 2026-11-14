@@ -1,6 +1,11 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { loadStripe, type StripeEmbeddedCheckout } from "@stripe/stripe-js";
+import {
+  loadStripe,
+  type StripePaymentElement,
+  type StripeCheckoutLoadActionsSuccess,
+  type StripeCheckoutAddress,
+} from "@stripe/stripe-js";
 import {
   Check,
   ExternalLink,
@@ -61,23 +66,35 @@ async function request(id: string, method: "GET" | "POST", retryVideo = false) {
     );
   return body;
 }
+type BillingDetails = { name: string; email: string; phone: string };
+
 function PaymentForm({
   clientSecret,
   publishableKey,
+  billingDetails,
   onComplete,
   onError,
 }: {
   clientSecret: string;
   publishableKey: string;
+  billingDetails: BillingDetails;
   onComplete: () => void;
   onError: (error: string) => void;
 }) {
   const root = useRef<HTMLDivElement>(null);
+  const actions = useRef<StripeCheckoutLoadActionsSuccess | null>(null);
+  const cardAddress = useRef<StripeCheckoutAddress | null>(null);
+  const submitting = useRef(false);
+  const mounted = useRef(false);
+  const [ready, setReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const callbacks = useRef({ onComplete, onError });
   callbacks.current = { onComplete, onError };
   useEffect(() => {
     let active = true;
-    let checkout: StripeEmbeddedCheckout | undefined;
+    mounted.current = true;
+    let element: StripePaymentElement | undefined;
     void (async () => {
       try {
         const stripe = await loadStripe(publishableKey);
@@ -86,15 +103,55 @@ function PaymentForm({
           throw new Error(
             "Formularul securizat de plată nu a putut fi încărcat.",
           );
-        checkout = await stripe.createEmbeddedCheckoutPage({
+        const checkout = stripe.initCheckoutElementsSdk({
           clientSecret,
-          onComplete: () => callbacks.current.onComplete(),
+          defaultValues: {
+            email: billingDetails.email,
+            phoneNumber: billingDetails.phone,
+          },
+          elementsOptions: {
+            savedPaymentMethod: {
+              enableSave: "never",
+              enableRedisplay: "never",
+            },
+            appearance: {
+              theme: "stripe",
+              variables: { colorPrimary: "#25382e", borderRadius: "8px" },
+            },
+          },
         });
-        if (!active) {
-          checkout.destroy();
-          return;
-        }
-        if (root.current) checkout.mount(root.current);
+        const result = await checkout.loadActions();
+        if (!active) return;
+        if (result.type === "error") throw new Error(result.error.message);
+        actions.current = result.actions;
+        element = checkout.createPaymentElement({
+          fields: {
+            billingDetails: {
+              name: "never",
+              email: "never",
+              phone: "never",
+              address: "if_required",
+            },
+          },
+          wallets: { applePay: "never", googlePay: "never", link: "never" },
+        });
+        element.update({ defaultValues: { billingDetails } });
+        element.on("change", (event) => {
+          const address = event.value.billingDetails?.address;
+          cardAddress.current = address?.country
+            ? { country: address.country, postal_code: address.postalCode }
+            : null;
+        });
+        element.on("ready", () => {
+          if (active) setReady(true);
+        });
+        element.on("loaderror", () => {
+          if (active)
+            callbacks.current.onError(
+              "Formularul securizat de plată nu a putut fi încărcat. Încearcă din nou.",
+            );
+        });
+        if (root.current) element.mount(root.current);
       } catch (error) {
         if (active)
           callbacks.current.onError(
@@ -106,17 +163,72 @@ function PaymentForm({
     })();
     return () => {
       active = false;
-      checkout?.destroy();
+      mounted.current = false;
+      actions.current = null;
+      element?.destroy();
     };
-  }, [clientSecret, publishableKey]);
+  }, [clientSecret, publishableKey, billingDetails]);
   return (
-    <div
-      className="publish-payment-frame"
-      ref={root}
-      aria-label="Formular securizat de plată Stripe"
-    />
+    <form
+      className="publish-payment-form"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (!ready || !actions.current || submitting.current) return;
+        submitting.current = true;
+        setBusy(true);
+        setError("");
+        try {
+          // Preserve Stripe-collected billing details when needed; the profile
+          // contains contact information, not the cardholder's billing address.
+          const address =
+            actions.current.getSession().billingAddress?.address ||
+            cardAddress.current;
+          const result = await actions.current.confirm({
+            redirect: "if_required",
+            returnUrl: window.location.href,
+            email: billingDetails.email,
+            phoneNumber: billingDetails.phone,
+            savePaymentMethod: false,
+            ...(address?.country
+              ? { billingAddress: { name: billingDetails.name, address } }
+              : {}),
+          });
+          if (!mounted.current) return;
+          if (result.type === "error") setError(result.error.message);
+          else callbacks.current.onComplete();
+        } catch {
+          if (mounted.current)
+            setError(
+              "Plata nu a putut fi confirmată. Verifică datele cardului și încearcă din nou.",
+            );
+        } finally {
+          submitting.current = false;
+          if (mounted.current) setBusy(false);
+        }
+      }}
+    >
+      <div
+        className="publish-payment-frame"
+        ref={root}
+        aria-label="Formular securizat de plată Stripe"
+      />
+      {!ready && <p role="status">Se încarcă formularul de card…</p>}
+      {error && (
+        <p className="publish-card-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        className="button primary publish-pay-button"
+        type="submit"
+        disabled={!ready || busy}
+      >
+        {busy ? "Se procesează plata…" : "Plătește 249 RON"}
+      </button>
+    </form>
   );
 }
+
 function Modal({
   onClose,
   children,
@@ -181,6 +293,7 @@ export function usePropertyPublication(options: {
   const [payment, setPayment] = useState<{
     clientSecret: string;
     publishableKey: string;
+    billingDetails: BillingDetails;
   } | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [videoError, setVideoError] = useState("");
@@ -426,11 +539,13 @@ export function usePropertyPublication(options: {
         <h2 id="publish-dialog-title">
           {phase === "success"
             ? "Proprietatea este publicată."
-            : "Pregătită pentru următorul capitol."}
+            : phase === "payment"
+              ? "Plată securizată"
+              : "Pregătită pentru următorul capitol."}
         </h2>
         <p>{options.property?.title || "Site-ul proprietății tale"}</p>
       </div>
-      {phase !== "success" && (
+      {phase !== "success" && phase !== "payment" && phase !== "confirming" && (
         <div className="publish-offer">
           <div>
             <strong>
