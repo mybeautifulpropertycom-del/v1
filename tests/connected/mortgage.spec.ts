@@ -74,6 +74,14 @@ test("saved property price drives financing; visitors can adjust the estimate wi
   await expect(calculator.locator(".mortgage-monthly strong")).toHaveText(
     "830",
   );
+  await expect(calculator.locator(".mortgage-details dl")).toBeHidden();
+  await calculator
+    .getByText("Vezi detaliile simulării", { exact: true })
+    .click();
+  await expect(calculator.locator(".mortgage-details dl")).toBeVisible();
+  await expect(
+    calculator.locator(".mortgage-details dd").first(),
+  ).toContainText("160.000");
 });
 test("rentals and unspecified prices never show a mortgage estimate", async ({
   page,

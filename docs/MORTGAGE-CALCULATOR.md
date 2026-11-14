@@ -1,7 +1,9 @@
 # Property mortgage simulator
 
 All three public designs and their sample pages include the same interactive
-calculator before the agent contact section. It receives the listing's current
+calculator before the agent contact section. A horizontal price-to-instalment
+summary leads into three adjustment fields; repayment totals and calculation
+assumptions expand through “Vezi detaliile simulării”. It receives the listing's current
 price, currency and transaction type directly; no second price field, database
 migration, external service or credentials are needed. Rentals and nonpositive or
 missing prices do not display a calculator.
