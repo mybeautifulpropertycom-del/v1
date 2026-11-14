@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowUpRight, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import type { PublicProperty } from "@/lib/model";
 import { calculateMortgage } from "@/lib/mortgage";
 
@@ -47,15 +47,11 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
   return (
     <section className="property-mortgage" aria-labelledby={`${id}-heading`}>
       <div className="mortgage-intro">
-        <span className="mortgage-eyebrow">UN PAS MAI APROAPE DE ACASĂ</span>
-        <h2 id={`${id}-heading`}>
-          Un loc al tău.
-          <br />
-          <em>Un plan pe măsura ta.</em>
-        </h2>
+        <span className="mortgage-eyebrow">SIMULATOR DE CREDIT</span>
+        <h2 id={`${id}-heading`}>Planifică următorul pas.</h2>
         <p>
-          Descoperă cum ar putea arăta rata pentru această proprietate.
-          Ajustează cifrele și găsește un punct de plecare.
+          Prețul acestei locuințe. Un avans ales de tine. O rată estimată pe
+          loc.
         </p>
       </div>
       <div className="mortgage-layout">
@@ -153,6 +149,22 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               <span>35 de ani</span>
             </div>
           </div>
+          <div
+            className="mortgage-term-options"
+            role="group"
+            aria-label="Perioade recomandate"
+          >
+            {[15, 20, 25, 30].map((term) => (
+              <button
+                key={term}
+                type="button"
+                aria-pressed={years === term}
+                onClick={() => setYears(term)}
+              >
+                {term} ani
+              </button>
+            ))}
+          </div>
           <div className="mortgage-interest-control">
             <label htmlFor={`${id}-rate`}>
               Dobândă anuală <small>Nominală, presupusă constantă</small>
@@ -210,7 +222,7 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
           )}
         </div>
         <div className="mortgage-result" aria-live="polite" aria-atomic="true">
-          <span className="mortgage-eyebrow">RATA LUNARĂ ESTIMATĂ</span>
+          <span className="mortgage-eyebrow">RATA TA ESTIMATĂ</span>
           <div className="mortgage-monthly">
             <strong>
               {result
@@ -242,33 +254,26 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               <dd>{result ? money(result.total) : "—"}</dd>
             </div>
           </dl>
-          <div className="mortgage-composition" aria-hidden="true">
-            <span
-              style={{
-                width: `${result && result.total > 0 ? (result.principal / result.total) * 100 : 100}%`,
-              }}
-            />
-          </div>
-          <div className="mortgage-legend">
-            <span>Suma împrumutată</span>
-            <span>Dobândă</span>
-          </div>
-          <p className="mortgage-result-footer">
-            Cifrele conturează planul.
-            <br />
-            Vizionarea îți spune restul.{" "}
-            <ArrowUpRight size={22} aria-hidden="true" />
-          </p>
         </div>
       </div>
-      <p className="mortgage-disclaimer">
-        Simulare orientativă, nu ofertă de credit sau confirmare a
-        eligibilității. Dobânda inițială de 4,7% este un exemplu, nu o ofertă
-        bancară și nu reprezintă DAE. Calculul nu include comisioane, asigurări,
-        taxe notariale sau alte costuri. Dobânda variabilă (inclusiv IRCC +
-        marjă), cursul valutar și condițiile băncii pot modifica rata. Avansul
-        minim și perioada acceptată sunt stabilite de bancă.
-      </p>
+      <div className="mortgage-notes">
+        <p>
+          Simulare orientativă · Dobândă constantă · Comisioanele și asigurările
+          nu sunt incluse
+        </p>
+        <details>
+          <summary>Cum este calculată rata?</summary>
+          <p className="mortgage-disclaimer">
+            Simulare orientativă, nu ofertă de credit sau confirmare a
+            eligibilității. Dobânda inițială de 4,7% este un exemplu, nu o
+            ofertă bancară și nu reprezintă DAE. Calculul nu include comisioane,
+            asigurări, taxe notariale sau alte costuri. Dobânda variabilă
+            (inclusiv IRCC + marjă), cursul valutar și condițiile băncii pot
+            modifica rata. Avansul minim și perioada acceptată sunt stabilite de
+            bancă.
+          </p>
+        </details>
+      </div>
     </section>
   );
 }
