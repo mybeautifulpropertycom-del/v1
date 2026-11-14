@@ -13,13 +13,17 @@ button; it does not embed Stripe's product summary or contact form.
 - Only card payments are enabled. Link is disabled on the session and the element;
   Apple Pay and Google Pay are hidden. Saving and redisplaying payment methods are
   disabled, and confirmation explicitly sets `savePaymentMethod: false`.
-- The element receives the saved profile as its default billing details. Name,
-  email and phone inputs are hidden. Billing address collection uses
+- The element receives the saved profile's name as a default; email and phone
+  stay on the Stripe customer. Name, email and phone inputs are hidden. Billing address collection uses
   `if_required`: Stripe may require a country/postal code or bank authentication.
   No billing address is invented from the property's address.
 - Email stays on the server-created Stripe customer. Do not supply `email` again
   in SDK defaults or confirmation: Stripe rejects updating a session whose
   customer already has an email. The browser fixture rejects those updates too.
+- Phone also stays on that customer. Do not pass `phoneNumber` to Checkout
+  defaults/confirmation when phone collection is disabled. Enabling collection
+  would unnecessarily ask the buyer for their number again. The browser fixture
+  rejects email and phone updates at initialization and confirmation.
 - Failed confirmation stays in the same form for correction and retry. Success
   enters the existing server reconciliation flow; a browser callback cannot grant
   publication rights.

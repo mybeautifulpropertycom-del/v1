@@ -105,9 +105,6 @@ function PaymentForm({
           );
         const checkout = stripe.initCheckoutElementsSdk({
           clientSecret,
-          defaultValues: {
-            phoneNumber: billingDetails.phone,
-          },
           elementsOptions: {
             savedPaymentMethod: {
               enableSave: "never",
@@ -134,13 +131,12 @@ function PaymentForm({
           },
           wallets: { applePay: "never", googlePay: "never", link: "never" },
         });
-        // The session's Customer already owns its email. Do not pass email to
-        // Checkout defaults/confirmation: Stripe rejects attempts to update it.
+        // Contact details belong to the server-created Customer. Do not update
+        // email/phone through Checkout: its collection settings prohibit that.
         element.update({
           defaultValues: {
             billingDetails: {
               name: billingDetails.name,
-              phone: billingDetails.phone,
             },
           },
         });
@@ -194,7 +190,6 @@ function PaymentForm({
           const result = await actions.current.confirm({
             redirect: "if_required",
             returnUrl: window.location.href,
-            phoneNumber: billingDetails.phone,
             savePaymentMethod: false,
             ...(address?.country
               ? { billingAddress: { name: billingDetails.name, address } }
