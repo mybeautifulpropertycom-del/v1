@@ -56,9 +56,11 @@ async function fixture(page: Page) {
       contentType: "application/javascript",
       body: `window.Stripe=function(){return {initCheckoutElementsSdk:function(options){
         window.__checkoutOptions=options;
+        if(options.defaultValues && 'email' in options.defaultValues)throw new Error('Cannot update customer email');
         return {
           loadActions:async function(){return {type:'success',actions:{getSession:function(){return {billingAddress:null};},confirm:async function(args){
             window.__confirmArguments=args;
+            if('email' in args)throw new Error('Cannot update customer email');
             window.__confirmCalls=(window.__confirmCalls||0)+1;
             if(window.__holdConfirmation)await new Promise(resolve=>{window.__resolveConfirmation=resolve;});
             if(window.__declinePayment){window.__declinePayment=false;return {type:'error',error:{message:'Cardul a fost refuzat.'}};}
@@ -69,7 +71,7 @@ async function fixture(page: Page) {
             window.__paymentOptions=options;
             let root;const handlers={};
             return {
-              update:function(options){window.__paymentDefaults=options;},
+              update:function(options){if('email' in options.defaultValues.billingDetails)throw new Error('Cannot update customer email');window.__paymentDefaults=options;},
               on:function(event,handler){handlers[event]=handler;},
               mount:function(node){root=node;node.innerHTML='<label>Numărul cardului<input aria-label="Numărul cardului" placeholder="1234 1234 1234 1234" /></label><label>Expirare<input aria-label="Expirare" placeholder="LL / AA" /></label><label>CVC<input aria-label="CVC" placeholder="CVC" /></label>';if(handlers.change)handlers.change({value:{billingDetails:{address:{country:'RO',postalCode:'105400'}}}});if(handlers.ready)handlers.ready();},
               destroy:function(){if(root)root.innerHTML='';window.__elementDestroyed=true;}
@@ -128,7 +130,6 @@ test("the private website can be edited before payment; both Publish buttons ope
   ).toMatchObject({
     options: {
       defaultValues: {
-        email: "saved@example.com",
         phoneNumber: "+40700123456",
       },
       elementsOptions: {
@@ -461,7 +462,6 @@ test("a declined card keeps the form and retries without reserving another check
   expect(
     await page.evaluate(() => (window as any).__confirmArguments),
   ).toMatchObject({
-    email: "saved@example.com",
     phoneNumber: "+40700123456",
     savePaymentMethod: false,
     redirect: "if_required",

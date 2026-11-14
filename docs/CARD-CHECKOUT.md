@@ -17,6 +17,9 @@ button; it does not embed Stripe's product summary or contact form.
   email and phone inputs are hidden. Billing address collection uses
   `if_required`: Stripe may require a country/postal code or bank authentication.
   No billing address is invented from the property's address.
+- Email stays on the server-created Stripe customer. Do not supply `email` again
+  in SDK defaults or confirmation: Stripe rejects updating a session whose
+  customer already has an email. The browser fixture rejects those updates too.
 - Failed confirmation stays in the same form for correction and retry. Success
   enters the existing server reconciliation flow; a browser callback cannot grant
   publication rights.

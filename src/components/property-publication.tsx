@@ -106,7 +106,6 @@ function PaymentForm({
         const checkout = stripe.initCheckoutElementsSdk({
           clientSecret,
           defaultValues: {
-            email: billingDetails.email,
             phoneNumber: billingDetails.phone,
           },
           elementsOptions: {
@@ -135,7 +134,16 @@ function PaymentForm({
           },
           wallets: { applePay: "never", googlePay: "never", link: "never" },
         });
-        element.update({ defaultValues: { billingDetails } });
+        // The session's Customer already owns its email. Do not pass email to
+        // Checkout defaults/confirmation: Stripe rejects attempts to update it.
+        element.update({
+          defaultValues: {
+            billingDetails: {
+              name: billingDetails.name,
+              phone: billingDetails.phone,
+            },
+          },
+        });
         element.on("change", (event) => {
           const address = event.value.billingDetails?.address;
           cardAddress.current = address?.country
@@ -186,7 +194,6 @@ function PaymentForm({
           const result = await actions.current.confirm({
             redirect: "if_required",
             returnUrl: window.location.href,
-            email: billingDetails.email,
             phoneNumber: billingDetails.phone,
             savePaymentMethod: false,
             ...(address?.country
