@@ -4,7 +4,7 @@ import path from "node:path";
 test("dashboard filters, searches, and changes view without fabricated analytics", async ({
   page,
 }) => {
-  await page.goto("/dashboard");
+  await page.goto("/panou");
   await expect(page.locator(".property-card")).toHaveCount(3);
   await expect(page.locator("html")).toHaveAttribute("lang", "ro");
   await page.getByRole("tab", { name: "Ciorne" }).click();
@@ -26,7 +26,7 @@ test("dashboard filters, searches, and changes view without fabricated analytics
 test("agent creates, uploads, publishes locally, reloads, edits and unpublishes a listing", async ({
   page,
 }) => {
-  await page.goto("/dashboard/properties/new");
+  await page.goto("/panou/proprietati/noua");
   await page.getByLabel("Titlul proprietății").fill("A new chapter in Austin");
   await page.getByLabel("Adresă", { exact: false }).fill("Austin, TX");
   await page.getByLabel("Preț", { exact: true }).fill("695000");
@@ -46,7 +46,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
   await page
     .getByRole("button", { name: "Deschide editorul site-ului" })
     .click();
-  await expect(page).toHaveURL(/preview\/[a-f0-9-]+$/);
+  await expect(page).toHaveURL(/previzualizare\/[a-f0-9-]+$/);
   await page
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
@@ -68,7 +68,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
     "A new chapter in Austin",
   );
   const propertyId = editorUrl.split("/").pop();
-  await page.goto(`/preview/${propertyId}`);
+  await page.goto(`/previzualizare/${propertyId}`);
   await expect(page.locator(".website-panorama")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "A new chapter in Austin", level: 1 }),
@@ -96,7 +96,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
 test("editing contact details updates all three saved previews", async ({
   page,
 }) => {
-  await page.goto("/dashboard/profile");
+  await page.goto("/panou/profil");
   await page.getByLabel("Nume complet").fill("Taylor Parker");
   await page.getByLabel("E-mail public de contact").fill("taylor@example.com");
   await page.getByRole("button", { name: "Salvează modificările" }).click();
@@ -104,7 +104,7 @@ test("editing contact details updates all three saved previews", async ({
     "Profilul tău a fost salvat",
   );
   for (const id of ["demo-villa", "demo-apartment", "demo-penthouse"]) {
-    await page.goto(`/preview/${id}`);
+    await page.goto(`/previzualizare/${id}`);
     await expect(page.locator(".landing-agent-profile")).toContainText(
       "Taylor Parker",
     );
@@ -119,7 +119,7 @@ test("each template has working gallery controls and honest preview contact beha
 }) => {
   test.setTimeout(90000); // Loads all 40 photographs across each of three templates.
   for (const template of ["editorial", "minimal", "panorama"]) {
-    await page.goto(`/templates/${template}`);
+    await page.goto(`/modele/${template}`);
     await expect(page.locator(`.website-${template}`)).toBeVisible();
     await page
       .getByRole("button", { name: "Vezi toate cele 40 fotografii" })
@@ -154,7 +154,7 @@ test("each template has working gallery controls and honest preview contact beha
 });
 
 test("incomplete properties cannot publish", async ({ page }) => {
-  await page.goto("/dashboard/properties/new");
+  await page.goto("/panou/proprietati/noua");
   await page.getByRole("button", { name: "Designul site-ului" }).click();
   await page
     .getByRole("button", { name: "Deschide editorul site-ului" })
@@ -175,7 +175,7 @@ test("incomplete properties cannot publish", async ({ page }) => {
 test("inline editing saves the property headline and survives reload", async ({
   page,
 }) => {
-  await page.goto("/preview/demo-villa");
+  await page.goto("/previzualizare/demo-villa");
   await page.getByRole("button", { name: "Editează pe pagină" }).click();
   await page
     .getByRole("textbox", { name: "Editează titlul proprietății" })
@@ -214,7 +214,7 @@ test("public routes do not leak local demo data and contact API validates reques
     },
   });
   expect(notConnected.status()).toBe(503);
-  await page.goto("/login");
+  await page.goto("/autentificare");
   await expect(
     page.getByRole("link", { name: "Explorează versiunea demo" }),
   ).toBeVisible();
@@ -225,7 +225,7 @@ test("mobile dashboard, editor, and three designs fit the viewport", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/dashboard");
+  await page.goto("/panou");
   await expect(page.locator(".property-card")).toHaveCount(3);
   await page.getByRole("button", { name: "Deschide meniul" }).click();
   await page.getByRole("link", { name: "Profilul meu", exact: true }).click();
@@ -233,12 +233,12 @@ test("mobile dashboard, editor, and three designs fit the viewport", async ({
     page.getByRole("heading", { name: "Câteva cuvinte despre tine." }),
   ).toBeVisible();
   for (const route of [
-    "/dashboard",
-    "/dashboard/properties/demo-villa",
-    "/dashboard/templates",
-    "/templates/editorial",
-    "/templates/minimal",
-    "/templates/panorama",
+    "/panou",
+    "/panou/proprietati/demo-villa",
+    "/panou/modele",
+    "/modele/editorial",
+    "/modele/minimal",
+    "/modele/panorama",
   ]) {
     await page.goto(route);
     await expect(page.locator("h1")).toBeVisible();

@@ -9,7 +9,7 @@ test("drafts hide sharing; published listings share saved data and hide controls
     address_slug: "saved-public-address",
     title: "Saved listing title",
   });
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   const share = page.getByRole("region", {
     name: "Distribuie proprietatea publicată",
   });
@@ -34,7 +34,7 @@ test("drafts hide sharing; published listings share saved data and hide controls
   expect(url.searchParams.get("text")).toBe("Saved listing title");
   await expect(
     share.getByRole("link", { name: "Salvează ca PDF" }),
-  ).toHaveAttribute("href", `/p/${state.property.slug}/print`);
+  ).toHaveAttribute("href", `/p/${state.property.slug}/tiparire`);
   await page.getByLabel("Titlul proprietății").fill("Unsaved headline");
   expect(
     new URL(
@@ -56,7 +56,7 @@ test("drafts hide sharing; published listings share saved data and hide controls
 
 test("a new draft has no sharing or PDF controls", async ({ page }) => {
   await workspace(page);
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Distribuie proprietatea publicată" }),
@@ -74,7 +74,7 @@ test("published print view produces a PDF with photos and hides interactive cont
       document.body.dataset.printCalled = "true";
     };
   });
-  const response = await page.goto("/p/print-test-home/print");
+  const response = await page.goto("/p/print-test-home/tiparire");
   expect(response?.status()).toBe(200);
   await expect(
     page.getByRole("heading", { name: "A home ready to share", level: 1 }),
@@ -117,7 +117,7 @@ test("published print view produces a PDF with photos and hides interactive cont
 });
 
 test("unpublished or missing print pages are unavailable", async ({ page }) => {
-  await page.goto("/p/unpublished-home/print");
+  await page.goto("/p/unpublished-home/tiparire");
   await expect(
     page.getByRole("heading", { name: "Această pagină nu este disponibilă." }),
   ).toBeVisible();

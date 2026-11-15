@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("new properties offer EUR and RON and format prices while typing, editing and pasting", async ({
   page,
 }) => {
-  await page.goto("/dashboard/properties/new");
+  await page.goto("/panou/proprietati/noua");
   const price = page.getByLabel("Preț", { exact: true });
   const currency = page.getByRole("combobox", { name: /^Monedă/ });
   await expect(currency.locator("option")).toHaveCount(2);
@@ -36,7 +36,7 @@ test("new properties offer EUR and RON and format prices while typing, editing a
 test("formatted price saves as a numeric EUR amount and survives reload", async ({
   page,
 }) => {
-  await page.goto("/dashboard/properties/new");
+  await page.goto("/panou/proprietati/noua");
   await page
     .getByLabel("Titlul proprietății")
     .fill("A beautifully priced home");
@@ -44,7 +44,7 @@ test("formatted price saves as a numeric EUR amount and survives reload", async 
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/properties\/[a-f0-9-]+$/);
+  await expect(page).toHaveURL(/\/proprietati\/[a-f0-9-]+$/);
   await page.reload();
   await expect(page.getByLabel("Preț", { exact: true })).toHaveValue(
     "100.000 EUR",

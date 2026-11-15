@@ -122,3 +122,35 @@ test("a property accepts 40 photos and rejects a 41st", () => {
   property.images.push("https://example.com/41.webp");
   assert.match(propertyErrors(property).join(" "), /40 de fotografii/);
 });
+
+test("platform page names cannot become property URLs, while full Romanian addresses remain valid", () => {
+  const { profile, properties } = demoWorkspace();
+  for (const location of [
+    "Panou",
+    "Modele",
+    "Previzualizare",
+    "Autentificare",
+    "Înregistrare",
+    "Resetare parolă",
+    "Administrare",
+  ]) {
+    const property = { ...properties[0], location };
+    assert.ok(
+      propertyErrors(property).some((error) =>
+        error.includes("adresa completă"),
+      ),
+    );
+    assert.ok(
+      publicationErrors(property, profile).some((error) =>
+        error.includes("adresa completă"),
+      ),
+    );
+  }
+  assert.deepEqual(
+    propertyErrors({
+      ...properties[0],
+      location: "Strada Modele 12, București",
+    }),
+    [],
+  );
+});

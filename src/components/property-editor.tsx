@@ -158,7 +158,7 @@ export function PropertyEditor({
             : t.saved,
       );
       if (publish) setPublished(true);
-      if (!id && redirect) router.replace(`/dashboard/properties/${value.id}`);
+      if (!id && redirect) router.replace(`/panou/proprietati/${value.id}`);
       return value;
     } catch (e) {
       setError(
@@ -258,7 +258,7 @@ export function PropertyEditor({
     return (
       <div className="empty-state">
         <h1>Proprietatea nu se află în contul tău.</h1>
-        <Link className="button primary" href="/dashboard">
+        <Link className="button primary" href="/panou">
           Înapoi la proprietăți
         </Link>
       </div>
@@ -272,7 +272,7 @@ export function PropertyEditor({
           Adaugă numele, telefonul și e-mailul. Le includem pe fiecare site de
           proprietate.
         </p>
-        <Link href="/dashboard/profile" className="button primary">
+        <Link href="/panou/profil" className="button primary">
           Completează profilul <ArrowRight size={17} />
         </Link>
       </div>
@@ -299,7 +299,7 @@ export function PropertyEditor({
   return (
     <>
       <Link
-        href="/dashboard"
+        href="/panou"
         className="back-link"
         onClick={(e) => {
           if (dirty && !confirm(t.unsaved)) e.preventDefault();
@@ -318,7 +318,7 @@ export function PropertyEditor({
           {saved && !busy && (
             <Link
               className="button secondary"
-              href={`/preview/${property.id}`}
+              href={`/previzualizare/${property.id}`}
               target="_blank"
             >
               <Eye size={16} />
@@ -797,7 +797,7 @@ export function PropertyEditor({
                 disabled={busy || uploading}
                 onClick={async () => {
                   const value = await persist(false, false, false);
-                  if (value) router.push(`/preview/${value.id}`);
+                  if (value) router.push(`/previzualizare/${value.id}`);
                 }}
               >
                 <Globe2 size={16} />
@@ -828,7 +828,7 @@ export function PropertyEditor({
             </div>
             {saved && !busy && (
               <Link
-                href={`/preview/${property.id}`}
+                href={`/previzualizare/${property.id}`}
                 target="_blank"
                 className="button secondary full-button"
               >
@@ -866,7 +866,7 @@ export function PropertyEditor({
               <Mail size={14} />
               {profile.email}
             </span>
-            <Link href="/dashboard/profile">
+            <Link href="/panou/profil">
               Editează datele de contact <ExternalLink size={12} />
             </Link>
           </div>

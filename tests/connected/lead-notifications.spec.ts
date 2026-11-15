@@ -14,7 +14,7 @@ test("unread badge refreshes, read status survives reload, and deleting a lead r
   page,
 }) => {
   const state = await workspace(page, {}, [lead]);
-  await page.goto("/dashboard");
+  await page.goto("/panou");
   await expect(page.locator(".inbox-unread-badge")).toHaveText("1");
   await page
     .getByRole("link", { name: "Mesaje, 1 mesaje necitite", exact: true })

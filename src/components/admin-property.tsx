@@ -72,7 +72,7 @@ export function AdminProperty({ id }: { id: string }) {
     return (
       <div className="state-screen">
         <h1>Este necesar accesul de administrator.</h1>
-        <Link href="/dashboard">Înapoi la spațiul de lucru</Link>
+        <Link href="/panou">Înapoi la spațiul de lucru</Link>
       </div>
     );
   async function publish() {
@@ -139,7 +139,7 @@ export function AdminProperty({ id }: { id: string }) {
   return (
     <>
       <section className="admin-property-toolbar">
-        <Link href="/dashboard/admin" className="text-button">
+        <Link href="/panou/administrare" className="text-button">
           ← Administrare
         </Link>
         {data && (
@@ -314,7 +314,7 @@ export function AdminProperty({ id }: { id: string }) {
           profile={data.profile}
           preview
           previewBackLink={{
-            href: "/dashboard/admin",
+            href: "/panou/administrare",
             label: "Înapoi la administrare",
           }}
           film={data.video?.film || undefined}

@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title:
       data?.property.status === "published"
-        ? `${data.property.title} — Print`
+        ? `${data.property.title} — Tipărire`
         : "Proprietate indisponibilă",
     robots: { index: false, follow: false },
     ...(data?.property.status === "published"

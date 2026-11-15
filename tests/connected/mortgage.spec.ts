@@ -5,7 +5,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
   test(`${template}: mortgage simulator is available in samples and fits mobile`, async ({
     page,
   }, testInfo) => {
-    await page.goto(`/templates/${template}`);
+    await page.goto(`/modele/${template}`);
     const calculator = page.locator(".property-mortgage");
     await calculator.scrollIntoViewIfNeeded();
     await expect(calculator).toBeVisible();
@@ -68,7 +68,7 @@ test("saved property price drives financing; visitors can adjust the estimate wi
     currency: "EUR",
     transaction: "sale",
   });
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   const calculator = page.locator(".property-mortgage");
   await calculator.scrollIntoViewIfNeeded();
   await expect(calculator.locator(".mortgage-price strong")).toContainText(
@@ -112,7 +112,7 @@ test("rentals and unspecified prices never show a mortgage estimate", async ({
   page,
 }) => {
   const state = await workspace(page, { transaction: "rent", price: 1000 });
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
   await expect(page.locator(".property-mortgage")).toHaveCount(0);
   state.property.transaction = "sale";
@@ -131,7 +131,7 @@ test("the estimate remains readable when the listing photograph is missing or un
     transaction: "sale",
     images: [],
   });
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   const calculator = page.locator(".property-mortgage");
   await calculator.scrollIntoViewIfNeeded();
   await expect(calculator.locator(".mortgage-monthly strong")).toHaveText(

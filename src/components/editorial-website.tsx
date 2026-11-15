@@ -270,8 +270,8 @@ export function EditorialWebsite({
             href={
               previewBackLink?.href ||
               (sample
-                ? "/dashboard/templates"
-                : `/dashboard/properties/${property.id}`)
+                ? "/panou/modele"
+                : `/panou/proprietati/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
@@ -284,7 +284,7 @@ export function EditorialWebsite({
               : "Previzualizarea site-ului salvat · Nu este un link public"}
           </span>
           {sample ? (
-            <Link href="/dashboard/properties/new?template=editorial">
+            <Link href="/panou/proprietati/noua?template=editorial">
               Folosește acest design <ArrowUpRight size={14} />
             </Link>
           ) : (

@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("Atelier opens with a real photo mosaic, and each tile opens the matching photograph", async ({
   page,
 }) => {
-  await page.goto("/templates/panorama");
+  await page.goto("/modele/panorama");
   const mosaic = page.locator(".atelier-mosaic");
   await expect(mosaic.locator("img")).toHaveCount(7);
   expect(
@@ -42,7 +42,7 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
 test("Atelier navigation, feature details, tour popup and sample film work", async ({
   page,
 }) => {
-  await page.goto("/templates/panorama");
+  await page.goto("/modele/panorama");
   await page.getByRole("button", { name: "Meniu", exact: true }).click();
   await expect(page.locator("#atelier-menu")).toBeVisible();
   await page
@@ -110,7 +110,7 @@ test("Atelier fits phones and keeps the tour action available without blocking i
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/templates/panorama");
+  await page.goto("/modele/panorama");
   await expect(page.locator(".atelier-mobile-tour")).toBeVisible();
   expect(
     await page.evaluate(

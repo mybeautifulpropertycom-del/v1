@@ -23,7 +23,7 @@ test("Tell the story notes are saved before generation and updated notes refresh
     });
   });
   for (let i = 0; i < notes.length; i++) {
-    await page.goto(`/dashboard/properties/${id}`);
+    await page.goto(`/panou/proprietati/${id}`);
     await page.getByLabel("Descriere", { exact: false }).fill(notes[i]);
     await page
       .getByRole("button", { name: "Salvează modificările", exact: true })
@@ -32,7 +32,7 @@ test("Tell the story notes are saved before generation and updated notes refresh
       page.getByText("Modificările au fost salvate.", { exact: true }),
     ).toBeVisible();
     expect(state.property.description).toBe(notes[i]);
-    await page.goto(`/preview/${id}`);
+    await page.goto(`/previzualizare/${id}`);
     await expect(page.locator(".atelier-website")).toContainText(
       `The roof was replaced in ${i === 0 ? "2024" : "2025"}.`,
     );
@@ -60,7 +60,7 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
       json: { draft, source: propertyStorySource(state.property) },
     });
   });
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   await expect(
     page.getByText("A story of its own.", { exact: true }),
   ).toHaveCount(0);
@@ -81,7 +81,7 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
   await expect(
     page.getByRole("button", { name: "Salvează modificările", exact: true }),
   ).toBeEnabled();
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".heritage-story-copy > p")).toHaveText(
     draft.description,
   );
@@ -139,7 +139,7 @@ test("private preview prepares text in place but only saves it on request", asyn
       json: { draft, source: propertyStorySource(state.property) },
     });
   });
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".heritage-story-copy > p")).toHaveText(
     draft.description,
   );
@@ -170,7 +170,7 @@ test("choosing a design saves photos and prepares the page without a separate AI
       },
     });
   });
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   await page.getByRole("button", { name: "Adaugă fotografiile" }).click();
   await page.getByRole("button", { name: "Alege designul" }).click();
   await expect(page.locator(".template-choices")).toBeVisible();
@@ -193,7 +193,7 @@ test("missing configuration keeps the draft saved, shows a useful error, and all
       },
     }),
   );
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   await page.getByLabel(/^Adresă/).fill("Austin, TX");
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
@@ -217,7 +217,7 @@ test("missing configuration keeps the draft saved, shows a useful error, and all
   await page
     .getByRole("button", { name: "Deschide editorul site-ului", exact: true })
     .click();
-  await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
+  await expect(page).toHaveURL(new RegExp(`/previzualizare/${id}$`));
   await expect(page.locator(".inline-edit-toolbar")).toBeVisible();
   expect(state.property.status).toBe("draft");
 });
@@ -242,7 +242,7 @@ test("private preview reports a platform timeout and lets the agent retry in pla
           },
         });
   });
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".inline-edit-error")).toContainText(
     "Pregătirea site-ului a durat prea mult.",
   );
@@ -261,7 +261,7 @@ test("a network failure ends loading and preserves the saved listing", async ({
   const state = await workspace(page);
   const original = JSON.stringify(state.property);
   await page.route("**/api/property-story", (route) => route.abort());
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".inline-edit-error")).toContainText(
     "Nu am putut contacta serviciul de redactare.",
   );
@@ -281,7 +281,7 @@ test("Editorial displays independent introduction, main story and invitation par
       json: { draft, source: propertyStorySource(state.property) },
     }),
   );
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".estate-story-copy > p")).toHaveText(
     draft.content.introBody,
   );
@@ -311,7 +311,7 @@ test("Atelier uses separate photo-based paragraphs and saves inline section edit
       json: { draft, source: propertyStorySource(state.property) },
     }),
   );
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".atelier-intro-copy > p")).toHaveText(
     draft.content.introBody,
   );

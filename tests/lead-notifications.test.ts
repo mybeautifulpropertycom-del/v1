@@ -27,7 +27,7 @@ const job = {
 test("lead email escapes untrusted content, uses the owner and supplies the inbox link and reply-to", () => {
   const payload = leadEmailPayload(
     job,
-    "https://www.mybeautifulproperty.com/dashboard/inquiries",
+    "https://www.mybeautifulproperty.com/panou/mesaje",
   );
   assert.deepEqual(payload.to, ["owner@example.com"]);
   assert.equal(payload.reply_to, "buyer@example.com");
@@ -38,7 +38,7 @@ test("lead email escapes untrusted content, uses the owner and supplies the inbo
   assert.ok(payload.text.includes(job.details.message));
   assert.ok(
     payload.html.includes(
-      "https://www.mybeautifulproperty.com/dashboard/inquiries",
+      "https://www.mybeautifulproperty.com/panou/mesaje",
     ),
   );
 });

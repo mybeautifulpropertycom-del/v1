@@ -1,4 +1,5 @@
 import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
+import { platformRedirects } from "./platform-redirects";
 import { locale, defaultCurrency, defaultAreaUnit } from "@/i18n/config";
 import type { SavedPropertyStory } from "./property-story";
 export type TemplateId = "editorial" | "minimal" | "panorama";
@@ -44,6 +45,12 @@ export type PublicProperty = Omit<
   "owner_id" | "created_at" | "updated_at"
 >;
 export type PublicProfile = Omit<Profile, "id">;
+
+const platformPageSlugs = new Set(
+  platformRedirects.map(([, destination]) => destination.split("/")[1]),
+);
+const reservedAddressError =
+  "Introdu adresa completă a proprietății, inclusiv strada și numărul.";
 
 export function propertyTypeLabel(type: string): string {
   return (
@@ -142,6 +149,8 @@ export function publicationErrors(
   if (property.title.trim().length < 5)
     errors.push("Titlul trebuie să conțină cel puțin 5 caractere.");
   if (!property.location.trim()) errors.push("Adaugă adresa proprietății.");
+  if (platformPageSlugs.has(slugify(property.location)))
+    errors.push(reservedAddressError);
   if (property.description.trim().length < 30)
     errors.push("Adaugă o descriere de cel puțin 30 de caractere.");
   if (!Number.isFinite(property.price) || property.price <= 0)
@@ -154,6 +163,8 @@ export function publicationErrors(
 
 export function propertyErrors(property: Property): string[] {
   const errors: string[] = [];
+  if (platformPageSlugs.has(slugify(property.location)))
+    errors.push(reservedAddressError);
   if (
     !Number.isFinite(property.price) ||
     property.price < 0 ||

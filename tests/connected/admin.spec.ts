@@ -99,7 +99,7 @@ test("admin reviews an agent's property, publishes at no charge and sees its vid
   page,
 }) => {
   const setup = await admin(page);
-  await page.goto("/dashboard/admin");
+  await page.goto("/panou/administrare");
   await expect(
     page.getByRole("link", { name: "Administrare", exact: true }),
   ).toBeVisible();
@@ -108,7 +108,7 @@ test("admin reviews an agent's property, publishes at no charge and sees its vid
   ).toBeVisible();
   await page.getByRole("button", { name: "Vezi proprietățile" }).click();
   await page.getByRole("link", { name: "Verifică proprietatea" }).click();
-  await expect(page).toHaveURL(new RegExp(`/admin/properties/${id}$`));
+  await expect(page).toHaveURL(new RegExp(`/administrare/proprietati/${id}$`));
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
   await page.getByLabel("Notă de publicare").fill("Complimentary showcase");
   await page.getByRole("button", { name: "Publică gratuit" }).click();
@@ -130,7 +130,7 @@ test("admin's own editor publishes directly without requesting a payment session
   page,
 }) => {
   const setup = await admin(page);
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(
     page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
@@ -158,7 +158,7 @@ test("ordinary agents have neither the admin navigation nor client access to the
     requests++;
     return route.abort();
   });
-  await page.goto("/dashboard/admin");
+  await page.goto("/panou/administrare");
   await expect(
     page.getByRole("heading", {
       name: "Este necesar accesul de administrator.",
@@ -173,7 +173,7 @@ test("ordinary agents have neither the admin navigation nor client access to the
 test("admin directory remains usable on a narrow screen", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await admin(page);
-  await page.goto("/dashboard/admin");
+  await page.goto("/panou/administrare");
   await expect(
     page.getByText("agent@example.com", { exact: true }),
   ).toBeVisible();
@@ -219,7 +219,7 @@ test("admin rebuild keeps the current public film while the replacement is queue
       json: { videoStatus: "queued", previousVideoRetained: true },
     });
   });
-  await page.goto(`/admin/properties/${id}`);
+  await page.goto(`/administrare/proprietati/${id}`);
   await expect(page.locator("#film video source")).toHaveAttribute("src", src);
   await page
     .getByRole("button", { name: "Refă filmul · Folosește credite API" })

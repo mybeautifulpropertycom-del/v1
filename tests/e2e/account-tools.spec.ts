@@ -4,7 +4,7 @@ import path from "node:path";
 test("a saved profile photo appears throughout the workspace and every template", async ({
   page,
 }) => {
-  await page.goto("/dashboard/profile");
+  await page.goto("/panou/profil");
   await page
     .getByLabel("Fotografie de profil", { exact: true })
     .setInputFiles(path.join(process.cwd(), "public/images/villa.jpg"));
@@ -24,7 +24,7 @@ test("a saved profile photo appears throughout the workspace and every template"
     ["demo-apartment", ".heritage-agent-monogram"],
     ["demo-penthouse", ".atelier-avatar"],
   ]) {
-    await page.goto(`/preview/${id}`);
+    await page.goto(`/previzualizare/${id}`);
     await expect(page.locator(`${selector} img`)).toBeVisible();
     await expect
       .poll(() =>
@@ -39,7 +39,7 @@ test("a saved profile photo appears throughout the workspace and every template"
 test("property deletion can be cancelled and confirmed deletion survives reload", async ({
   page,
 }) => {
-  await page.goto("/dashboard");
+  await page.goto("/panou");
   const card = page
     .locator(".property-card")
     .filter({ hasText: "Vila cu grădină" });
@@ -51,7 +51,7 @@ test("property deletion can be cancelled and confirmed deletion survives reload"
   await expect(card).toHaveCount(0);
   await page.reload();
   await expect(card).toHaveCount(0);
-  await page.goto("/preview/demo-villa");
+  await page.goto("/previzualizare/demo-villa");
   await expect(
     page.getByRole("heading", { name: "Previzualizarea nu este disponibilă." }),
   ).toBeVisible();

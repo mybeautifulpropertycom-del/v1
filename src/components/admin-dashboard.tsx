@@ -77,7 +77,7 @@ export function AdminDashboard() {
     return (
       <div className="state-screen">
         <h1>Este necesar accesul de administrator.</h1>
-        <Link href="/dashboard">Înapoi la spațiul de lucru</Link>
+        <Link href="/panou">Înapoi la spațiul de lucru</Link>
       </div>
     );
   function changeView(next: "accounts" | "properties") {
@@ -246,7 +246,7 @@ export function AdminDashboard() {
                           <td>
                             <Link
                               className="text-button"
-                              href={`/admin/properties/${property.id}`}
+                              href={`/administrare/proprietati/${property.id}`}
                             >
                               Verifică proprietatea →
                             </Link>

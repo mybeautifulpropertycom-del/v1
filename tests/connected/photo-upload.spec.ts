@@ -40,7 +40,7 @@ test("uploads JPEG, PNG and WebP as resized WebP with visible progress and prese
         : { json: { Key: "uploaded" } },
     );
   });
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   await page.getByRole("button", { name: /Fotografii/ }).click();
   await page.locator("input[type=file]").setInputFiles([
     { name: "exterior.jpg", mimeType: "image/jpeg", buffer },
@@ -85,7 +85,7 @@ test("40-photo galleries use responsive lazy images and the pinned story only mo
       contentType: "image/jpeg",
     }),
   );
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   const gallery = page.locator(".estate-gallery-grid");
   await expect(gallery.locator("img")).toHaveCount(40);
   await expect(gallery.locator("img").last()).toHaveAttribute(
@@ -101,7 +101,7 @@ test("40-photo galleries use responsive lazy images and the pinned story only mo
     "true",
   );
   await expect(page.locator(".estate-scene img")).toHaveCount(2);
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   await page.getByRole("button", { name: /Fotografii/ }).click();
   await expect(page.locator(".upload-area")).toContainText("40/40 fotografii");
   await page

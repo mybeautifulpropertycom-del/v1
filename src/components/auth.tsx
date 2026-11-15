@@ -32,7 +32,7 @@ export function Auth({
     void supabase.auth
       .getUser()
       .then(({ data: { user } }) => {
-        if (active && user) router.replace("/dashboard");
+        if (active && user) router.replace("/panou");
       })
       .catch(() => {
         /* Keep the login form available if the session cannot be checked. */
@@ -64,9 +64,10 @@ export function Auth({
       if (resetPassword) {
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
-        router.replace("/dashboard");
+        router.replace("/panou");
       } else if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          // Keep the existing Supabase allow-list entry; Next redirects it to Romanian.
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw error;
@@ -79,11 +80,12 @@ export function Auth({
           password,
           options: {
             data: { name },
+            // Existing confirmation links remain allowed and redirect to /panou/profil.
             emailRedirectTo: `${window.location.origin}/dashboard/profile`,
           },
         });
         if (error) throw error;
-        if (data.session) router.replace("/dashboard/profile");
+        if (data.session) router.replace("/panou/profil");
         else
           setMessage(
             "Verifică e-mailul pentru a confirma adresa. Apoi autentifică-te și completează profilul.",
@@ -94,7 +96,7 @@ export function Auth({
           password,
         });
         if (error) throw error;
-        router.replace("/dashboard");
+        router.replace("/panou");
       }
     } catch (e) {
       const code =
@@ -186,7 +188,7 @@ export function Auth({
                 reale și distribuirea publică sunt disponibile după conectarea
                 serviciului Supabase.
               </p>
-              <Link href="/dashboard" className="button primary full-button">
+              <Link href="/panou" className="button primary full-button">
                 Explorează versiunea demo <ArrowRight size={17} />
               </Link>
             </div>

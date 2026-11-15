@@ -25,15 +25,15 @@ import {
 import { useWorkspace } from "./workspace-provider";
 
 const nav = [
-  { href: "/dashboard", label: "Proprietățile mele", icon: Building2 },
+  { href: "/panou", label: "Proprietățile mele", icon: Building2 },
   {
-    href: "/dashboard/templates",
+    href: "/panou/modele",
     label: "Modele de site",
     icon: LayoutTemplate,
   },
-  { href: "/dashboard/video", label: "Studio video", icon: Video },
-  { href: "/dashboard/inquiries", label: "Mesaje", icon: Inbox },
-  { href: "/dashboard/profile", label: "Profilul meu", icon: UserRound },
+  { href: "/panou/video", label: "Studio video", icon: Video },
+  { href: "/panou/mesaje", label: "Mesaje", icon: Inbox },
+  { href: "/panou/profil", label: "Profilul meu", icon: UserRound },
 ];
 export function Brand({ light = false }: { light?: boolean }) {
   return (
@@ -62,7 +62,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       )}
       <aside className={`sidebar ${menu ? "open" : ""}`}>
         <Link
-          href="/dashboard"
+          href="/panou"
           className="brand-link"
           onClick={() => setMenu(false)}
         >
@@ -88,8 +88,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <nav aria-label="Navigare principală">
           {isAdmin && (
             <Link
-              href="/dashboard/admin"
-              className={`nav-link ${path.startsWith("/dashboard/admin") ? "active" : ""}`}
+              href="/panou/administrare"
+              className={`nav-link ${path.startsWith("/panou/administrare") ? "active" : ""}`}
               onClick={() => setMenu(false)}
             >
               <ShieldCheck size={19} />
@@ -101,16 +101,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
               key={href}
               href={href}
               aria-label={
-                href === "/dashboard/inquiries" && unreadCount > 0
+                href === "/panou/mesaje" && unreadCount > 0
                   ? `Mesaje, ${unreadCount} mesaje necitite`
                   : undefined
               }
-              className={`nav-link ${(href === "/dashboard" ? path === href || path.includes("/properties/") : path === href) ? "active" : ""}`}
+              className={`nav-link ${(href === "/panou" ? path === href || path.includes("/proprietati/") : path === href) ? "active" : ""}`}
               onClick={() => setMenu(false)}
             >
               <Icon size={19} />
               <span>{label}</span>
-              {href === "/dashboard/inquiries" && unreadCount > 0 && (
+              {href === "/panou/mesaje" && unreadCount > 0 && (
                 <span className="inbox-unread-badge" aria-hidden="true">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
@@ -128,15 +128,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
               Detaliile fac diferența. Alege designul potrivit proprietății
               tale.
             </p>
-            <Link href="/dashboard/templates">
+            <Link href="/panou/modele">
               Alege-ți stilul <ArrowUpRight size={16} />
             </Link>
           </div>
           <div className="account-row">
-            <Link href="/dashboard/profile" className="avatar">
+            <Link href="/panou/profil" className="avatar">
               <AgentAvatar profile={profile} />
             </Link>
-            <Link href="/dashboard/profile" className="account-name">
+            <Link href="/panou/profil" className="account-name">
               {profile.name || "Profilul tău"}
               <small>{profile.agency || "Agent imobiliar"}</small>
             </Link>
@@ -163,7 +163,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span className="topbar-breadcrumb">
               Spațiul tău de lucru <span>/</span>{" "}
               <strong>
-                {path.startsWith("/dashboard/admin")
+                {path.startsWith("/panou/administrare")
                   ? "Administrare"
                   : nav.find((n) => n.href === path)?.label ||
                     "Editorul proprietății"}
@@ -182,7 +182,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             >
               <CircleHelp size={19} />
             </button>
-            <Link className="avatar small" href="/dashboard/profile">
+            <Link className="avatar small" href="/panou/profil">
               <AgentAvatar profile={profile} />
             </Link>
           </div>
@@ -195,7 +195,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               Modificările rămân în acest browser. Conectează Supabase pentru
               publicare online.
             </span>
-            <Link href="/login">
+            <Link href="/autentificare">
               Despre conturi <ArrowUpRight size={13} />
             </Link>
           </div>
@@ -259,7 +259,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </ol>
             <div className="help-actions">
               <Link
-                href="/dashboard/properties/new"
+                href="/panou/proprietati/noua"
                 className="button primary"
                 onClick={() => setHelp(false)}
               >

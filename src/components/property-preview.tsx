@@ -161,7 +161,7 @@ export function PropertyPreview({ id }: { id: string }) {
       <div className="state-screen">
         <h1>Previzualizarea nu este disponibilă.</h1>
         <p>Salvează mai întâi proprietatea, apoi deschide previzualizarea.</p>
-        <Link href="/dashboard" className="button primary">
+        <Link href="/panou" className="button primary">
           Înapoi la proprietăți
         </Link>
       </div>
@@ -183,7 +183,7 @@ export function PropertyPreview({ id }: { id: string }) {
         <div>
           <Link
             className="text-button"
-            href={`/dashboard/properties/${id}`}
+            href={`/panou/proprietati/${id}`}
             onClick={(e) => {
               if (dirty && !confirm("Pleci fără să salvezi modificările?"))
                 e.preventDefault();
@@ -232,7 +232,7 @@ export function PropertyPreview({ id }: { id: string }) {
           {property.status === "published" ? (
             <Link
               className="button primary"
-              href={demo ? `/preview/${id}` : publicPath(property)}
+              href={demo ? `/previzualizare/${id}` : publicPath(property)}
               target="_blank"
               rel="noopener noreferrer"
             >

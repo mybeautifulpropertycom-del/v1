@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { platformRedirects } from "./src/lib/platform-redirects";
 
 const photoOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
@@ -25,6 +26,13 @@ const config: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   devIndicators: false,
   poweredByHeader: false,
+  redirects() {
+    return platformRedirects.map(([source, destination]) => ({
+      source,
+      destination,
+      permanent: true,
+    }));
+  },
   serverExternalPackages: ["@ffmpeg-installer/linux-x64"],
   outputFileTracingIncludes: {
     "/api/admin/*": ["./node_modules/@ffmpeg-installer/linux-x64/**"],

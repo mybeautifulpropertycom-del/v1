@@ -33,7 +33,7 @@ for (const theme of ["editorial", "minimal", "panorama"]) {
     page,
     context,
   }) => {
-    await page.goto(`/templates/${theme}`);
+    await page.goto(`/modele/${theme}`);
     await page
       .getByRole("button", {
         name: "Mărește fotografia proprietății 3",
@@ -76,7 +76,7 @@ for (const theme of ["editorial", "minimal", "panorama"]) {
 test("photo changes animate, settle, and respect reduced motion", async ({
   page,
 }) => {
-  await page.goto("/templates/panorama");
+  await page.goto("/modele/panorama");
   await page
     .getByRole("button", {
       name: "Mărește fotografia proprietății 3",

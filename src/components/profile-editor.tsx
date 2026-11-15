@@ -27,7 +27,7 @@ export function ProfileEditor() {
   const [redirecting, setRedirecting] = useState(false);
   useEffect(() => {
     if (!redirecting) return;
-    const timer = setTimeout(() => router.push("/dashboard"), 3000);
+    const timer = setTimeout(() => router.push("/panou"), 3000);
     return () => clearTimeout(timer);
   }, [redirecting, router]);
   const t = ro.profile;
@@ -220,7 +220,7 @@ export function ProfileEditor() {
             </button>
           </div>
           {saved && !redirecting && (
-            <Link className="success-next" href="/dashboard/properties/new">
+            <Link className="success-next" href="/panou/proprietati/noua">
               Profilul este pregătit. Adaugă prima proprietate{" "}
               <ArrowRight size={17} />
             </Link>

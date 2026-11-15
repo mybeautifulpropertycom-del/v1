@@ -55,7 +55,7 @@ export function leadEmailConfiguration(
       apiKey,
       serviceKey,
       supabaseUrl,
-      inboxUrl: `${site.origin}/dashboard/inquiries`,
+      inboxUrl: `${site.origin}/panou/mesaje`,
     };
   } catch {
     return null;

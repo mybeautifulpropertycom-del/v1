@@ -102,7 +102,7 @@ test("the private website can be edited before payment; both Publish buttons ope
   page,
 }) => {
   const setup = await fixture(page);
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Salvează site-ul" }),
@@ -157,14 +157,14 @@ test("the private website can be edited before payment; both Publish buttons ope
   await expect(
     page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeVisible();
-  await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
+  await expect(page).toHaveURL(new RegExp(`/previzualizare/${id}$`));
   expect(setup.posts).toBe(2);
 });
 test("completed embedded checkout waits for server publication, shows the live link, and queues video", async ({
   page,
 }) => {
   const setup = await fixture(page);
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(
     page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
@@ -206,7 +206,7 @@ test("an unavailable payment configuration leaves the saved draft and shows an e
       },
     }),
   );
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(
     page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
@@ -226,12 +226,12 @@ test("choosing a template opens the private website editor before any checkout",
   page,
 }) => {
   const setup = await fixture(page);
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   await page.getByRole("button", { name: /Designul site-ului/ }).click();
   await page
     .getByRole("button", { name: "Deschide editorul site-ului" })
     .click();
-  await expect(page).toHaveURL(new RegExp(`/preview/${id}$`));
+  await expect(page).toHaveURL(new RegExp(`/previzualizare/${id}$`));
   await expect(
     page
       .locator(".inline-edit-toolbar")
@@ -246,7 +246,7 @@ test("publication modal fits a mobile viewport and Escape returns to the saved e
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const setup = await fixture(page);
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(
     page.getByRole("button", { name: "Salvează site-ul" }),
   ).toBeEnabled();
@@ -291,7 +291,7 @@ test("completed provider video replaces the pending panel in every property desi
   );
   for (const template of ["editorial", "minimal", "panorama"] as const) {
     state.property.template = template;
-    await page.goto(`/preview/${id}`);
+    await page.goto(`/previzualizare/${id}`);
     await expect(page.locator("#film video source")).toHaveAttribute(
       "src",
       src,
@@ -317,7 +317,7 @@ test("an uncertain generation explains the delay without offering another paid s
       },
     }),
   );
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".property-video-prompt")).toContainText(
     "necesită o verificare",
   );
@@ -359,7 +359,7 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       }),
     );
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/preview/${id}`);
+    await page.goto(`/previzualizare/${id}`);
     await expect(page.locator(".property-video-status-strip")).toHaveText(
       "Video: în pregătire · 3 din 11 scene pregătite",
     );
@@ -420,7 +420,7 @@ test("a stopped video shows its saved progress without a loading animation or pr
       },
     }),
   );
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".property-video-status-strip")).toHaveText(
     "Video: eșuat · 3 din 11 scene pregătite",
   );
@@ -439,7 +439,7 @@ test("a declined card keeps the form and retries without reserving another check
   page,
 }) => {
   const setup = await fixture(page);
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await page
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
@@ -478,7 +478,7 @@ test("repeated submission confirms once and waits for server publication", async
   page,
 }) => {
   const setup = await fixture(page);
-  await page.goto(`/preview/${id}`);
+  await page.goto(`/previzualizare/${id}`);
   await page
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })

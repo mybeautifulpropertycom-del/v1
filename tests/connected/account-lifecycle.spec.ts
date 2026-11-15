@@ -20,7 +20,7 @@ test("first successful profile completion confirms save then redirects once, lat
       };
     await route.fulfill({ json: profile });
   });
-  await page.goto("/dashboard/profile");
+  await page.goto("/panou/profil");
   await page
     .getByLabel("Număr de telefon", { exact: true })
     .fill("+1 555 123 4567");
@@ -33,8 +33,8 @@ test("first successful profile completion confirms save then redirects once, lat
       exact: false,
     }),
   ).toHaveCount(0);
-  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 6000 });
-  await page.goto("/dashboard/profile");
+  await expect(page).toHaveURL(/\/panou$/, { timeout: 6000 });
+  await page.goto("/panou/profil");
   await page
     .getByLabel("O scurtă prezentare")
     .fill("A thoughtful approach to finding your next home.");
@@ -43,7 +43,7 @@ test("first successful profile completion confirms save then redirects once, lat
     .click();
   await expect(page.getByRole("status")).toContainText("salvat");
   await page.waitForTimeout(3200);
-  await expect(page).toHaveURL(/\/dashboard\/profile$/);
+  await expect(page).toHaveURL(/\/panou\/profil$/);
 });
 
 test("a failed first save never redirects", async ({ page }) => {
@@ -55,7 +55,7 @@ test("a failed first save never redirects", async ({ page }) => {
           json: { ...state.profile, phone: "", profile_completed_at: null },
         }),
   );
-  await page.goto("/dashboard/profile");
+  await page.goto("/panou/profil");
   await page
     .getByLabel("Număr de telefon", { exact: true })
     .fill("+1 555 123 4567");
@@ -66,7 +66,7 @@ test("a failed first save never redirects", async ({ page }) => {
     "nu a fost salvat",
   );
   await page.waitForTimeout(3200);
-  await expect(page).toHaveURL(/\/dashboard\/profile$/);
+  await expect(page).toHaveURL(/\/panou\/profil$/);
 });
 
 test("administrator deletion requires confirmation and shows queued account cleanup", async ({
@@ -107,7 +107,7 @@ test("administrator deletion requires confirmation and shows queued account clea
     deleting = true;
     await route.fulfill({ json: { queued: true } });
   });
-  await page.goto("/dashboard/admin");
+  await page.goto("/panou/administrare");
   await expect(
     page.getByRole("button", { name: "Șterge contul admin@example.com" }),
   ).toHaveCount(0);
@@ -128,7 +128,7 @@ test("public template players preserve playback controls without download action
   page,
 }) => {
   for (const template of ["editorial", "minimal", "panorama"]) {
-    await page.goto(`/templates/${template}`);
+    await page.goto(`/modele/${template}`);
     const video = page.locator("video");
     await expect(video).toHaveAttribute("controlslist", "nodownload");
     await expect(video).toHaveAttribute("controls", "");

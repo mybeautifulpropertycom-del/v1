@@ -174,7 +174,7 @@ export function Inquiries() {
                   </a>
                 )}
                 {item.property_id && (
-                  <Link href={`/dashboard/properties/${item.property_id}`}>
+                  <Link href={`/panou/proprietati/${item.property_id}`}>
                     Vezi proprietatea <ArrowUpRight size={14} />
                   </Link>
                 )}
@@ -200,7 +200,7 @@ export function Inquiries() {
               ? "Acestea sunt mesaje demonstrative. După conectarea Supabase, mesajele de pe site-urile publicate vor apărea aici."
               : "Când cineva te contactează printr-un site publicat, mesajul apare aici."}
           </p>
-          <Link className="button secondary" href="/dashboard">
+          <Link className="button secondary" href="/panou">
             Înapoi la proprietățile mele <ArrowUpRight size={16} />
           </Link>
         </div>

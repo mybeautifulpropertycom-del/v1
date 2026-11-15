@@ -42,7 +42,7 @@ export default function Page() {
                 </p>
                 <Link
                   className="button primary"
-                  href={`/preview/${property.id}${property.status === "published" ? "#film" : ""}`}
+                  href={`/previzualizare/${property.id}${property.status === "published" ? "#film" : ""}`}
                 >
                   {property.status === "published"
                     ? "Vezi site-ul și filmul"
@@ -61,7 +61,7 @@ export default function Page() {
             Adaugă detaliile și fotografiile, apoi previzualizează site-ul
             înainte de publicare.
           </p>
-          <Link className="button primary" href="/dashboard/properties/new">
+          <Link className="button primary" href="/panou/proprietati/noua">
             <Plus size={16} />
             Adaugă o proprietate
           </Link>

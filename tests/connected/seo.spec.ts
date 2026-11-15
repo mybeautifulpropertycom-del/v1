@@ -28,12 +28,12 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
   const canonical = await page
     .locator('link[rel="canonical"]')
     .getAttribute("href");
-  await page.goto("/login");
+  await page.goto("/autentificare");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",
     canonical!,
   );
-  await page.goto("/register");
+  await page.goto("/inregistrare");
   await expect(
     page.getByRole("heading", { name: "Pune-ți proprietatea în valoare" }),
   ).toBeVisible();
@@ -48,7 +48,7 @@ test("signed-in visitors still go to their private dashboard", async ({
 }) => {
   await workspace(page);
   await page.goto("/");
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/panou$/);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     /noindex/,

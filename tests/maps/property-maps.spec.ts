@@ -13,7 +13,7 @@ test("Romanian address selection persists; editing it clears the pin, without bl
       json: { error: "Use your own description for this test." },
     }),
   );
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
   const address = page.getByRole("combobox", { name: "Adresă", exact: true });
   await expect(
@@ -59,7 +59,7 @@ test("non-Romanian/city selections and stale asynchronous selections never creat
 }) => {
   await mockGoogleMaps(page);
   await workspace(page);
-  await page.goto(`/dashboard/properties/${id}`);
+  await page.goto(`/panou/proprietati/${id}`);
   const address = page.getByRole("combobox", { name: "Adresă", exact: true });
   for (const query of ["Canada address", "City only"]) {
     await address.fill(query);
@@ -264,7 +264,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     page,
   }) => {
     await mockGoogleMaps(page);
-    await page.goto(`/templates/${template}`);
+    await page.goto(`/modele/${template}`);
     await expect(page.locator(`.website-${template}`)).toBeVisible();
     await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
     const requests = await page.evaluate(() => window.__mapsTest);
@@ -287,7 +287,7 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
         json: { error: "Use your existing description." },
       }),
     );
-    await page.goto(`/preview/${id}`);
+    await page.goto(`/previzualizare/${id}`);
     await expect(
       page.locator(
         template === "panorama" ? ".atelier-website" : ".property-website",

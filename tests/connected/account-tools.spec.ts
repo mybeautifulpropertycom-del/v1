@@ -15,7 +15,7 @@ test("profile uploads use owned storage and the saved portrait survives a reload
   page,
 }) => {
   const state = await workspace(page);
-  await page.goto("/dashboard/profile");
+  await page.goto("/panou/profil");
   await page
     .getByLabel("Fotografie de profil", { exact: true })
     .setInputFiles(path.join(process.cwd(), "public/images/villa.jpg"));
@@ -44,7 +44,7 @@ test("deleting a property removes its page entry and saved photos but keeps its 
   page,
 }) => {
   const state = await workspace(page, {}, [lead]);
-  await page.goto("/dashboard");
+  await page.goto("/panou");
   page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("button", {
@@ -55,7 +55,7 @@ test("deleting a property removes its page entry and saved photos but keeps its 
   await expect(page.locator(".property-card")).toHaveCount(0);
   await expect.poll(() => state.removedPhotos.length).toBe(1);
   expect(state.removedPhotos[0]).toBe(`${owner}/${id}/photo.webp`);
-  await page.goto("/dashboard/inquiries");
+  await page.goto("/panou/mesaje");
   await expect(page.getByRole("heading", { name: lead.name })).toBeVisible();
   await expect(
     page.getByText("Proprietate ștearsă", { exact: true }),
@@ -87,7 +87,7 @@ test("a failed deletion keeps the lead visible and offers another attempt", asyn
       ? route.fulfill({ status: 500, json: { message: "Test failure" } })
       : route.fallback(),
   );
-  await page.goto("/dashboard/inquiries");
+  await page.goto("/panou/mesaje");
   page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("button", { name: `Șterge mesajul de la ${lead.name}` })

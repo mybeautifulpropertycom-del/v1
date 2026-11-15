@@ -14,7 +14,7 @@ async function coverScale(page: import("@playwright/test").Page) {
 test("Heritage cover zooms on scroll, keeps the heading stable, and honors reduced motion", async ({
   page,
 }) => {
-  await page.goto("/templates/minimal");
+  await page.goto("/modele/minimal");
   const stage = page.locator(".heritage-hero-stage");
   await expect(stage).toHaveAttribute("data-zoom-pinned", "true");
   expect(await coverScale(page)).toBe(1);
@@ -43,7 +43,7 @@ test("Heritage cover zooms on scroll, keeps the heading stable, and honors reduc
 test("Heritage highlights loop as text, pause on hover, and remain fully readable with reduced motion", async ({
   page,
 }) => {
-  await page.goto("/templates/minimal");
+  await page.goto("/modele/minimal");
   const strip = page.getByLabel("Punctele forte ale proprietății");
   await expect(strip.locator("svg")).toHaveCount(0);
   await expect(strip.locator("ul").first().locator("li")).toHaveText(
@@ -84,7 +84,7 @@ test("Heritage highlights loop as text, pause on hover, and remain fully readabl
 test("reviewed property copy persists, gallery captions stay hidden, and changed facts invalidate old analysis", async ({
   page,
 }) => {
-  await page.goto("/dashboard");
+  await page.goto("/panou");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const workspace = demoWorkspace();
   const listing = workspace.properties[1];
@@ -113,7 +113,7 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
       open.onerror = () => reject(open.error);
     });
   }, workspace);
-  await page.goto("/preview/demo-apartment");
+  await page.goto("/previzualizare/demo-apartment");
   await expect(
     page.locator(".heritage-story .heritage-section-heading h2"),
   ).toContainText("Windows onto a new day.");
@@ -129,11 +129,11 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
   await expect(
     page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
-  await page.goto("/preview/demo-apartment");
+  await page.goto("/previzualizare/demo-apartment");
   await expect(
     page.locator(".heritage-story .heritage-section-heading h2"),
   ).toContainText("Your Austin story.");
-  await page.goto("/dashboard/properties/demo-apartment");
+  await page.goto("/panou/proprietati/demo-apartment");
   await page.getByLabel(/^Adresă/).fill("Portland, OR");
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
@@ -141,7 +141,7 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
   await expect(
     page.getByText("Modificările au fost salvate.", { exact: true }),
   ).toBeVisible();
-  await page.goto("/preview/demo-apartment");
+  await page.goto("/previzualizare/demo-apartment");
   await expect(
     page.locator(".heritage-setting-layout figcaption"),
   ).toContainText("Portland, OR");
@@ -159,7 +159,7 @@ test("every Schedule a tour CTA opens the calendar and sample requests never sen
     if (request.url().endsWith("/api/inquiries") && request.method() === "POST")
       submissions++;
   });
-  await page.goto("/templates/minimal");
+  await page.goto("/modele/minimal");
   const triggers = page.getByRole("button", {
     name: "Programează o vizionare",
     exact: true,
@@ -194,7 +194,7 @@ test("every Schedule a tour CTA opens the calendar and sample requests never sen
 test("Heritage gallery filters real photographs and opens the right image", async ({
   page,
 }) => {
-  await page.goto("/templates/minimal");
+  await page.goto("/modele/minimal");
   await expect(page.locator(".heritage-photo-grid figure")).toHaveCount(40);
   await page
     .getByRole("button", { name: "Prime impresii", exact: true })
@@ -232,7 +232,7 @@ test("Heritage gallery filters real photographs and opens the right image", asyn
 test("Heritage uses saved listing data, supports inline edits, and fits phones", async ({
   page,
 }) => {
-  await page.goto("/preview/demo-apartment");
+  await page.goto("/previzualizare/demo-apartment");
   await expect(page.locator(".heritage-hero h1")).toHaveText(
     "Apartamentul luminos",
   );
@@ -254,7 +254,7 @@ test("Heritage uses saved listing data, supports inline edits, and fits phones",
     "The Lantern House",
   );
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/templates/minimal");
+  await page.goto("/modele/minimal");
   await expect(page.locator(".heritage-hero-stage")).not.toHaveAttribute(
     "data-zoom-pinned",
   );

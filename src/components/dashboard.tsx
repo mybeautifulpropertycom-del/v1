@@ -45,7 +45,7 @@ function PropertyCard({
   return (
     <article className="property-card">
       <Link
-        href={`/dashboard/properties/${property.id}`}
+        href={`/panou/proprietati/${property.id}`}
         className="property-image"
       >
         {property.images[0] ? (
@@ -79,7 +79,7 @@ function PropertyCard({
             {property.transaction === "sale" ? "De vânzare" : "De închiriat"}
           </span>
         </div>
-        <Link href={`/dashboard/properties/${property.id}`}>
+        <Link href={`/panou/proprietati/${property.id}`}>
           <h3>{property.title || "Proprietate fără titlu"}</h3>
         </Link>
         <p className="location">
@@ -111,12 +111,12 @@ function PropertyCard({
         </div>
       </div>
       <div className="property-card-footer">
-        <Link href={`/preview/${property.id}`}>
+        <Link href={`/previzualizare/${property.id}`}>
           <FilePenLine size={15} />
           Editează site-ul
         </Link>
         <Link
-          href={`/preview/${property.id}`}
+          href={`/previzualizare/${property.id}`}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Previzualizează ${property.title} (se deschide într-o filă nouă)`}
@@ -179,7 +179,7 @@ export function Dashboard() {
           </p>
         </div>
         <Link
-          href={complete ? "/dashboard/properties/new" : "/dashboard/profile"}
+          href={complete ? "/panou/proprietati/noua" : "/panou/profil"}
           className="button primary"
         >
           <Plus size={18} />
@@ -187,7 +187,7 @@ export function Dashboard() {
         </Link>
       </div>
       {!complete && (
-        <Link href="/dashboard/profile" className="onboarding-callout">
+        <Link href="/panou/profil" className="onboarding-callout">
           <span className="step-number">01</span>
           <div>
             <strong>Mai întâi, completează-ți profilul.</strong>
@@ -370,7 +370,7 @@ export function Dashboard() {
               <Link
                 className="button primary"
                 href={
-                  complete ? "/dashboard/properties/new" : "/dashboard/profile"
+                  complete ? "/panou/proprietati/noua" : "/panou/profil"
                 }
               >
                 <Plus size={16} />
@@ -394,13 +394,13 @@ export function Dashboard() {
             <br />
             Noi pregătim prezentarea.
           </p>
-          <Link href="/dashboard/templates">
+          <Link href="/panou/modele">
             Descoperă colecția <ArrowUpRight size={17} />
           </Link>
         </div>
         <div className="design-strip-templates">
           {templates.map((t) => (
-            <Link href={`/templates/${t.id}`} key={t.id}>
+            <Link href={`/modele/${t.id}`} key={t.id}>
               <TemplateMiniature template={t.id} />
               <div className="design-strip-caption">
                 <span>{t.name}</span>
@@ -421,7 +421,7 @@ export function Dashboard() {
             de prezentare.
           </span>
         </div>
-        <Link href="/dashboard/video">
+        <Link href="/panou/video">
           Deschide studioul video <ArrowRight size={16} />
         </Link>
       </div>

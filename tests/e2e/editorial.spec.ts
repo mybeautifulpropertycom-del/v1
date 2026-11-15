@@ -11,7 +11,7 @@ test("viewing calendar selects a day, blocks past days, keeps focus in the modal
     if (request.url().endsWith("/api/inquiries") && request.method() === "POST")
       submissions++;
   });
-  await page.goto("/templates/editorial");
+  await page.goto("/modele/editorial");
   const trigger = page.getByRole("button", {
     name: "Programează o vizionare",
     exact: true,
@@ -74,7 +74,7 @@ test("calendar handles December to January and the maximum year of requests", as
   page,
 }) => {
   await page.clock.install({ time: new Date("2026-12-31T16:00:00Z") });
-  await page.goto("/templates/editorial");
+  await page.goto("/modele/editorial");
   await page
     .getByRole("button", { name: "Programează o vizionare", exact: true })
     .click();
@@ -102,7 +102,7 @@ test("calendar handles December to January and the maximum year of requests", as
 test("the pinned photographs change on scroll and remain separate from the complete gallery", async ({
   page,
 }) => {
-  await page.goto("/templates/editorial");
+  await page.goto("/modele/editorial");
   const scroll = page.locator(".estate-scroll-stage");
   await expect(scroll).toHaveAttribute("data-pinned", "true");
   await expect(scroll.locator(".estate-scene")).toHaveCount(20);
@@ -163,7 +163,7 @@ test("mobile pins 20 photographs while reduced motion keeps normal scrolling", a
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/templates/editorial");
+  await page.goto("/modele/editorial");
   await expect(page.locator(".estate-scroll-stage")).not.toHaveAttribute(
     "data-pinned",
   );

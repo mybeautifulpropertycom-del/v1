@@ -24,7 +24,7 @@ test("sharing uses canonical public URLs and safely encodes titles and email tex
     new URL(links.email).searchParams.get("body"),
     `${property.title}\n${property.location}\n\n${links.url}`,
   );
-  assert.equal(links.print, `/p/${property.slug}/print`);
+  assert.equal(links.print, `/p/${property.slug}/tiparire`);
   assert.match(
     propertyShareLinks({ ...property, address_slug: null })!.url,
     /\/p\//,
@@ -50,7 +50,7 @@ test("print route serves only published data and excludes itself from indexing",
   };
   globalThis.fetch = async () => Response.json(result);
   const { default: page, generateMetadata } =
-    await import("../src/app/p/[slug]/print/page");
+    await import("../src/app/p/[slug]/tiparire/page");
   const params = { params: Promise.resolve({ slug: "published-home" }) };
   const rendered = await page(params);
   assert.equal(rendered.props.property.status, "published");

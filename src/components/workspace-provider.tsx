@@ -111,7 +111,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           error: authError,
         } = await supabase.auth.getUser();
         if (authError || !user) {
-          router.replace("/login");
+          router.replace("/autentificare");
           return;
         }
         const [profileResult, propertyResult, adminResult] = await Promise.all([
@@ -143,7 +143,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
     void load();
     const subscription = supabase?.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") router.replace("/login");
+      if (event === "SIGNED_OUT") router.replace("/autentificare");
     });
     return () => {
       active = false;
@@ -377,7 +377,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         return;
       }
     }
-    router.push("/login");
+    router.push("/autentificare");
   }
 
   if (error)

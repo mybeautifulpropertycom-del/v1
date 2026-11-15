@@ -140,8 +140,8 @@ export function AtelierWebsite({
             href={
               previewBackLink?.href ||
               (sample
-                ? "/dashboard/templates"
-                : `/dashboard/properties/${property.id}`)
+                ? "/panou/modele"
+                : `/panou/proprietati/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
@@ -154,7 +154,7 @@ export function AtelierWebsite({
               : "Previzualizarea site-ului salvat · Nu este un link public"}
           </span>
           {sample && (
-            <Link href="/dashboard/properties/new?template=panorama">
+            <Link href="/panou/proprietati/noua?template=panorama">
               Folosește acest design <ArrowUpRight size={14} />
             </Link>
           )}

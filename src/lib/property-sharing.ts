@@ -10,6 +10,6 @@ export function propertyShareLinks(property: Property | PublicProperty) {
     x: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(property.title)}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
     email: `mailto:?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(`${property.title}\n${property.location}\n\n${url}`)}`,
-    print: `/p/${encodeURIComponent(property.slug)}/print`,
+    print: `/p/${encodeURIComponent(property.slug)}/tiparire`,
   };
 }

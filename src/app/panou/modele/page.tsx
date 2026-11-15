@@ -20,7 +20,7 @@ export default function Page() {
       <div className="templates-gallery">
         {templates.map((t) => (
           <article className="template-gallery-card" key={t.id}>
-            <Link href={`/templates/${t.id}`}>
+            <Link href={`/modele/${t.id}`}>
               <TemplateMiniature template={t.id} />
             </Link>
             <div className="template-gallery-copy">
@@ -28,12 +28,12 @@ export default function Page() {
               <h2>{t.name}</h2>
               <p>{t.description}</p>
               <div>
-                <Link href={`/templates/${t.id}`} className="button secondary">
+                <Link href={`/modele/${t.id}`} className="button secondary">
                   Descoperă designul <ArrowUpRight size={16} />
                 </Link>
                 <Link
                   className="text-button"
-                  href={`/dashboard/properties/new?template=${t.id}`}
+                  href={`/panou/proprietati/noua?template=${t.id}`}
                 >
                   Folosește acest design <ArrowRight size={15} />
                 </Link>
