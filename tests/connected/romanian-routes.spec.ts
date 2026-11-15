@@ -41,7 +41,7 @@ test("old saved property and confirmation links enter the Romanian workspace", a
   ).toBeVisible();
   await page.goto("/dashboard/profile");
   await expect(page).toHaveURL(/\/panou\/profil$/);
-  await page.getByRole("link", { name: "Modele de site", exact: true }).click();
+  await page.getByRole("link", { name: "Modele prezentare", exact: true }).click();
   await expect(page).toHaveURL(/\/panou\/modele$/);
   const templateLink = page.locator('a[href="/modele/editorial"]').first();
   await templateLink.click();

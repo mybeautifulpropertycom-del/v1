@@ -4271,38 +4271,54 @@ fieldset.editor-content {
 .profile-photo-control > div {
   min-width: 0;
 }
-.profile-photo-control input {
-  width: 100%;
+.localized-file-control {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 10px 0 7px;
   font-size: 12px;
-  padding: 8px 0;
-  border: 0;
-  background: transparent;
 }
-.profile-photo-control input::file-selector-button {
-  margin-right: 12px;
+.profile-photo-control .localized-file-input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.localized-file-button {
+  display: inline-flex;
   padding: 10px 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f6f7f3;
   color: var(--ink);
-  font: inherit;
   font-weight: 500;
-  cursor: pointer;
-  transition:
-    background 150ms ease,
-    border-color 150ms ease;
+  white-space: nowrap;
 }
-.profile-photo-control input:not(:disabled):hover::file-selector-button {
+.localized-file-name {
+  flex: 1 1 140px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.localized-file-control:hover .localized-file-button {
   background: #ecefe7;
   border-color: #aab39e;
 }
-.profile-photo-control input:focus-visible {
+.localized-file-control:has(input:focus-visible) .localized-file-button {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: 8px;
 }
-.profile-photo-control input:disabled::file-selector-button {
-  opacity: 0.6;
+.localized-file-control:has(input:disabled) {
+  opacity: .6;
+}
+.profile-photo-control .localized-file-input:disabled {
   cursor: wait;
 }
 .profile-photo-control small {

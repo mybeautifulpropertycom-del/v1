@@ -28,7 +28,7 @@ const nav = [
   { href: "/panou", label: "Proprietățile mele", icon: Building2 },
   {
     href: "/panou/modele",
-    label: "Modele de site",
+    label: "Modele prezentare",
     icon: LayoutTemplate,
   },
   { href: "/panou/video", label: "Studio video", icon: Video },
@@ -129,7 +129,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               tale.
             </p>
             <Link href="/panou/modele">
-              Alege-ți stilul <ArrowUpRight size={16} />
+              Alege stilul <ArrowUpRight size={16} />
             </Link>
           </div>
           <div className="account-row">

@@ -1,6 +1,6 @@
 "use client";
 import { AgentAvatar } from "./agent-avatar";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,6 +18,8 @@ import { ro } from "@/i18n/ro";
 
 export function ProfileEditor() {
   const router = useRouter();
+  const fileStatusId = useId();
+  const [fileName, setFileName] = useState("");
   const { profile, saveProfile, uploadAvatar, notify } = useWorkspace();
   const [form, setForm] = useState(profile);
   const [busy, setBusy] = useState(false);
@@ -83,32 +85,49 @@ export function ProfileEditor() {
             <div>
               <label>
                 Fotografie de profil
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={busy || uploading}
-                  onChange={async (event) => {
-                    const input = event.currentTarget;
-                    const file = input.files?.[0];
-                    if (!file) return;
-                    setUploading(true);
-                    setError("");
-                    setSaved(false);
-                    try {
-                      const avatar_url = await uploadAvatar(file);
-                      setForm((current) => ({ ...current, avatar_url }));
-                    } catch (e) {
-                      setError(
-                        e instanceof Error
-                          ? e.message
-                          : "Fotografia nu a putut fi încărcată.",
-                      );
-                    } finally {
-                      setUploading(false);
-                      input.value = "";
-                    }
-                  }}
-                />
+                <span className="localized-file-control">
+                  <input
+                    className="localized-file-input"
+                    aria-label="Fotografie de profil"
+                    aria-describedby={fileStatusId}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={busy || uploading}
+                    onChange={async (event) => {
+                      const input = event.currentTarget;
+                      const file = input.files?.[0];
+                      if (!file) return;
+                      setFileName(file.name);
+                      setUploading(true);
+                      setError("");
+                      setSaved(false);
+                      try {
+                        const avatar_url = await uploadAvatar(file);
+                        setForm((current) => ({ ...current, avatar_url }));
+                      } catch (e) {
+                        setFileName("");
+                        setError(
+                          e instanceof Error
+                            ? e.message
+                            : "Fotografia nu a putut fi încărcată.",
+                        );
+                      } finally {
+                        setUploading(false);
+                        input.value = "";
+                      }
+                    }}
+                  />
+                  <span className="localized-file-button" aria-hidden="true">
+                    Alege Imaginea
+                  </span>
+                  <span
+                    className="localized-file-name"
+                    id={fileStatusId}
+                    aria-live="polite"
+                  >
+                    {fileName || "Niciun fișier selectat"}
+                  </span>
+                </span>
               </label>
               <small>
                 {uploading
@@ -122,6 +141,7 @@ export function ProfileEditor() {
                   disabled={busy || uploading}
                   onClick={() => {
                     setForm((current) => ({ ...current, avatar_url: "" }));
+                    setFileName("");
                     setSaved(false);
                   }}
                 >

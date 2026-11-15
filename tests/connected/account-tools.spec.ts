@@ -16,10 +16,15 @@ test("profile uploads use owned storage and the saved portrait survives a reload
 }) => {
   const state = await workspace(page);
   await page.goto("/panou/profil");
+  await expect(page.getByText("Alege Imaginea", { exact: true })).toBeVisible();
+  await expect(page.locator(".localized-file-name")).toHaveText(
+    "Niciun fișier selectat",
+  );
   await page
     .getByLabel("Fotografie de profil", { exact: true })
     .setInputFiles(path.join(process.cwd(), "public/images/villa.jpg"));
   await expect(page.locator(".profile-preview-avatar img")).toBeVisible();
+  await expect(page.locator(".localized-file-name")).toHaveText("villa.jpg");
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
     .click();

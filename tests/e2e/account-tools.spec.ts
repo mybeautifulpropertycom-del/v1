@@ -17,7 +17,7 @@ test("a saved profile photo appears throughout the workspace and every template"
   await expect(page.locator(".profile-preview-avatar img")).toBeVisible();
   await expect(page.locator(".avatar img")).toHaveCount(2);
   await expect(
-    page.getByRole("link", { name: "Modele de site", exact: true }),
+    page.getByRole("link", { name: "Modele prezentare", exact: true }),
   ).toBeVisible();
   for (const [id, selector] of [
     ["demo-villa", ".estate-agent-monogram"],
