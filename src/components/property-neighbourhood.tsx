@@ -3,6 +3,11 @@ import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import type { PublicProperty } from "@/lib/model";
 import { loadGoogleMaps, withMapsTimeout } from "@/lib/google-maps";
 import {
+  TEMPLATE_LOCATION,
+  TEMPLATE_LOCATION_QUERY,
+  isTemplateAddress,
+} from "@/lib/template-location";
+import {
   distanceKilometers,
   isRomanianAddress,
   mapsEnabled,
@@ -17,6 +22,7 @@ import {
 type MappedProperty = Pick<PublicProperty, "location" | "google_place_id">;
 export function PropertyNeighbourhood({
   property,
+  sample = false,
 }: {
   property: MappedProperty;
   sample?: boolean;
@@ -24,18 +30,27 @@ export function PropertyNeighbourhood({
   const hasSavedPlace = Boolean(
     property.google_place_id && PLACE_ID.test(property.google_place_id),
   );
-  // Only agent-confirmed addresses get a map. Sample photos have no verified location.
-  if (!mapsEnabled() || !hasSavedPlace) return null;
+  const resolveSampleAddress =
+    sample && property.location === TEMPLATE_LOCATION && !hasSavedPlace;
+  // Ordinary listings still require an agent-selected place ID.
+  if (!mapsEnabled() || (!hasSavedPlace && !resolveSampleAddress)) return null;
   // Remount on address changes: a pending request must never populate a new listing.
   return (
     <Neighbourhood
-      key={`${property.google_place_id}:${property.location}`}
+      key={`${resolveSampleAddress}:${property.google_place_id}:${property.location}`}
       property={property}
+      resolveSampleAddress={resolveSampleAddress}
     />
   );
 }
 
-function Neighbourhood({ property }: { property: MappedProperty }) {
+function Neighbourhood({
+  property,
+  resolveSampleAddress,
+}: {
+  property: MappedProperty;
+  resolveSampleAddress: boolean;
+}) {
   const heading = useId();
   const section = useRef<HTMLElement>(null);
   const startMap = useRef<() => void>(() => {});
@@ -43,6 +58,7 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
   const map = useRef<google.maps.Map | null>(null);
   const centre = useRef<google.maps.LatLngLiteral | null>(null);
   const homePlaceId = useRef<string | null>(null);
+  const samplePlaceId = useRef<string | null>(null);
   const homeMarker = useRef<google.maps.marker.AdvancedMarkerElement | null>(
     null,
   );
@@ -128,7 +144,23 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
         ]),
       );
       if (request !== currentRequest.current) return;
-      const placeId = property.google_place_id;
+      let placeId = property.google_place_id;
+      if (resolveSampleAddress) {
+        placeId = samplePlaceId.current;
+        if (!placeId) {
+          const response = await withMapsTimeout(
+            placesLibrary.Place.searchByText({
+              textQuery: TEMPLATE_LOCATION_QUERY,
+              fields: ["id"],
+              maxResultCount: 1,
+              language: "ro",
+              region: "ro",
+            }),
+          );
+          if (request !== currentRequest.current) return;
+          placeId = response.places[0]?.id;
+        }
+      }
       if (!placeId || !PLACE_ID.test(placeId))
         throw new Error("Adresa nu a putut fi localizată.");
       const home = new placesLibrary.Place({
@@ -141,8 +173,13 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
         }),
       );
       if (request !== currentRequest.current || !mapContainer.current) return;
-      if (!home.location || !isRomanianAddress(home))
+      if (
+        !home.location ||
+        !isRomanianAddress(home) ||
+        (resolveSampleAddress && !isTemplateAddress(home))
+      )
         throw new Error("Adresa nu a putut fi localizată.");
+      if (resolveSampleAddress) samplePlaceId.current = home.id;
       homePlaceId.current = home.id;
       centre.current = home.location.toJSON();
       map.current = new mapsLibrary.Map(mapContainer.current, {
@@ -156,11 +193,14 @@ function Neighbourhood({ property }: { property: MappedProperty }) {
       });
       const label = document.createElement("div");
       label.className = "neighbourhood-home-pin";
-      label.textContent = "Următoarea ta locuință";
+      const markerTitle = resolveSampleAddress
+        ? "Adresă demonstrativă"
+        : "Următoarea ta locuință";
+      label.textContent = markerTitle;
       homeMarker.current = new markerLibrary.AdvancedMarkerElement({
         map: map.current,
         position: centre.current,
-        title: "Următoarea ta locuință",
+        title: markerTitle,
         content: label,
         zIndex: 100,
       });

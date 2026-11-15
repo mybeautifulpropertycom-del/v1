@@ -123,9 +123,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     expect(requests.searches[0].fields).not.toContain("*");
     expect(requests.photos).toBe(0);
     expect(
-      requests.details.filter((request) =>
-        request.fields.includes("photos"),
-      ),
+      requests.details.filter((request) => request.fields.includes("photos")),
     ).toHaveLength(0);
     await expect(
       section.getByRole("link", { name: "Open in Google Maps" }),
@@ -164,7 +162,9 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     ).toHaveCount(1);
     await section.getByRole("button", { name: "Parcuri", exact: true }).click();
     await expect(
-      section.getByText("Nu au fost găsite locuri din categoria parcuri în apropiere. Încearcă altă categorie."),
+      section.getByText(
+        "Nu au fost găsite locuri din categoria parcuri în apropiere. Încearcă altă categorie.",
+      ),
     ).toBeVisible();
     await section.getByRole("button", { name: "Școli", exact: true }).click();
     await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
@@ -260,18 +260,93 @@ test("old listings without a selected place keep their existing layout", async (
 });
 
 for (const template of ["editorial", "minimal", "panorama"]) {
-  test(`${template}: fictional design samples never search for an address or display a false map pin`, async ({
+  test(`${template}: samples resolve the Romanian demonstration address lazily and show nearby places`, async ({
     page,
-  }) => {
+  }, testInfo) => {
     await mockGoogleMaps(page);
     await page.goto(`/modele/${template}`);
     await expect(page.locator(`.website-${template}`)).toBeVisible();
-    await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
-    const requests = await page.evaluate(() => window.__mapsTest);
-    expect(requests.imports).toHaveLength(0);
-    expect(requests.textSearches).toHaveLength(0);
-    expect(requests.maps).toBe(0);
-    expect(requests.searches).toHaveLength(0);
+    const section = page.locator(".property-neighbourhood");
+    await expect(section).toContainText("Strada Sipca Numar 9, București");
+    expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
+    await section.scrollIntoViewIfNeeded();
+    await expect(
+      section.getByText("Adresă demonstrativă", { exact: true }),
+    ).toBeVisible();
+    await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
+    const initial = await page.evaluate(() => window.__mapsTest);
+    expect(initial.textSearches).toHaveLength(1);
+    expect(initial.textSearches[0]).toMatchObject({
+      textQuery: "Strada Sipca 9, București, România",
+      fields: ["id"],
+      maxResultCount: 1,
+      region: "ro",
+    });
+    expect(initial.maps).toBe(1);
+    expect(initial.searches[0].includedTypes).toEqual([
+      "primary_school",
+      "secondary_school",
+    ]);
+    await section
+      .getByRole("button", { name: "Cumpărături", exact: true })
+      .click();
+    await expect
+      .poll(() => page.evaluate(() => window.__mapsTest.searches.length))
+      .toBe(2);
+    expect(
+      await page.evaluate(() => window.__mapsTest.searches[1].includedTypes),
+    ).toEqual(["supermarket", "grocery_store", "shopping_mall"]);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await section.scrollIntoViewIfNeeded();
+    expect(
+      await page.evaluate(() => window.__mapsTest.textSearches.length),
+    ).toBe(1);
+    const map = await section.locator(".neighbourhood-map").boundingBox();
+    const panel = await section.locator(".neighbourhood-panel").boundingBox();
+    expect(map!.x + map!.width).toBeLessThan(panel!.x);
+    await section.screenshot({
+      path: testInfo.outputPath("sample-map-desktop.png"),
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      )
+      .toBe(true);
+    await section.screenshot({
+      path: testInfo.outputPath("sample-map-mobile.png"),
+    });
+  });
+}
+
+for (const result of ["wrong-address", "empty"] as const) {
+  test(`a ${result} sample address result never creates a false marker and can be retried`, async ({
+    page,
+  }) => {
+    await mockGoogleMaps(page);
+    await page.goto("/modele/minimal");
+    await page.evaluate((value) => {
+      window.__mapsTest.templateAddressResult = value;
+    }, result);
+    const section = page.locator(".property-neighbourhood");
+    await section.scrollIntoViewIfNeeded();
+    await expect(
+      section.getByRole("button", { name: "Reîncarcă harta", exact: true }),
+    ).toBeEnabled();
+    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(0);
+    expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(
+      0,
+    );
+    await page.evaluate(() => {
+      window.__mapsTest.templateAddressResult = "match";
+    });
+    await section
+      .getByRole("button", { name: "Reîncarcă harta", exact: true })
+      .click();
+    await expect(
+      section.getByText("Adresă demonstrativă", { exact: true }),
+    ).toBeVisible();
+    expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);
   });
 }
 

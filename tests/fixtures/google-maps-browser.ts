@@ -88,11 +88,11 @@ export async function mockGoogleMaps(page: Page) {
             {
               types: ["street_number"],
               shortText:
-                state.templateAddressResult === "wrong-address" ? "371" : "370",
+                state.templateAddressResult === "wrong-address" ? "10" : "9",
             },
-            { types: ["route"], shortText: "Ocean St" },
-            { types: ["locality"], shortText: "Santa Cruz" },
-            { types: ["administrative_area_level_1"], shortText: "CA" },
+            { types: ["route"], shortText: "Strada Șipca" },
+            { types: ["locality"], shortText: "București" },
+            { types: ["administrative_area_level_1"], shortText: "București" },
           ];
         }
         return { place: this };

@@ -1,4 +1,4 @@
-# US property maps and nearby places
+# Romanian property maps and nearby places
 
 The integration is opt-in and off by default. It uses **Maps JavaScript API** and
 **Places API (New)** with a public, website-restricted browser key. It does not
@@ -8,30 +8,32 @@ Search Console verification does not enable these services.
 ## What visitors and agents see
 
 - Address suggestions begin after four characters and a 400 ms pause, restricted
-  to `us`. Selecting a suggestion completes its autocomplete session and checks
-  for a full US street address/building. A city alone or a non-US result is rejected.
+  to `ro`. Selecting a suggestion completes its autocomplete session and checks
+  for a full Romanian street address/building. A city alone or a non-Romanian result is rejected.
   The agent can still enter and save an address manually when suggestions fail.
   Ineligible selections leave manual entry intact without a regional warning.
 - The agent's editor saves the selection without showing a map card. The map
   section appears on public landing pages and saved website previews.
   Existing listings acquire a map only when an
   agent selects their address from the suggestions and saves it; no bulk geocoding.
-- The three public design samples at `/templates/editorial`, `/templates/minimal`
-  and `/templates/panorama` use **370 Ocean St, Santa Cruz, CA**. When the map
+- The three public design samples at `/modele/editorial`, `/modele/minimal`
+  and `/modele/panorama` use **Strada Sipca Numar 9, București**. When the map
   section approaches the viewport, Places Text Search requests one place ID for
   this fixed address. Place Details then checks the street number, street, city,
-  state and country before showing a pin. A missing or mismatched address shows
+  and country before showing a pin. A missing or mismatched address shows
   the normal retry state. This exception applies only to design samples; ordinary
-  listings without an agent-selected place ID still do not load a map.
-- All three property templates show **Explore the neighborhood** before the
+  listings without an agent-selected place ID still do not load a map. The sample
+  marker reads **Adresă demonstrativă**. These photographs illustrate the design;
+  they are not verification of the real appearance of the demonstration address.
+- All three property templates show **Descoperă cartierul.** before the
   contact section for selected addresses. The map loads automatically when the
-  section approaches the viewport (200 px margin), with Schools preselected.
+  section approaches the viewport (200 px margin), with Școli preselected.
   There is no introductory card or Show map button. Visitors who never approach
   the section do not trigger its Google requests.
 - The map appears on the left and categories with a compact place list on the
-  right; on narrow screens they stack vertically. The **Your next home** pin
-  marks the property. Schools, Childcare, Restaurants, Parks, Shopping and Culture
-  return up to six places within approximately three miles, ordered by distance.
+  right; on narrow screens they stack vertically. The **Următoarea ta locuință** pin
+  marks the property. Școli, Grădinițe, Restaurante, Parcuri, Cumpărături and Cultură
+  return up to six places within approximately five kilometres, ordered by distance.
   Schools are requested on initialization; other categories are requested on
   selection. Successful results are reused within the mounted view. This is
   nearby discovery, not an exhaustive list or school zoning advice.
@@ -40,7 +42,7 @@ Search Console verification does not enable these services.
   requests are used. Returned data providers retain their attribution links.
   Custom "Open in Google Maps" / "View place" links are omitted; Google's native
   map attribution is preserved.
-- Miles are straight-line estimates; no routing or travel times are claimed.
+- Kilometres are straight-line estimates; no routing or travel times are claimed.
 - Editing an address clears the saved place ID in the editor and inline preview.
   A DB trigger also clears stale IDs on direct updates. Deleting/unpublishing a
   property uses the existing page-access rules.
@@ -58,8 +60,8 @@ Search Console verification does not enable these services.
    by this repository change.
 3. Create a **browser API key**, with application restrictions set to **Websites**.
    Allow only the production origins used by the application, for example:
-   `https://www.mybeautifulproperty.com/*` and, only if it serves pages rather than
-   redirecting, `https://mybeautifulproperty.com/*`. Restrict the APIs to Maps
+   `https://pucioasa-premium-beige.vercel.app/*`. Add the custom domain only after
+   configuring it for the site. Restrict the APIs to Maps
    JavaScript API and Places API (New). Use a separate restricted development key
    for localhost/staging. Do not allow all `*.vercel.app` deployments.
 4. Create a **JavaScript Map ID** in Google Maps Management. Advanced markers need
@@ -76,10 +78,11 @@ Search Console verification does not enable these services.
    These are browser-visible configuration values by design. Never put a Google
    service-account credential or a server-only key in a `NEXT_PUBLIC_` variable.
    Keep the switch false until the migration, key restrictions and quotas are ready.
+
 6. Review the site's privacy notice and Google Maps attribution/terms requirements
    for the production integration, including automatic map loading near the
    viewport. This implementation does not read visitor geolocation.
-7. Select a real US address in a test listing and save it. Once published, verify
+7. Select a real Romanian address in a test listing and save it. Once published, verify
    its pin on the public page and check all three templates. Test the automatic
    Schools results and Restaurants filter using the configured key, then inspect
    Cloud usage/billing. Mocked tests cannot establish that the live key, enabled

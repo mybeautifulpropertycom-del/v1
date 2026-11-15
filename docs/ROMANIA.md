@@ -25,7 +25,7 @@ npm run test:e2e
 npm run dev
 ```
 
-Fără configurație Supabase, aplicația pornește în modul demonstrativ. Profilul, proprietățile și adresele demonstrative sunt fictive. Fotografiile de exemplu nu stabilesc o adresă reală; nu plasăm un indicator pe hartă pentru acestea. Adresele reale sugerate prin Google Maps sunt limitate la România, iar distanțele sunt afișate în kilometri.
+Fără configurație Supabase, aplicația pornește în modul demonstrativ. Profilul și proprietățile demonstrative sunt exemple. Modelele publice folosesc adresa demonstrativă aleasă de utilizator, „Strada Sipca Numar 9, București”, confirmată prin Google înaintea afișării indicatorului. Fotografiile ilustrează designul și nu confirmă aspectul real al acestei adrese. Adresele sugerate prin Google Maps sunt limitate la România, iar distanțele sunt afișate în kilometri.
 
 Folosește checkout-ul izolat existent; nu crea un Git worktree fără o cerere explicită. Costurile furnizorilor video rămân în USD, separat de prețul în RON al pachetului.
 
