@@ -4,10 +4,11 @@ import { useId, useState, type CSSProperties } from "react";
 import { ChevronDown, Minus, Plus } from "lucide-react";
 import type { PublicProperty } from "@/lib/model";
 import { calculateMortgage } from "@/lib/mortgage";
+import { PropertyImage } from "./property-image";
 
 type MortgageProperty = Pick<
   PublicProperty,
-  "price" | "currency" | "transaction"
+  "price" | "currency" | "transaction" | "images"
 >;
 export function PropertyMortgage({ property }: { property: MortgageProperty }) {
   if (
@@ -21,6 +22,9 @@ export function PropertyMortgage({ property }: { property: MortgageProperty }) {
 
 function MortgageCalculator({ property }: { property: MortgageProperty }) {
   const id = useId();
+  const [failedPhoto, setFailedPhoto] = useState<string | null>(null);
+  const photo = property.images?.[0] || "";
+  const hasPhoto = Boolean(photo && failedPhoto !== photo);
   const [deposit, setDeposit] = useState(20);
   const [years, setYears] = useState(30);
   const [rate, setRate] = useState("4.7");
@@ -51,10 +55,6 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
       <div className="mortgage-intro">
         <span className="mortgage-eyebrow">SIMULATOR DE CREDIT</span>
         <h2 id={`${id}-heading`}>Planifică următorul pas.</h2>
-        <p>
-          Prețul acestei locuințe. Un avans ales de tine. O rată estimată pe
-          loc.
-        </p>
       </div>
       <div className="mortgage-layout">
         <div className="mortgage-controls">
@@ -128,10 +128,6 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               style={track(deposit)}
               onChange={(e) => setDeposit(Number(e.target.value))}
             />
-            <div className="mortgage-range-ends">
-              <span>0%</span>
-              <span>100%</span>
-            </div>
           </div>
           <div className="mortgage-control">
             <div className="mortgage-control-title">
@@ -148,10 +144,6 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               style={track(((years - 5) / 30) * 100)}
               onChange={(e) => setYears(Number(e.target.value))}
             />
-            <div className="mortgage-range-ends">
-              <span>5 ani</span>
-              <span>35 de ani</span>
-            </div>
           </div>
           <div
             className="mortgage-term-options"
@@ -225,50 +217,62 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
             </p>
           )}
         </div>
-        <div className="mortgage-result" aria-live="polite" aria-atomic="true">
-          <span className="mortgage-eyebrow">RATA TA ESTIMATĂ</span>
-          <div className="mortgage-monthly">
-            <strong>
-              {result
-                ? new Intl.NumberFormat("ro-RO", {
-                    maximumFractionDigits: 0,
-                  }).format(result.monthly)
-                : "—"}
-            </strong>
-            <span>{currency} / lună</span>
+        <div className={`mortgage-result${hasPhoto ? " has-photo" : ""}`}>
+          {hasPhoto && (
+            <PropertyImage
+              className="mortgage-property-photo"
+              src={photo}
+              alt=""
+              aria-hidden="true"
+              sizes="(max-width: 760px) 100vw, 45vw"
+              onError={() => setFailedPhoto(photo)}
+            />
+          )}
+          <div className="mortgage-result-copy">
+            <span className="mortgage-eyebrow">RATA TA ESTIMATĂ</span>
+            <div
+              className="mortgage-monthly"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <strong>
+                {result
+                  ? new Intl.NumberFormat("ro-RO", {
+                      maximumFractionDigits: 0,
+                    }).format(result.monthly)
+                  : "—"}
+              </strong>
+              <span>{currency} / lună</span>
+            </div>
+            <details className="mortgage-breakdown">
+              <summary>
+                Detaliile finanțării{" "}
+                <ChevronDown size={16} aria-hidden="true" />
+              </summary>
+              <dl>
+                <div>
+                  <dt>Suma împrumutată</dt>
+                  <dd>{result ? money(result.principal) : "—"}</dd>
+                </div>
+                <div>
+                  <dt>Dobândă totală</dt>
+                  <dd>{result ? money(result.interest) : "—"}</dd>
+                </div>
+                <div className="mortgage-total">
+                  <dt>
+                    Total de rambursat{" "}
+                    <small>Credit + dobândă, fără avans</small>
+                  </dt>
+                  <dd>{result ? money(result.total) : "—"}</dd>
+                </div>
+              </dl>
+            </details>
           </div>
-          <p className="mortgage-result-caption">
-            {deposit === 100
-              ? "Cu avans integral, nu mai este necesar un credit."
-              : `O simulare pentru ${years} de ani, cu rate egale.`}
-          </p>
-          <details className="mortgage-breakdown">
-            <summary>
-              Detaliile finanțării <ChevronDown size={16} aria-hidden="true" />
-            </summary>
-            <dl>
-              <div>
-                <dt>Suma împrumutată</dt>
-                <dd>{result ? money(result.principal) : "—"}</dd>
-              </div>
-              <div>
-                <dt>Dobândă totală</dt>
-                <dd>{result ? money(result.interest) : "—"}</dd>
-              </div>
-              <div className="mortgage-total">
-                <dt>
-                  Total de rambursat <small>Credit + dobândă, fără avans</small>
-                </dt>
-                <dd>{result ? money(result.total) : "—"}</dd>
-              </div>
-            </dl>
-          </details>
         </div>
       </div>
       <div className="mortgage-notes">
         <p>
-          Simulare orientativă · Dobândă constantă · Comisioanele și asigurările
-          nu sunt incluse
+          Estimare orientativă. Comisioanele și asigurările nu sunt incluse.
         </p>
         <details>
           <summary>Cum este calculată rata?</summary>

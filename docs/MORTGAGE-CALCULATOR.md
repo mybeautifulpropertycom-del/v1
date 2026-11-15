@@ -6,11 +6,13 @@ price, currency and transaction type directly; no second price field, database
 migration, external service or credentials are needed. Rentals and nonpositive or
 missing prices do not display a calculator.
 
-The section inherits each design's actual page colors, typography and horizontal
-grid (Editorial, Heritage and Atelier). The approved heading “Planifică următorul
-pas.” remains unchanged. The monthly estimate sits on the left on desktop and
-first on mobile. Repayment totals expand through “Detaliile finanțării”; the
-adjustment controls use thin progress tracks and text-based duration presets.
+The approved heading “Planifică următorul pas.” remains unchanged. A two-column
+card pairs the listing's main photograph and monthly estimate on the left with
+adjustments on the right. On mobile, the photo/estimate appears first. The image
+loads lazily through the shared responsive PropertyImage component. Missing or
+failed photographs fall back to a dark surface with readable light text. Repayment
+totals expand through “Detaliile finanțării”; longer assumptions remain expandable.
+The introduction and duplicate microcopy are omitted to keep the section visual.
 
 Defaults: 20% deposit, 30 years, 4.7% nominal annual interest. These are editable
 simulation assumptions, not lending criteria or bank offers. The amortization

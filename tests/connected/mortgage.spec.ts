@@ -23,6 +23,13 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       calculator.getByRole("spinbutton", { name: /Dobândă anuală/ }),
     ).toHaveValue("4.7");
     await expect(calculator).toContainText("Preluat din anunț");
+    await expect
+      .poll(() =>
+        calculator
+          .locator<HTMLImageElement>(".mortgage-property-photo")
+          .evaluate((img) => img.complete && img.naturalWidth > 0),
+      )
+      .toBe(true);
     await calculator.screenshot({
       path: testInfo.outputPath(`mortgage-${template}.png`),
     });
@@ -97,4 +104,35 @@ test("rentals and unspecified prices never show a mortgage estimate", async ({
   await page.reload();
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
   await expect(page.locator(".property-mortgage")).toHaveCount(0);
+});
+
+test("the estimate remains readable when the listing photograph is missing or unavailable", async ({
+  page,
+}) => {
+  const state = await workspace(page, {
+    price: 100000,
+    currency: "EUR",
+    transaction: "sale",
+    images: [],
+  });
+  await page.goto(`/preview/${id}`);
+  const calculator = page.locator(".property-mortgage");
+  await calculator.scrollIntoViewIfNeeded();
+  await expect(calculator.locator(".mortgage-monthly strong")).toHaveText(
+    "415",
+  );
+  await expect(calculator.locator(".mortgage-property-photo")).toHaveCount(0);
+  state.property.images = [
+    "https://missing-photo.invalid/missing.webp",
+  ];
+  await page.route("**/missing.webp*", (route) => route.abort());
+  await page.reload();
+  await calculator.scrollIntoViewIfNeeded();
+  await expect(calculator.locator(".mortgage-result")).not.toHaveClass(
+    /has-photo/,
+  );
+  await expect(calculator.locator(".mortgage-monthly strong")).toHaveText(
+    "415",
+  );
+  await expect(calculator.locator(".mortgage-property-photo")).toHaveCount(0);
 });
