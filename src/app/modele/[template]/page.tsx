@@ -18,6 +18,8 @@ export default async function Page({
     <PropertyWebsite
       property={{
         ...data.properties[0],
+        price: 850000,
+        currency: "EUR",
         location: TEMPLATE_LOCATION,
         google_place_id: null,
         description: data.properties[0].description,
