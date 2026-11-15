@@ -26,8 +26,13 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect
       .poll(() =>
         calculator
-          .locator<HTMLImageElement>(".mortgage-property-photo")
-          .evaluate((img) => img.complete && img.naturalWidth > 0),
+          .locator(".mortgage-property-photo")
+          .evaluate(
+            (img) =>
+              img instanceof HTMLImageElement &&
+              img.complete &&
+              img.naturalWidth > 0,
+          ),
       )
       .toBe(true);
     await calculator.screenshot({
@@ -122,9 +127,7 @@ test("the estimate remains readable when the listing photograph is missing or un
     "415",
   );
   await expect(calculator.locator(".mortgage-property-photo")).toHaveCount(0);
-  state.property.images = [
-    "https://missing-photo.invalid/missing.webp",
-  ];
+  state.property.images = ["https://missing-photo.invalid/missing.webp"];
   await page.route("**/missing.webp*", (route) => route.abort());
   await page.reload();
   await calculator.scrollIntoViewIfNeeded();
