@@ -15,7 +15,10 @@ for (const template of ["editorial", "minimal", "panorama"]) {
         exact: true,
       }),
     ).toBeVisible();
+    await expect(calculator.locator(".mortgage-result dl")).toBeHidden();
+    await calculator.getByText("Detaliile finanțării", { exact: true }).click();
     await expect(calculator.locator(".mortgage-result dl")).toBeVisible();
+    await calculator.getByText("Detaliile finanțării", { exact: true }).click();
     await expect(
       calculator.getByRole("spinbutton", { name: /Dobândă anuală/ }),
     ).toHaveValue("4.7");

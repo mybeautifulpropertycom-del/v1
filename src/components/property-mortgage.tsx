@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { useId, useState, type CSSProperties } from "react";
+import { ChevronDown, Minus, Plus } from "lucide-react";
 import type { PublicProperty } from "@/lib/model";
 import { calculateMortgage } from "@/lib/mortgage";
 
@@ -44,6 +44,8 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
       currency: unit,
       maximumFractionDigits: 0,
     }).format(amount);
+  const track = (value: number) =>
+    ({ "--range-progress": `${value}%` }) as CSSProperties;
   return (
     <section className="property-mortgage" aria-labelledby={`${id}-heading`}>
       <div className="mortgage-intro">
@@ -123,6 +125,7 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               max="100"
               step="1"
               value={deposit}
+              style={track(deposit)}
               onChange={(e) => setDeposit(Number(e.target.value))}
             />
             <div className="mortgage-range-ends">
@@ -142,6 +145,7 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               max="35"
               step="1"
               value={years}
+              style={track(((years - 5) / 30) * 100)}
               onChange={(e) => setYears(Number(e.target.value))}
             />
             <div className="mortgage-range-ends">
@@ -238,22 +242,27 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               ? "Cu avans integral, nu mai este necesar un credit."
               : `O simulare pentru ${years} de ani, cu rate egale.`}
           </p>
-          <dl>
-            <div>
-              <dt>Suma împrumutată</dt>
-              <dd>{result ? money(result.principal) : "—"}</dd>
-            </div>
-            <div>
-              <dt>Dobândă totală</dt>
-              <dd>{result ? money(result.interest) : "—"}</dd>
-            </div>
-            <div className="mortgage-total">
-              <dt>
-                Total de rambursat <small>Credit + dobândă, fără avans</small>
-              </dt>
-              <dd>{result ? money(result.total) : "—"}</dd>
-            </div>
-          </dl>
+          <details className="mortgage-breakdown">
+            <summary>
+              Detaliile finanțării <ChevronDown size={16} aria-hidden="true" />
+            </summary>
+            <dl>
+              <div>
+                <dt>Suma împrumutată</dt>
+                <dd>{result ? money(result.principal) : "—"}</dd>
+              </div>
+              <div>
+                <dt>Dobândă totală</dt>
+                <dd>{result ? money(result.interest) : "—"}</dd>
+              </div>
+              <div className="mortgage-total">
+                <dt>
+                  Total de rambursat <small>Credit + dobândă, fără avans</small>
+                </dt>
+                <dd>{result ? money(result.total) : "—"}</dd>
+              </div>
+            </dl>
+          </details>
         </div>
       </div>
       <div className="mortgage-notes">

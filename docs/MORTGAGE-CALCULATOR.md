@@ -6,6 +6,12 @@ price, currency and transaction type directly; no second price field, database
 migration, external service or credentials are needed. Rentals and nonpositive or
 missing prices do not display a calculator.
 
+The section inherits each design's actual page colors, typography and horizontal
+grid (Editorial, Heritage and Atelier). The approved heading “Planifică următorul
+pas.” remains unchanged. The monthly estimate sits on the left on desktop and
+first on mobile. Repayment totals expand through “Detaliile finanțării”; the
+adjustment controls use thin progress tracks and text-based duration presets.
+
 Defaults: 20% deposit, 30 years, 4.7% nominal annual interest. These are editable
 simulation assumptions, not lending criteria or bank offers. The amortization
 formula uses equal monthly instalments with a constant interest rate, subtracting
