@@ -4783,17 +4783,15 @@ fieldset.editor-content {
 .mortgage-layout { grid-template-columns: .95fr 1.15fr; border-radius: 12px; border: 0; box-shadow: 0 8px 36px #263e3407; }
 .mortgage-controls { padding: 30px 36px; }
 .mortgage-result { position: relative; isolation: isolate; overflow: hidden; min-height: 440px; justify-content: flex-end; padding: 32px; border: 0; background: var(--mortgage-ink); color: #fff; }
-.mortgage-result::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, #14251c12 10%, #14251c55 40%, #102018ed 80%, #102018fc); pointer-events: none; }
+.mortgage-result::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, #102018ad 0%, #14251c80 42%, #102018ed 80%, #102018fc); pointer-events: none; }
 .mortgage-property-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .mortgage-result-copy { position: relative; width: 100%; }
 .mortgage-result-copy > .mortgage-eyebrow { color: #ffffffde; font-size: 10px; letter-spacing: .16em; }
-.property-mortgage .mortgage-monthly strong { color: #fff; font-size: clamp(48px, 5.2vw, 74px); }
+.property-mortgage .mortgage-monthly strong { color: #fff; font-size: calc(clamp(48px, 5.2vw, 74px) - 2px); }
 .mortgage-monthly { margin-top: 12px; }
 .mortgage-monthly > span { color: #ffffffde; }
 .mortgage-breakdown { border-top: 1px solid #ffffff55; margin-top: 24px; }
-.mortgage-breakdown summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none; padding: 16px 0 0; color: #fff; font-size: 11px; cursor: pointer; }
-.mortgage-breakdown summary::-webkit-details-marker { display: none; }
-.mortgage-breakdown[open] summary svg { transform: rotate(180deg); }
+.mortgage-breakdown-title { margin: 0; padding: 16px 0 0; color: #fff; font-size: 11px; font-weight: 400; }
 .mortgage-result dl { margin-top: 20px; }
 .mortgage-result dt { color: #ffffffe0; }
 .mortgage-result .mortgage-total { border-color: #ffffff45; }
@@ -4804,6 +4802,7 @@ fieldset.editor-content {
 @media (max-width: 760px) {
   .mortgage-layout { grid-template-columns: 1fr; }
   .mortgage-result { min-height: 300px; padding: 24px; }
+  .property-mortgage .mortgage-monthly strong { font-size: calc(clamp(48px, 5.2vw, 74px) - 1px); }
   .mortgage-controls { padding: 24px; }
   .mortgage-result dl { margin-top: 20px; }
 }

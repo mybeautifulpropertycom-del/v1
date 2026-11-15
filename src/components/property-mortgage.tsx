@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type CSSProperties } from "react";
-import { ChevronDown, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import type { PublicProperty } from "@/lib/model";
 import { calculateMortgage } from "@/lib/mortgage";
 import { PropertyImage } from "./property-image";
@@ -244,11 +244,8 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
               </strong>
               <span>{currency} / lună</span>
             </div>
-            <details className="mortgage-breakdown">
-              <summary>
-                Detaliile finanțării{" "}
-                <ChevronDown size={16} aria-hidden="true" />
-              </summary>
+            <div className="mortgage-breakdown">
+              <p className="mortgage-breakdown-title">Detaliile finanțării</p>
               <dl>
                 <div>
                   <dt>Suma împrumutată</dt>
@@ -266,7 +263,7 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
                   <dd>{result ? money(result.total) : "—"}</dd>
                 </div>
               </dl>
-            </details>
+            </div>
           </div>
         </div>
       </div>

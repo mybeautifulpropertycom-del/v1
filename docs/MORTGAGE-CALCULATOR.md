@@ -11,7 +11,8 @@ card pairs the listing's main photograph and monthly estimate on the left with
 adjustments on the right. On mobile, the photo/estimate appears first. The image
 loads lazily through the shared responsive PropertyImage component. Missing or
 failed photographs fall back to a dark surface with readable light text. Repayment
-totals expand through “Detaliile finanțării”; longer assumptions remain expandable.
+totals stay permanently visible under “Detaliile finanțării”, without a toggle
+or arrow; longer assumptions remain expandable.
 The introduction and duplicate microcopy are omitted to keep the section visual.
 
 Defaults: 20% deposit, 30 years, 4.7% nominal annual interest. These are editable

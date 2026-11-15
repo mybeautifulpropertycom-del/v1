@@ -15,10 +15,16 @@ for (const template of ["editorial", "minimal", "panorama"]) {
         exact: true,
       }),
     ).toBeVisible();
-    await expect(calculator.locator(".mortgage-result dl")).toBeHidden();
-    await calculator.getByText("Detaliile finanțării", { exact: true }).click();
     await expect(calculator.locator(".mortgage-result dl")).toBeVisible();
-    await calculator.getByText("Detaliile finanțării", { exact: true }).click();
+    await expect(
+      calculator.locator(
+        ".mortgage-breakdown summary, .mortgage-breakdown svg",
+      ),
+    ).toHaveCount(0);
+    await expect(calculator.locator(".mortgage-monthly strong")).toHaveCSS(
+      "font-size",
+      "72px",
+    );
     await expect(
       calculator.getByRole("spinbutton", { name: /Dobândă anuală/ }),
     ).toHaveValue("4.7");
@@ -39,6 +45,11 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       path: testInfo.outputPath(`mortgage-${template}.png`),
     });
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(calculator.locator(".mortgage-monthly strong")).toHaveCSS(
+      "font-size",
+      "47px",
+    );
+    await expect(calculator.locator(".mortgage-result dl")).toBeVisible();
     await expect
       .poll(() =>
         page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
