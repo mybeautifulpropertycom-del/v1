@@ -269,20 +269,14 @@ label small {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-family: var(--serif);
-  font-size: 32px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 10px;
   width: 41px;
   height: 45px;
-  line-height: 1;
-  padding-bottom: 6px;
-  letter-spacing: -3px;
-  padding-right: 4px;
 }
-.brand-symbol > span {
-  color: #f5ccab;
+.brand-symbol > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .brand-property {
   display: block;

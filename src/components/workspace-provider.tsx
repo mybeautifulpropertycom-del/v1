@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { BrandSymbol } from "./brand-symbol";
 import { useRouter } from "next/navigation";
 import { Check, LoaderCircle, X } from "lucide-react";
 import type { Profile, Property, Workspace } from "@/lib/model";
@@ -382,7 +383,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   if (error)
     return (
       <div className="state-screen">
-        <div className="brand-symbol">m.</div>
+        <BrandSymbol />
         <h1>Să restabilim conexiunea.</h1>
         <p>{error}</p>
         <button className="button primary" onClick={() => location.reload()}>
@@ -393,7 +394,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   if (!state)
     return (
       <div className="state-screen">
-        <div className="brand-symbol">m.</div>
+        <BrandSymbol />
         <LoaderCircle className="spin" />
         <p>Se pregătește spațiul de lucru…</p>
       </div>

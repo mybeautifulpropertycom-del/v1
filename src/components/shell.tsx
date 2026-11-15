@@ -1,4 +1,5 @@
 "use client";
+import { BrandSymbol } from "./brand-symbol";
 import { AgentAvatar } from "./agent-avatar";
 
 import Link from "next/link";
@@ -37,14 +38,10 @@ const nav = [
 export function Brand({ light = false }: { light?: boolean }) {
   return (
     <span className={`brand ${light ? "brand-light" : ""}`}>
-      <span className="brand-symbol">
-        m<span>.</span>
-      </span>
+      <BrandSymbol />
       <span>
-        my beautiful
-        <span className="brand-property">
-          property<span className="brand-dot">.</span>
-        </span>
+        Următoarea{" "}
+        <span className="brand-property">Proprietate</span>
       </span>
     </span>
   );
@@ -176,7 +173,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="topbar-right">
             <span className="domain-badge">
               <Globe2 size={14} />
-              mybeautifulproperty.com
+              Următoarea Proprietate
             </span>
             <button
               className="icon-button help-top"

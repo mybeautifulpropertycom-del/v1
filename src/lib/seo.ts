@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { publicPath, type PublicProperty } from "./model";
 
-export const SITE_NAME = "My Beautiful Property";
+export const SITE_NAME = "Următoarea Proprietate";
 export const HOME_TITLE =
-  "My Beautiful Property — Site-uri și filme de prezentare imobiliară";
+  "Următoarea Proprietate — Site-uri și filme de prezentare imobiliară";
 export const HOME_DESCRIPTION =
   "Creează un site dedicat proprietății tale și un film de prezentare. Adaugă detaliile și fotografiile, alege designul și publică pentru 249 RON.";
 

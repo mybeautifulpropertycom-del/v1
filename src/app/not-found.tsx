@@ -8,7 +8,7 @@ export default function NotFound() {
       <p>Pagina poate fi nepublicată sau linkul s-a schimbat.</p>
       <Link href="/" className="button primary">
         <ArrowLeft size={16} />
-        Înapoi la My Beautiful Property
+        Înapoi la Următoarea Proprietate
       </Link>
     </div>
   );

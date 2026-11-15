@@ -169,7 +169,7 @@ export function Auth({
           </h2>
           <p>
             {!supabase
-              ? "Descoperă My Beautiful Property. Următoarea ta proprietate este la doar câteva clicuri distanță."
+              ? "Descoperă Următoarea Proprietate. Următoarea ta proprietate este la doar câteva clicuri distanță."
               : resetPassword
                 ? "Alege o parolă nouă pentru contul tău."
                 : mode === "signup"

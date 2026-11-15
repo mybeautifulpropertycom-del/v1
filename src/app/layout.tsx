@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
   title: {
     default: HOME_TITLE,
-    template: "%s | My Beautiful Property",
+    template: "%s | Următoarea Proprietate",
   },
   description: HOME_DESCRIPTION,
 };

@@ -70,9 +70,9 @@ export function leadEmailPayload(
   const subject = `Solicitare nouă: ${d.propertyTitle}`
     .replace(/[\r\n]/g, " ")
     .slice(0, 180);
-  const text = `Bună, ${d.agentName || ""},\n\nAi o solicitare nouă pentru ${d.propertyTitle}.\n\nNume: ${d.name}\nEmail: ${d.email}\nTelefon: ${d.phone || "Necompletat"}\n\n${d.message}\n\nDeschide mesajele: ${inboxUrl}\n\nMy Beautiful Property`;
+  const text = `Bună, ${d.agentName || ""},\n\nAi o solicitare nouă pentru ${d.propertyTitle}.\n\nNume: ${d.name}\nEmail: ${d.email}\nTelefon: ${d.phone || "Necompletat"}\n\n${d.message}\n\nDeschide mesajele: ${inboxUrl}\n\nUrmătoarea Proprietate`;
   return {
-    from: "My Beautiful Property <account@mybeautifulproperty.com>",
+    from: "Următoarea Proprietate <account@mybeautifulproperty.com>",
     to: [job.recipient],
     reply_to: d.email,
     subject,
