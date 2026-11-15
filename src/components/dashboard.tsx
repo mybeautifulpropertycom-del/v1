@@ -212,7 +212,7 @@ export function Dashboard() {
         </div>
         <div className="stat-card">
           <div>
-            <span>Site-uri {demo ? "publicate în demo" : "published"}</span>
+            <span>Prezentări publicate{demo ? " în demo" : ""}</span>
             <strong>
               {String(published).padStart(2, "0")}
               <i className="stat-live">{demo ? "DEMO" : "LIVE"}</i>
