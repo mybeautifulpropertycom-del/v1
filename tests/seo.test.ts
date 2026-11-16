@@ -14,13 +14,13 @@ import {
 import robots from "../src/app/robots";
 
 test("home metadata uses the requested copy and one canonical origin", () => {
-  process.env.NEXT_PUBLIC_SITE_URL = "https://www.mybeautifulproperty.com";
+  process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
   const meta = homeMetadata();
   assert.deepEqual(meta.title, { absolute: HOME_TITLE });
   assert.equal(meta.description, HOME_DESCRIPTION);
   assert.equal(
     meta.alternates?.canonical,
-    "https://www.mybeautifulproperty.com/",
+    "https://urmatoarea-proprietate.ro/",
   );
   assert.equal(meta.openGraph?.description, HOME_DESCRIPTION);
 });
@@ -34,7 +34,7 @@ test("new listings derive unique metadata and update it from their current prope
   const meta = propertyMetadata(property);
   assert.equal(
     meta.alternates?.canonical,
-    "https://www.mybeautifulproperty.com/123-palm-drive",
+    "https://urmatoarea-proprietate.ro/123-palm-drive",
   );
   assert.equal(meta.description, "A bright home. With space for everyone.");
   assert.ok(String(meta.title).includes(property.location));
@@ -111,5 +111,23 @@ test("canonical URLs reject credentials and invalid origins", () => {
   } finally {
     if (before === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
     else process.env.NEXT_PUBLIC_SITE_URL = before;
+  }
+});
+
+test("the purchased domain is the default canonical origin while explicit rollout origins remain supported", () => {
+  const previous = process.env.NEXT_PUBLIC_SITE_URL;
+  try {
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    assert.equal(siteOrigin(), "https://urmatoarea-proprietate.ro");
+    assert.equal(
+      homeMetadata().alternates?.canonical,
+      "https://urmatoarea-proprietate.ro/",
+    );
+    process.env.NEXT_PUBLIC_SITE_URL =
+      "https://pucioasa-premium-beige.vercel.app";
+    assert.equal(siteOrigin(), "https://pucioasa-premium-beige.vercel.app");
+  } finally {
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+    else process.env.NEXT_PUBLIC_SITE_URL = previous;
   }
 });

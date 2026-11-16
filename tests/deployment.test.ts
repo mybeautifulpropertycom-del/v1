@@ -44,7 +44,7 @@ test("Vercel rejects privileged key types without logging their values", () => {
 test("public keys work with an initial Vercel URL or a configured custom domain", () => {
   const anon = `header.${Buffer.from(JSON.stringify({ role: "anon" })).toString("base64url")}.signature`;
   for (const key of [examplePublishableKey, anon]) {
-    for (const site of ["", "https://mybeautifulproperty.com"]) {
+    for (const site of ["", "https://urmatoarea-proprietate.ro"]) {
       const result = validate({
         NEXT_PUBLIC_SUPABASE_ANON_KEY: key,
         NEXT_PUBLIC_SITE_URL: site,

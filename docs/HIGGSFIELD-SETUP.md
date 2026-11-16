@@ -26,7 +26,7 @@ For the current **Save your API key** screen, copy the entire key into `HF_KEY` 
 
 Legacy accounts may instead use `HF_CREDENTIALS=KEY_ID:KEY_SECRET` or separate `HF_API_KEY` and `HF_API_SECRET`. Never use a `NEXT_PUBLIC_` prefix. The [official Python SDK](https://github.com/higgsfield-ai/higgsfield-client) version 0.2.0 reads `HF_KEY` verbatim and sends `Authorization: Key <value>` (`auth.py` and `http/client.py`). The published JS SDK 0.2.6 requires a colon-delimited pair, so opaque keys use a bounded REST submission with exactly the same model, webhook and response handling. No fake secret is added and no automatic paid retry is made. This update requires no new SQL migration.
 
-Existing `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SITE_URL=https://www.mybeautifulproperty.com` are reused. Generate the worker secret locally with `openssl rand -hex 32`; use the same value in the scheduler below. Redeploy after environment changes.
+Existing `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SITE_URL=https://urmatoarea-proprietate.ro` are reused. Generate the worker secret locally with `openssl rand -hex 32`; use the same value in the scheduler below. Redeploy after environment changes.
 
 `npm run higgsfield:check` checks local configuration and reports the selected endpoint/output shape without printing secrets, contacting Higgsfield or spending credits. This is not an API-account or credit-balance verification.
 
@@ -87,7 +87,7 @@ The supplied scheduler uses **Supabase Cron + pg_net + Vault**, so it does not r
 
    ```sql
    select public.configure_higgsfield_schedule(
-     'https://www.mybeautifulproperty.com',
+     'https://urmatoarea-proprietate.ro',
      'YOUR_CRON_SECRET'
    );
    ```

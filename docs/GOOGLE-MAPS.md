@@ -60,8 +60,9 @@ Search Console verification does not enable these services.
    by this repository change.
 3. Create a **browser API key**, with application restrictions set to **Websites**.
    Allow only the production origins used by the application, for example:
-   `https://pucioasa-premium-beige.vercel.app/*`. Add the custom domain only after
-   configuring it for the site. Restrict the APIs to Maps
+   `https://urmatoarea-proprietate.ro/*` and
+   `https://www.urmatoarea-proprietate.ro/*`. Keep
+   `https://pucioasa-premium-beige.vercel.app/*` during the domain transition. Restrict the APIs to Maps
    JavaScript API and Places API (New). Use a separate restricted development key
    for localhost/staging. Do not allow all `*.vercel.app` deployments.
 4. Create a **JavaScript Map ID** in Google Maps Management. Advanced markers need

@@ -43,7 +43,7 @@ beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://film-test.supabase.co";
   process.env.HIGGSFIELD_MODEL = "hailuo-2.3-standard";
   delete process.env.HIGGSFIELD_MODELS_JSON;
-  process.env.NEXT_PUBLIC_SITE_URL = "https://www.mybeautifulproperty.com";
+  process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
   process.env.CRON_SECRET = "f".repeat(48);
   job = {
     order_id: order,

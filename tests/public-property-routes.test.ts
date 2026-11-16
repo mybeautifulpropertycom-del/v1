@@ -4,7 +4,7 @@ import { demoWorkspace } from "../src/lib/demo";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://public-routes.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-test-key";
-process.env.NEXT_PUBLIC_SITE_URL = "https://www.mybeautifulproperty.com";
+process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
 const originalFetch = globalThis.fetch;
 after(() => {
   globalThis.fetch = originalFetch;
@@ -53,7 +53,7 @@ test("public routes redirect old links, render the address and use canonical met
   });
   assert.equal(
     metadata.alternates?.canonical,
-    "https://www.mybeautifulproperty.com/123-palm-drive",
+    "https://urmatoarea-proprietate.ro/123-palm-drive",
   );
   const previous = calls;
   await assert.rejects(

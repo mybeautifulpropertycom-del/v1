@@ -12,7 +12,7 @@ Agentul își creează contul și completează numele, agenția, emailul de cont
 
 Recomandarea pentru lansare este un singur domeniu și o adresă pentru fiecare proprietate:
 
-`https://mybeautifulproperty.com/p/the-palm-residence-<identificator-unic>`
+`https://urmatoarea-proprietate.ro/p/the-palm-residence-<identificator-unic>`
 
 Nu trebuie cumpărat un domeniu pentru fiecare agent sau proprietate. Conectezi domeniul o singură dată la hosting; aplicația servește toate paginile și identifică proprietatea din adresă. Agenții distribuie linkul prin email, mesaje, social media sau cod QR.
 
@@ -28,7 +28,7 @@ Estimări de planificare, în USD, nu oferte verificate în timp real. Paginile 
 | ------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Supabase](https://supabase.com/pricing)          | Conturi, PostgreSQL, fotografii                       | Plan gratuit pentru prototip; aproximativ $25/lună pentru planul de producție de bază, plus eventual consum                                   |
 | [Vercel](https://vercel.com/pricing)              | Hosting Next.js, domeniu și HTTPS                     | Aproximativ $20/lună pentru un utilizator Pro, plus consum; verifică termenii planului potrivit utilizării comerciale                         |
-| Registrar de domenii                              | `mybeautifulproperty.com`                             | De regulă $10–25/an pentru un `.com` standard; poate fi mult mai scump dacă este premium. Disponibilitatea și deținerea nu au fost verificate |
+| Registrar de domenii | `urmatoarea-proprietate.ro` — Romarg | Domeniu achiziționat de proprietar; cost conform facturii registratorului |
 | [Resend](https://resend.com/pricing) sau alt SMTP | Confirmare cont, resetare parolă, ulterior notificări | Plan gratuit limitat pentru testare; aproximativ $20/lună pentru un plan plătit de bază                                                       |
 | [Stripe](https://stripe.com/pricing)              | Abonamente și plăți                                   | Comisioane per tranzacție; Billing/Tax pot adăuga taxe separate. Integrarea nu este încă implementată                                         |
 | Higgsfield / furnizor video API                   | Generarea clipurilor                                  | Buget separat, în funcție de API, model, durată, rezoluție și numărul de generări. Tariful și disponibilitatea API nu sunt confirmate         |

@@ -5,7 +5,7 @@ import { demoWorkspace } from "../src/lib/demo";
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://admin-tests.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-test-key";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
-process.env.NEXT_PUBLIC_SITE_URL = "https://www.mybeautifulproperty.com";
+process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
 process.env.STRIPE_SECRET_KEY = "sk_live_fake";
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_fake";
 const actor = "11111111-1111-4111-8111-111111111111";

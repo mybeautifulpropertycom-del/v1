@@ -1,16 +1,15 @@
+import { PLATFORM_NAME, PLATFORM_ORIGIN } from "./platform-brand";
 import type { Metadata } from "next";
 import { publicPath, type PublicProperty } from "./model";
 
-export const SITE_NAME = "Următoarea Proprietate";
+export const SITE_NAME = PLATFORM_NAME;
 export const HOME_TITLE =
   "Următoarea Proprietate — Site-uri și filme de prezentare imobiliară";
 export const HOME_DESCRIPTION =
   "Creează un site dedicat proprietății tale și un film de prezentare. Adaugă detaliile și fotografiile, alege designul și publică pentru 249 RON.";
 
 export function siteOrigin(): string {
-  const url = new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.mybeautifulproperty.com",
-  );
+  const url = new URL(process.env.NEXT_PUBLIC_SITE_URL || PLATFORM_ORIGIN);
   const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
   const localDevelopment = process.env.NODE_ENV === "development" && loopback;
   if (

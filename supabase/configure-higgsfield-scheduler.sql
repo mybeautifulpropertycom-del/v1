@@ -32,5 +32,5 @@ revoke all on function public.configure_higgsfield_schedule(text,text) from publ
 
 -- After storing CRON_SECRET in Vercel, execute this separately as the dashboard
 -- database administrator, replacing the placeholder locally. Never share the secret.
--- select public.configure_higgsfield_schedule('https://www.mybeautifulproperty.com','YOUR_CRON_SECRET');
+-- select public.configure_higgsfield_schedule('https://urmatoarea-proprietate.ro','YOUR_CRON_SECRET');
 select 'MBP_HIGGSFIELD_SCHEDULER_READY' as status;

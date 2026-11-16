@@ -7,12 +7,12 @@ The app attempts delivery after returning the successful form response. A schedu
 ## Activate on the existing deployment
 
 1. In Supabase SQL Editor, run **all** of `supabase/sql-editor-lead-notifications.sql`. Expect `MBP_LEAD_NOTIFICATIONS_READY`.
-2. In Vercel → v1 → Environment Variables → **Production**, add `RESEND_API_KEY` as **Secret**. Create/use a Resend API key with sending permission for the already verified `mybeautifulproperty.com` domain. The key used as the Supabase SMTP password can be reused if it has the appropriate sending permission. Never put it in chat or prefix it with `NEXT_PUBLIC_`.
-3. The existing `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SITE_URL=https://www.mybeautifulproperty.com`, and `CRON_SECRET` are also required. No Stripe or Higgsfield credentials are used by this worker. Redeploy after adding the Resend key.
+2. In Vercel → pucioasa-premium → Environment Variables → **Production**, add `RESEND_API_KEY` as **Secret**. Create/use a Resend API key with sending permission for the verified sending domain (verify `urmatoarea-proprietate.ro` before switching the sender). The key used as the Supabase SMTP password can be reused if it has the appropriate sending permission. Never put it in chat or prefix it with `NEXT_PUBLIC_`.
+3. The existing `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SITE_URL=https://urmatoarea-proprietate.ro`, and `CRON_SECRET` are also required. No Stripe or Higgsfield credentials are used by this worker. Redeploy after adding the Resend key.
 4. Run `supabase/configure-lead-notifications.sql`. Expect `MBP_LEAD_EMAILS_SCHEDULED`. It reuses the site origin and worker secret already stored in Supabase Vault for the video scheduler; it creates a separate minute-based email job and does not alter the video schedule. The Vault worker secret must match the current Vercel `CRON_SECRET`.
 5. From a published property, submit one contact/tour request. Verify the lead appears in the owner's inbox, a red badge appears, and the owner receives an email. Use **Mark as read**, then refresh to confirm persistence.
 
-Sender: **My Beautiful Property <account@mybeautifulproperty.com>**. Reply-To is the buyer's email. The notification includes buyer contact details, the message/viewing request, property title and a link to the authenticated inbox. Resend SMTP configured within Supabase Auth alone does not send application lead notifications. This feature does not change authentication email templates.
+Sender name: **Următoarea Proprietate**. Set server-side `RESEND_FROM_EMAIL=contact@urmatoarea-proprietate.ro` after verifying that domain in Resend; until then the existing verified sender `account@mybeautifulproperty.com` is retained. See [domain migration](DOMAIN-MIGRATION.md). Reply-To is the buyer's email. The notification includes buyer contact details, the message/viewing request, property title and a link to the authenticated inbox. Resend SMTP configured within Supabase Auth alone does not send application lead notifications. This feature does not change authentication email templates.
 
 ## Inbox behavior
 

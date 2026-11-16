@@ -1,4 +1,5 @@
 "use client";
+import { PLATFORM_DOMAIN } from "@/lib/platform-brand";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyImage } from "./property-image";
 import { PriceInput } from "./price-input";
@@ -827,10 +828,10 @@ export function PropertyEditor({
             <div className="editor-site-link">
               <Globe2 size={14} />
               <span>
-                mybeautifulproperty.com
+                {PLATFORM_DOMAIN}
                 {property.address_slug
                   ? publicPath(property)
-                  : "/your-property-address"}
+                  : "/adresa-proprietatii-tale"}
               </span>
             </div>
             {saved && !busy && (

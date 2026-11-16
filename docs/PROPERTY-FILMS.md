@@ -26,7 +26,7 @@ This optional workflow animates **original photographs**, rather than generating
 
    ```sql
    select public.configure_higgsfield_schedule(
-     'https://www.mybeautifulproperty.com',
+     'https://urmatoarea-proprietate.ro',
      'REPLACE_WITH_YOUR_CRON_SECRET'
    );
    ```

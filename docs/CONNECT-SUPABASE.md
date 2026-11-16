@@ -75,4 +75,4 @@ După conectare verificăm două conturi distincte, completarea profilului, înc
 
 Păstrează autentificarea email/parolă și confirmarea emailului activate. Serviciul email implicit Supabase are restricții pentru testare; un SMTP propriu va fi necesar înainte de a invita clienți reali. Acesta este un pas separat de alegerea planului gratuit sau Pro.
 
-Hostingul și DNS-ul pentru `mybeautifulproperty.com` se conectează după verificarea aplicației cu proiectul real. Higgsfield și editorul video rămân integrarea ulterioară.
+Hostingul și DNS-ul pentru `urmatoarea-proprietate.ro` se conectează după verificarea aplicației cu proiectul real. Higgsfield și editorul video rămân integrarea ulterioară.

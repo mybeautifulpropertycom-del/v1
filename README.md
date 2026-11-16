@@ -1,4 +1,4 @@
-# My Beautiful Property
+# Următoarea Proprietate
 
 Versiune pentru România: interfață în română, prețuri în EUR și suprafețe în m² implicit, trei modele de site și integrare Supabase. Pachetul site + film de prezentare costă 249 RON, plată unică. Vezi [instrucțiunile pentru România](docs/ROMANIA.md), inclusiv verificarea actualizării bazei de date înainte de publicare. Documentele istorice despre integrarea inițială pot menționa tariful anterior de 97 USD.
 
@@ -60,15 +60,15 @@ Marketing photos use a public bucket: anyone with an image URL can view it, incl
 ## One domain, every property
 
 ```text
-mybeautifulproperty.com/dashboard       Agent workspace
-mybeautifulproperty.com/p/<stable-slug> Public property website
+urmatoarea-proprietate.ro/panou       Agent workspace
+urmatoarea-proprietate.ro/p/<stable-slug> Public property website
 ```
 
 All pages are routes inside one application. Agents do not need separate domains, hosting plans, or DNS records. Each agent owns multiple listings; each listing chooses a design while retaining a stable, globally unique URL. Updating an agent’s contact profile is reflected immediately in public pages because the publication RPC joins the current profile.
 
 Follow [DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md) for the first deployment, Auth redirects, and domain connection. `vercel.json` selects Next.js and `npm run build:vercel`, which rejects missing public Supabase configuration and privileged key types before bundling. Local demo builds still use `npm run build`. Set the two Supabase variables in Vercel before deploying; an initial `vercel.app` address works before connecting the custom domain.
 
-Add `mybeautifulproperty.com` in the host’s domain settings and enter the exact DNS records shown there at your registrar. Configure the production Auth redirects and rebuild after changing public environment variables. The host provisions TLS after domain verification. An optional `www` domain can redirect to the primary domain.
+Add `urmatoarea-proprietate.ro` in the host’s domain settings and enter the exact DNS records shown there at your registrar. Configure the production Auth redirects and rebuild after changing public environment variables. The host provisions TLS after domain verification. An optional `www` domain can redirect to the primary domain.
 
 No deployment or DNS modification has been performed. Publishing a Codex development-environment snapshot is separate from deploying this website.
 
@@ -122,3 +122,5 @@ The $97 USD website + presentation-video package supports test and live Checkout
 Protected platform administrators can review agents and properties and grant complimentary publication with the included video. See [platform administrator setup](docs/PLATFORM-ADMIN.md) for the additive SQL upgrade and explicit account-role grant. This keeps normal agent billing and private data isolation intact.
 
 For the multi-photo MiniMax workflow, use [Higgsfield presentation films](docs/HIGGSFIELD-FILMS.md). `PROPERTY_VIDEO_MODE=higgsfield-montage` generates each selected scene through Higgsfield, then edits the clips with speed ramps, transitions and music. It uses API credits; it does not select the local photo-animation renderer.
+
+For the purchased Romanian domain and migration from the old deployment, follow [the domain migration guide](docs/DOMAIN-MIGRATION.md).

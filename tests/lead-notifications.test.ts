@@ -8,7 +8,7 @@ const env = {
   RESEND_API_KEY: "test-only-key",
   SUPABASE_SERVICE_ROLE_KEY: "test-service-key",
   NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
-  NEXT_PUBLIC_SITE_URL: "https://www.mybeautifulproperty.com",
+  NEXT_PUBLIC_SITE_URL: "https://urmatoarea-proprietate.ro",
 };
 const job = {
   inquiry_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -27,7 +27,7 @@ const job = {
 test("lead email escapes untrusted content, uses the owner and supplies the inbox link and reply-to", () => {
   const payload = leadEmailPayload(
     job,
-    "https://www.mybeautifulproperty.com/panou/mesaje",
+    "https://urmatoarea-proprietate.ro/panou/mesaje",
   );
   assert.deepEqual(payload.to, ["owner@example.com"]);
   assert.equal(payload.reply_to, "buyer@example.com");
@@ -37,9 +37,7 @@ test("lead email escapes untrusted content, uses the owner and supplies the inbo
   assert.ok(payload.html.includes("&lt;script&gt;"));
   assert.ok(payload.text.includes(job.details.message));
   assert.ok(
-    payload.html.includes(
-      "https://www.mybeautifulproperty.com/panou/mesaje",
-    ),
+    payload.html.includes("https://urmatoarea-proprietate.ro/panou/mesaje"),
   );
 });
 test("notification worker freezes payloads and retries with the same Resend idempotency key", async () => {
@@ -73,7 +71,11 @@ test("notification worker freezes payloads and retries with the same Resend idem
   assert.equal(
     (
       await runLeadEmailWorker({
-        env: { ...env, NEXT_PUBLIC_SITE_URL: "https://changed.example.com" },
+        env: {
+          ...env,
+          NEXT_PUBLIC_SITE_URL: "https://changed.example.com",
+          RESEND_FROM_EMAIL: "contact@urmatoarea-proprietate.ro",
+        },
         fetcher,
       })
     ).sent,
@@ -94,5 +96,49 @@ test("unconfigured email delivery makes no external request", async () => {
     },
   });
   assert.equal(r.configured, false);
+  assert.equal(calls, 0);
+});
+
+test("a verified new-domain sender applies to new messages and invalid sender configuration makes no request", async () => {
+  let payload: Record<string, unknown> | undefined;
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = String(input);
+    if (url.includes("/rpc/claim_lead_emails")) return Response.json([job]);
+    if (url.includes("/lead_email_jobs?")) {
+      payload = JSON.parse(init!.body as string).email_payload;
+      return Response.json({ email_payload: payload });
+    }
+    if (url === "https://api.resend.com/emails")
+      return Response.json({ id: "verified-new-domain" });
+    if (url.includes("/rpc/finish_lead_email")) return Response.json(true);
+    throw new Error("Unexpected request");
+  };
+  assert.equal(
+    (
+      await runLeadEmailWorker({
+        env: { ...env, RESEND_FROM_EMAIL: "contact@urmatoarea-proprietate.ro" },
+        fetcher,
+      })
+    ).sent,
+    1,
+  );
+  assert.equal(
+    payload!.from,
+    "Următoarea Proprietate <contact@urmatoarea-proprietate.ro>",
+  );
+  assert.ok(String(payload!.html).includes("URMĂTOAREA PROPRIETATE"));
+  assert.ok(!String(payload!.html).includes("MY BEAUTIFUL PROPERTY"));
+  let calls = 0;
+  const invalid = await runLeadEmailWorker({
+    env: {
+      ...env,
+      RESEND_FROM_EMAIL: "bad@example.com\nBcc: hidden@example.com",
+    },
+    fetcher: async () => {
+      calls++;
+      throw new Error("Must not send");
+    },
+  });
+  assert.equal(invalid.configured, false);
   assert.equal(calls, 0);
 });

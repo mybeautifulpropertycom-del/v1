@@ -1,5 +1,10 @@
+import { PLATFORM_NAME } from "./platform-brand";
 // Server routes only. Resend and Supabase service credentials never reach clients.
 import { createClient } from "@supabase/supabase-js";
+
+// Retain the currently verified sender until the new email domain is verified.
+// Set RESEND_FROM_EMAIL to contact@urmatoarea-proprietate.ro at email cutover.
+const legacySenderEmail = "account@mybeautifulproperty.com";
 
 type Details = {
   agentName: string;
@@ -39,6 +44,12 @@ export function leadEmailConfiguration(
   const apiKey = env.RESEND_API_KEY?.trim();
   const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
+  const senderEmail = env.RESEND_FROM_EMAIL?.trim() || legacySenderEmail;
+  if (
+    senderEmail.length > 254 ||
+    !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(senderEmail)
+  )
+    return null;
   if (!apiKey || !serviceKey || !supabaseUrl) return null;
   try {
     const site = new URL(env.NEXT_PUBLIC_SITE_URL || "");
@@ -55,6 +66,7 @@ export function leadEmailConfiguration(
       apiKey,
       serviceKey,
       supabaseUrl,
+      senderEmail,
       inboxUrl: `${site.origin}/panou/mesaje`,
     };
   } catch {
@@ -65,6 +77,7 @@ export function leadEmailConfiguration(
 export function leadEmailPayload(
   job: Pick<Job, "recipient" | "details">,
   inboxUrl: string,
+  senderEmail = legacySenderEmail,
 ): LeadEmailPayload {
   const d = job.details;
   const subject = `Solicitare nouă: ${d.propertyTitle}`
@@ -72,12 +85,12 @@ export function leadEmailPayload(
     .slice(0, 180);
   const text = `Bună, ${d.agentName || ""},\n\nAi o solicitare nouă pentru ${d.propertyTitle}.\n\nNume: ${d.name}\nEmail: ${d.email}\nTelefon: ${d.phone || "Necompletat"}\n\n${d.message}\n\nDeschide mesajele: ${inboxUrl}\n\nUrmătoarea Proprietate`;
   return {
-    from: "Următoarea Proprietate <account@mybeautifulproperty.com>",
+    from: `${PLATFORM_NAME} <${senderEmail}>`,
     to: [job.recipient],
     reply_to: d.email,
     subject,
     text,
-    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#253c30;max-width:600px;margin:auto;padding:28px"><p style="font-size:12px;letter-spacing:2px">MY BEAUTIFUL PROPERTY</p><h1 style="font-size:26px">Un mesaj nou. O nouă posibilitate.</h1><p>Bună, ${escapeHtml(d.agentName || "")},</p><p>Ai o solicitare nouă pentru <strong>${escapeHtml(d.propertyTitle)}</strong>.</p><p><strong>Nume:</strong> ${escapeHtml(d.name)}<br><strong>Email:</strong> ${escapeHtml(d.email)}<br><strong>Telefon:</strong> ${escapeHtml(d.phone || "Necompletat")}</p><p style="white-space:pre-wrap;background:#f7f7f1;padding:18px;border-radius:8px">${escapeHtml(d.message)}</p><p><a href="${escapeHtml(inboxUrl)}" style="display:inline-block;background:#d96947;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px">Deschide mesajele</a></p><p style="font-size:12px;color:#727a70">Ai primit această notificare deoarece cineva te-a contactat prin site-ul proprietății.</p></div>`,
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#253c30;max-width:600px;margin:auto;padding:28px"><p style="font-size:12px;letter-spacing:2px">${PLATFORM_NAME.toLocaleUpperCase("ro-RO")}</p><h1 style="font-size:26px">Un mesaj nou. O nouă posibilitate.</h1><p>Bună, ${escapeHtml(d.agentName || "")},</p><p>Ai o solicitare nouă pentru <strong>${escapeHtml(d.propertyTitle)}</strong>.</p><p><strong>Nume:</strong> ${escapeHtml(d.name)}<br><strong>Email:</strong> ${escapeHtml(d.email)}<br><strong>Telefon:</strong> ${escapeHtml(d.phone || "Necompletat")}</p><p style="white-space:pre-wrap;background:#f7f7f1;padding:18px;border-radius:8px">${escapeHtml(d.message)}</p><p><a href="${escapeHtml(inboxUrl)}" style="display:inline-block;background:#d96947;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px">Deschide mesajele</a></p><p style="font-size:12px;color:#727a70">Ai primit această notificare deoarece cineva te-a contactat prin site-ul proprietății.</p></div>`,
   };
 }
 
@@ -101,7 +114,7 @@ export async function runLeadEmailWorker(
     jobs.map(async (job) => {
       let payload = job.email_payload;
       if (!payload) {
-        payload = leadEmailPayload(job, config.inboxUrl);
+        payload = leadEmailPayload(job, config.inboxUrl, config.senderEmail);
         // Freeze the provider payload before the first send. Retries use precisely
         // the same body and idempotency key, even after profile/config edits.
         const saved = await db

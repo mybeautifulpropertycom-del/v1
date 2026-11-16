@@ -39,7 +39,7 @@ Repository: `mybeautifulpropertycom-del/v1`.
 
 Selectează mediile în care testezi aplicația, de exemplu Production și Preview. În prima etapă, aceste deploymenturi folosesc aceeași bază Supabase: proprietățile și conturile reale sunt comune. Pentru experimente care modifică schema, folosește ulterior un proiect Supabase separat de staging.
 
-`NEXT_PUBLIC_SITE_URL` poate rămâne nesetat la primul deployment. Linkurile de confirmare, resetare și distribuire sunt construite de aplicație din originea deschisă în browser. După activarea domeniului, poți seta variabila la `https://mybeautifulproperty.com` în mediul Production. Nu copia `http://localhost:3000` în configurația Vercel.
+`NEXT_PUBLIC_SITE_URL` poate rămâne nesetat la primul deployment. Linkurile de confirmare, resetare și distribuire sunt construite de aplicație din originea deschisă în browser. După activarea domeniului, poți seta variabila la `https://urmatoarea-proprietate.ro` în mediul Production. Nu copia `http://localhost:3000` în configurația Vercel.
 
 Pentru aplicația de bază nu sunt necesare cheile `service_role`, `sb_secret_…`, parola bazei sau tokenurile personale. Integrarea opțională Stripe are nevoie de o cheie Supabase de server separată, în `SUPABASE_SERVICE_ROLE_KEY`; vezi [configurarea Stripe](STRIPE-SETUP.md). Nu o pune în variabilele `NEXT_PUBLIC_`. Nu încărca `.env.local` în GitHub; fișierele locale de mediu și `.vercel/` sunt excluse. Valorile publice sunt incluse în browser la build, de aceea schimbarea lor cere **Redeploy**.
 
@@ -59,14 +59,14 @@ Supabase are restricții pentru serviciul email implicit. Configurează SMTP pen
 
 Testul inițial: creează un cont, confirmă emailul, completează profilul, încarcă o fotografie proprie, salvează și publică o proprietate. Deschide pagina în alt browser, fără autentificare, și verifică formularul și inboxul. Apoi retrage pagina și verifică faptul că nu mai este accesibilă public. Repetă cu un al doilea agent pentru izolarea datelor.
 
-## 5. Domeniul mybeautifulproperty.com
+## 5. Domeniul urmatoarea-proprietate.ro
 
-După testul de bază, adaugă `mybeautifulproperty.com` în **Project → Settings → Domains** și copiază la registrator exact înregistrările DNS cerute de Vercel. Nu folosi un IP sau un CNAME găsit într-un tutorial vechi. Păstrează înregistrările de email existente, dacă există.
+După testul de bază, adaugă `urmatoarea-proprietate.ro` în **Project → Settings → Domains** și copiază la registrator exact înregistrările DNS cerute de Vercel. Nu folosi un IP sau un CNAME găsit într-un tutorial vechi. Păstrează înregistrările de email existente, dacă există.
 
 După verificarea DNS și activarea HTTPS:
 
-- actualizează Supabase Site URL la `https://mybeautifulproperty.com`;
-- adaugă redirecturile `https://mybeautifulproperty.com/dashboard/profile` și `https://mybeautifulproperty.com/reset-password`;
+- actualizează Supabase Site URL la `https://urmatoarea-proprietate.ro`;
+- adaugă redirecturile `https://urmatoarea-proprietate.ro/dashboard/profile` și `https://urmatoarea-proprietate.ro/reset-password`;
 - dacă folosești și `www`, configurează redirecționarea către domeniul principal în Vercel;
 - retestează înregistrarea, recuperarea contului și pagina publică pe domeniul final.
 

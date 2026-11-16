@@ -1,4 +1,5 @@
 "use client";
+import { PLATFORM_CONTACT_EMAIL } from "@/lib/platform-brand";
 import { BrandSymbol } from "./brand-symbol";
 import { AgentAvatar } from "./agent-avatar";
 
@@ -40,8 +41,7 @@ export function Brand({ light = false }: { light?: boolean }) {
     <span className={`brand ${light ? "brand-light" : ""}`}>
       <BrandSymbol />
       <span>
-        Următoarea{" "}
-        <span className="brand-property">Proprietate</span>
+        Următoarea <span className="brand-property">Proprietate</span>
       </span>
     </span>
   );
@@ -267,7 +267,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 Adaugă o proprietate
               </Link>
               <a
-                href="mailto:contact@mybeautifulproperty.com"
+                href={`mailto:${PLATFORM_CONTACT_EMAIL}`}
                 className="button secondary"
               >
                 <Mail size={17} />

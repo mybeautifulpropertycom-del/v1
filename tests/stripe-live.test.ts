@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import { demoWorkspace } from "../src/lib/demo";
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://live-tests.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-test-key";
-process.env.NEXT_PUBLIC_SITE_URL = "https://www.mybeautifulproperty.com";
+process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_fake_live";
 const owner = "11111111-1111-4111-8111-111111111111",
@@ -420,7 +420,7 @@ test("card checkout uses the saved profile, disables Link and saving, and fixes 
   assert.equal(params.get("allowed_payment_method_types[0]"), "card");
   assert.equal(
     params.get("return_url"),
-    `https://www.mybeautifulproperty.com/preview/${id}`,
+    `https://urmatoarea-proprietate.ro/preview/${id}`,
   );
   for (const field of ["name", "email", "phone"] as const) {
     assert.equal(customerPosts[0].get(field), demo.profile[field].trim());

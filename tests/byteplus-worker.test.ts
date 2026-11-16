@@ -17,7 +17,7 @@ beforeEach(() => {
   process.env.ARK_API_KEY = "fake-ark-key";
   process.env.OPENAI_API_KEY = "fake-openai-key";
   process.env.CRON_SECRET = "s".repeat(48);
-  process.env.NEXT_PUBLIC_SITE_URL = "https://www.mybeautifulproperty.com";
+  process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://byteplus-worker.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "fake-server-key";
   delete process.env.HF_KEY;

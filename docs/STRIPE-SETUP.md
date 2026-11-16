@@ -17,7 +17,7 @@ Use the Stripe **live account**, outside Test mode / Sandbox. Complete Stripe's 
 - Developers / API keys: copy the **Secret key**, beginning `sk_live_`, directly into Vercel.
 - Copy the matching `pk_live_…` publishable key into `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` for the embedded payment form. This public value can use Vercel **Config**.
 - Developers / Workbench → Webhooks: add an event destination for **Your account**, type **Webhook endpoint**.
-- Endpoint: **https://www.mybeautifulproperty.com/api/stripe/webhook**
+- Endpoint: **https://urmatoarea-proprietate.ro/api/stripe/webhook**
 - Events:
   - `checkout.session.completed`
   - `checkout.session.async_payment_succeeded`
@@ -28,11 +28,11 @@ Use the Stripe **live account**, outside Test mode / Sandbox. Complete Stripe's 
 - Copy this LIVE endpoint's **Signing secret**, beginning `whsec_`, directly into Vercel.
 - The SDK uses API **2026-09-30.endive**. Prefer that event version if selectable.
 
-Keys and webhook secrets must belong to the same Stripe account and mode. No manual Product, Price, Payment Link, subscription or Stripe Connect setup is required: the server creates the fixed one-time line item. Adaptive Pricing is disabled to retain USD. This implementation does not add coupons, automatic taxes or a hosting-expiry promise.
+Keys and webhook secrets must belong to the same Stripe account and mode. No manual Product, Price, Payment Link, subscription or Stripe Connect setup is required: the server creates the fixed one-time line item. Adaptive Pricing is disabled to retain RON. This implementation does not add coupons, automatic taxes or a hosting-expiry promise.
 
 ## 3. Vercel: live configuration
 
-Project **v1 → Settings → Environment Variables → Production**:
+Project **pucioasa-premium → Settings → Environment Variables → Production**:
 
 | Variable | Value now |
 | --- | --- |
@@ -42,7 +42,7 @@ Project **v1 → Settings → Environment Variables → Production**:
 | `STRIPE_SECRET_KEY` | `sk_live_…` |
 | `STRIPE_WEBHOOK_SECRET` | LIVE endpoint signing secret, `whsec_…` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase server secret or legacy `service_role` key |
-| `NEXT_PUBLIC_SITE_URL` | `https://www.mybeautifulproperty.com` |
+| `NEXT_PUBLIC_SITE_URL` | `https://urmatoarea-proprietate.ro` |
 
 Get the Supabase server key from Project Settings → API keys (legacy keys → `service_role`, or a current server secret key). Do not replace the existing public Supabase key. All Stripe and service-role secrets are server-only: never prefix them with `NEXT_PUBLIC_`, commit them to GitHub or share their values in chat.
 

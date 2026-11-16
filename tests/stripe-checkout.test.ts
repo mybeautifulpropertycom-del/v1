@@ -5,7 +5,7 @@ import { demoWorkspace } from "../src/lib/demo";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://billing-tests.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-test-key";
-process.env.NEXT_PUBLIC_SITE_URL = "https://www.mybeautifulproperty.com";
+process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
 process.env.STRIPE_CHECKOUT_MODE = "test";
 process.env.STRIPE_SECRET_KEY = "sk_test_fake";
@@ -206,7 +206,7 @@ test("checkout fixes the RON price server-side and reuses a session across retri
   assert.equal(params.get("metadata[owner_id]"), owner);
   assert.equal(
     params.get("success_url"),
-    `https://www.mybeautifulproperty.com/dashboard/properties/${propertyId}?checkout=success`,
+    `https://urmatoarea-proprietate.ro/dashboard/properties/${propertyId}?checkout=success`,
   );
   assert.equal(keys[0], `mbp-test-${orderId}-1`);
   assert.equal((await CHECKOUT(request())).status, 200);
