@@ -110,6 +110,9 @@ istorici `mbp`/`higgsfield` rămân pentru compatibilitatea instalării BytePlus
 4. Separat, în Supabase → Authentication → SMTP, schimbați numele și adresa
    expeditorului numai după verificarea domeniului în furnizorul SMTP. Revizuiți
    și linkurile/numele vechi din șabloanele e-mailurilor de autentificare.
+   Variantele în română pentru confirmare și resetare sunt în
+   [supabase/email-templates](../supabase/email-templates/README.md); se copiază și
+   se salvează în Supabase, nu se activează automat prin deploy.
 5. Verificați înscrierea, confirmarea e-mailului, resetarea parolei și un mesaj
    dintr-o proprietate folosind adrese proprii. Codul și testele automate nu trimit
    e-mailuri reale și nu efectuează plăți reale.
