@@ -631,6 +631,14 @@
 .property-mortgage + .estate-contact {
   padding-top: clamp(42px, 5.1vw, 84px);
 }
+@media (min-width: 1001px) {
+  .estate-contact {
+    padding-block: clamp(49px, 5.95vw, 98px);
+  }
+  .property-mortgage + .estate-contact {
+    padding-top: clamp(29.4px, 3.57vw, 58.8px);
+  }
+}
 .estate-contact .estate-agent h2 {
   margin: 0 0 35px;
 }
