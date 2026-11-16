@@ -138,9 +138,8 @@ export function Auth({
         <div>
           <h1>Vinde sau închiriază o proprietate de 10 ori mai repede.</h1>
           <p>
-            Vinzi sau închiriezi o proprietate? Vinzi sau închiriezi o
-            proprietate? Îți oferim cea mai eficientă modalitate de a o
-            prezenta, promova și vinde.
+            Vinzi sau închiriezi o proprietate? Îți oferim cea mai eficientă
+            modalitate de a o prezenta, promova și vinde.
           </p>
         </div>
         <span className="eyebrow">
