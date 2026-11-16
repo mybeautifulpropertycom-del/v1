@@ -4808,6 +4808,10 @@ fieldset.editor-content {
 .mortgage-notes summary { cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
 .mortgage-notes details p { padding-top:10px; }
 .property-mortgage :focus-visible { outline:2px solid var(--mortgage-ink); outline-offset:4px; }
+@media (min-width:1001px) {
+ .mortgage-controls { position:sticky; top:var(--mortgage-sticky-top,24px); max-height:calc(100dvh - var(--mortgage-sticky-top,24px) - 24px); overflow-y:auto; scrollbar-width:thin; }
+ body:has(.inline-edit-toolbar) .property-mortgage { --mortgage-sticky-top:96px; }
+}
 @media (max-width:1000px) and (min-width:761px) {
  .mortgage-controls,.mortgage-result { padding:18px; }
  .mortgage-result-top { grid-template-columns:1fr; gap:14px; }

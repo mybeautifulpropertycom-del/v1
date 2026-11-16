@@ -11,6 +11,9 @@ illustrates the introduction. Controls sit on the left; a dark panel in each
 page design's palette presents the monthly estimate, borrowed amount, a donut
 showing principal versus interest over the whole term, and a declining-balance
 chart. Fields have no decorative icons. On mobile, controls precede results.
+On desktop, the control card stays sticky with a top gap until the repayment
+plan ends. The editor toolbar receives extra clearance; short viewports can
+scroll the card contents. Phones and tablets retain normal page scrolling.
 Missing photographs fall back to the theme's background.
 
 A repayment table below the results shows payment, principal, interest and
