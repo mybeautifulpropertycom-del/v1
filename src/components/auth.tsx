@@ -136,10 +136,11 @@ export function Auth({
           <Brand light />
         </Link>
         <div>
-          <h1>Vinde o proprietate de 10 ori mai repede cu o nouă abordare.</h1>
+          <h1>Vinde sau închiriază o proprietate de 10 ori mai repede.</h1>
           <p>
-            Vinzi sau închiriezi o proprietate? Descoperă o modalitate mai
-            simplă și mai eficientă de a o prezenta, promova și vinde.
+            Vinzi sau închiriezi o proprietate? Vinzi sau închiriezi o
+            proprietate? Îți oferim cea mai eficientă modalitate de a o
+            prezenta, promova și vinde.
           </p>
         </div>
         <span className="eyebrow">
