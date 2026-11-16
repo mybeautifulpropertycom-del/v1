@@ -150,3 +150,67 @@ test("the estimate remains readable when the listing photograph is missing or un
   );
   await expect(calculator.locator(".mortgage-property-photo")).toHaveCount(0);
 });
+
+test("graphs and repayment rows update together, paginate and reset after changing assumptions", async ({
+  page,
+}) => {
+  await workspace(page, {
+    price: 100000,
+    currency: "EUR",
+    transaction: "sale",
+  });
+  await page.goto(`/previzualizare/${id}`);
+  const calculator = page.locator(".property-mortgage");
+  await calculator.scrollIntoViewIfNeeded();
+  await expect(calculator.locator(".mortgage-controls svg")).toHaveCount(0);
+  await expect(calculator.locator("tbody tr")).toHaveCount(6);
+  await expect(calculator.locator("tbody tr").first().locator("th")).toHaveText(
+    "1",
+  );
+  await expect(
+    calculator.locator("tbody tr").first().locator("td").nth(2),
+  ).toContainText("313,33");
+  await calculator
+    .getByRole("button", { name: "Următoarele 6", exact: true })
+    .click();
+  await expect(calculator.locator("tbody tr").first().locator("th")).toHaveText(
+    "7",
+  );
+  await calculator
+    .getByRole("spinbutton", { name: "Dobândă anuală", exact: true })
+    .fill("0");
+  await expect(calculator.locator("tbody tr").first().locator("th")).toHaveText(
+    "1",
+  );
+  await expect(
+    calculator.locator("tbody tr").first().locator("td").nth(2),
+  ).toContainText("0,00");
+  await expect(calculator.locator(".mortgage-donut")).toHaveAttribute(
+    "aria-label",
+    /dobândă totală 0/,
+  );
+  await calculator
+    .getByRole("combobox", { name: "Perioada creditului", exact: true })
+    .selectOption("5");
+  await expect(calculator.locator(".mortgage-pagination")).toContainText(
+    "din 60",
+  );
+  await calculator
+    .getByRole("spinbutton", { name: "Avansul tău", exact: true })
+    .fill("100");
+  await expect(calculator.locator(".mortgage-monthly strong")).toHaveText("0");
+  await expect(
+    calculator.locator("tbody tr").first().locator("td").last(),
+  ).toContainText("0,00");
+  await calculator
+    .getByRole("spinbutton", { name: "Dobândă anuală", exact: true })
+    .fill("");
+  await expect(calculator.getByRole("alert")).toBeVisible();
+  await expect(calculator.locator("tbody tr")).toHaveCount(0);
+  await expect(
+    calculator.getByRole("button", {
+      name: "Vezi planul de rambursare",
+      exact: true,
+    }),
+  ).toBeDisabled();
+});

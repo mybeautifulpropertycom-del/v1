@@ -37,3 +37,35 @@ export function calculateMortgage(
     months,
   };
 }
+
+export type MortgageInstalment = {
+  month: number;
+  payment: number;
+  principal: number;
+  interest: number;
+  balance: number;
+};
+
+export function mortgageSchedule(
+  loan: NonNullable<ReturnType<typeof calculateMortgage>>,
+  annualRate: number,
+): MortgageInstalment[] {
+  const rows: MortgageInstalment[] = [];
+  let balance = loan.principal;
+  for (let month = 1; month <= loan.months; month++) {
+    const interest = (balance * annualRate) / 1200;
+    const principal =
+      month === loan.months
+        ? balance
+        : Math.min(balance, Math.max(0, loan.monthly - interest));
+    balance = Math.max(0, balance - principal);
+    rows.push({
+      month,
+      payment: principal + interest,
+      principal,
+      interest,
+      balance,
+    });
+  }
+  return rows;
+}

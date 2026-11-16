@@ -47,3 +47,31 @@ test("invalid financial inputs never produce misleading estimates", () => {
     );
   }
 });
+
+test("repayment schedules reconcile each instalment, interest totals and a fully repaid balance", async () => {
+  const { mortgageSchedule } = await import("../src/lib/mortgage");
+  for (const rate of [0, 4.7, 15, 30])
+    for (const deposit of [0, 20, 100]) {
+      const loan = calculateMortgage(123456.78, deposit, 35, rate)!;
+      const rows = mortgageSchedule(loan, rate);
+      assert.equal(rows.length, 420);
+      assert.equal(rows.at(-1)!.balance, 0);
+      assert.ok(
+        Math.abs(
+          rows.reduce((sum, row) => sum + row.principal, 0) - loan.principal,
+        ) < 0.0001,
+      );
+      assert.ok(
+        Math.abs(
+          rows.reduce((sum, row) => sum + row.interest, 0) - loan.interest,
+        ) < 0.0001,
+      );
+      let balance = loan.principal;
+      for (const row of rows) {
+        assert.ok(Math.abs(row.interest - (balance * rate) / 1200) < 0.000001);
+        assert.equal(row.payment, row.principal + row.interest);
+        assert.ok(row.balance >= 0 && row.balance <= balance);
+        balance = row.balance;
+      }
+    }
+});
