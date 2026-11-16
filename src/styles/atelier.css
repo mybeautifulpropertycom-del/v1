@@ -985,6 +985,10 @@
     grid-template-columns: 1fr;
     padding-block: 50px;
   }
+  .atelier-spec-grid dd {
+    font-size: 20px;
+    line-height: 1.4;
+  }
   .atelier-detail-image {
     min-height: 380px;
   }
@@ -1024,10 +1028,10 @@
     grid-template-columns: 1fr;
     gap: 40px;
     padding-block: 55px;
-    padding-top: 35.75px;
+    padding-top: 28.6px;
   }
   .property-mortgage + .atelier-contact {
-    padding-top: 21.45px;
+    padding-top: 17.16px;
   }
   .atelier-contact .landing-inquiry {
     padding: 24px 20px;

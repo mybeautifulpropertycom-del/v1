@@ -346,14 +346,14 @@ export function AtelierWebsite({
             </h2>
             <p>{text("storyBody")}</p>
             <a className="atelier-round-link" href="#gallery">
-              <span>Descoperă fiecare unghi</span>
+              <span>Descoperă această proprietate</span>
               <ArrowUpRight size={24} />
             </a>
           </div>
         </section>
         <section className="atelier-details atelier-pad" id="details">
           <div className="atelier-details-heading">
-            <span className="atelier-kicker">DETALII DE ZI CU ZI</span>
+            <span className="atelier-kicker">DETALIILE CARE CONTEAZĂ</span>
             <h2>
               {text("detailsTitle")}
               <em>{text("detailsAccent")}</em>
