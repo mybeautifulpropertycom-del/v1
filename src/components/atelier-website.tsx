@@ -339,7 +339,7 @@ export function AtelierWebsite({
           </figure>
           <div className="atelier-story-copy">
             <span className="atelier-kicker">SIMTE-TE ACASĂ</span>
-            <h2>
+            <h2 className="presentation-section-heading">
               {presentationCopy.introduction.title}
               <em>{presentationCopy.introduction.accent}</em>
             </h2>
@@ -415,7 +415,7 @@ export function AtelierWebsite({
         <section className="atelier-gallery atelier-pad" id="gallery">
           <div className="atelier-section-heading">
             <div>
-              <h2>
+              <h2 className="presentation-section-heading">
                 {presentationCopy.gallery.title}
                 <em>{presentationCopy.gallery.accent}</em>
               </h2>
@@ -487,9 +487,11 @@ export function AtelierWebsite({
         <PropertyMortgage property={property} />
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
+            <span className="atelier-kicker presentation-agent-kicker">
+              {presentationCopy.agent.subtitle}
+            </span>
             <h2 className="presentation-agent-heading">
               {presentationCopy.agent.title}
-              <em>{presentationCopy.agent.subtitle}</em>
             </h2>
             <div className="landing-agent-profile">
               <span className="atelier-avatar">
@@ -520,7 +522,10 @@ export function AtelierWebsite({
             {tour()}
           </div>
           <form className="landing-inquiry" onSubmit={submit}>
-            <h3>{presentationCopy.inquiry.title}</h3>
+            <h3 className="presentation-inquiry-heading">
+              {presentationCopy.inquiry.lead}{" "}
+              <em>{presentationCopy.inquiry.accent}</em>
+            </h3>
             <p>{presentationCopy.inquiry.subtitle}</p>
             <label>
               Numele tău
@@ -629,6 +634,8 @@ export function AtelierWebsite({
           </span>
           <h2 className="presentation-invitation-heading">
             {presentationCopy.invitation.title}
+            <br />
+            <em>{presentationCopy.invitation.accent}</em>
           </h2>
           <p>{propertyInvitation(property.location)}</p>
           {tour()}

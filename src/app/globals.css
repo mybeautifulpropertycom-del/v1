@@ -4851,26 +4851,34 @@ fieldset.editor-content {
 }
 @media print { .property-mortgage { display:none !important; } }
 
-/* Common presentation headings keep long Romanian copy readable in each design. */
-:is(.estate-contact, .heritage-contact, .atelier-contact) .presentation-agent-heading {
-  font-size: clamp(28px, 2.65vw, 40px);
-  line-height: 1.2;
-}
-:is(.estate-contact, .heritage-contact, .atelier-contact) .presentation-agent-heading em {
-  display: block;
-  margin-top: 12px;
-  font-size: clamp(18px, 1.65vw, 24px);
-  line-height: 1.4;
-}
-:is(.estate-invitation, .heritage-invitation, .atelier-invitation) h2.presentation-invitation-heading {
-  max-width: none;
-  font-size: clamp(26px, 2.25vw, 36px);
-  line-height: 1.25;
-}
 .heritage-invitation-note {
   display: block;
   margin-top: 22px;
   font-size: 10px;
   line-height: 1.6;
   color: #dce5d2;
+}
+
+/* Requested size adjustments retain each design's original font and accents. */
+.estate-website .presentation-section-heading { font-size:calc(clamp(30px,3.44vw,52px) - 4px); }
+.heritage-website .presentation-section-heading { font-size:calc(clamp(26px,2.8vw,42px) - 4px); }
+.atelier-website .presentation-section-heading { font-size:calc(clamp(27px,3.44vw,52px) - 4px); }
+.estate-contact .estate-agent > .presentation-agent-kicker { display:block; margin-bottom:18px; }
+.estate-inquiry h3.presentation-inquiry-heading { font-size:calc(clamp(28px,2.6vw,38px) - 4px); }
+.atelier-contact .landing-inquiry h3.presentation-inquiry-heading { font-size:28px; }
+.atelier-contact .landing-inquiry h3 em { color:#7b826e; }
+.presentation-inquiry-heading em { white-space:nowrap; }
+.atelier-invitation h2.presentation-invitation-heading em { display:inline; }
+.estate-invitation-copy { margin-bottom:20px; }
+.estate-invitation .estate-button { margin-top:24px; }
+.heritage-invitation-copy { margin-bottom:20px; }
+@media (max-width:767px) {
+ .heritage-website .presentation-section-heading { font-size:calc(clamp(26px,6.4vw,34px) - 2px); }
+}
+@media (max-width:680px) {
+ .estate-website .presentation-section-heading { font-size:calc(clamp(28px,7.2vw,34px) - 2px); }
+ .estate-inquiry h3.presentation-inquiry-heading { font-size:29px; }
+}
+@media (max-width:640px) {
+ .atelier-website .presentation-section-heading { font-size:calc(clamp(27px,3.44vw,52px) - 2px); }
 }

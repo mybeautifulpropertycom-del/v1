@@ -11,3 +11,8 @@ page. The closing invitation uses that property's actual address.
 Only spelling, grammar and diacritics have been corrected in the supplied copy.
 Future generated descriptions retain the existing factual, restrained Romanian
 voice, with explicit examples of ornamental adjectives to avoid.
+
+The agent response line appears as the small label above its main heading. The
+contact form highlights “când ai timp”, and the final invitation breaks before
+its colored “cum arată această proprietate” line. The themes retain their own
+fonts and accents; the mortgage title retains its original font and sizing.

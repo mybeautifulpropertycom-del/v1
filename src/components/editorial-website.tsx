@@ -367,7 +367,7 @@ export function EditorialWebsite({
         </section>
         <section className="estate-story estate-pad estate-space" id="story">
           <div>
-            <h2>
+            <h2 className="presentation-section-heading">
               {presentationCopy.introduction.title}
               <br />
               <em>{presentationCopy.introduction.accent}</em>
@@ -522,7 +522,7 @@ export function EditorialWebsite({
         >
           <div className="estate-section-heading">
             <div>
-              <h2>
+              <h2 className="presentation-section-heading">
                 {presentationCopy.gallery.title}
                 <br />
                 <em>{presentationCopy.gallery.accent}</em>
@@ -632,9 +632,11 @@ export function EditorialWebsite({
           id="contact"
         >
           <div className="estate-agent landing-agent">
+            <span className="estate-eyebrow presentation-agent-kicker">
+              {presentationCopy.agent.subtitle}
+            </span>
             <h2 className="presentation-agent-heading">
               {presentationCopy.agent.title}
-              <em>{presentationCopy.agent.subtitle}</em>
             </h2>
             <div className="estate-agent-person landing-agent-profile">
               <span className="estate-agent-monogram">
@@ -668,7 +670,10 @@ export function EditorialWebsite({
             )}
           </div>
           <form className="estate-inquiry" onSubmit={submit}>
-            <h3>{presentationCopy.inquiry.title}</h3>
+            <h3 className="presentation-inquiry-heading">
+              {presentationCopy.inquiry.lead}{" "}
+              <em>{presentationCopy.inquiry.accent}</em>
+            </h3>
             <p>{presentationCopy.inquiry.subtitle}</p>
             <label>
               Numele tău
@@ -779,6 +784,8 @@ export function EditorialWebsite({
             </span>
             <h2 className="presentation-invitation-heading">
               {presentationCopy.invitation.title}
+              <br />
+              <em>{presentationCopy.invitation.accent}</em>
             </h2>
             <p className="estate-invitation-copy">
               {propertyInvitation(property.location)}

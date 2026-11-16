@@ -39,7 +39,7 @@ export function PropertyPrint({
     [copy.settingTitle, copy.settingAccent, copy.settingBody],
     [
       presentationCopy.invitation.title,
-      "",
+      presentationCopy.invitation.accent,
       propertyInvitation(property.location),
     ],
   ];

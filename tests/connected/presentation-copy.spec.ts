@@ -38,28 +38,59 @@ async function checkPresentation(
     presentationCopy.mortgage.subtitle,
   );
   const contact = page.locator("#contact");
-  await expect(contact.locator(".presentation-agent-heading")).toContainText(
+  await expect(contact.locator(".presentation-agent-heading")).toHaveText(
     "Comunică eficient cu agentul",
   );
-  await expect(contact.locator(".presentation-agent-heading em")).toHaveText(
-    "Obține răspuns rapid la toate întrebările.",
-  );
-  await expect(
-    contact.locator(
-      ".landing-agent > .heritage-kicker, .landing-agent > .estate-eyebrow, .landing-agent > .atelier-kicker",
+  const kicker = contact.locator(".presentation-agent-kicker");
+  await expect(kicker).toHaveText("Obține răspuns rapid la toate întrebările.");
+  expect(
+    await kicker.evaluate((el) =>
+      Boolean(el.nextElementSibling?.matches(".presentation-agent-heading")),
     ),
-  ).toHaveCount(0);
+  ).toBe(true);
+  await expect(contact.locator(".presentation-agent-heading em")).toHaveCount(
+    0,
+  );
   if (prefix !== "heritage") {
     await expect(contact.locator("form h3")).toHaveText(
       presentationCopy.inquiry.title,
+    );
+    await expect(contact.locator("form h3 em")).toHaveText("când ai timp");
+    await expect(contact.locator("form h3 em")).toHaveCSS(
+      "color",
+      prefix === "estate" ? "rgb(106, 128, 104)" : "rgb(123, 130, 110)",
     );
     await expect(contact.locator("form > p").first()).toHaveText(
       presentationCopy.inquiry.subtitle,
     );
   }
   const invitation = page.locator(`.${prefix}-invitation`);
-  await expect(invitation.locator("h2")).toHaveText(
-    "Te așteptăm să înțelegi cum arată această proprietate",
+  await expect(invitation.locator("h2")).toContainText(
+    "Te așteptăm să înțelegi",
+  );
+  await expect(invitation.locator("h2 br")).toHaveCount(1);
+  await expect(invitation.locator("h2 em")).toHaveText(
+    "cum arată această proprietate",
+  );
+  await expect(invitation.locator("h2 em")).toHaveCSS(
+    "color",
+    prefix === "estate"
+      ? "rgb(203, 209, 167)"
+      : prefix === "heritage"
+        ? "rgb(225, 229, 198)"
+        : "rgb(123, 115, 94)",
+  );
+  await expect(page.locator(".mortgage-intro h2")).toHaveCSS(
+    "font-size",
+    page.viewportSize()!.width === 390 ? "29px" : "44px",
+  );
+  await expect(page.locator(".mortgage-intro h2")).toHaveCSS(
+    "font-weight",
+    "500",
+  );
+  await expect(page.locator(".mortgage-intro h2")).toHaveCSS(
+    "font-family",
+    /Nunito Sans Variable/,
   );
   await expect(invitation).toContainText(
     "Nu mai pierde timpul cu vizionări inutile",
@@ -75,20 +106,18 @@ for (const [template, prefix, introduction] of designs) {
     await page.goto(`/modele/${template}`);
     await checkPresentation(page, prefix, introduction, TEMPLATE_LOCATION);
     const invitation = page.locator(`.${prefix}-invitation`);
-    await expect
-      .poll(() =>
-        invitation.locator("h2").evaluate((el) => {
-          const range = document.createRange();
-          range.selectNodeContents(el);
-          return range.getClientRects().length;
-        }),
-      )
-      .toBe(1);
-    await page
-      .locator("#contact")
-      .screenshot({
-        path: testInfo.outputPath(`${template}-contact-desktop.png`),
-      });
+    const linePositions = await invitation.locator("h2").evaluate((el) => {
+      const first = document.createRange();
+      first.selectNodeContents(el.firstChild!);
+      return {
+        first: first.getBoundingClientRect().top,
+        accent: el.querySelector("em")!.getBoundingClientRect().top,
+      };
+    });
+    expect(linePositions.accent).toBeGreaterThan(linePositions.first);
+    await page.locator("#contact").screenshot({
+      path: testInfo.outputPath(`${template}-contact-desktop.png`),
+    });
     await invitation.screenshot({
       path: testInfo.outputPath(`${template}-invitation-desktop.png`),
     });
@@ -99,11 +128,9 @@ for (const [template, prefix, introduction] of designs) {
         page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       )
       .toBe(true);
-    await page
-      .locator("#contact")
-      .screenshot({
-        path: testInfo.outputPath(`${template}-contact-mobile.png`),
-      });
+    await page.locator("#contact").screenshot({
+      path: testInfo.outputPath(`${template}-contact-mobile.png`),
+    });
     await invitation.screenshot({
       path: testInfo.outputPath(`${template}-invitation-mobile.png`),
     });

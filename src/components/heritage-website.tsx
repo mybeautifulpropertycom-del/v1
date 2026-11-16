@@ -274,7 +274,7 @@ export function HeritageWebsite({
             <span>O LOCUINȚĂ. O EMOȚIE. UN NOU ÎNCEPUT.</span>
           </div>
           <div className="heritage-section-heading">
-            <h2>
+            <h2 className="presentation-section-heading">
               {presentationCopy.introduction.title}
               <br />
               <em>{presentationCopy.introduction.accent}</em>
@@ -368,7 +368,7 @@ export function HeritageWebsite({
             <span>FIECARE FOTOGRAFIE, O NOUĂ POSIBILITATE</span>
           </div>
           <div className="heritage-section-heading">
-            <h2>
+            <h2 className="presentation-section-heading">
               {presentationCopy.gallery.title}
               <br />
               <em>{presentationCopy.gallery.accent}</em>
@@ -552,12 +552,14 @@ export function HeritageWebsite({
           aria-labelledby="heritage-contact-title"
         >
           <div className="heritage-agent landing-agent">
+            <span className="heritage-kicker presentation-agent-kicker">
+              {presentationCopy.agent.subtitle}
+            </span>
             <h2
               className="presentation-agent-heading"
               id="heritage-contact-title"
             >
               {presentationCopy.agent.title}
-              <em>{presentationCopy.agent.subtitle}</em>
             </h2>
             <div className="heritage-agent-profile landing-agent-profile">
               <span className="heritage-agent-monogram">
@@ -683,6 +685,8 @@ export function HeritageWebsite({
             </span>
             <h2 className="presentation-invitation-heading">
               {presentationCopy.invitation.title}
+              <br />
+              <em>{presentationCopy.invitation.accent}</em>
             </h2>
             <p className="heritage-invitation-copy">
               {propertyInvitation(property.location)}

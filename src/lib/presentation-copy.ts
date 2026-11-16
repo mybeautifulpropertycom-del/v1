@@ -21,6 +21,8 @@ export const presentationCopy = {
   neighbourhood: "Cunoaște zonele din apropiere",
   inquiry: {
     title: "Programează o vizionare când ai timp",
+    lead: "Programează o vizionare",
+    accent: "când ai timp",
     subtitle:
       "Completează acest formular pentru a programa o vizionare a proprietății.",
   },
@@ -28,7 +30,8 @@ export const presentationCopy = {
     "Completează detaliile de contact și alege o zi potrivită pentru vizionare. Revenim pentru a confirma ora și disponibilitatea.",
   invitation: {
     eyebrow: "Nu mai pierde timpul cu vizionări inutile",
-    title: "Te așteptăm să înțelegi cum arată această proprietate",
+    title: "Te așteptăm să înțelegi",
+    accent: "cum arată această proprietate",
     note: "Alege o zi potrivită pentru tine. O locuință în care să te simți acasă.",
   },
 } as const;
