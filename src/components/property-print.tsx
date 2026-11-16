@@ -1,3 +1,4 @@
+import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
 import { propertyTypeLabel } from "@/lib/model";
 import {
   formatPrice,
@@ -20,11 +21,27 @@ export function PropertyPrint({
   const copy = propertyStory(property);
   const url = siteUrl(publicPath(property));
   const sections = [
-    [copy.introTitle, copy.introAccent, copy.introBody],
-    [copy.storyTitle, copy.storyAccent, copy.storyBody],
+    [
+      presentationCopy.introduction.title,
+      presentationCopy.introduction.accent,
+      copy.introBody,
+    ],
+    [
+      ...(property.template === "panorama"
+        ? [
+            presentationCopy.introduction.title,
+            presentationCopy.introduction.accent,
+          ]
+        : [copy.storyTitle, copy.storyAccent]),
+      copy.storyBody,
+    ],
     [copy.detailsTitle, copy.detailsAccent, copy.detailsBody],
     [copy.settingTitle, copy.settingAccent, copy.settingBody],
-    [copy.closingTitle, copy.closingAccent, copy.closingBody],
+    [
+      presentationCopy.invitation.title,
+      "",
+      propertyInvitation(property.location),
+    ],
   ];
   return (
     <main className="property-print">
@@ -92,7 +109,7 @@ export function PropertyPrint({
         )}
         <section className="property-print-section">
           <h2>
-            {copy.galleryTitle} {copy.galleryAccent}
+            {presentationCopy.gallery.title} {presentationCopy.gallery.accent}
           </h2>
           {copy.galleryBody && <p>{copy.galleryBody}</p>}
           <div className="property-print-gallery">

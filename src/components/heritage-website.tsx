@@ -1,4 +1,5 @@
 "use client";
+import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
@@ -146,9 +147,7 @@ export function HeritageWebsite({
           <Link
             href={
               previewBackLink?.href ||
-              (sample
-                ? "/panou/modele"
-                : `/panou/proprietati/${property.id}`)
+              (sample ? "/panou/modele" : `/panou/proprietati/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
@@ -276,19 +275,9 @@ export function HeritageWebsite({
           </div>
           <div className="heritage-section-heading">
             <h2>
-              <EditableText
-                field="copy.introTitle"
-                value={copy.introTitle}
-                onEdit={onEdit}
-              />
+              {presentationCopy.introduction.title}
               <br />
-              <em>
-                <EditableText
-                  field="copy.introAccent"
-                  value={copy.introAccent}
-                  onEdit={onEdit}
-                />
-              </em>
+              <em>{presentationCopy.introduction.accent}</em>
             </h2>
             <p>
               <EditableText
@@ -380,19 +369,9 @@ export function HeritageWebsite({
           </div>
           <div className="heritage-section-heading">
             <h2>
-              <EditableText
-                field="copy.galleryTitle"
-                value={copy.galleryTitle}
-                onEdit={onEdit}
-              />
+              {presentationCopy.gallery.title}
               <br />
-              <em>
-                <EditableText
-                  field="copy.galleryAccent"
-                  value={copy.galleryAccent}
-                  onEdit={onEdit}
-                />
-              </em>
+              <em>{presentationCopy.gallery.accent}</em>
             </h2>
             <p>
               <EditableText
@@ -573,11 +552,12 @@ export function HeritageWebsite({
           aria-labelledby="heritage-contact-title"
         >
           <div className="heritage-agent landing-agent">
-            <span className="heritage-kicker">
-              Omul din spatele proprietății
-            </span>
-            <h2 id="heritage-contact-title">
-              O scurtă <em>prezentare.</em>
+            <h2
+              className="presentation-agent-heading"
+              id="heritage-contact-title"
+            >
+              {presentationCopy.agent.title}
+              <em>{presentationCopy.agent.subtitle}</em>
             </h2>
             <div className="heritage-agent-profile landing-agent-profile">
               <span className="heritage-agent-monogram">
@@ -699,33 +679,18 @@ export function HeritageWebsite({
           )}
           <div>
             <span className="heritage-kicker">
-              Unele lucruri merită văzute personal
+              {presentationCopy.invitation.eyebrow}
             </span>
-            <h2>
-              <EditableText
-                field="copy.closingTitle"
-                value={copy.closingTitle}
-                onEdit={onEdit}
-              />
-              <br />
-              <em>
-                <EditableText
-                  field="copy.closingAccent"
-                  value={copy.closingAccent}
-                  onEdit={onEdit}
-                />
-              </em>
+            <h2 className="presentation-invitation-heading">
+              {presentationCopy.invitation.title}
             </h2>
-            {copy.closingBody && (
-              <p className="heritage-invitation-copy">
-                <EditableText
-                  field="copy.closingBody"
-                  value={copy.closingBody}
-                  onEdit={onEdit}
-                />
-              </p>
-            )}
+            <p className="heritage-invitation-copy">
+              {propertyInvitation(property.location)}
+            </p>
             {tourButton("heritage-button heritage-button-paper")}
+            <span className="heritage-invitation-note">
+              {presentationCopy.invitation.note}
+            </span>
           </div>
         </section>
       </main>

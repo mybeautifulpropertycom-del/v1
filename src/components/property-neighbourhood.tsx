@@ -1,4 +1,5 @@
 "use client";
+import { presentationCopy } from "@/lib/presentation-copy";
 import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import type { PublicProperty } from "@/lib/model";
 import { loadGoogleMaps, withMapsTimeout } from "@/lib/google-maps";
@@ -318,7 +319,7 @@ function Neighbourhood({
         <span className="neighbourhood-kicker">
           ÎN APROPIEREA VIITOAREI TALE LOCUINȚE
         </span>
-        <h2 id={heading}>Descoperă cartierul.</h2>
+        <h2 id={heading}>{presentationCopy.neighbourhood}</h2>
         <p>{property.location}</p>
       </div>
       <div className="neighbourhood-layout">

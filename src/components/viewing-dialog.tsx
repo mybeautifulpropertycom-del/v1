@@ -1,4 +1,5 @@
 "use client";
+import { presentationCopy } from "@/lib/presentation-copy";
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -199,10 +200,7 @@ export function ViewingDialog({
           <br />
           <em>la viitoarea ta locuință.</em>
         </h2>
-        <p id="viewing-description">
-          Alege o zi și lasă datele de contact. Revenim pentru a confirma ora și
-          disponibilitatea.
-        </p>
+        <p id="viewing-description">{presentationCopy.viewingSubtitle}</p>
       </div>
       <form onSubmit={submit}>
         <div className="viewing-columns">

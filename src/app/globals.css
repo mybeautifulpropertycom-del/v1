@@ -4850,3 +4850,27 @@ fieldset.editor-content {
  .mortgage-breakdown dl > div { font-size:10px; }
 }
 @media print { .property-mortgage { display:none !important; } }
+
+/* Common presentation headings keep long Romanian copy readable in each design. */
+:is(.estate-contact, .heritage-contact, .atelier-contact) .presentation-agent-heading {
+  font-size: clamp(28px, 2.65vw, 40px);
+  line-height: 1.2;
+}
+:is(.estate-contact, .heritage-contact, .atelier-contact) .presentation-agent-heading em {
+  display: block;
+  margin-top: 12px;
+  font-size: clamp(18px, 1.65vw, 24px);
+  line-height: 1.4;
+}
+:is(.estate-invitation, .heritage-invitation, .atelier-invitation) h2.presentation-invitation-heading {
+  max-width: none;
+  font-size: clamp(26px, 2.25vw, 36px);
+  line-height: 1.25;
+}
+.heritage-invitation-note {
+  display: block;
+  margin-top: 22px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #dce5d2;
+}

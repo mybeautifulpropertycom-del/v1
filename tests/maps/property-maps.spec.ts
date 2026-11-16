@@ -101,7 +101,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await mockGoogleMaps(page);
     await page.goto(`/map-test-${template}`);
     const section = page.getByRole("region", {
-      name: "Descoperă cartierul.",
+      name: "Cunoaște zonele din apropiere",
     });
     await expect(section).toBeVisible();
     expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
@@ -206,7 +206,7 @@ test("quota errors keep the property page usable and let the visitor retry", asy
   await mockGoogleMaps(page);
   await page.goto("/map-test-editorial");
   const section = page.getByRole("region", {
-    name: "Descoperă cartierul.",
+    name: "Cunoaște zonele din apropiere",
   });
   await page.evaluate(() => {
     window.__mapsTest.failSearch = true;
@@ -233,7 +233,7 @@ test("a blocked Google script offers an in-page retry without external navigatio
   await blockGoogle(page);
   await page.goto("/map-test-minimal");
   const section = page.getByRole("region", {
-    name: "Descoperă cartierul.",
+    name: "Cunoaște zonele din apropiere",
   });
   await section.scrollIntoViewIfNeeded();
   await expect(section.getByRole("status")).toContainText(
@@ -246,7 +246,7 @@ test("a blocked Google script offers an in-page retry without external navigatio
     section.getByRole("button", { name: "Reîncarcă harta", exact: true }),
   ).toBeEnabled();
   await expect(
-    page.getByRole("heading", { name: /O scurtă prezentare/ }),
+    page.getByRole("heading", { name: /Comunică eficient cu agentul/ }),
   ).toBeVisible();
 });
 
@@ -369,7 +369,7 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       ),
     ).toBeVisible();
     const section = page.getByRole("region", {
-      name: "Descoperă cartierul.",
+      name: "Cunoaște zonele din apropiere",
     });
     await expect(section).toBeVisible();
     expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);

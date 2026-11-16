@@ -1,4 +1,5 @@
 "use client";
+import { presentationCopy } from "@/lib/presentation-copy";
 
 import {
   useEffect,
@@ -111,11 +112,8 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
           <span className="mortgage-eyebrow">
             CALCULATOR DE CREDIT IPOTECAR
           </span>
-          <h2 id={`${id}-heading`}>Planifică următorul pas.</h2>
-          <p>
-            Rata lunară, costul creditului și planul de rambursare pentru
-            această locuință.
-          </p>
+          <h2 id={`${id}-heading`}>{presentationCopy.mortgage.title}</h2>
+          <p>{presentationCopy.mortgage.subtitle}</p>
         </div>
       </div>
       <div className="mortgage-layout">

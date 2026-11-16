@@ -1,3 +1,4 @@
+import { propertyInvitation } from "../../src/lib/presentation-copy";
 import { test, expect } from "@playwright/test";
 import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
@@ -92,7 +93,7 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
     page.locator(".heritage-gallery .heritage-section-heading > p"),
   ).toHaveText(draft.content.galleryBody);
   await expect(page.locator(".heritage-invitation-copy")).toHaveText(
-    draft.content.closingBody,
+    propertyInvitation(state.property.location),
   );
   expect(requests).toBe(1);
   await page.getByRole("button", { name: "Editează pe pagină" }).click();
@@ -289,7 +290,7 @@ test("Editorial displays independent introduction, main story and invitation par
     draft.description,
   );
   await expect(page.locator(".estate-invitation-copy")).toHaveText(
-    draft.content.closingBody,
+    propertyInvitation(state.property.location),
   );
   await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(

@@ -1,4 +1,5 @@
 "use client";
+import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
@@ -269,9 +270,7 @@ export function EditorialWebsite({
           <Link
             href={
               previewBackLink?.href ||
-              (sample
-                ? "/panou/modele"
-                : `/panou/proprietati/${property.id}`)
+              (sample ? "/panou/modele" : `/panou/proprietati/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
@@ -369,19 +368,9 @@ export function EditorialWebsite({
         <section className="estate-story estate-pad estate-space" id="story">
           <div>
             <h2>
-              <EditableText
-                field="copy.introTitle"
-                value={copy.introTitle}
-                onEdit={onEdit}
-              />
+              {presentationCopy.introduction.title}
               <br />
-              <em>
-                <EditableText
-                  field="copy.introAccent"
-                  value={copy.introAccent}
-                  onEdit={onEdit}
-                />
-              </em>
+              <em>{presentationCopy.introduction.accent}</em>
             </h2>
           </div>
           <div className="estate-story-copy">
@@ -534,19 +523,9 @@ export function EditorialWebsite({
           <div className="estate-section-heading">
             <div>
               <h2>
-                <EditableText
-                  field="copy.galleryTitle"
-                  value={copy.galleryTitle}
-                  onEdit={onEdit}
-                />
+                {presentationCopy.gallery.title}
                 <br />
-                <em>
-                  <EditableText
-                    field="copy.galleryAccent"
-                    value={copy.galleryAccent}
-                    onEdit={onEdit}
-                  />
-                </em>
+                <em>{presentationCopy.gallery.accent}</em>
               </h2>
             </div>
             <p>Descoperă fotografiile acestei locuințe.</p>
@@ -653,10 +632,9 @@ export function EditorialWebsite({
           id="contact"
         >
           <div className="estate-agent landing-agent">
-            <h2>
-              Hai să discutăm.
-              <br />
-              <em>Simte-te acasă.</em>
+            <h2 className="presentation-agent-heading">
+              {presentationCopy.agent.title}
+              <em>{presentationCopy.agent.subtitle}</em>
             </h2>
             <div className="estate-agent-person landing-agent-profile">
               <span className="estate-agent-monogram">
@@ -690,13 +668,8 @@ export function EditorialWebsite({
             )}
           </div>
           <form className="estate-inquiry" onSubmit={submit}>
-            <span className="estate-eyebrow">
-              Fiecare început pornește cu un salut
-            </span>
-            <h3>
-              Hai să ne <em>cunoaștem.</em>
-            </h3>
-            <p>Ai o întrebare sau vrei mai multe detalii? Scrie-ne.</p>
+            <h3>{presentationCopy.inquiry.title}</h3>
+            <p>{presentationCopy.inquiry.subtitle}</p>
             <label>
               Numele tău
               <input
@@ -802,34 +775,18 @@ export function EditorialWebsite({
           )}
           <div className="estate-invitation-content">
             <span className="estate-eyebrow">
-              Următorul tău capitol te așteaptă
+              {presentationCopy.invitation.eyebrow}
             </span>
-            <h2>
-              <EditableText
-                field="copy.closingTitle"
-                value={copy.closingTitle}
-                onEdit={onEdit}
-              />
-              <br />
-              <em>
-                <EditableText
-                  field="copy.closingAccent"
-                  value={copy.closingAccent}
-                  onEdit={onEdit}
-                />
-              </em>
+            <h2 className="presentation-invitation-heading">
+              {presentationCopy.invitation.title}
             </h2>
             <p className="estate-invitation-copy">
-              <EditableText
-                field="copy.closingBody"
-                value={copy.closingBody}
-                onEdit={onEdit}
-              />
+              {propertyInvitation(property.location)}
             </p>
             {viewingButton("Programează o vizionare privată")}
             <span className="estate-invitation-note">
-              <CalendarDays size={15} />O zi potrivită pentru tine. O locuință
-              în care să te simți acasă.
+              <CalendarDays size={15} />
+              {presentationCopy.invitation.note}
             </span>
             <p className="estate-invitation-price">{formatPrice(property)}</p>
           </div>

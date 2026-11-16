@@ -6,7 +6,7 @@ price, currency and transaction type directly; no second price field, database
 migration, external service or credentials are needed. Rentals and nonpositive or
 missing prices do not display a calculator.
 
-The heading “Planifică următorul pas.” stays unchanged. The listing photograph
+The common heading is “Estimează bugetul cu ușurință:”. The listing photograph
 illustrates the introduction. Controls sit on the left; a dark panel in each
 page design's palette presents the monthly estimate, borrowed amount, a donut
 showing principal versus interest over the whole term, and a declining-balance

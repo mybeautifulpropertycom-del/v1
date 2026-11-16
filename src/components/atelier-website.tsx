@@ -1,4 +1,5 @@
 "use client";
+import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
@@ -139,9 +140,7 @@ export function AtelierWebsite({
           <Link
             href={
               previewBackLink?.href ||
-              (sample
-                ? "/panou/modele"
-                : `/panou/proprietati/${property.id}`)
+              (sample ? "/panou/modele" : `/panou/proprietati/${property.id}`)
             }
           >
             <ArrowLeft size={15} />
@@ -341,8 +340,8 @@ export function AtelierWebsite({
           <div className="atelier-story-copy">
             <span className="atelier-kicker">SIMTE-TE ACASĂ</span>
             <h2>
-              {text("storyTitle")}
-              <em>{text("storyAccent")}</em>
+              {presentationCopy.introduction.title}
+              <em>{presentationCopy.introduction.accent}</em>
             </h2>
             <p>{text("storyBody")}</p>
             <a className="atelier-round-link" href="#gallery">
@@ -417,8 +416,8 @@ export function AtelierWebsite({
           <div className="atelier-section-heading">
             <div>
               <h2>
-                {text("galleryTitle")}
-                <em>{text("galleryAccent")}</em>
+                {presentationCopy.gallery.title}
+                <em>{presentationCopy.gallery.accent}</em>
               </h2>
             </div>
             <div>
@@ -488,8 +487,9 @@ export function AtelierWebsite({
         <PropertyMortgage property={property} />
         <section className="atelier-contact atelier-pad" id="contact">
           <div className="landing-agent">
-            <h2>
-              Hai să discutăm.<em>Cunoaște agentul.</em>
+            <h2 className="presentation-agent-heading">
+              {presentationCopy.agent.title}
+              <em>{presentationCopy.agent.subtitle}</em>
             </h2>
             <div className="landing-agent-profile">
               <span className="atelier-avatar">
@@ -520,8 +520,8 @@ export function AtelierWebsite({
             {tour()}
           </div>
           <form className="landing-inquiry" onSubmit={submit}>
-            <h3>Un început frumos.</h3>
-            <p>Spune-ne câteva cuvinte despre tine. Revenim cu detalii.</p>
+            <h3>{presentationCopy.inquiry.title}</h3>
+            <p>{presentationCopy.inquiry.subtitle}</p>
             <label>
               Numele tău
               <input
@@ -625,16 +625,15 @@ export function AtelierWebsite({
             />
           )}
           <span className="atelier-kicker">
-            URMĂTORUL CAPITOL ÎNCEPE CU O VIZITĂ
+            {presentationCopy.invitation.eyebrow}
           </span>
-          <h2>
-            {text("closingTitle")}
-            <em>{text("closingAccent")}</em>
+          <h2 className="presentation-invitation-heading">
+            {presentationCopy.invitation.title}
           </h2>
-          <p>{text("closingBody")}</p>
+          <p>{propertyInvitation(property.location)}</p>
           {tour()}
           <span className="atelier-invitation-footnote">
-            O conversație. O nouă perspectivă.
+            {presentationCopy.invitation.note}
           </span>
         </section>
       </main>
