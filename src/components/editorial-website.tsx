@@ -636,7 +636,7 @@ export function EditorialWebsite({
               {presentationCopy.agent.subtitle}
             </span>
             <h2 className="presentation-agent-heading">
-              {presentationCopy.agent.title}
+              {presentationCopy.agent.editorialTitle}
             </h2>
             <div className="estate-agent-person landing-agent-profile">
               <span className="estate-agent-monogram">

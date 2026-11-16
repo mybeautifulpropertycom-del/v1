@@ -39,8 +39,40 @@ async function checkPresentation(
   );
   const contact = page.locator("#contact");
   await expect(contact.locator(".presentation-agent-heading")).toHaveText(
-    "Comunică eficient cu agentul",
+    prefix === "estate"
+      ? "Comunică eficient cu agentul imobiliar"
+      : "Comunică eficient cu agentul",
   );
+  if (prefix === "estate") {
+    const reference = await page
+      .locator(".estate-scroll-heading h2")
+      .evaluate((el) => getComputedStyle(el).fontSize);
+    await expect(contact.locator(".presentation-agent-heading")).toHaveCSS(
+      "font-size",
+      reference,
+    );
+    const captions = await page
+      .locator(".estate-scene-copy h3")
+      .evaluateAll((els) =>
+        els.map((el) => ({
+          size: getComputedStyle(el).fontSize,
+          color: getComputedStyle(el).color,
+          accent: getComputedStyle(el.querySelector("em")!).color,
+        })),
+      );
+    expect(captions.length).toBeGreaterThan(0);
+    for (const caption of captions)
+      expect(caption).toEqual({
+        size: reference,
+        color: "rgb(255, 255, 255)",
+        accent: "rgb(255, 255, 255)",
+      });
+    if (await page.locator(".estate-film h2").count())
+      await expect(page.locator(".estate-film h2")).toHaveCSS(
+        "font-size",
+        reference,
+      );
+  }
   const kicker = contact.locator(".presentation-agent-kicker");
   await expect(kicker).toHaveText("Obține răspuns rapid la toate întrebările.");
   expect(

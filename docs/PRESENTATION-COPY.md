@@ -16,3 +16,7 @@ The agent response line appears as the small label above its main heading. The
 contact form highlights “când ai timp”, and the final invitation breaks before
 its colored “cum arată această proprietate” line. The themes retain their own
 fonts and accents; the mortgage title retains its original font and sizing.
+
+Editorial uses its longer agent heading, “Comunică eficient cu agentul imobiliar”.
+Its changing photo captions, video heading and agent heading share the responsive
+size of “Lasă curiozitatea să te îndrume”. The photo captions stay white.

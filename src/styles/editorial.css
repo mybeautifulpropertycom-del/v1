@@ -2,6 +2,7 @@
 .estate-website {
   --sans: "Nunito Sans Variable", Arial, sans-serif;
   --serif: var(--sans);
+  --estate-flow-heading-size: clamp(28px, 2.88vw, 45px);
   --estate-paper: #f7f7f1;
   --estate-ink: #17332d;
   --estate-sage: #6a8068;
@@ -342,7 +343,7 @@
   font-size: 9px;
 }
 .estate-scroll-heading h2 {
-  font-size: clamp(28px, 2.88vw, 45px);
+  font-size: var(--estate-flow-heading-size);
 }
 .estate-scroll-heading h2 em {
   color: #c2c9a2;
@@ -412,12 +413,13 @@
   color: #e5e9d7;
 }
 .estate-scene-copy h3 {
-  font: 600 clamp(34px, 4.2vw, 62px)/1.12 var(--serif);
+  font: 600 var(--estate-flow-heading-size)/1.12 var(--serif);
+  color: #fff;
   letter-spacing: -0.03em;
   margin: 20px 0;
 }
 .estate-scene-copy h3 em {
-  color: #f2f1dc;
+  color: #fff;
 }
 .estate-scene-copy > p {
   font-size: 12px;
@@ -549,6 +551,10 @@
   padding-block: 85px;
   background: #15332d;
   color: #f7f7ef;
+}
+.estate-film h2,
+.estate-contact .presentation-agent-heading {
+  font-size: var(--estate-flow-heading-size);
 }
 .estate-film .estate-eyebrow {
   color: #c5cea3;
@@ -1055,7 +1061,10 @@
 .viewing-intro h2 em {
   color: var(--estate-sage);
 }
-:is(.estate-website, .heritage-website, .atelier-website) .viewing-dialog .viewing-intro h2 {
+:is(.estate-website, .heritage-website, .atelier-website)
+  .viewing-dialog
+  .viewing-intro
+  h2 {
   font-weight: 600;
   line-height: 1.16;
   letter-spacing: -0.03em;
@@ -1254,6 +1263,9 @@
   }
 }
 @media (max-width: 680px) {
+  .estate-website {
+    --estate-flow-heading-size: clamp(28px, 7.2vw, 34px);
+  }
   .estate-pad {
     padding-inline: 6%;
   }
@@ -1385,7 +1397,7 @@
     max-width: 75%;
   }
   .estate-scene-copy h3 {
-    font-size: 38px;
+    font-size: var(--estate-flow-heading-size);
   }
   .estate-scene-copy p {
     font-size: 11px;
