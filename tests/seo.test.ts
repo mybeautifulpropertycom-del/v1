@@ -4,6 +4,7 @@ import { demoWorkspace } from "../src/lib/demo";
 import {
   descriptionSnippet,
   homeMetadata,
+  homeJsonLd,
   HOME_TITLE,
   HOME_DESCRIPTION,
   propertyMetadata,
@@ -12,6 +13,11 @@ import {
   siteOrigin,
 } from "../src/lib/seo";
 import robots from "../src/app/robots";
+import {
+  applyPropertyStory,
+  propertyStory,
+  propertyStorySource,
+} from "../src/lib/property-story";
 
 test("home metadata uses the requested copy and one canonical origin", () => {
   process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
@@ -130,4 +136,51 @@ test("the purchased domain is the default canonical origin while explicit rollou
     if (previous === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
     else process.env.NEXT_PUBLIC_SITE_URL = previous;
   }
+});
+
+test("homepage structured data describes the real brand and website without invented reviews or search features", () => {
+  const graph = homeJsonLd()["@graph"];
+  const organization = graph.find((node) => node["@type"] === "Organization")!;
+  const website = graph.find((node) => node["@type"] === "WebSite")!;
+  assert.equal(organization.name, "Următoarea Proprietate");
+  assert.equal(organization.url, `${siteOrigin()}/`);
+  assert.equal(organization.logo, `${siteOrigin()}/icon.svg`);
+  assert.equal(website.publisher!["@id"], organization["@id"]);
+  assert.equal(website.inLanguage, "ro-RO");
+  assert.ok(!JSON.stringify(graph).includes("aggregateRating"));
+  assert.ok(!JSON.stringify(graph).includes("SearchAction"));
+});
+
+test("property search descriptions use the current reader-facing copy instead of the agent's source notes", () => {
+  const listing = {
+    ...demoWorkspace().properties[0],
+    description:
+      "Notițe de lucru: înlocuiește acest text înainte de publicare.",
+  };
+  const { storyBody: _, ...content } = propertyStory(listing);
+  const published = applyPropertyStory(
+    listing,
+    {
+      description:
+        "Locuința are o terasă și o bucătărie deschisă spre zona de zi. Programează o vizionare pentru a vedea compartimentarea.",
+      content,
+    },
+    propertyStorySource(listing),
+  );
+  assert.equal(published.description, listing.description);
+  assert.equal(
+    propertyMetadata(published).description,
+    published.website_copy!.description,
+  );
+  assert.equal(
+    propertyJsonLd(published).description,
+    published.website_copy!.description,
+  );
+  assert.ok(
+    !String(propertyMetadata(published).description).includes(
+      "Notițe de lucru",
+    ),
+  );
+  const changed = { ...published, location: "O adresă actualizată" };
+  assert.equal(propertyJsonLd(changed).description, changed.description);
 });

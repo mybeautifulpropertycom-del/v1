@@ -1,12 +1,13 @@
 import { PLATFORM_NAME, PLATFORM_ORIGIN } from "./platform-brand";
 import type { Metadata } from "next";
 import { publicPath, type PublicProperty } from "./model";
+import { propertyStory } from "./property-story";
 
 export const SITE_NAME = PLATFORM_NAME;
 export const HOME_TITLE =
-  "Următoarea Proprietate — Site-uri și filme de prezentare imobiliară";
+  "Site de prezentare imobiliară | Următoarea Proprietate";
 export const HOME_DESCRIPTION =
-  "Creează un site dedicat proprietății tale și un film de prezentare. Adaugă detaliile și fotografiile, alege designul și publică pentru 249 RON.";
+  "Site dedicat pentru proprietatea ta, cu fotografii, hartă și film de prezentare. Pentru vânzare sau închiriere. Plată unică: 249 RON.";
 
 export function siteOrigin(): string {
   const url = new URL(process.env.NEXT_PUBLIC_SITE_URL || PLATFORM_ORIGIN);
@@ -89,9 +90,34 @@ export function homeMetadata(): Metadata {
   };
 }
 
+export function homeJsonLd() {
+  const organizationId = `${siteUrl("/")}#organization`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": organizationId,
+        name: SITE_NAME,
+        url: siteUrl("/"),
+        logo: siteUrl("/icon.svg"),
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl("/")}#website`,
+        name: SITE_NAME,
+        url: siteUrl("/"),
+        description: HOME_DESCRIPTION,
+        inLanguage: "ro-RO",
+        publisher: { "@id": organizationId },
+      },
+    ],
+  };
+}
+
 export function propertyMetadata(property: PublicProperty): Metadata {
   const title = `${property.title} · ${property.location}`;
-  const description = descriptionSnippet(property.description);
+  const description = descriptionSnippet(propertyStory(property).storyBody);
   const url = siteUrl(publicPath(property));
   const images = property.images
     .slice(0, 1)
@@ -126,7 +152,7 @@ export function propertyJsonLd(property: PublicProperty) {
     "@id": `${siteUrl(publicPath(property))}#listing`,
     url: siteUrl(publicPath(property)),
     name: property.title,
-    description: property.description,
+    description: propertyStory(property).storyBody,
     image: property.images.map((image) => siteUrl(image)),
     inLanguage: "ro-RO",
     about: {

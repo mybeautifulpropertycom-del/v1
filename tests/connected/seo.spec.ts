@@ -21,6 +21,18 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
     page.getByLabel("Adresă de e-mail", { exact: true }),
   ).toBeVisible();
   await expect(page).toHaveTitle(HOME_TITLE);
+  const structured = await page
+    .locator('script[type="application/ld+json"]')
+    .evaluateAll((nodes) =>
+      nodes.map((node) => JSON.parse(node.textContent || "{}")),
+    );
+  const graph = structured.flatMap((item) => item["@graph"] || [item]);
+  expect(graph.find((item) => item["@type"] === "Organization")?.name).toBe(
+    "Următoarea Proprietate",
+  );
+  expect(
+    graph.find((item) => item["@type"] === "WebSite")?.publisher?.["@id"],
+  ).toBe(graph.find((item) => item["@type"] === "Organization")?.["@id"]);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
     HOME_DESCRIPTION,
@@ -53,4 +65,24 @@ test("signed-in visitors still go to their private dashboard", async ({
     "content",
     /noindex/,
   );
+});
+
+test("administration pages send noindex even to anonymous crawlers and their APIs require authentication", async ({
+  request,
+}) => {
+  for (const path of [
+    "/panou/administrare",
+    "/administrare/proprietati/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  ]) {
+    const response = await request.get(path);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toContain(
+      'name="robots" content="noindex, nofollow"',
+    );
+  }
+  for (const path of ["/api/admin/accounts", "/api/admin/properties"]) {
+    const response = await request.get(path);
+    expect(response.status()).toBe(401);
+    expect(response.headers()["cache-control"]).toBe("no-store");
+  }
 });

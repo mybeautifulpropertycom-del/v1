@@ -1,5 +1,5 @@
 import { Auth } from "@/components/auth";
-import { homeMetadata, serializeJsonLd, siteUrl, SITE_NAME } from "@/lib/seo";
+import { homeJsonLd, homeMetadata, serializeJsonLd } from "@/lib/seo";
 
 export const metadata = homeMetadata();
 export default function Home() {
@@ -8,13 +8,7 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: serializeJsonLd({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: SITE_NAME,
-            url: siteUrl("/"),
-            inLanguage: "ro-RO",
-          }),
+          __html: serializeJsonLd(homeJsonLd()),
         }}
       />
       <Auth redirectAuthenticated />
