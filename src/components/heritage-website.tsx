@@ -364,9 +364,6 @@ export function HeritageWebsite({
           className="heritage-gallery heritage-section heritage-pad"
           id="gallery"
         >
-          <div className="heritage-section-label">
-            <span>FIECARE FOTOGRAFIE, O NOUĂ POSIBILITATE</span>
-          </div>
           <div className="heritage-section-heading">
             <h2 className="presentation-section-heading">
               {presentationCopy.gallery.title}
@@ -453,21 +450,13 @@ export function HeritageWebsite({
             <span>DETALIILE FAC DIFERENȚA</span>
           </div>
           <div className="heritage-details-copy">
-            <span className="heritage-kicker">Detalii pentru tine</span>
+            <span className="heritage-kicker">
+              {presentationCopy.heritageDetails.label}
+            </span>
             <h2 id="heritage-details-title">
-              <EditableText
-                field="copy.detailsTitle"
-                value={copy.detailsTitle}
-                onEdit={onEdit}
-              />
+              {presentationCopy.heritageDetails.title}
               <br />
-              <em>
-                <EditableText
-                  field="copy.detailsAccent"
-                  value={copy.detailsAccent}
-                  onEdit={onEdit}
-                />
-              </em>
+              <em>{presentationCopy.heritageDetails.accent}</em>
             </h2>
             <p>
               <EditableText

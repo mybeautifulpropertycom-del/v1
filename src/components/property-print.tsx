@@ -35,7 +35,15 @@ export function PropertyPrint({
         : [copy.storyTitle, copy.storyAccent]),
       copy.storyBody,
     ],
-    [copy.detailsTitle, copy.detailsAccent, copy.detailsBody],
+    [
+      ...(property.template === "minimal"
+        ? [
+            presentationCopy.heritageDetails.title,
+            presentationCopy.heritageDetails.accent,
+          ]
+        : [copy.detailsTitle, copy.detailsAccent]),
+      copy.detailsBody,
+    ],
     [copy.settingTitle, copy.settingAccent, copy.settingBody],
     [
       presentationCopy.invitation.title,

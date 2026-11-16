@@ -37,6 +37,24 @@ async function checkPresentation(
   await expect(page.locator(".mortgage-intro p")).toHaveText(
     presentationCopy.mortgage.subtitle,
   );
+  if (prefix === "heritage") {
+    await expect(
+      page.locator(".heritage-gallery > .heritage-section-label"),
+    ).toHaveCount(0);
+    await expect(
+      page.locator(".heritage-details-copy > .heritage-kicker"),
+    ).toHaveText("Detaliile care contează");
+    await expect(page.locator("#heritage-details-title")).toContainText(
+      "O locuință potrivită",
+    );
+    await expect(page.locator("#heritage-details-title em")).toHaveText(
+      "pe termen lung",
+    );
+    await expect(page.locator("#heritage-details-title em")).toHaveCSS(
+      "color",
+      "rgb(199, 207, 173)",
+    );
+  }
   const contact = page.locator("#contact");
   await expect(contact.locator(".presentation-agent-heading")).toHaveText(
     prefix === "estate"
@@ -193,6 +211,8 @@ for (const [template, prefix, introduction] of designs) {
       "storyAccent",
       "galleryTitle",
       "galleryAccent",
+      "detailsTitle",
+      "detailsAccent",
       "closingTitle",
       "closingAccent",
       "closingBody",

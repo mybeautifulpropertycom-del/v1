@@ -296,6 +296,9 @@
   gap: 25px;
   margin-bottom: 45px;
 }
+.heritage-story > .heritage-section-label {
+  margin-bottom: 28px;
+}
 .heritage-section-label > span:first-child {
   display: flex;
   gap: 10px;
@@ -439,6 +442,9 @@
   to {
     transform: translateX(-50%);
   }
+}
+.heritage-gallery {
+  padding-top: clamp(52px, 6vw, 88px);
 }
 .heritage-gallery .heritage-section-heading {
   margin-bottom: 26px;
@@ -950,6 +956,12 @@
   }
   .heritage-section {
     padding-block: 60px;
+  }
+  .heritage-gallery {
+    padding-top: 48px;
+  }
+  .heritage-story > .heritage-section-label {
+    margin-bottom: 20px;
   }
   .heritage-nav {
     min-height: 70px;

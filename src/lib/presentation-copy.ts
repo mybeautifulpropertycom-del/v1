@@ -9,6 +9,11 @@ export const presentationCopy = {
     title: "Descoperă proprietatea.",
     accent: "Fotografii care reflectă realitatea",
   },
+  heritageDetails: {
+    label: "Detaliile care contează",
+    title: "O locuință potrivită",
+    accent: "pe termen lung",
+  },
   mortgage: {
     title: "Estimează bugetul cu ușurință:",
     subtitle:

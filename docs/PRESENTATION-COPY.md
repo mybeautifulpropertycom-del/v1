@@ -20,3 +20,7 @@ fonts and accents; the mortgage title retains its original font and sizing.
 Editorial uses its longer agent heading, “Comunică eficient cu agentul imobiliar”.
 Its changing photo captions, video heading and agent heading share the responsive
 size of “Lasă curiozitatea să te îndrume”. The photo captions stay white.
+
+Heritage uses “Detaliile care contează” above “O locuință potrivită / pe termen
+lung”, preserving the design's green accent. Its gallery has no extra label
+above the heading and sits closer to the scrolling highlights strip.
