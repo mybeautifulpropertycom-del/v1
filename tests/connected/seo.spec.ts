@@ -47,7 +47,7 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
   );
   await page.goto("/inregistrare");
   await expect(
-    page.getByRole("heading", { name: "Pune-ți proprietatea în valoare" }),
+    page.getByRole("heading", { name: "Pune proprietatea în valoare" }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",

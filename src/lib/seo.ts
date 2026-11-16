@@ -5,9 +5,9 @@ import { propertyStory } from "./property-story";
 
 export const SITE_NAME = PLATFORM_NAME;
 export const HOME_TITLE =
-  "Site de prezentare imobiliară | Următoarea Proprietate";
+  "Următoarea Proprietate - Prezintă Proprietatea Eficient";
 export const HOME_DESCRIPTION =
-  "Site dedicat pentru proprietatea ta, cu fotografii, hartă și film de prezentare. Pentru vânzare sau închiriere. Plată unică: 249 RON.";
+  "Vinzi sau închiriezi o proprietate? Îți oferim cea mai eficientă modalitate de a o prezenta, promova și vinde.";
 
 export function siteOrigin(): string {
   const url = new URL(process.env.NEXT_PUBLIC_SITE_URL || PLATFORM_ORIGIN);

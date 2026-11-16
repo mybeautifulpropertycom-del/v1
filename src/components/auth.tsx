@@ -160,7 +160,7 @@ export function Auth({
               : !supabase
                 ? "Descoperă aplicația."
                 : mode === "signup"
-                  ? "Pune-ți proprietatea în valoare"
+                  ? "Pune proprietatea în valoare"
                   : mode === "forgot"
                     ? "Recuperează accesul la cont."
                     : "Bine ai venit."}
