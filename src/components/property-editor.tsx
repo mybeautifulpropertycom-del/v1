@@ -52,13 +52,20 @@ export function PropertyEditor({
     useWorkspace();
   const router = useRouter();
   const existing = properties.find((p) => p.id === id);
-  const [property, setProperty] = useState<Property>(
-    () =>
-      existing ?? {
-        ...createProperty(profile.id),
-        template: initialTemplate ?? "editorial",
-      },
-  );
+  const [property, setProperty] = useState<Property>(() => {
+    const initial = existing ?? {
+      ...createProperty(profile.id),
+      template: initialTemplate ?? "editorial",
+    };
+    // Convert legacy dimensions before presenting the metric-only editor.
+    return initial.area_unit === "sqft"
+      ? {
+          ...initial,
+          area: Math.round(initial.area * 0.09290304 * 100) / 100,
+          area_unit: "sqm",
+        }
+      : initial;
+  });
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -424,18 +431,18 @@ export function PropertyEditor({
                   <label>
                     Tipul proprietății
                     <select
-                      value={propertyTypeLabel(property.type)}
+                      value={
+                        property.type === "Town House" ? "House" : property.type
+                      }
                       onChange={(e) =>
                         update("type", e.target.value as Property["type"])
                       }
                     >
-                      {["House", "Town House", "Condo", "Penthouse"].map(
-                        (v) => (
-                          <option key={v} value={v}>
-                            {propertyTypeLabel(v)}
-                          </option>
-                        ),
-                      )}
+                      {["House", "Condo", "Penthouse"].map((v) => (
+                        <option key={v} value={v}>
+                          {propertyTypeLabel(v)}
+                        </option>
+                      ))}
                     </select>
                   </label>
                   <label>
@@ -486,6 +493,7 @@ export function PropertyEditor({
                     <input
                       type="number"
                       min="0"
+                      step="0.01"
                       value={property.area || ""}
                       placeholder="120"
                       onChange={(e) => update("area", Number(e.target.value))}
@@ -502,8 +510,7 @@ export function PropertyEditor({
                         )
                       }
                     >
-                      <option value="sqft">Picioare pătrate (sq ft)</option>
-                      <option value="sqm">Metri pătrați (m²)</option>
+                      <option value="sqm">m² - Metri pătrați</option>
                     </select>
                   </label>
                   <label>
@@ -549,11 +556,11 @@ export function PropertyEditor({
                   />
                   <small>
                     {property.description.length.toLocaleString("ro-RO")} /
-                    12.000 de caractere. Notițele tale ghidează textele fiecărei
-                    secțiuni. La salvare, serviciul de redactare AI folosește
-                    aceste notițe, fotografiile și detaliile proprietății pentru
-                    a scrie texte clare. Notițele rămân aici; poți edita textele
-                    site-ului direct pe pagină.
+                    12.000 de caractere. Aceste detalii vor ghida textele
+                    fiecărei secțiuni din prezentare. La salvare, serviciul de
+                    redactare folosește aceste notițe, fotografiile și detaliile
+                    proprietății pentru a scrie texte clare. Notițele rămân
+                    aici; poți edita textele prezentării direct pe pagină
                   </small>
                 </label>
                 <label className="amenity-label">Dotări și facilități</label>

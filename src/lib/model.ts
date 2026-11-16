@@ -58,7 +58,7 @@ export function propertyTypeLabel(type: string): string {
       {
         Condo: "Apartament",
         House: "Casă",
-        "Town House": "Casă înșiruită",
+        "Town House": "Casă",
         Penthouse: "Penthouse",
         Land: "Teren",
       } as Record<string, string>

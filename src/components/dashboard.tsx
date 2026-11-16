@@ -147,7 +147,9 @@ export function Dashboard() {
     .filter(
       (p) =>
         (tab === "all" || p.status === tab) &&
-        (type === "all" || p.type === type) &&
+        (type === "all" ||
+          p.type === type ||
+          (type === "House" && p.type === "Town House")) &&
         `${p.title} ${p.location}`
           .toLocaleLowerCase("ro-RO")
           .includes(query.toLocaleLowerCase("ro-RO")),
@@ -318,7 +320,7 @@ export function Dashboard() {
               Tipul proprietății
               <select value={type} onChange={(e) => setType(e.target.value)}>
                 <option value="all">Toate tipurile</option>
-                {["Condo", "House", "Town House", "Penthouse"].map((t) => (
+                {["House", "Condo", "Penthouse"].map((t) => (
                   <option key={t} value={t}>
                     {propertyTypeLabel(t)}
                   </option>
@@ -369,9 +371,7 @@ export function Dashboard() {
             {!properties.length && (
               <Link
                 className="button primary"
-                href={
-                  complete ? "/panou/proprietati/noua" : "/panou/profil"
-                }
+                href={complete ? "/panou/proprietati/noua" : "/panou/profil"}
               >
                 <Plus size={16} />
                 Începe aici
