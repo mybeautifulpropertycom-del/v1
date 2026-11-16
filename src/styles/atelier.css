@@ -666,6 +666,9 @@
   gap: 12%;
   padding-block: 110px;
 }
+.property-mortgage + .atelier-contact {
+  padding-top: 66px;
+}
 .atelier-contact h2 {
   margin: 25px 0 35px;
   font-size: clamp(28px, 3.2vw, 45px);
@@ -846,6 +849,9 @@
     gap: 6%;
     padding-block: 75px;
   }
+  .property-mortgage + .atelier-contact {
+    padding-top: 45px;
+  }
   .atelier-contact .landing-inquiry {
     padding: 24px;
   }
@@ -1010,6 +1016,9 @@
     grid-template-columns: 1fr;
     gap: 40px;
     padding-block: 55px;
+  }
+  .property-mortgage + .atelier-contact {
+    padding-top: 33px;
   }
   .atelier-contact .landing-inquiry {
     padding: 24px 20px;
