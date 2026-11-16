@@ -240,7 +240,7 @@ export function ViewingDialog({
                 name="email"
                 type="email"
                 maxLength={254}
-                placeholder="you@example.com"
+                placeholder="nume@email.ro"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />

@@ -182,7 +182,7 @@ export function ProfileEditor() {
                 type="email"
                 autoComplete="email"
                 maxLength={254}
-                placeholder="you@youragency.com"
+                placeholder="nume@email.ro"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
@@ -260,7 +260,7 @@ export function ProfileEditor() {
             <div className="preview-contact">
               <span>
                 <Mail size={16} />
-                {form.email || "you@youragency.com"}
+                {form.email || "nume@email.ro"}
               </span>
               <span>
                 <Phone size={16} />

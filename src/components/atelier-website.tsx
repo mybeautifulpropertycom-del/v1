@@ -548,7 +548,7 @@ export function AtelierWebsite({
                   name="email"
                   autoComplete="email"
                   maxLength={254}
-                  placeholder="alex@example.com"
+                  placeholder="nume@email.ro"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />

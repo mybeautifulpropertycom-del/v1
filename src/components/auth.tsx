@@ -136,13 +136,10 @@ export function Auth({
           <Brand light />
         </Link>
         <div>
-          <h1>
-            Prezintă-ți proprietatea cu un site dedicat și un film de
-            prezentare.
-          </h1>
+          <h1>Vinde o proprietate de 10 ori mai repede cu o nouă abordare.</h1>
           <p>
-            Creează site-uri pentru proprietăți și filme de prezentare care
-            atrag atenția de la prima vizită.
+            Vinzi sau închiriezi o proprietate? Descoperă o modalitate mai
+            simplă și mai eficientă de a o prezenta, promova și vinde.
           </p>
         </div>
         <span className="eyebrow">
@@ -218,7 +215,7 @@ export function Auth({
                     value={email}
                     maxLength={254}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@youragency.com"
+                    placeholder="nume@email.ro"
                   />
                 </label>
               )}
