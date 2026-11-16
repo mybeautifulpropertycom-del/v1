@@ -148,7 +148,6 @@ export function Auth({
       </div>
       <main className="login-panel">
         <div className="auth-card">
-          <span className="eyebrow">URMĂTORUL TĂU CAPITOL ÎNCEPE AICI</span>
           <h2
             className={
               !resetPassword && supabase && mode === "signup"
