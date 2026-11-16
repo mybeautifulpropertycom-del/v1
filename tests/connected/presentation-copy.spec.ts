@@ -21,7 +21,7 @@ async function checkPresentation(
   address: string,
 ) {
   await expect(page.locator(introduction)).toContainText(
-    "Descoperă proprietatea perfectă",
+    "Proprietatea perfectă",
   );
   await expect(page.locator(`${introduction} em`)).toHaveText(
     "pentru tine și familia ta",

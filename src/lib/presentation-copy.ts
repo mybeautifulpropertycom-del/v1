@@ -2,7 +2,7 @@
 // independently of headings stored by earlier versions of the writing service.
 export const presentationCopy = {
   introduction: {
-    title: "Descoperă proprietatea perfectă",
+    title: "Proprietatea perfectă",
     accent: "pentru tine și familia ta",
   },
   gallery: {
@@ -38,5 +38,5 @@ export const presentationCopy = {
 
 export function propertyInvitation(location: string) {
   const address = location.trim();
-  return `Programează o vizionare${address ? ` din ${address}` : ""} pentru a avea toate informațiile de care ai nevoie pentru o decizie corectă`;
+  return `Programează o vizionare a proprietății${address ? ` din ${address}` : ""} pentru a avea toate informațiile de care ai nevoie și a lua o decizie corectă.`;
 }

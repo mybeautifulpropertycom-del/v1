@@ -116,7 +116,7 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
   await page.goto("/previzualizare/demo-apartment");
   await expect(
     page.locator(".heritage-story .heritage-section-heading h2"),
-  ).toContainText("Descoperă proprietatea perfectă");
+  ).toContainText("Proprietatea perfectă");
   await expect(page.locator(".heritage-photo-grid figcaption")).toHaveCount(0);
   await expect(
     page.getByLabel("Punctele forte ale proprietății").locator("ul").first(),
