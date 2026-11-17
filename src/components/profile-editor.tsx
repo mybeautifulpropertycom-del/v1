@@ -240,7 +240,11 @@ export function ProfileEditor() {
             </button>
           </div>
           {saved && !redirecting && (
-            <Link className="success-next" href="/panou/proprietati/noua">
+            <Link
+              className="success-next"
+              data-guide-next-property
+              href="/panou/proprietati/noua"
+            >
               Profilul este pregătit. Adaugă prima proprietate{" "}
               <ArrowRight size={17} />
             </Link>

@@ -156,6 +156,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="topbar-left">
             <button
               className="icon-button mobile-menu"
+              data-guide-menu
               aria-label="Deschide meniul"
               onClick={() => setMenu(true)}
             >
@@ -201,10 +202,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         )}
-        <main className="workspace-main">
-          <AgentGuide />
-          {children}
-        </main>
+        <main className="workspace-main">{children}</main>
+        <AgentGuide />
         <footer className="workspace-footer">
           <span>O prezentare frumoasă pentru fiecare proprietate.</span>
           <span>

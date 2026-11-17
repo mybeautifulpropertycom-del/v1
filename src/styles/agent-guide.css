@@ -1,145 +1,130 @@
-.agent-guide {
-  margin: 0 0 30px;
-  padding: 20px 24px;
-  border: 1px solid #dce4d8;
-  border-radius: 12px;
-  background: #f1f5ee;
-  color: #28392c;
+.guide-coachmark {
   font:
-    400 13px/1.6 "Nunito Sans Variable",
+    400 12px/1.6 "Nunito Sans Variable",
     Arial,
     sans-serif;
+  color: #28392c;
 }
-.agent-guide-top {
+.guide-beacon {
+  position: fixed;
+  z-index: 81;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+.guide-beacon > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #d96947;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px #d9694726;
+  animation: guide-point 2.2s ease-out 3;
+}
+.guide-beacon:hover > span,
+.guide-beacon[aria-expanded="true"] > span {
+  box-shadow: 0 0 0 5px #d9694738;
+}
+.guide-tip {
+  position: fixed;
+  z-index: 82;
+  padding: 14px 16px;
+  border: 1px solid #e0e5dc;
+  border-radius: 10px;
+  background: #fffefb;
+  box-shadow: 0 6px 28px #1c2d2021;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.guide-tip-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 11px;
-  color: #53644f;
-}
-.agent-guide-dismiss {
-  border: 0;
-  background: transparent;
-  padding: 4px 0 4px 8px;
-  font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.agent-guide-steps {
-  display: flex;
-  gap: 12px 28px;
-  list-style: none;
-  padding: 0;
-  margin: 14px 0 18px;
-  font-size: 11px;
-}
-.agent-guide-steps li {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #6c7668;
-}
-.agent-guide-steps li[aria-current] {
-  color: #263d2c;
-  font-weight: 700;
-}
-.agent-guide-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 21px;
-  height: 21px;
-  border-radius: 50%;
-  border: 1px solid #c6d3be;
-  flex-shrink: 0;
+  margin-bottom: 5px;
+  color: #7b8577;
   font-size: 10px;
 }
-.agent-guide-steps li[aria-current] .agent-guide-number {
-  background: #304d36;
-  color: white;
-  border-color: #304d36;
+.guide-tip-collapse {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: -5px -6px -2px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #75806f;
 }
-.agent-guide-steps .done .agent-guide-number {
-  background: #e0ead9;
-  color: #304d36;
+.guide-tip h2 {
+  margin: 0 0 6px;
+  font:
+    600 16px/1.3 "Nunito Sans Variable",
+    Arial,
+    sans-serif;
+  letter-spacing: -0.02em;
+  color: #28392c;
 }
-.agent-guide-content {
+.guide-tip p {
+  margin: 0;
+  font:
+    400 12px/1.65 "Nunito Sans Variable",
+    Arial,
+    sans-serif;
+  color: #606c5b;
+}
+.guide-tip-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px 32px;
+  gap: 12px;
+  margin-top: 14px;
 }
-.agent-guide .agent-guide-title {
-  margin: 0 0 5px;
-  font:
-    600 23px/1.25 "Nunito Sans Variable",
-    Arial,
-    sans-serif;
-  letter-spacing: -0.025em;
-  color: #28392c;
+.guide-tip-dismiss,
+.guide-tip-next {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
 }
-.agent-guide-content p {
-  margin: 0;
-  max-width: 720px;
-  color: #53614f;
-  font-size: 13px;
+.guide-tip-dismiss {
+  color: #7a8376;
+  font-size: 10px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
-.agent-guide-content .button {
-  flex-shrink: 0;
-  font:
-    600 12px/1.5 "Nunito Sans Variable",
-    Arial,
-    sans-serif;
-  background: #fff;
-  border-color: #ced8c9;
-  white-space: nowrap;
+.guide-tip-next,
+.guide-tip-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 700;
+  color: #304d36;
 }
-.agent-guide-error {
-  margin: 12px 0 0;
+.guide-tip .guide-tip-error {
+  margin-top: 8px;
   color: #a03524;
 }
-.agent-guide-preview {
-  max-width: 1100px;
-  margin: 20px auto;
-}
-@media (max-width: 900px) {
-  .agent-guide-content {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 14px;
+@keyframes guide-point {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px #d9694726;
   }
-  .agent-guide-preview {
-    margin: 16px;
-  }
-}
-@media (max-width: 600px) {
-  .agent-guide {
-    padding: 16px;
-    margin-bottom: 24px;
-  }
-  .agent-guide-top {
-    align-items: flex-start;
-    font-size: 10px;
-  }
-  .agent-guide-dismiss {
-    padding-top: 0;
-  }
-  .agent-guide-steps {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 9px 12px;
-  }
-  .agent-guide .agent-guide-title {
-    font-size: 21px;
-  }
-  .agent-guide-content .button {
-    width: 100%;
-    justify-content: center;
+  50% {
+    box-shadow: 0 0 0 7px #d969470d;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .agent-guide {
-    scroll-behavior: auto;
+  .guide-beacon > span {
+    animation: none;
   }
 }

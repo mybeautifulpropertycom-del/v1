@@ -108,7 +108,7 @@ export function Inquiries() {
       <div className="page-heading compact">
         <div>
           <span className="eyebrow">CONVERSAȚIILE BUNE ÎNCEP AICI</span>
-          <h1>
+          <h1 data-guide-messages>
             Un mesaj nou.
             <br />
             <em>O nouă posibilitate.</em>

@@ -184,6 +184,7 @@ export function PropertyPreview({ id }: { id: string }) {
         <div>
           <Link
             className="text-button"
+            data-guide-back
             href={`/panou/proprietati/${id}`}
             onClick={(e) => {
               if (dirty && !confirm("Pleci fără să salvezi modificările?"))

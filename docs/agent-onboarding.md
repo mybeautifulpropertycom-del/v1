@@ -1,10 +1,12 @@
 # Ghidul de început
 
-Ghidul apare într-un card discret, în panou și în previzualizarea privată. Se adresează conturilor noi de agenți; administratorii, vizitatorii paginilor publice și modul demonstrativ nu îl văd.
+Ghidul apare ca un punct discret lângă elementul relevant din panou sau din previzualizarea privată. La apăsare deschide un indiciu scurt, de maximum 300px, ancorat în apropierea acelui element. Nu ocupă spațiu în pagină. Se adresează conturilor noi de agenți; administratorii, vizitatorii paginilor publice și modul demonstrativ nu îl văd.
 
-Pașii se actualizează din datele salvate: profil de contact valid → proprietate cu detalii și fotografii → previzualizare și publicare → explicarea secțiunii Mesaje. O plată începută, anulată sau refuzată nu finalizează pasul de publicare. Ghidul nu trimite plăți și nu publică proprietăți automat. În editor, acțiunea ghidului păstrează formularul deschis, inclusiv modificările nesalvate.
+Pașii urmăresc profilul, adăugarea proprietății, detaliile, fotografiile, modelul, publicarea și Mesaje. În editor, ghidul folosește butoanele existente de continuare și salvare, inclusiv validarea lor; formularul și modificările nesalvate sunt păstrate. În previzualizare, indică butonul de publicare fără a-l apăsa. O plată începută, anulată sau refuzată nu finalizează pasul de publicare. Ghidul nu trimite plăți și nu publică proprietăți automat.
 
-„Mă descurc singur” închide definitiv ghidul. După publicare, „Deschide mesajele” duce la inbox, unde „Am înțeles” finalizează ghidul. Starea este păstrată în baza de date, separată pentru fiecare cont; se reîncarcă la autentificare și la revenirea în filă. Un ghid închis nu poate fi reactivat de o filă veche. Nu este necesară primirea unui lead real pentru finalizarea ghidului.
+„Restrânge indiciul”, Escape sau apăsarea în afara lui lasă doar punctul. „Închide ghidul” îl închide definitiv. După publicare, „Deschide mesajele” duce la inbox, unde „Am înțeles” finalizează ghidul. Starea este păstrată în baza de date, separată pentru fiecare cont; se reîncarcă la autentificare și la revenirea în filă. Un ghid închis nu poate fi reactivat de o filă veche. Nu este necesară primirea unui lead real pentru finalizarea ghidului.
+
+Indiciul își adaptează poziția la ecran, scroll și tastatura telefonului. Rămâne ascuns când ținta este în afara ecranului sau când este deschis un dialog de plată, fotografii ori meniul mobil. Ghidul se deschide doar la cerere și nu preia automat focusul. Redesenarea nu necesită o nouă migrare SQL.
 
 ## Activare pe proiectul existent
 

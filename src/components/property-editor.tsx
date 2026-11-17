@@ -347,7 +347,11 @@ export function PropertyEditor({
           </button>
         </div>
       </div>
-      <div className="editor-steps" data-guide-editor>
+      <div
+        className="editor-steps"
+        data-guide-editor
+        data-guide-editor-step={step}
+      >
         {t.steps.map((label, index) => (
           <button
             key={label}
@@ -405,6 +409,7 @@ export function PropertyEditor({
                   <label className="full-width">
                     Titlul proprietății
                     <input
+                      data-guide-details
                       value={property.title}
                       maxLength={160}
                       placeholder="O locuință cu o perspectivă deosebită."
@@ -612,7 +617,7 @@ export function PropertyEditor({
             <section className="form-card">
               <div className="form-section-title">
                 <span>02</span>
-                <h2>{t.photography}</h2>
+                <h2 data-guide-photos>{t.photography}</h2>
               </div>
               <p className="form-intro">
                 Fotografiile bune fac prima impresie. Prima fotografie devine
@@ -741,7 +746,7 @@ export function PropertyEditor({
             <section className="form-card">
               <div className="form-section-title">
                 <span>03</span>
-                <h2>{t.design}</h2>
+                <h2 data-guide-design>{t.design}</h2>
               </div>
               <p className="form-intro">
                 Aceeași proprietate. Trei stiluri diferite. Alege-l pe cel care
@@ -790,6 +795,7 @@ export function PropertyEditor({
             {step < 2 ? (
               <button
                 className="button dark"
+                data-guide-editor-next
                 onClick={() => goToStep(step + 1)}
               >
                 {preparing

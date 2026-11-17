@@ -79,7 +79,10 @@ function PropertyCard({
             {property.transaction === "sale" ? "De vânzare" : "De închiriat"}
           </span>
         </div>
-        <Link href={`/panou/proprietati/${property.id}`}>
+        <Link
+          href={`/panou/proprietati/${property.id}`}
+          data-guide-property={property.id}
+        >
           <h3>{property.title || "Proprietate fără titlu"}</h3>
         </Link>
         <p className="location">
@@ -183,24 +186,12 @@ export function Dashboard() {
         <Link
           href={complete ? "/panou/proprietati/noua" : "/panou/profil"}
           className="button primary"
+          data-guide-add-property
         >
           <Plus size={18} />
           Adaugă o proprietate
         </Link>
       </div>
-      {!complete && (
-        <Link href="/panou/profil" className="onboarding-callout">
-          <span className="step-number">01</span>
-          <div>
-            <strong>Mai întâi, completează-ți profilul.</strong>
-            <p>
-              Completează datele de contact. Le adăugăm pe fiecare site de
-              proprietate.
-            </p>
-          </div>
-          <ArrowRight size={22} />
-        </Link>
-      )}
       <section className="stats-grid" aria-label="Prezentarea proprietăților">
         <div className="stat-card">
           <div>
