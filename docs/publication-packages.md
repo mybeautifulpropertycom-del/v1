@@ -22,3 +22,7 @@ The old application remains compatible immediately after the SQL upgrade, while 
 - 54 server/database checks covering Stripe sessions, exact tariff matching, signed receipt fulfilment, active-session fencing, complimentary access, publication gates, address links, lifecycle cleanup and the BytePlus shared queue.
 - 24 browser checks covering package selection before card creation, 149/249 RON card totals, changing the selected package, card declines, repeated confirmation, administrator publication and video visibility for Editorial, Minimal and Panorama before/after reload and on public pages.
 - Desktop/mobile chooser screenshots and checks for overflow. Provider and payment boundaries are stubbed; these results do not claim production activation.
+
+## Activation progress — 17 November 2026
+
+The owner supplied the existing Supabase project's successful SQL result, `MBP_PUBLICATION_PACKAGES_READY`. The application can now be deployed to Production. Vercel readiness and the first live photo-only publication remain separate checks; no live payment or provider generation has been performed as part of activation.
