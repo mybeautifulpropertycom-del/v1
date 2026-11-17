@@ -404,7 +404,7 @@
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   gap: 10%;
-  padding-block: 110px;
+  padding-block: 84px 110px;
   align-items: center;
 }
 .atelier-story figure {
@@ -879,7 +879,7 @@
   }
   .atelier-story {
     gap: 6%;
-    padding-block: 70px;
+    padding-block: 54px 70px;
   }
   .atelier-details {
     gap: 32px 4%;
@@ -1025,7 +1025,7 @@
   .atelier-story {
     grid-template-columns: 1fr;
     gap: 35px;
-    padding-block: 55px;
+    padding-block: 42px 55px;
   }
   .atelier-story-photo {
     aspect-ratio: 1/1;
