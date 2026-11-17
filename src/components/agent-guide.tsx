@@ -16,6 +16,9 @@ import {
 } from "@/lib/property-guide";
 import { guidePlacement } from "@/lib/guide-placement";
 
+const profileGuideFields = ["agency", "phone", "bio"] as const;
+type ProfileGuideField = (typeof profileGuideFields)[number];
+
 type Tip = {
   key: string;
   label: string;
@@ -30,7 +33,7 @@ type Tip = {
   requirement?: string;
   besideHeading?: boolean;
   fieldId?: PropertyGuideField;
-  profileFieldId?: "agency" | "phone";
+  profileFieldId?: ProfileGuideField;
   highlight?: boolean;
   fieldTarget?: HTMLElement;
   editing?: boolean;
@@ -155,7 +158,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       try {
         const stored: unknown = JSON.parse(localStorage.getItem(key) || "[]");
         if (Array.isArray(stored))
-          done = stored.filter((id) => id === "agency" || id === "phone");
+          done = stored.filter((id) => profileGuideFields.includes(id));
       } catch {
         /* Storage is optional. */
       }
@@ -163,12 +166,17 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     }
     return profileJourney.current;
   }
-  function rememberProfileField(id: "agency" | "phone") {
+  function rememberProfileField(id: ProfileGuideField) {
     const input = find(`[data-profile-guide-field="${id}"]`);
     if (!input || input.dataset.guideIssue) return;
     const state = profileFields();
-    state.done.add("agency");
-    state.done.add(id);
+    for (const field of profileGuideFields.slice(
+      0,
+      profileGuideFields.indexOf(id) + 1,
+    )) {
+      const control = find(`[data-profile-guide-field="${field}"]`);
+      if (control && !control.dataset.guideIssue) state.done.add(field);
+    }
     persistJourney(state);
   }
 
@@ -189,7 +197,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     }
     function resolveTip(): Tip | null {
       if (
-        tipRef.current?.fieldId &&
+        (tipRef.current?.fieldId || tipRef.current?.profileFieldId) &&
         (panel.current?.contains(document.activeElement) ||
           beacon.current === document.activeElement)
       )
@@ -265,14 +273,28 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       }
       if (progress.step === 0 && !messagesOnly) {
         const done = profileFields().done;
-        const phone = find<HTMLInputElement>(
-          '[data-profile-guide-field="phone"]',
+        const focused = document.activeElement?.closest<HTMLElement>(
+          "[data-profile-guide-field]",
         );
-        const profileFieldId = !done.has("agency")
-          ? "agency"
-          : !done.has("phone") || phone?.dataset.guideIssue
-            ? "phone"
-            : undefined;
+        const focusedId = focused?.dataset.profileGuideField as
+          ProfileGuideField | undefined;
+        const invalid = profileGuideFields.find(
+          (id) =>
+            find(`[data-profile-guide-field="${id}"]`)?.dataset.guideIssue,
+        );
+        const profileFieldId =
+          focusedId &&
+          invalid &&
+          profileGuideFields.indexOf(invalid) <
+            profileGuideFields.indexOf(focusedId)
+            ? invalid
+            : (focusedId ??
+              profileGuideFields.find(
+                (id) =>
+                  !done.has(id) ||
+                  find(`[data-profile-guide-field="${id}"]`)?.dataset
+                    .guideIssue,
+              ));
         const contact =
           path === "/panou/profil"
             ? find<HTMLElement>(
@@ -283,6 +305,14 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             : null;
         const anchor = contact ?? navigationTarget("/panou/profil");
         if (!anchor) return null;
+        const nextId = profileFieldId
+          ? profileGuideFields[profileGuideFields.indexOf(profileFieldId) + 1]
+          : undefined;
+        const nextContact = contact?.dataset.guideIssue
+          ? contact
+          : nextId
+            ? find(`[data-profile-guide-field="${nextId}"]`)
+            : find("[data-guide-profile-save]");
         return {
           key: contact ? "profile-contact" : "profile-link",
           label: "Profilul tău",
@@ -298,14 +328,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           profileFieldId: contact ? profileFieldId : undefined,
           ...(contact
             ? profileFieldId
-              ? {
-                  focus:
-                    profileFieldId === "agency"
-                      ? (phone ?? contact)
-                      : phone?.dataset.guideIssue
-                        ? phone
-                        : (find("[data-guide-profile-save]") ?? contact),
-                }
+              ? { focus: nextContact ?? contact }
               : { advance: contact as HTMLButtonElement }
             : { href: "/panou/profil" }),
         };
@@ -418,11 +441,27 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       ],
     });
     let guidePointer = false;
+    let activeLabelPointer: HTMLLabelElement | null = null;
     let pointerTimer: ReturnType<typeof setTimeout> | undefined;
     const pointer = (event: PointerEvent) => {
-      guidePointer = Boolean(
-        (event.target as Element).closest(".guide-coachmark"),
-      );
+      const target = event.target as Element;
+      guidePointer = Boolean(target.closest(".guide-coachmark"));
+      const active = document.activeElement;
+      const label = target.closest("label");
+      // A click in the label's gap blurs its input, then the label's default
+      // click focuses it again. Treat that gap like the space below the input
+      // when leaving a valid active guide field; other labels still focus normally.
+      activeLabelPointer =
+        active instanceof HTMLElement &&
+        active.dataset.guideHighlight === "true" &&
+        active.matches(
+          "[data-property-guide-field], [data-profile-guide-field]",
+        ) &&
+        !active.dataset.guideIssue &&
+        label?.control === active &&
+        !active.contains(target)
+          ? label
+          : null;
       clearTimeout(pointerTimer);
       pointerTimer = setTimeout(() => {
         guidePointer = false;
@@ -445,8 +484,17 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       );
       if (contact && !guidePointer && !related?.closest(".guide-coachmark"))
         rememberProfileField(
-          contact.dataset.profileGuideField as "agency" | "phone",
+          contact.dataset.profileGuideField as ProfileGuideField,
         );
+      update();
+    };
+    const leaveActiveLabel = (event: MouseEvent) => {
+      const label = activeLabelPointer;
+      activeLabelPointer = null;
+      if (!label?.contains(event.target as Node)) return;
+      event.preventDefault();
+      if (document.activeElement === label.control)
+        (label.control as HTMLElement).blur();
       update();
     };
     const chooseDesign = (event: MouseEvent) => {
@@ -481,6 +529,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     document.addEventListener("input", update);
     document.addEventListener("change", update);
     document.addEventListener("click", chooseDesign);
+    document.addEventListener("click", leaveActiveLabel, true);
     document.addEventListener("keydown", skipSignupFields);
     window.addEventListener("resize", update);
     return () => {
@@ -493,6 +542,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       document.removeEventListener("input", update);
       document.removeEventListener("change", update);
       document.removeEventListener("click", chooseDesign);
+      document.removeEventListener("click", leaveActiveLabel, true);
       document.removeEventListener("keydown", skipSignupFields);
       window.removeEventListener("resize", update);
     };

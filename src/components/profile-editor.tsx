@@ -209,6 +209,12 @@ export function ProfileEditor() {
             <label className="full-width">
               {t.bio}
               <textarea
+                data-profile-guide-field="bio"
+                data-guide-issue={
+                  form.bio.length > MAX_PROFILE_BIO_LENGTH
+                    ? "Scurtează prezentarea înainte de salvare."
+                    : undefined
+                }
                 rows={4}
                 maxLength={MAX_PROFILE_BIO_LENGTH}
                 aria-describedby="profile-bio-hint"

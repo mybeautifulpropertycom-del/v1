@@ -173,6 +173,10 @@ test("a new agent gets an automatic compact hint once, with only a red point aft
   ).toBeFocused();
   await page.getByLabel("Număr de telefon", { exact: true }).fill("0755436284");
   await page.getByLabel("Număr de telefon", { exact: true }).press("Tab");
+  const bio = page.locator('[data-profile-guide-field="bio"]');
+  await expect(bio).toHaveAttribute("data-guide-highlight", "true");
+  await bio.fill("Te ajut să găsești locuința potrivită.");
+  await bio.press("Tab");
   await expect(page.locator("[data-guide-profile-save]")).toHaveAttribute(
     "data-guide-highlight",
     "true",
@@ -724,6 +728,11 @@ test("the profile tour starts at the optional agency and Tab skips the signup em
   await expect(phone).toHaveAttribute("data-guide-highlight", "true");
   await phone.fill("0755436284");
   await phone.press("Tab");
+  const bio = page.locator('[data-profile-guide-field="bio"]');
+  await expect(bio).toBeFocused();
+  await expect(bio).toHaveAttribute("data-guide-highlight", "true");
+  await bio.fill("");
+  await bio.press("Tab");
   await expect(page.locator("[data-guide-profile-save]")).toHaveAttribute(
     "data-guide-highlight",
     "true",
@@ -734,3 +743,90 @@ test("the profile tour starts at the optional agency and Tab skips the signup em
     ),
   ).toHaveCount(0);
 });
+
+for (const width of [1440, 390]) {
+  test(`profile fields advance consistently above and below their border at ${width}px`, async ({
+    page,
+  }) => {
+    await guideFixture(page, { fresh: true });
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.setViewportSize({ width, height: 950 });
+    await page.goto("/panou/profil");
+    const tip = await openTip(page);
+    await tip.getByRole("button", { name: "Restrânge indiciul" }).click();
+    for (const [field, value, next] of [
+      ["agency", "Agenția Exemplu", '[data-profile-guide-field="phone"]'],
+      ["phone", "0755436284", '[data-profile-guide-field="bio"]'],
+      ["bio", "", "[data-guide-profile-save]"],
+    ]) {
+      const control = page.locator(`[data-profile-guide-field="${field}"]`);
+      for (const edge of ["above", "below"]) {
+        await control.fill(value);
+        await expect(control).toHaveAttribute("data-guide-highlight", "true");
+        const box = (await control.boundingBox())!;
+        await page.mouse.click(
+          box.x + box.width / 2,
+          edge === "above" ? box.y - 4 : box.y + box.height + 6,
+        );
+        await expect(control).not.toBeFocused();
+        await expect(page.locator(next)).toHaveAttribute(
+          "data-guide-highlight",
+          "true",
+        );
+        await expect(page.locator('[data-guide-highlight="true"]')).toHaveCount(
+          1,
+        );
+      }
+    }
+    // A different field's label still focuses that field, including invalid fields.
+    const phone = page.locator('[data-profile-guide-field="phone"]');
+    await phone.fill("07");
+    await phone.locator("..").click({ position: { x: 10, y: 5 } });
+    await expect(phone).toBeFocused();
+    await expect(phone).toHaveAttribute("data-guide-highlight", "true");
+    await page
+      .locator('[data-profile-guide-field="agency"]')
+      .locator("..")
+      .click({ position: { x: 10, y: 5 } });
+    await expect(
+      page.locator('[data-profile-guide-field="agency"]'),
+    ).toBeFocused();
+    await expect(
+      page.locator('[data-profile-guide-field="agency"]'),
+    ).toHaveAttribute("data-guide-highlight", "true");
+    await expect(page.locator(".form-error")).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test(`property inputs advance above and below their border without reactivating the previous input at ${width}px`, async ({
+    page,
+  }) => {
+    await guideFixture(page);
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.setViewportSize({ width, height: 950 });
+    await page.goto(`/panou/proprietati/${id}`);
+    const tip = await openTip(page);
+    await tip.getByRole("button", { name: "Restrânge indiciul" }).click();
+    const title = page.locator('[data-property-guide-field="title"]');
+    for (const edge of ["above", "below"]) {
+      await title.fill("Vila cu grădină");
+      await expect(title).toHaveAttribute("data-guide-highlight", "true");
+      const box = (await title.boundingBox())!;
+      await page.mouse.click(
+        box.x + box.width / 2,
+        edge === "above" ? box.y - 4 : box.y + box.height + 6,
+      );
+      await expect(title).not.toBeFocused();
+      await expect(
+        page.locator('[data-property-guide-field="location"]'),
+      ).toHaveAttribute("data-guide-highlight", "true");
+      await expect(page.locator('[data-guide-highlight="true"]')).toHaveCount(
+        1,
+      );
+    }
+    await expect(page.locator(".editor-error")).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+}
