@@ -182,7 +182,7 @@
   background: #becfa7;
 }
 .estate-hero h1 {
-  font: 600 clamp(48px, 6.15vw, 92px)/1.06 var(--serif);
+  font: 600 clamp(42px, calc(6.15vw - 6px), 86px)/1.06 var(--serif);
   letter-spacing: -0.035em;
   max-width: 710px;
   overflow-wrap: anywhere;
@@ -1309,7 +1309,7 @@
     padding-block: 50px;
   }
   .estate-hero h1 {
-    font-size: clamp(40px, 11.5vw, 66px);
+    font-size: clamp(37px, calc(11.5vw - 3px), 63px);
     max-width: 100%;
   }
   .estate-hero-content > p {
