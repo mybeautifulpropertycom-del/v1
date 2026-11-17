@@ -239,7 +239,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (error)
         throw new Error(
           error.code === "P0402"
-            ? "Finalizează plata de 249 RON în secțiunea Designul site-ului înainte de publicarea proprietății."
+            ? "Alege varianta de publicare și finalizează plata în editorul prezentării înainte de publicarea proprietății."
             : "Proprietatea nu a fost salvată. Verifică detaliile și conexiunea, apoi încearcă din nou.",
         );
       Object.assign(nextProperty, data);

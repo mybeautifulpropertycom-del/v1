@@ -27,6 +27,7 @@ export async function GET(request: Request) {
         { data: profile, error: profileError },
         { data: job, error: jobError },
         { data: grant, error: grantError },
+        { data: order, error: orderError },
       ] = await Promise.all([
         admin.from("profiles").select("*").eq("id", property.owner_id).single(),
         admin
@@ -41,8 +42,13 @@ export async function GET(request: Request) {
           .select("reason,granted_at")
           .eq("property_id", id)
           .maybeSingle(),
+        admin
+          .from("property_orders")
+          .select("status,includes_video")
+          .eq("property_id", id)
+          .maybeSingle(),
       ]);
-      if (profileError || jobError || grantError)
+      if (profileError || jobError || grantError || orderError)
         throw new Error("Property details unavailable.");
       let activeScenes: number | undefined;
       if (
@@ -96,6 +102,8 @@ export async function GET(request: Request) {
         property,
         profile,
         grant,
+        videoIncluded: order?.includes_video ?? true,
+        packageLocked: Boolean(grant || job || order?.status === "paid"),
         video: job
           ? {
               status: job.status,

@@ -11,11 +11,18 @@ import {
 import { useWorkspace } from "./workspace-provider";
 import { PropertyWebsite } from "./property-website";
 import { PropertyVideoProgressPanel } from "./property-video-progress";
+import { PublicationPackagePicker } from "./publication-package-picker";
+import {
+  publicationPackages,
+  type PublicationPackage,
+} from "@/lib/publication-packages";
 
 type Detail = {
   property: Property;
   profile: Profile;
   grant: { reason: string; granted_at: string } | null;
+  videoIncluded?: boolean;
+  packageLocked?: boolean;
   video: {
     status: string;
     activeScenes?: number;
@@ -51,9 +58,13 @@ export function AdminProperty({ id }: { id: string }) {
     "Publicare gratuită aprobată de administrator",
   );
   const [notice, setNotice] = useState("");
+  const [selectedPackage, setSelectedPackage] =
+    useState<PublicationPackage>("photos");
   const refresh = useCallback(async () => {
     const next = await adminRequest(`properties?id=${encodeURIComponent(id)}`);
     setData(next);
+    if (next.packageLocked || next.grant || next.video)
+      setSelectedPackage(next.videoIncluded === false ? "photos" : "video");
     if (next.video?.error || next.video?.status === "failed") setNotice("");
   }, [id]);
   useEffect(() => {
@@ -81,10 +92,17 @@ export function AdminProperty({ id }: { id: string }) {
     setError("");
     setNotice("");
     try {
-      await adminRequest("publish", { propertyId: id, reason });
+      const result = await adminRequest("publish", {
+        propertyId: id,
+        reason,
+        package: selectedPackage,
+      });
       await refresh();
       setNotice(
-        "Proprietatea este publică. Filmul inclus va apărea când este gata. Această acțiune nu a încasat nicio plată.",
+        (result.videoIncluded ??
+          publicationPackages[selectedPackage].includesVideo)
+          ? "Proprietatea este publică. Filmul va apărea când este gata. Publicarea nu a încasat nicio plată; generarea folosește credite API."
+          : "Proprietatea este publică, fără videoclip. Nu s-a efectuat nicio plată și nu s-a pornit generarea video.",
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Publicare indisponibilă.");
@@ -159,6 +177,13 @@ export function AdminProperty({ id }: { id: string }) {
                 onChange={(e) => setReason(e.target.value)}
               />
             </label>
+            <PublicationPackagePicker
+              value={selectedPackage}
+              onChange={setSelectedPackage}
+              administrator
+              locked={Boolean(data.packageLocked || data.grant || data.video)}
+              disabled={busy}
+            />
             <button
               className="button primary"
               disabled={busy || issues.length > 0 || !reason.trim()}
@@ -279,7 +304,16 @@ export function AdminProperty({ id }: { id: string }) {
             {data.video?.error && <p role="status">{data.video.error}</p>}
             {data.video && (
               <p role="status">
-                Video: {({queued: "în coadă", processing: "în pregătire", completed: "finalizat", failed: "eșuat", cancelled: "anulat"} as Record<string,string>)[data.video.status] || data.video.status}
+                Video:{" "}
+                {(
+                  {
+                    queued: "în coadă",
+                    processing: "în pregătire",
+                    completed: "finalizat",
+                    failed: "eșuat",
+                    cancelled: "anulat",
+                  } as Record<string, string>
+                )[data.video.status] || data.video.status}
                 {data.video.activeScenes
                   ? ` · ${data.video.activeScenes} solicitări de generare în curs`
                   : ""}
@@ -318,6 +352,11 @@ export function AdminProperty({ id }: { id: string }) {
             label: "Înapoi la administrare",
           }}
           film={data.video?.film || undefined}
+          videoIncluded={
+            data.packageLocked || data.grant || data.video
+              ? data.videoIncluded !== false
+              : publicationPackages[selectedPackage].includesVideo
+          }
           videoPanel={
             data.video && data.video.status !== "completed" ? (
               <PropertyVideoProgressPanel

@@ -97,6 +97,7 @@ export function HeritageWebsite({
   onEdit,
   film,
   videoPanel,
+  videoIncluded = true,
   previewBackLink,
 }: PropertyWebsiteProps) {
   const { stage, cover } = useCoverZoom();
@@ -472,7 +473,7 @@ export function HeritageWebsite({
             </ul>
           </div>
         </section>
-        {(film?.src || isPreview) && (
+        {videoIncluded && (film?.src || isPreview) && (
           <section
             className="heritage-film heritage-section heritage-pad"
             id="film"

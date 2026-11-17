@@ -222,6 +222,7 @@ test("complimentary publication uses verified actor, validates property, and req
     grant_reason: "Complimentary showcase",
     expected_session: null,
     expected_attempt: null,
+    include_video: true,
   });
   assert.deepEqual(actions, ["publish"]);
 });
@@ -232,6 +233,17 @@ test("complimentary publication expires an open payment form before the database
   assert.deepEqual(actions, ["retrieve", "expire", "publish"]);
   assert.equal(payload?.expected_session, checkout);
   assert.equal(payload?.expected_attempt, 4);
+});
+
+test("a photo-only administrative publication needs no Stripe configuration and grants no video entitlement", async () => {
+  authorized = true;
+  process.env.STRIPE_CHECKOUT_MODE = "off";
+  const response = await PUBLISH(
+    request({ propertyId: id, package: "photos", reason: "Doar fotografii" }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(payload?.include_video, false);
+  assert.deepEqual(actions, ["publish"]);
 });
 test("in-flight payments and concurrent checkout or role changes do not receive a success response", async () => {
   authorized = true;

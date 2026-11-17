@@ -13,12 +13,21 @@ globalThis.fetch = async (input, init) => {
     : input instanceof Request
       ? await input.clone().json()
       : {};
-  const mapTemplate = /^map-test-(editorial|minimal|panorama|unmapped)$/.exec(
+  const photoOnly = /^photos-test-(editorial|minimal|panorama)$/.exec(
     body.property_slug || "",
   )?.[1];
+  const mapTemplate =
+    photoOnly ||
+    /^map-test-(editorial|minimal|panorama|unmapped)$/.exec(
+      body.property_slug || "",
+    )?.[1];
   if (mapTemplate) {
     const sample = demoWorkspace();
     return Response.json({
+      videoIncluded: !photoOnly,
+      ...(photoOnly
+        ? { film: { src: "/videos/template-property-tour.mp4" } }
+        : {}),
       property: {
         ...sample.properties[0],
         template: mapTemplate === "unmapped" ? "editorial" : mapTemplate,

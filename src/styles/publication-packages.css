@@ -1,0 +1,120 @@
+.publication-packages {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 28px 0 22px;
+}
+.publication-packages legend {
+  font: 600 15px/1.5 var(--sans);
+  padding: 0;
+  margin-bottom: 14px;
+}
+.publication-package-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.publication-package {
+  position: relative;
+  display: block;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d8dfd4;
+  border-radius: 12px;
+  background: #fff;
+  color: #25382e;
+  cursor: pointer;
+}
+.publication-package[data-selected="true"] {
+  background: #eef2e9;
+  border-color: #687e61;
+  box-shadow: inset 0 0 0 1px #687e61;
+}
+.publication-package:focus-within {
+  outline: 2px solid #687e61;
+  outline-offset: 3px;
+}
+.publication-package input {
+  position: absolute;
+  top: 20px;
+  right: 18px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0;
+  accent-color: #25382e;
+}
+.publication-package-content {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
+}
+.publication-package-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding-right: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.publication-package-name svg {
+  flex-shrink: 0;
+}
+.publication-package-content > strong {
+  font: 600 32px/1.1 var(--sans);
+}
+.publication-package-content > strong small {
+  font-size: 13px;
+  font-weight: 500;
+}
+.publication-package-content > span:not(.publication-package-name) {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #65715f;
+}
+.publication-package-content > small,
+.publication-packages > p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #65715f;
+}
+.publication-packages > p {
+  margin-top: 12px;
+}
+.publication-package:has(input:disabled) {
+  opacity: 0.65;
+  cursor: default;
+}
+.publish-choice-continue {
+  width: 100%;
+  justify-content: center;
+}
+.publish-change-package {
+  display: block;
+  margin: 20px auto 0;
+}
+.publish-selected-package {
+  font-size: 13px;
+  margin-top: 20px;
+  color: #65715f;
+}
+.admin-property-toolbar > .publication-packages {
+  flex-basis: 100%;
+  width: 100%;
+  max-width: 760px;
+}
+@media (max-width: 600px) {
+  .publication-package-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .publication-package {
+    padding: 17px;
+  }
+  .publication-package-content {
+    gap: 10px;
+  }
+  .publication-package-content > strong {
+    font-size: 28px;
+  }
+}

@@ -286,6 +286,7 @@ export function PropertyPreview({ id }: { id: string }) {
           preview
           videoPanel={publication.videoPanel}
           film={publication.film}
+          videoIncluded={publication.videoIncluded}
           onEdit={editing && !preparing && !busy ? edit : undefined}
         />
       </div>

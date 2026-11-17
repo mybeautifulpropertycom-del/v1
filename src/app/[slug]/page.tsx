@@ -19,6 +19,7 @@ export default async function Page({ params }: Props) {
       property={data.property}
       profile={data.profile}
       film={data.film ?? undefined}
+      videoIncluded={data.videoIncluded}
     />
   );
 }

@@ -24,6 +24,7 @@ let order: Record<string, unknown>,
   disputeStatus = "needs_response";
 let customerPosts: URLSearchParams[] = [];
 let previousSession: Record<string, unknown>;
+let stripeAmount = 24900;
 let stripePosts: URLSearchParams[] = [],
   applications: Record<string, unknown>[] = [];
 let POST: typeof import("../src/app/api/billing/checkout/route").POST;
@@ -34,6 +35,7 @@ before(async () => {
   ({ POST: WEBHOOK } = await import("../src/app/api/stripe/webhook/route"));
 });
 beforeEach(() => {
+  stripeAmount = 24900;
   delete process.env.HIGGSFIELD_ENABLED;
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_live_fake";
   process.env.STRIPE_CHECKOUT_MODE = "live";
@@ -41,6 +43,7 @@ beforeEach(() => {
   process.env.STRIPE_LIVE_PAYMENTS_ENABLED = "true";
   order = {
     amount: 24900,
+    includes_video: true,
     currency: "ron",
     id: orderId,
     property_id: id,
@@ -130,7 +133,7 @@ globalThis.fetch = async (input, init) => {
         livemode: true,
         status: "succeeded",
         currency: "ron",
-        amount: 24900,
+        amount: stripeAmount,
         metadata,
         latest_charge: "ch_live_one",
       });
@@ -139,7 +142,7 @@ globalThis.fetch = async (input, init) => {
         id: "ch_live_one",
         livemode: true,
         paid: true,
-        amount: 24900,
+        amount: stripeAmount,
         currency: "ron",
         payment_intent: "pi_live_one",
         amount_refunded: refunded,
@@ -184,10 +187,47 @@ globalThis.fetch = async (input, init) => {
     return Response.json(allowed);
   if (url.pathname.endsWith("/property_billing_settings"))
     return Response.json({ enabled: active });
-  if (url.pathname.endsWith("/rpc/request_property_publication"))
-    return Response.json(allowed ? { published: true, paid: true } : { order });
-  if (url.pathname.endsWith("/rpc/reserve_property_order"))
+  if (
+    url.pathname.endsWith("/rpc/request_property_publication") ||
+    url.pathname.endsWith("/rpc/reserve_property_order")
+  ) {
+    const body = JSON.parse(String(init?.body));
+    if (
+      order.status === "pending" &&
+      !order.checkout_session_id &&
+      typeof body.include_video === "boolean"
+    )
+      order = {
+        ...order,
+        includes_video: body.include_video,
+        amount: body.include_video ? 24900 : 14900,
+      };
+    return Response.json(
+      url.pathname.endsWith("/rpc/request_property_publication")
+        ? allowed
+          ? { published: true, paid: true }
+          : { order }
+        : order,
+    );
+  }
+  if (url.pathname.endsWith("/rpc/change_publication_package")) {
+    const body = JSON.parse(String(init?.body));
+    assert.equal(
+      expiredSessions,
+      1,
+      "The previous checkout is expired before changing the package",
+    );
+    assert.equal(body.expected_attempt, order.attempt);
+    assert.equal(body.expected_session, order.checkout_session_id);
+    order = {
+      ...order,
+      includes_video: body.include_video,
+      amount: body.include_video ? 24900 : 14900,
+      attempt: Number(order.attempt) + 1,
+      checkout_session_id: null,
+    };
     return Response.json(order);
+  }
   if (url.pathname.endsWith("/rpc/apply_property_payment")) {
     if (failSave) return Response.json({ message: "failed" }, { status: 500 });
     const update = JSON.parse(String(init?.body));
@@ -532,4 +572,85 @@ test("a completed old embedded session waits for reconciliation instead of offer
   assert.equal(expiredSessions, 0);
   assert.equal(stripePosts.length, 0);
   assert.equal(customerPosts.length, 0);
+});
+
+const photoRequest = () =>
+  new Request("https://app.example/api/billing/checkout", {
+    method: "POST",
+    headers: { authorization: "Bearer user-token" },
+    body: JSON.stringify({
+      propertyId: id,
+      embedded: true,
+      package: "photos",
+      amount: 1,
+      includes_video: true,
+    }),
+  });
+
+test("photo-only checkout fixes 149 RON on the server and returns the confirmed package to the card form", async () => {
+  const response = await POST(photoRequest());
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.package, "photos");
+  assert.equal(body.amount, 14900);
+  assert.equal(order.includes_video, false);
+  assert.equal(
+    stripePosts[0].get("line_items[0][price_data][unit_amount]"),
+    "14900",
+  );
+  assert.equal(
+    stripePosts[0].get("line_items[0][price_data][product_data][name]"),
+    "Prezentare cu fotografii",
+  );
+  assert.equal(
+    stripePosts[0].get("payment_intent_data[metadata][publication_package]"),
+    "photos",
+  );
+});
+
+test("changing from video to photos expires the old session and rotates its durable attempt before creating a 149 RON checkout", async () => {
+  order.checkout_session_id = "cs_live_one";
+  const response = await POST(photoRequest());
+  assert.equal(response.status, 200);
+  assert.equal(expiredSessions, 1);
+  assert.equal(order.attempt, 2);
+  assert.equal(stripePosts.length, 1);
+  assert.equal(
+    stripePosts[0].get("line_items[0][price_data][unit_amount]"),
+    "14900",
+  );
+});
+
+test("a completing old payment prevents package switching and never offers a second charge", async () => {
+  order.checkout_session_id = "cs_live_one";
+  previousSession.status = "complete";
+  assert.deepEqual(await (await POST(photoRequest())).json(), {
+    processing: true,
+  });
+  assert.equal(stripePosts.length, 0);
+  assert.equal(expiredSessions, 0);
+  assert.equal(order.amount, 24900);
+});
+
+test("a verified 149 RON payment is accepted only for an exact photo-only order", async () => {
+  order.amount = 14900;
+  order.includes_video = false;
+  stripeAmount = 14900;
+  const response = await WEBHOOK(
+    webhook("checkout.session.completed", session({ amount_total: 14900 })),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(applications.length, 1);
+  assert.equal(applications[0].new_status, "paid");
+});
+
+test("a 149 RON receipt cannot fulfil the video package even when other identifiers match", async () => {
+  order.amount = 14900;
+  order.includes_video = true;
+  stripeAmount = 14900;
+  const response = await WEBHOOK(
+    webhook("checkout.session.completed", session({ amount_total: 14900 })),
+  );
+  assert.equal(response.status, 400);
+  assert.equal(applications.length, 0);
 });

@@ -2,9 +2,21 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { serverSupabase } from "./supabase";
+import {
+  isPublicationPackage,
+  orderPackage,
+  publicationPackages,
+  type PublicationPackage,
+} from "./publication-packages";
 
 export const PROPERTY_PACKAGE_CENTS = 24900;
 export const PROPERTY_PACKAGE_CURRENCY = "ron";
+export function selectedPublicationPackage(value: unknown): PublicationPackage {
+  if (value === undefined) return "video"; // Existing clients keep their package.
+  if (!isPublicationPackage(value))
+    throw new BillingError("Alege o variantă de publicare.", 400);
+  return value;
+}
 export const UUID = /^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i;
 export class BillingError extends Error {
   constructor(
@@ -140,19 +152,31 @@ export function billingFailure(error: unknown) {
 }
 
 // Accept historical receipts only as an exact amount/currency pair.
-export function supportedPackage(amount: unknown, currency: unknown): boolean {
-  return (
+export function supportedPackage(
+  amount: unknown,
+  currency: unknown,
+  includesVideo?: boolean,
+): boolean {
+  const video =
     (amount === PROPERTY_PACKAGE_CENTS &&
       currency === PROPERTY_PACKAGE_CURRENCY) ||
-    (amount === 9700 && currency === "usd")
-  );
+    (amount === 9700 && currency === "usd");
+  const photos =
+    amount === publicationPackages.photos.amount &&
+    currency === PROPERTY_PACKAGE_CURRENCY;
+  return includesVideo === undefined
+    ? video || photos
+    : includesVideo
+      ? video
+      : photos;
 }
 export function requireRomanianOrder(order: {
   amount?: number;
   currency?: string;
+  includes_video?: boolean;
 }) {
   if (
-    order.amount !== PROPERTY_PACKAGE_CENTS ||
+    order.amount !== publicationPackages[orderPackage(order)].amount ||
     order.currency !== PROPERTY_PACKAGE_CURRENCY
   )
     throw new BillingError(

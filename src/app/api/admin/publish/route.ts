@@ -8,7 +8,9 @@ import {
   UUID,
   stripeClient,
   stripeConfiguration,
+  selectedPublicationPackage,
 } from "@/lib/stripe-server";
+import { publicationPackages } from "@/lib/publication-packages";
 import { publicationErrors, type Property, type Profile } from "@/lib/model";
 import { recordLiveSession } from "@/lib/stripe-live";
 import { wakeVideoWorker } from "@/lib/higgsfield-worker";
@@ -24,6 +26,8 @@ export async function POST(request: Request) {
       throw new BillingError("Alege o proprietate salvată.", 400);
     }
     const id = body?.propertyId;
+    const offer =
+      publicationPackages[selectedPublicationPackage(body?.package)];
     if (typeof id !== "string" || !UUID.test(id))
       throw new BillingError("Alege o proprietate salvată.", 400);
     const reason =
@@ -87,6 +91,7 @@ export async function POST(request: Request) {
         grant_reason: reason,
         expected_session: order?.checkout_session_id || null,
         expected_attempt: order?.attempt ?? null,
+        include_video: offer.includesVideo,
       },
     );
     if (publishError) {
@@ -103,7 +108,7 @@ export async function POST(request: Request) {
     }
     if (!result?.published)
       throw new BillingError("Publication is not confirmed yet.");
-    if (videoEnabled()) after(wakeVideoWorker);
+    if (result.videoIncluded && videoEnabled()) after(wakeVideoWorker);
     return billingJson(result);
   } catch (error) {
     return adminFailure(error);

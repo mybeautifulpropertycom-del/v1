@@ -7,6 +7,12 @@ import {
   type Property,
 } from "@/lib/model";
 import { embeddedCheckout } from "@/lib/embedded-checkout";
+import { checkoutPackage } from "@/lib/checkout-package";
+import {
+  orderPackage,
+  publicationPackages,
+  type PublicationPackage,
+} from "@/lib/publication-packages";
 import { createLiveCheckout, liveBillingStatus } from "@/lib/stripe-live";
 import {
   billingDatabase,
@@ -14,13 +20,13 @@ import {
   BillingError,
   billingJson,
   billingUser,
-  PROPERTY_PACKAGE_CENTS,
   PROPERTY_PACKAGE_CURRENCY,
   readLimitedBody,
   stripeClient,
   stripeConfiguration,
   checkoutMode,
   UUID,
+  selectedPublicationPackage,
 } from "@/lib/stripe-server";
 
 export const runtime = "nodejs";
@@ -96,7 +102,8 @@ export async function GET(request: Request) {
         published: property?.status === "published",
         publicPath: property ? publicPath(property) : null,
         publicationError: order?.publication_error ?? null,
-        videoStatus: job?.status ?? null,
+        videoStatus:
+          state.videoIncluded === false ? null : (job?.status ?? null),
         videoNeedsReview: ["uncertain", "provider_failed"].includes(
           job?.provider_phase || "",
         ),
@@ -116,7 +123,7 @@ export async function GET(request: Request) {
           job.attempts < 3 &&
           Date.now() - Date.parse(job.updated_at) >= 60000,
         film:
-          state.allowed && job?.video_url
+          state.videoIncluded !== false && state.allowed && job?.video_url
             ? { src: job.video_url, poster: job.poster_url }
             : null,
       });
@@ -142,11 +149,13 @@ export async function POST(request: Request) {
     const config = stripeConfiguration();
     let id: unknown;
     let embedded = false;
+    let selected: PublicationPackage = "video";
     const body = await readLimitedBody(request, 1024);
     try {
       const parsed = JSON.parse(body);
       id = parsed?.propertyId;
       embedded = parsed?.embedded === true;
+      selected = selectedPublicationPackage(parsed?.package);
     } catch {
       throw new BillingError("Alege o proprietate salvată.", 400);
     }
@@ -172,17 +181,38 @@ export async function POST(request: Request) {
     const errors = publicationErrors(property as Property, profile as Profile);
     if (errors.length) throw new BillingError(errors.join(" "), 400);
     if (embedded)
-      return await embeddedCheckout(config, id, user.id, profile as Profile);
-    if (config.live) return await createLiveCheckout(config, id, user.id);
+      return await embeddedCheckout(
+        config,
+        id,
+        user.id,
+        profile as Profile,
+        selected,
+      );
+    if (config.live)
+      return await createLiveCheckout(config, id, user.id, selected);
     const admin = billingDatabase(config);
-    const { data: order, error: reservationError } = await admin.rpc(
+    const { data: reserved, error: reservationError } = await admin.rpc(
       "reserve_stripe_test_order",
-      { listing_id: id, agent_id: user.id },
+      {
+        listing_id: id,
+        agent_id: user.id,
+        include_video: publicationPackages[selected].includesVideo,
+      },
     );
-    if (reservationError || !order)
+    if (reservationError || !reserved)
       throw new BillingError("The Stripe test database setup is incomplete.");
-    if (order.status === "paid") return billingJson({ paid: true });
+    if (reserved.status === "paid") return billingJson({ paid: true });
+    const prepared = await checkoutPackage(
+      config,
+      id,
+      user.id,
+      reserved,
+      selected,
+    );
+    if (prepared.processing) return billingJson({ processing: true });
+    const order = prepared.order;
     requireRomanianOrder(order);
+    const offer = publicationPackages[orderPackage(order)];
     const stripe = stripeClient(config.key);
     // A paid session may arrive before its webhook. Do not offer another charge.
     if (order.checkout_session_id) {
@@ -211,11 +241,10 @@ export async function POST(request: Request) {
             quantity: 1,
             price_data: {
               currency: PROPERTY_PACKAGE_CURRENCY,
-              unit_amount: PROPERTY_PACKAGE_CENTS,
+              unit_amount: offer.amount,
               product_data: {
-                name: "Site de proprietate + film de prezentare",
-                description:
-                  "O proprietate. Plată unică de 249 RON. Doar plată de test; fără plată reală sau comandă video.",
+                name: offer.name,
+                description: `${offer.description} Plată de test de ${offer.price} RON; fără plată reală sau comandă video.`,
               },
             },
           },
@@ -226,6 +255,7 @@ export async function POST(request: Request) {
           order_id: order.id,
           property_id: id,
           owner_id: user.id,
+          publication_package: offer.id,
         },
         expires_at: Math.floor(new Date(order.expires_at).getTime() / 1000),
         success_url: `${config.origin}/dashboard/properties/${id}?checkout=success`,

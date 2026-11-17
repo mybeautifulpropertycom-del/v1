@@ -7,6 +7,7 @@ async function admin(page: Page) {
   const state = await workspace(page, {}, [], true);
   let published = false,
     calls = 0;
+  let includesVideo = true;
   await page.route("**/api/admin/**", (route) => {
     const url = new URL(route.request().url());
     expect(route.request().headers().authorization).toBe(
@@ -28,6 +29,7 @@ async function admin(page: Page) {
       });
     if (url.pathname.endsWith("/publish")) {
       expect(route.request().postDataJSON().propertyId).toBe(id);
+      includesVideo = route.request().postDataJSON().package !== "photos";
       calls++;
       published = true;
       state.property.status = "published";
@@ -37,6 +39,7 @@ async function admin(page: Page) {
           complimentary: true,
           paid: false,
           publicPath: `/p/${state.property.slug}`,
+          videoIncluded: includesVideo,
         },
       });
     }
@@ -45,15 +48,18 @@ async function admin(page: Page) {
         json: {
           property: state.property,
           profile: state.profile,
+          videoIncluded: includesVideo,
+          packageLocked: published,
           grant: published
             ? {
                 reason: "Complimentary showcase",
                 granted_at: "2026-10-26T10:00:00Z",
               }
             : null,
-          video: published
-            ? { status: "queued", completed: 0, total: 0, film: null }
-            : null,
+          video:
+            published && includesVideo
+              ? { status: "queued", completed: 0, total: 0, film: null }
+              : null,
         },
       });
     expect(url.searchParams.get("owner")).toBe(owner);
@@ -111,6 +117,9 @@ test("admin reviews an agent's property, publishes at no charge and sees its vid
   await expect(page).toHaveURL(new RegExp(`/administrare/proprietati/${id}$`));
   await expect(page.locator(".heritage-story-copy")).toBeVisible();
   await page.getByLabel("Notă de publicare").fill("Complimentary showcase");
+  await page
+    .getByRole("radio", { name: /Prezentare cu fotografii și videoclip/ })
+    .check();
   await page.getByRole("button", { name: "Publică gratuit" }).click();
   await expect(
     page.getByText("Video: în coadă.", { exact: true }),
@@ -137,6 +146,12 @@ test("admin's own editor publishes directly without requesting a payment session
   await page
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
+    .click();
+  await page
+    .getByRole("radio", { name: /Prezentare cu fotografii și videoclip/ })
+    .check();
+  await page
+    .getByRole("button", { name: "Publică proprietatea · Gratuit" })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
     "Site-ul proprietății a fost publicat.",
@@ -168,6 +183,64 @@ test("ordinary agents have neither the admin navigation nor client access to the
     page.getByRole("link", { name: "Administrare", exact: true }),
   ).toHaveCount(0);
   expect(requests).toBe(0);
+});
+
+test("administrator defaults to photos, publishes an agent's property for free and hides the video section", async ({
+  page,
+}) => {
+  const setup = await admin(page);
+  let checkouts = 0;
+  await page.route("**/api/billing/checkout**", (route) => {
+    if (route.request().method() === "POST") checkouts++;
+    return route.fulfill({
+      json: {
+        enabled: true,
+        mode: "live",
+        published: true,
+        allowed: true,
+        videoIncluded: false,
+        videoStatus: null,
+      },
+    });
+  });
+  await page.goto(`/administrare/proprietati/${id}`);
+  await expect(page.getByRole("radio").first()).toBeChecked();
+  await expect(page.locator("#film")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Publică gratuit", exact: true })
+    .click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Proprietatea este publică, fără videoclip." }),
+  ).toBeVisible();
+  await expect(page.locator("#film")).toHaveCount(0);
+  expect(setup.calls).toBe(1);
+  expect(checkouts).toBe(0);
+});
+
+test("administrator chooses photos in the personal editor without a card form or video progress", async ({
+  page,
+}) => {
+  const setup = await admin(page);
+  await page.goto(`/previzualizare/${id}`);
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publică proprietatea" })
+    .click();
+  await expect(
+    page.getByRole("dialog").getByRole("radio").first(),
+  ).toBeChecked();
+  await expect(page.getByRole("dialog")).not.toContainText("149 RON");
+  await page
+    .getByRole("button", { name: "Publică proprietatea · Gratuit" })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Site-ul proprietății a fost publicat.",
+  );
+  await page.getByRole("button", { name: "Înapoi la editare" }).click();
+  await expect(page.locator("#film,.property-video-status")).toHaveCount(0);
+  expect(setup.calls).toBe(1);
 });
 
 test("admin directory remains usable on a narrow screen", async ({ page }) => {

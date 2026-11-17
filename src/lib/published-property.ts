@@ -11,6 +11,7 @@ export const getPublished = cache(
     property: PublicProperty;
     profile: PublicProfile;
     film?: { src: string; poster?: string } | null;
+    videoIncluded?: boolean;
   } | null> => {
     if (!/^[a-z0-9-]{1,110}$/.test(slug)) return null;
     const supabase = serverSupabase();

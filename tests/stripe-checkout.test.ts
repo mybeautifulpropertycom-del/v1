@@ -107,6 +107,7 @@ globalThis.fetch = async (input, init) => {
     assert.deepEqual(JSON.parse(String(init?.body)), {
       listing_id: propertyId,
       agent_id: owner,
+      include_video: true,
     });
     return Response.json(order);
   }

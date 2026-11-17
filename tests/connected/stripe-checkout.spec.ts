@@ -15,18 +15,24 @@ async function fixture(page: Page) {
   );
   let paid = false,
     postCount = 0;
+  let selected: "photos" | "video" = "video";
   await page.route("**/api/billing/checkout**", (route) => {
     if (route.request().method() === "POST") {
       postCount++;
+      selected = route.request().postDataJSON().package;
+      expect(["photos", "video"]).toContain(selected);
       expect(route.request().postDataJSON()).toEqual({
         propertyId: id,
         embedded: true,
+        package: selected,
       });
       return route.fulfill({
         json: {
           clientSecret: "cs_live_browser_secret_fake",
           publishableKey: "pk_live_browser",
           mode: "live",
+          package: selected,
+          amount: selected === "photos" ? 14900 : 24900,
           billingDetails: {
             name: "Saved Agent",
             email: "saved@example.com",
@@ -46,7 +52,9 @@ async function fixture(page: Page) {
         allowed: paid,
         published: paid,
         publicPath: "/123-palm-drive",
-        videoStatus: paid ? "queued" : null,
+        package: postCount ? selected : null,
+        videoIncluded: selected === "video",
+        videoStatus: paid && selected === "video" ? "queued" : null,
       },
     });
   });
@@ -98,6 +106,95 @@ async function fixture(page: Page) {
     },
   };
 }
+async function chooseVideo(page: Page) {
+  await page
+    .getByRole("radio", { name: /Prezentare cu fotografii și videoclip/ })
+    .check();
+  await page
+    .getByRole("button", { name: "Continuă la plată · 249 RON" })
+    .click();
+}
+
+for (const template of ["editorial", "minimal", "panorama"] as const) {
+  test(`${template}: the 149 RON package publishes without a film section and remains film-free after reload`, async ({
+    page,
+  }) => {
+    const setup = await fixture(page);
+    setup.state.property.template = template;
+    await page.goto(`/previzualizare/${id}`);
+    await page
+      .locator(".inline-edit-toolbar")
+      .getByRole("button", { name: "Publică proprietatea" })
+      .click();
+    await expect(page.getByRole("dialog").getByRole("radio")).toHaveCount(2);
+    await expect(page.getByRole("radio").first()).toBeChecked();
+    expect(setup.posts).toBe(0);
+    await page
+      .getByRole("button", { name: "Continuă la plată · 149 RON" })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Plătește 149 RON" }),
+    ).toBeEnabled();
+    await page.getByRole("button", { name: "Plătește 149 RON" }).click();
+    await expect(page.getByRole("dialog")).toContainText(
+      "Site-ul proprietății a fost publicat.",
+    );
+    await expect(page.getByRole("dialog")).not.toContainText(
+      "Filmul inclus va apărea",
+    );
+    await page.getByRole("button", { name: "Înapoi la editare" }).click();
+    await expect(page.locator("#film")).toHaveCount(0);
+    await expect(page.locator(".property-video-status")).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator(".inline-edit-toolbar")).toBeVisible();
+    await expect(page.locator("#film")).toHaveCount(0);
+    await page.goto(`/photos-test-${template}`);
+    await expect(page.locator("#film")).toHaveCount(0);
+    expect(setup.posts).toBe(1);
+  });
+}
+
+test("customers can review both packages before checkout and change a 249 RON selection to 149 RON", async ({
+  page,
+}, testInfo) => {
+  const setup = await fixture(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(`/previzualizare/${id}`);
+  await page
+    .locator(".inline-edit-toolbar")
+    .getByRole("button", { name: "Publică proprietatea" })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText("149");
+  await expect(page.getByRole("dialog")).toContainText("249");
+  expect(setup.posts).toBe(0);
+  await page
+    .getByRole("dialog")
+    .screenshot({ path: testInfo.outputPath("packages-desktop.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page
+    .getByRole("dialog")
+    .screenshot({ path: testInfo.outputPath("packages-mobile.png") });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await chooseVideo(page);
+  await expect(
+    page.getByRole("button", { name: "Plătește 249 RON" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Schimbă varianta de publicare" })
+    .click();
+  await page.getByRole("radio").first().check();
+  await page
+    .getByRole("button", { name: "Continuă la plată · 149 RON" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Plătește 149 RON" }),
+  ).toBeVisible();
+  expect(setup.posts).toBe(2);
+});
 test("the private website can be edited before payment; both Publish buttons open the same modal", async ({
   page,
 }) => {
@@ -115,6 +212,9 @@ test("the private website can be edited before payment; both Publish buttons ope
   });
   await expect(buttons).toHaveCount(2);
   await buttons.first().click();
+  await expect(page.getByRole("dialog").getByRole("radio")).toHaveCount(2);
+  expect(setup.posts).toBe(0);
+  await chooseVideo(page);
   await expect(page.getByRole("dialog")).toContainText("249 RON");
   await expect(page.getByRole("dialog")).not.toContainText(
     "Site de proprietate + film de prezentare",
@@ -154,6 +254,7 @@ test("the private website can be edited before payment; both Publish buttons ope
     .click();
   expect(setup.state.property.status).toBe("draft");
   await buttons.last().click();
+  await chooseVideo(page);
   await expect(
     page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeVisible();
@@ -172,6 +273,7 @@ test("completed embedded checkout waits for server publication, shows the live l
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
+  await chooseVideo(page);
   await page.getByRole("button", { name: "Plătește 249 RON" }).click();
   await expect(page.getByRole("dialog")).toContainText(
     "Site-ul proprietății a fost publicat.",
@@ -254,6 +356,7 @@ test("publication modal fits a mobile viewport and Escape returns to the saved e
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
+  await chooseVideo(page);
   await expect(
     page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeVisible();
@@ -444,6 +547,7 @@ test("a declined card keeps the form and retries without reserving another check
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
+  await chooseVideo(page);
   await expect(
     page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeEnabled();
@@ -483,6 +587,7 @@ test("repeated submission confirms once and waits for server publication", async
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
+  await chooseVideo(page);
   await expect(
     page.getByRole("button", { name: "Plătește 249 RON" }),
   ).toBeEnabled();

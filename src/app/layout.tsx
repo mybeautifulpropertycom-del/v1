@@ -6,6 +6,7 @@ import "./globals.css";
 import "@/styles/atelier.css";
 import "@/styles/footer.css";
 import "@/styles/admin.css";
+import "@/styles/publication-packages.css";
 import "@/styles/property-print.css";
 import "@/styles/neighbourhood.css";
 import "@/styles/workspace-typography.css";

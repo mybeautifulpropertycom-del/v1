@@ -36,6 +36,7 @@ export function AtelierWebsite({
   onEdit,
   film,
   videoPanel,
+  videoIncluded = true,
   previewBackLink,
 }: PropertyWebsiteProps) {
   const [lightbox, setLightbox] = useState<number | null>(null);
@@ -436,7 +437,7 @@ export function AtelierWebsite({
           </div>
           {!property.images.length && <p>Fotografiile tale vor apărea aici.</p>}
         </section>
-        {(film?.src || isPreview) && (
+        {videoIncluded && (film?.src || isPreview) && (
           <section className="atelier-film atelier-pad" id="film">
             <div className="atelier-film-heading">
               <h2>

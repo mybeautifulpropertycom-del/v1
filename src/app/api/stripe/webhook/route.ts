@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     // A property/account may have been deleted while Checkout was open. Keep
     // the test receipt, without ever recreating or publishing that property.
     if (
+      !supportedPackage(order.amount, order.currency, order.includes_video ?? true) ||
       order.amount !== session.amount_total ||
       order.currency !== session.currency ||
       (order.property_id && order.property_id !== property_id) ||

@@ -19,6 +19,12 @@ import { publicPath, type Property } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { adminRequest } from "@/lib/admin-client";
 import {
+  isPublicationPackage,
+  publicationPackages,
+  type PublicationPackage,
+} from "@/lib/publication-packages";
+import { PublicationPackagePicker } from "./publication-package-picker";
+import {
   PropertyVideoProgressPanel,
   PropertyVideoStatus,
 } from "./property-video-progress";
@@ -39,8 +45,15 @@ type PublicationStatus = {
   videoProgress?: { completed: number; total: number } | null;
   canRetryVideo?: boolean;
   film?: { src: string; poster?: string } | null;
+  package?: PublicationPackage | null;
+  videoIncluded?: boolean;
 };
-async function request(id: string, method: "GET" | "POST", retryVideo = false) {
+async function request(
+  id: string,
+  method: "GET" | "POST",
+  retryVideo = false,
+  selected: PublicationPackage = "video",
+) {
   const { data } = await getSupabase()!.auth.getSession();
   if (!data.session) throw new Error("Autentifică-te din nou.");
   const response = await fetch(
@@ -54,7 +67,13 @@ async function request(id: string, method: "GET" | "POST", retryVideo = false) {
         "Content-Type": "application/json",
       },
       ...(method === "POST"
-        ? { body: JSON.stringify({ propertyId: id, embedded: true }) }
+        ? {
+            body: JSON.stringify({
+              propertyId: id,
+              embedded: true,
+              package: selected,
+            }),
+          }
         : {}),
       signal: AbortSignal.timeout(55000),
     },
@@ -74,12 +93,14 @@ function PaymentForm({
   billingDetails,
   onComplete,
   onError,
+  amount,
 }: {
   clientSecret: string;
   publishableKey: string;
   billingDetails: BillingDetails;
   onComplete: () => void;
   onError: (error: string) => void;
+  amount: number;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const actions = useRef<StripeCheckoutLoadActionsSuccess | null>(null);
@@ -225,7 +246,7 @@ function PaymentForm({
         type="submit"
         disabled={!ready || busy}
       >
-        {busy ? "Se procesează plata…" : "Plătește 249 RON"}
+        {busy ? "Se procesează plata…" : `Plătește ${amount / 100} RON`}
       </button>
     </form>
   );
@@ -289,14 +310,25 @@ export function usePropertyPublication(options: {
   const [open, setOpen] = useState(false),
     [status, setStatus] = useState<PublicationStatus>({}),
     [phase, setPhase] = useState<
-      "loading" | "payment" | "confirming" | "success" | "demo" | "error"
+      | "loading"
+      | "choose"
+      | "payment"
+      | "confirming"
+      | "success"
+      | "demo"
+      | "error"
     >("loading"),
     [error, setError] = useState("");
   const [payment, setPayment] = useState<{
     clientSecret: string;
     publishableKey: string;
     billingDetails: BillingDetails;
+    amount: number;
   } | null>(null);
+  const [selectedPackage, setSelectedPackage] =
+    useState<PublicationPackage>("photos");
+  const [packageLocked, setPackageLocked] = useState(false);
+  const preparedProperty = useRef<Property | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [videoError, setVideoError] = useState("");
   const pending = useRef(false),
@@ -390,7 +422,7 @@ export function usePropertyPublication(options: {
     }, 15000);
     return () => clearInterval(timer);
   }, [id, options.demo, status.videoStatus, refresh]);
-  const publish = useCallback(async () => {
+  const publish = useCallback(async (selected?: PublicationPackage) => {
     if (pending.current || current.current.disabled) return;
     pending.current = true;
     const attempt = ++generation.current;
@@ -399,23 +431,60 @@ export function usePropertyPublication(options: {
     setError("");
     setPayment(null);
     try {
-      const property = await current.current.prepare();
+      if (!selected) preparedProperty.current = null;
+      const property =
+        preparedProperty.current || (await current.current.prepare());
       if (!property)
         throw new Error(
           "Verifică detaliile proprietății și salvează modificările, apoi încearcă din nou.",
         );
       if (attempt !== generation.current) return;
+      preparedProperty.current = property;
       if (current.current.demo) {
         setPhase("demo");
         return;
       }
+      if (!selected) {
+        let latest: PublicationStatus;
+        if (administrator.current) {
+          const details = await adminRequest(
+            `properties?id=${encodeURIComponent(property.id)}`,
+          );
+          const locked = Boolean(
+            details.packageLocked || details.grant || details.video,
+          );
+          setPackageLocked(locked);
+          latest = {
+            allowed: locked,
+            published: details.property?.status === "published",
+            videoIncluded: details.videoIncluded ?? true,
+            package: locked
+              ? details.videoIncluded === false
+                ? "photos"
+                : "video"
+              : null,
+          };
+        } else {
+          latest = await request(property.id, "GET");
+          setPackageLocked(Boolean(latest.allowed));
+        }
+        if (attempt !== generation.current) return;
+        setStatus(latest);
+        setSelectedPackage(
+          isPublicationPackage(latest.package) ? latest.package : "photos",
+        );
+        setPhase("choose");
+        return;
+      }
+      const offer = publicationPackages[selected];
       const result = administrator.current
         ? await adminRequest("publish", {
             propertyId: property.id,
             reason:
               "Publicare de către administrator din editorul proprietății",
+            package: selected,
           })
-        : await request(property.id, "POST");
+        : await request(property.id, "POST", false, selected);
       if (attempt !== generation.current) return;
       if (result.publicationError) throw new Error(result.publicationError);
       if (result.published) {
@@ -424,12 +493,16 @@ export function usePropertyPublication(options: {
         setStatus((s) => ({
           ...s,
           published: true,
+          videoIncluded: result.videoIncluded ?? offer.includesVideo,
           publicPath: publicPath(property),
           ...(administrator.current
             ? {
                 allowed: true,
                 paid: result.paid === true,
-                videoStatus: s.videoStatus || "queued",
+                videoStatus:
+                  (result.videoIncluded ?? offer.includesVideo)
+                    ? s.videoStatus || "queued"
+                    : null,
               }
             : {}),
         }));
@@ -442,8 +515,20 @@ export function usePropertyPublication(options: {
         );
         setPhase("error");
       } else if (result.clientSecret && result.publishableKey) {
-        setStatus((s) => ({ ...s, mode: result.mode }));
-        setPayment(result);
+        if (
+          (result.package && result.package !== selected) ||
+          (result.amount && result.amount !== offer.amount)
+        )
+          throw new Error(
+            "Varianta de plată s-a schimbat. Verifică alegerea înainte de a continua.",
+          );
+        setStatus((s) => ({
+          ...s,
+          mode: result.mode,
+          videoIncluded: offer.includesVideo,
+          package: selected,
+        }));
+        setPayment({ ...result, amount: result.amount ?? offer.amount });
         setPhase("payment");
       } else
         throw new Error("Formularul securizat de plată nu a putut fi deschis.");
@@ -541,13 +626,34 @@ export function usePropertyPublication(options: {
         <h2 id="publish-dialog-title">
           {phase === "success"
             ? "Proprietatea este publicată."
-            : phase === "payment"
-              ? "Plată securizată"
-              : "Pregătită pentru următorul capitol."}
+            : phase === "choose"
+              ? "Cum vrei să prezinți proprietatea?"
+              : phase === "payment"
+                ? "Plată securizată"
+                : "Pregătită pentru următorul capitol."}
         </h2>
         <p>{options.property?.title || "Site-ul proprietății tale"}</p>
       </div>
-      {phase !== "success" && phase !== "payment" && phase !== "confirming" && (
+      {phase === "choose" && (
+        <>
+          <PublicationPackagePicker
+            value={selectedPackage}
+            onChange={setSelectedPackage}
+            administrator={isAdmin}
+            locked={packageLocked}
+          />
+          <button
+            type="button"
+            className="button primary publish-choice-continue"
+            onClick={() => void publish(selectedPackage)}
+          >
+            {isAdmin || status.allowed
+              ? "Publică proprietatea · Gratuit"
+              : `Continuă la plată · ${publicationPackages[selectedPackage].price} RON`}
+          </button>
+        </>
+      )}
+      {phase === "error" && (
         <div className="publish-offer">
           <div>
             <strong>
@@ -555,7 +661,8 @@ export function usePropertyPublication(options: {
                 "Inclus"
               ) : (
                 <>
-                  249 <small>RON</small>
+                  {publicationPackages[selectedPackage].price}{" "}
+                  <small>RON</small>
                 </>
               )}
             </strong>
@@ -572,19 +679,23 @@ export function usePropertyPublication(options: {
               <Check size={16} />
               Site-ul publicat al proprietății
             </li>
-            <li>
-              <Check size={16} />
-              Un film de prezentare din fotografiile tale
-            </li>
+            {publicationPackages[selectedPackage].includesVideo && (
+              <li>
+                <Check size={16} />
+                Un film de prezentare din fotografiile tale
+              </li>
+            )}
             <li>
               <Check size={16} />
               Posibilitatea de a edita în continuare site-ul proprietății
             </li>
           </ul>
           <p>
-            {isAdmin || status.allowed
-              ? "Site-ul va fi publicat gratuit. Filmul inclus va fi adăugat când este gata."
-              : "Site-ul se publică după confirmarea plății. Filmul va fi adăugat când este gata."}
+            {!publicationPackages[selectedPackage].includesVideo
+              ? "Se publică prezentarea fără generare video."
+              : isAdmin || status.allowed
+                ? "Site-ul va fi publicat gratuit. Filmul inclus va fi adăugat când este gata."
+                : "Site-ul se publică după confirmarea plății. Filmul va fi adăugat când este gata."}
           </p>
         </div>
       )}
@@ -597,6 +708,10 @@ export function usePropertyPublication(options: {
       )}
       {phase === "payment" && payment && (
         <>
+          <p className="publish-selected-package">
+            {publicationPackages[selectedPackage].name} · {payment.amount / 100}{" "}
+            RON
+          </p>
           <PaymentForm
             {...payment}
             onComplete={() => {
@@ -608,6 +723,16 @@ export function usePropertyPublication(options: {
               setPhase("error");
             }}
           />
+          <button
+            type="button"
+            className="text-button publish-change-package"
+            onClick={() => {
+              setPayment(null);
+              setPhase("choose");
+            }}
+          >
+            Schimbă varianta de publicare
+          </button>
           <p className="publish-secure">
             <LockKeyhole size={14} />
             Plată securizată prin Stripe
@@ -635,7 +760,7 @@ export function usePropertyPublication(options: {
           <button
             type="button"
             className="text-button"
-            onClick={() => void publish()}
+            onClick={() => void publish(selectedPackage)}
           >
             Încearcă din nou
           </button>
@@ -670,7 +795,7 @@ export function usePropertyPublication(options: {
           <Check size={32} />
           <p role="status">Site-ul proprietății a fost publicat.</p>
           <p>
-            {status.videoStatus
+            {status.videoIncluded !== false && status.videoStatus
               ? "Filmul inclus va apărea pe site când este gata."
               : "Site-ul este pregătit pentru distribuire."}
           </p>
@@ -694,8 +819,10 @@ export function usePropertyPublication(options: {
   return {
     publish,
     dialog,
-    videoPanel,
-    videoStatus,
-    film: status.film ?? undefined,
+    videoPanel: status.videoIncluded === false ? null : videoPanel,
+    videoStatus: status.videoIncluded === false ? null : videoStatus,
+    videoIncluded: status.videoIncluded !== false,
+    film:
+      status.videoIncluded === false ? undefined : (status.film ?? undefined),
   };
 }

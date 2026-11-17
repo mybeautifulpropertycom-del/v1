@@ -2,12 +2,17 @@ import { supportedPackage } from "./stripe-server";
 import { requireRomanianOrder } from "./stripe-server";
 // Server-only live purchase handling. Sandbox orders cannot grant these rights.
 import type Stripe from "stripe";
+import { checkoutPackage } from "./checkout-package";
+import {
+  orderPackage,
+  publicationPackages,
+  type PublicationPackage,
+} from "./publication-packages";
 import {
   billingDatabase,
   BillingError,
   billingJson,
   livePaymentsEnabled,
-  PROPERTY_PACKAGE_CENTS,
   PROPERTY_PACKAGE_CURRENCY,
   stripeClient,
   stripeConfiguration,
@@ -48,7 +53,7 @@ export async function liveBillingStatus(
     }),
     admin
       .from("property_orders")
-      .select("status,video_status")
+      .select("status,video_status,includes_video")
       .eq("property_id", propertyId)
       .eq("owner_id", ownerId)
       .maybeSingle(),
@@ -63,7 +68,10 @@ export async function liveBillingStatus(
     paid: order?.status === "paid",
     allowed: Boolean(allowed),
     status: order?.status ?? "unpaid",
-    videoStatus: order?.video_status ?? null,
+    package: order ? orderPackage(order) : null,
+    videoIncluded: order?.includes_video ?? true,
+    videoStatus:
+      order?.includes_video === false ? null : (order?.video_status ?? null),
   });
 }
 
@@ -71,6 +79,7 @@ export async function createLiveCheckout(
   config: Config,
   propertyId: string,
   ownerId: string,
+  selected: PublicationPackage = "video",
 ) {
   if (!livePaymentsEnabled())
     throw new BillingError(
@@ -85,11 +94,12 @@ export async function createLiveCheckout(
   if (accessError)
     throw new BillingError("The live billing database setup is incomplete.");
   if (allowed) return liveBillingStatus(config, propertyId, ownerId);
-  const { data: order, error } = await admin.rpc("reserve_property_order", {
+  const { data: reserved, error } = await admin.rpc("reserve_property_order", {
     listing_id: propertyId,
     agent_id: ownerId,
+    include_video: publicationPackages[selected].includesVideo,
   });
-  if (error || !order)
+  if (error || !reserved)
     throw new BillingError("Plata nu a putut fi pregătită. Încearcă din nou.");
   // The complimentary grant may have committed between the initial access
   // read and the reservation lock. Recheck after reserving; a later grant
@@ -104,14 +114,24 @@ export async function createLiveCheckout(
   if (recheckError)
     throw new BillingError("Publication access could not be checked.");
   if (nowAllowed) return liveBillingStatus(config, propertyId, ownerId);
-  if (order.status === "refunded" || order.status === "disputed")
+  if (reserved.status === "refunded" || reserved.status === "disputed")
     throw new BillingError(
       "Contactează asistența despre plata acestei proprietăți înainte de a plăti din nou.",
       409,
     );
-  if (order.status === "paid")
+  if (reserved.status === "paid")
     return billingJson({ paid: true, allowed: true });
+  const prepared = await checkoutPackage(
+    config,
+    propertyId,
+    ownerId,
+    reserved,
+    selected,
+  );
+  if (prepared.processing) return billingJson({ processing: true });
+  const order = prepared.order;
   requireRomanianOrder(order);
+  const offer = publicationPackages[orderPackage(order)];
   const stripe = stripeClient(config.key);
   if (order.checkout_session_id) {
     const previous = await stripe.checkout.sessions.retrieve(
@@ -138,6 +158,7 @@ export async function createLiveCheckout(
     order_id: order.id,
     property_id: propertyId,
     owner_id: ownerId,
+    publication_package: offer.id,
   };
   const session = await stripe.checkout.sessions.create(
     {
@@ -150,11 +171,10 @@ export async function createLiveCheckout(
           quantity: 1,
           price_data: {
             currency: PROPERTY_PACKAGE_CURRENCY,
-            unit_amount: PROPERTY_PACKAGE_CENTS,
+            unit_amount: offer.amount,
             product_data: {
-              name: "Site de proprietate + film de prezentare",
-              description:
-                "Un site de proprietate și un film de prezentare. Plată unică de 249 RON; fără abonament.",
+              name: offer.name,
+              description: `${offer.description} Plată unică de ${offer.price} RON; fără abonament.`,
             },
           },
         },
@@ -256,6 +276,11 @@ export async function synchronizeLiveIntent(
       "The purchase record is not available; retry delivery.",
     );
   if (
+    !supportedPackage(
+      order.amount,
+      order.currency,
+      order.includes_video ?? true,
+    ) ||
     order.amount !== intent.amount ||
     order.currency !== intent.currency ||
     (order.property_id && order.property_id !== property_id) ||

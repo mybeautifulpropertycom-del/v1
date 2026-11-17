@@ -194,6 +194,7 @@ export function EditorialWebsite({
   onEdit,
   film,
   videoPanel,
+  videoIncluded = true,
   previewBackLink,
 }: PropertyWebsiteProps) {
   const [viewing, setViewing] = useState(false);
@@ -209,7 +210,7 @@ export function EditorialWebsite({
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const isPreview = preview || sample;
-  const showFilm = Boolean(film?.src) || isPreview;
+  const showFilm = videoIncluded && (Boolean(film?.src) || isPreview);
   const copy = propertyStory(property);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
 

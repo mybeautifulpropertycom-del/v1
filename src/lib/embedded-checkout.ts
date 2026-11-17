@@ -6,18 +6,24 @@ import {
   billingJson,
   BillingError,
   livePaymentsEnabled,
-  PROPERTY_PACKAGE_CENTS,
   PROPERTY_PACKAGE_CURRENCY,
   stripeClient,
   stripeConfiguration,
 } from "./stripe-server";
 import { recordLiveSession } from "./stripe-live";
+import { checkoutPackage } from "./checkout-package";
+import {
+  orderPackage,
+  publicationPackages,
+  type PublicationPackage,
+} from "./publication-packages";
 
 export async function embeddedCheckout(
   config: ReturnType<typeof stripeConfiguration>,
   propertyId: string,
   ownerId: string,
   profile: Profile,
+  selected: PublicationPackage = "video",
 ) {
   const billingDetails = {
     name: profile.name.trim(),
@@ -37,10 +43,12 @@ export async function embeddedCheckout(
     ? await admin.rpc("request_property_publication", {
         listing_id: propertyId,
         agent_id: ownerId,
+        include_video: publicationPackages[selected].includesVideo,
       })
     : await admin.rpc("reserve_stripe_test_order", {
         listing_id: propertyId,
         agent_id: ownerId,
+        include_video: publicationPackages[selected].includesVideo,
       });
   if (error || !reservation)
     throw new BillingError(
@@ -51,7 +59,17 @@ export async function embeddedCheckout(
   let order = config.live ? reservation.order : reservation;
   if (!config.live && order.status === "paid")
     return billingJson({ testPaid: true });
+  const prepared = await checkoutPackage(
+    config,
+    propertyId,
+    ownerId,
+    order,
+    selected,
+  );
+  if (prepared.processing) return billingJson({ processing: true });
+  order = prepared.order;
   requireRomanianOrder(order);
+  const offer = publicationPackages[orderPackage(order)];
   const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
   if (!publishableKey?.startsWith(config.live ? "pk_live_" : "pk_test_"))
     throw new BillingError(
@@ -88,6 +106,8 @@ export async function embeddedCheckout(
         publishableKey,
         mode: config.live ? "live" : "test",
         billingDetails,
+        package: offer.id,
+        amount: offer.amount,
       });
     }
     // Close an old hosted/embedded-page session before replacing it, so two payable
@@ -118,6 +138,7 @@ export async function embeddedCheckout(
     order_id: order.id,
     property_id: propertyId,
     owner_id: ownerId,
+    publication_package: offer.id,
   };
   // A customer supplies the saved profile's name and contact details without
   // collecting them again. Creating a customer does not save the payment method.
@@ -140,11 +161,11 @@ export async function embeddedCheckout(
         quantity: 1,
         price_data: {
           currency: PROPERTY_PACKAGE_CURRENCY,
-          unit_amount: PROPERTY_PACKAGE_CENTS,
+          unit_amount: offer.amount,
           product_data: {
-            name: "Site de proprietate + film de prezentare",
+            name: offer.name,
             description: config.live
-              ? "Publică proprietatea și primești un film de prezentare. Plată unică de 249 RON, fără abonament."
+              ? `${offer.description} Plată unică de ${offer.price} RON, fără abonament.`
               : "Doar plată de test. Fără plată reală, publicare sau generare video.",
           },
         },
@@ -187,5 +208,7 @@ export async function embeddedCheckout(
     publishableKey,
     mode: config.live ? "live" : "test",
     billingDetails,
+    package: offer.id,
+    amount: offer.amount,
   });
 }

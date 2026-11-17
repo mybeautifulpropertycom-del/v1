@@ -27,7 +27,13 @@ test("address upgrade preserves URLs, allocates unique routes, protects drafts a
     const directory = new URL("../supabase/migrations/", import.meta.url);
     for (const file of (await readdir(directory))
       .sort()
-      .filter((f) => f.endsWith(".sql") && !f.includes("address_urls"))) {
+      // The packages upgrade depends on address URLs, which this test installs later.
+      .filter(
+        (f) =>
+          f.endsWith(".sql") &&
+          !f.includes("address_urls") &&
+          !f.includes("publication_packages"),
+      )) {
       await db.exec(await readFile(new URL(file, directory), "utf8"));
     }
     await db.query(
