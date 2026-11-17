@@ -16,7 +16,7 @@ export const presentationCopy = {
   },
   heritageSetting: {
     title: "Mai aproape de",
-    accent: "Locuința ta",
+    accent: "locuința ta",
   },
   mortgage: {
     title: "Estimează bugetul cu ușurință:",

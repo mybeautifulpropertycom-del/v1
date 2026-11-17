@@ -447,7 +447,7 @@ export function HeritageWebsite({
                 O privire mai atentă asupra proprietății.
               </div>
             )}
-            <span>DETALIILE FAC DIFERENȚA</span>
+            <span>Facilitățile proprietății</span>
           </div>
           <div className="heritage-details-copy">
             <span className="heritage-kicker">
