@@ -73,22 +73,27 @@ export function leadEmailConfiguration(
 }
 
 export function leadEmailPayload(
-  job: Pick<Job, "recipient" | "details">,
+  job: Pick<Job, "inquiry_id" | "recipient" | "details">,
   inboxUrl: string,
   senderEmail = PLATFORM_CONTACT_EMAIL,
 ): LeadEmailPayload {
   const d = job.details;
+  // A per-inquiry link keeps repeated Gmail notifications from sharing an
+  // identical action block. This remains an authenticated inbox URL.
+  const messageUrl = new URL(inboxUrl);
+  messageUrl.searchParams.set("solicitare", job.inquiry_id);
+  const inboxLink = messageUrl.toString();
   const subject = `Solicitare nouă: ${d.propertyTitle}`
     .replace(/[\r\n]/g, " ")
     .slice(0, 180);
-  const text = `Bună, ${d.agentName || ""},\n\nAi o solicitare nouă pentru ${d.propertyTitle}.\n\nNume: ${d.name}\nEmail: ${d.email}\nTelefon: ${d.phone || "Necompletat"}\n\n${d.message}\n\nDeschide mesajele: ${inboxUrl}\n\nUrmătoarea Proprietate`;
+  const text = `Bună, ${d.agentName || ""},\n\nAi o solicitare nouă pentru ${d.propertyTitle}.\n\nNume: ${d.name}\nEmail: ${d.email}\nTelefon: ${d.phone || "Necompletat"}\n\n${d.message}\n\nDeschide mesajele: ${inboxLink}\n\nUrmătoarea Proprietate`;
   return {
     from: `${PLATFORM_NAME} <${senderEmail}>`,
     to: [job.recipient],
     reply_to: d.email,
     subject,
     text,
-    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#253c30;max-width:600px;margin:auto;padding:28px"><p style="font-size:12px;letter-spacing:2px">${PLATFORM_NAME.toLocaleUpperCase("ro-RO")}</p><h1 style="font-size:26px">Un mesaj nou. O nouă posibilitate.</h1><p>Bună, ${escapeHtml(d.agentName || "")},</p><p>Ai o solicitare nouă pentru <strong>${escapeHtml(d.propertyTitle)}</strong>.</p><p><strong>Nume:</strong> ${escapeHtml(d.name)}<br><strong>Email:</strong> ${escapeHtml(d.email)}<br><strong>Telefon:</strong> ${escapeHtml(d.phone || "Necompletat")}</p><p style="white-space:pre-wrap;background:#f7f7f1;padding:18px;border-radius:8px">${escapeHtml(d.message)}</p><p><a href="${escapeHtml(inboxUrl)}" style="display:inline-block;background:#d96947;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px">Deschide mesajele</a></p><p style="font-size:12px;color:#727a70">Ai primit această notificare deoarece cineva te-a contactat prin site-ul proprietății.</p></div>`,
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#253c30;max-width:600px;margin:auto;padding:28px"><p style="font-size:12px;letter-spacing:2px">${PLATFORM_NAME.toLocaleUpperCase("ro-RO")}</p><h1 style="font-size:26px">Un mesaj nou. O nouă posibilitate.</h1><p>Bună, ${escapeHtml(d.agentName || "")},</p><p>Ai o solicitare nouă pentru <strong>${escapeHtml(d.propertyTitle)}</strong>.</p><p><strong>Nume:</strong> ${escapeHtml(d.name)}<br><strong>Email:</strong> ${escapeHtml(d.email)}<br><strong>Telefon:</strong> ${escapeHtml(d.phone || "Necompletat")}</p><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="white-space:pre-wrap;background:#f7f7f1;padding:18px;border-radius:8px">${escapeHtml(d.message)}</p><p><a href="${escapeHtml(inboxLink)}" style="display:inline-block;background:#d96947;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px">Deschide mesajele</a></p></td></tr></table><p style="font-size:12px;color:#727a70">Ai primit această notificare deoarece cineva te-a contactat prin site-ul proprietății.</p></div>`,
   };
 }
 

@@ -14,7 +14,9 @@ The app attempts delivery after returning the successful form response. A schedu
 
 Sender name: **Următoarea Proprietate**. The new domain is verified and the default sender for new notifications is `contact@urmatoarea-proprietate.ro`; server-side `RESEND_FROM_EMAIL` can explicitly override it. Previously frozen payloads retain their original sender during a retry. See [domain migration](DOMAIN-MIGRATION.md). Reply-To is the buyer's email. The notification includes buyer contact details, the message/viewing request, property title and a link to the authenticated inbox. Resend SMTP configured within Supabase Auth alone does not send application lead notifications. This feature does not change authentication email templates.
 
-On 17 November 2026 the owner reported that `RESEND_API_KEY` existed in the old `v1` Vercel project but was missing from `pucioasa-premium`, then added the saved key to the new project. Their Resend screenshot shows **Full access / All domains**, so this key covers the verified new domain regardless of its old display name. Successful live delivery still requires checking after redeployment; the presence of a key or working Supabase SMTP alone does not establish that lead notifications have arrived.
+On 17 November 2026 the owner reported that `RESEND_API_KEY` existed in the old `v1` Vercel project but was missing from `pucioasa-premium`, then added the saved key to the new project. Their Resend screenshot shows **Full access / All domains**, so this key covers the verified new domain regardless of its old display name. The owner subsequently confirmed receiving a lead notification.
+
+The inbox action remains after the contact details and message, grouped with the message in a presentation table, with a stable per-inquiry `solicitare` query parameter. This reduces Gmail's tendency to collapse identical trailing content in a conversation. The link opens the existing authenticated inbox and does not grant access or mark a lead as read. Email clients ultimately control collapsing; verify with a new notification, since already-delivered emails and frozen retries retain their original markup.
 
 ## Inbox behavior
 

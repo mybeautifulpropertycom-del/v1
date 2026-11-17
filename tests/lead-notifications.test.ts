@@ -43,6 +43,33 @@ test("lead email escapes untrusted content, uses the owner and supplies the inbo
     payload.html.includes("https://urmatoarea-proprietate.ro/panou/mesaje"),
   );
 });
+test("each inquiry has a distinct inbox action after the message, without changing on retries", () => {
+  const inboxUrl = "https://urmatoarea-proprietate.ro/panou/mesaje";
+  const first = leadEmailPayload(job, inboxUrl);
+  const second = leadEmailPayload(
+    { ...job, inquiry_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" },
+    inboxUrl,
+  );
+  const href = (html: string) => html.match(/<a href="([^"]+)"/)![1];
+  const link = new URL(href(first.html));
+  assert.equal(link.origin, "https://urmatoarea-proprietate.ro");
+  assert.equal(link.pathname, "/panou/mesaje");
+  assert.equal(link.searchParams.get("solicitare"), job.inquiry_id);
+  assert.notEqual(href(first.html), href(second.html));
+  assert.deepEqual(first, leadEmailPayload(job, inboxUrl));
+  assert.ok(
+    first.html.indexOf("Deschide mesajele") > first.html.indexOf("Nume:"),
+  );
+  assert.ok(
+    first.text.indexOf("Deschide mesajele") >
+      first.text.indexOf(job.details.message),
+  );
+  assert.ok(
+    first.html.indexOf("Deschide mesajele") >
+      first.html.indexOf("Viewing request"),
+  );
+  assert.ok(first.text.includes(link.toString()));
+});
 test("notification worker freezes payloads and retries with the same Resend idempotency key", async () => {
   let stored: ReturnType<typeof leadEmailPayload> | null = null;
   const requests: { key: string | null; body: string }[] = [];
