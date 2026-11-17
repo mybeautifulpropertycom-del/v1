@@ -160,12 +160,10 @@ export function HeritageWebsite({
               ? "The Heritage · Previzualizare design · Proprietate demonstrativă"
               : "Previzualizarea site-ului salvat · Nu este un link public"}
           </span>
-          {sample ? (
+          {sample && (
             <Link href="/panou/proprietati/noua?template=minimal">
               Folosește acest design <ArrowUpRight size={14} />
             </Link>
-          ) : (
-            <span>Un loc pentru următorul tău capitol</span>
           )}
         </div>
       )}
