@@ -11,11 +11,19 @@ async function guideFixture(
     admin?: boolean;
     published?: boolean;
     status?: GuideStatus | null;
+    emptyDetails?: boolean;
+    emptyPhotos?: boolean;
   } = {},
 ) {
   const state = await workspace(
     page,
-    { status: options.published ? "published" : "draft" },
+    {
+      status: options.published ? "published" : "draft",
+      ...(options.emptyDetails
+        ? { title: "", location: "", price: 0, area: 0 }
+        : {}),
+      ...(options.emptyPhotos ? { images: [] } : {}),
+    },
     [],
     options.admin,
   );
@@ -77,13 +85,19 @@ async function guideFixture(
 async function openTip(page: Page) {
   const point = page.getByRole("button", { name: /^Ghid:/ });
   await expect(point).toBeVisible();
-  await point.click();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   const tip = page.getByRole("dialog", { name: "Ghid de început" });
+  if (!(await tip.isVisible())) await point.click();
   await expect(tip).toBeVisible();
   return tip;
 }
 
-test("a new agent gets only an anchored point, with an optional compact hint on desktop and phone", async ({
+test("a new agent gets an automatic compact hint once, with only a red point after collapse", async ({
   page,
 }, testInfo) => {
   await guideFixture(page, { fresh: true });
@@ -91,6 +105,9 @@ test("a new agent gets only an anchored point, with an optional compact hint on 
   await expect(page.locator(".agent-guide, .onboarding-callout")).toHaveCount(
     0,
   );
+  await expect(
+    page.getByRole("dialog", { name: "Ghid de început" }),
+  ).toBeVisible();
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.locator(".sidebar").evaluate(async (element) => {
@@ -132,7 +149,7 @@ test("a new agent gets only an anchored point, with an optional compact hint on 
   await expect(page).toHaveURL(/\/panou$/, { timeout: 6000 });
   await expect(
     page.getByRole("dialog", { name: "Ghid de început" }),
-  ).toHaveCount(0);
+  ).toBeVisible();
   await (
     await openTip(page)
   )
@@ -182,7 +199,7 @@ test("contextual hints follow details, photographs and design through the existi
   await title.fill("Titlu nesalvat pentru test");
   let tip = await openTip(page);
   await expect(tip).toContainText("Detaliile proprietății");
-  await tip.getByRole("button", { name: "Adaugă fotografiile" }).click();
+  await tip.getByRole("button", { name: "Continuă", exact: true }).click();
   await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
     "data-guide-editor-step",
     "1",
@@ -192,14 +209,14 @@ test("contextual hints follow details, photographs and design through the existi
   await page.locator("[data-guide-editor-next]").click();
   tip = await openTip(page);
   await expect(tip).toContainText("Prima fotografie va fi coperta");
-  await tip.getByRole("button", { name: "Alege modelul" }).click();
+  await tip.getByRole("button", { name: "Continuă", exact: true }).click();
   await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
     "data-guide-editor-step",
     "2",
   );
   tip = await openTip(page);
   await expect(tip).toContainText("Stilul prezentării");
-  await tip.getByRole("button", { name: "Vezi previzualizarea" }).click();
+  await tip.getByRole("button", { name: "Continuă", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/previzualizare/${id}$`));
   tip = await openTip(page);
   await expect(tip).toContainText("149 lei");
@@ -225,7 +242,7 @@ test("the point follows scroll and hides when its input is outside the viewport"
   await guideFixture(page);
   await page.setViewportSize({ width: 390, height: 700 });
   await page.goto(`/panou/proprietati/${id}`);
-  const target = page.locator("[data-guide-details]");
+  const target = page.locator("[data-guide-details-title]");
   await target.scrollIntoViewIfNeeded();
   const tip = await openTip(page);
   const box = (await tip.boundingBox())!;
@@ -283,4 +300,125 @@ test("existing accounts and administrators do not see first-time hints", async (
   await expect(page.locator(".guide-coachmark")).toHaveCount(0);
   await page.goto("/modele/minimal");
   await expect(page.locator(".guide-coachmark")).toHaveCount(0);
+});
+
+test("incomplete details block the guide, normal button and step tabs, while drafts remain saveable", async ({
+  page,
+}, testInfo) => {
+  const state = await guideFixture(page, {
+    emptyDetails: true,
+    emptyPhotos: true,
+  });
+  await page.goto(`/panou/proprietati/${id}`);
+  const tip = page.getByRole("dialog", { name: "Ghid de început" });
+  await expect(tip).toBeVisible();
+  await expect(
+    tip.getByRole("button", { name: "Continuă", exact: true }),
+  ).toBeDisabled();
+  await expect(tip).toContainText("Adaugă un titlu de minimum 5 caractere.");
+  await expect(tip.getByLabel("Pasul 2 din 6")).toBeVisible();
+  await expect(page.getByText("Începe aici", { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath("variant1-desktop.png") });
+  await page.setViewportSize({ width: 390, height: 850 });
+  await page.locator(".sidebar").evaluate(async (element) => {
+    await Promise.all(
+      element.getAnimations().map((animation) => animation.finished),
+    );
+  });
+  await page
+    .locator("[data-guide-details-title]")
+    .evaluate((element) =>
+      element.scrollIntoView({ block: "center", behavior: "instant" }),
+    );
+  await expect(tip).toBeVisible();
+  await expect
+    .poll(async () => {
+      const box = await tip.boundingBox();
+      return Boolean(
+        box &&
+        box.x >= 11 &&
+        box.x + box.width <= 379 &&
+        box.y >= 11 &&
+        box.y + box.height <= 839,
+      );
+    })
+    .toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("variant1-mobile.png") });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await tip.getByRole("button", { name: "Restrânge indiciul" }).click();
+  await expect(page.locator("[data-guide-editor-next]")).toBeDisabled();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "Modificările au fost salvate",
+  );
+  await page.locator("[data-guide-editor] button").nth(1).click();
+  await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
+    "data-guide-editor-step",
+    "0",
+  );
+  await expect(page.locator(".editor-error")).toContainText(
+    "Adaugă adresa proprietății.",
+  );
+  await page.locator("[data-guide-editor] button").nth(2).click();
+  await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
+    "data-guide-editor-step",
+    "0",
+  );
+  await page
+    .getByLabel("Titlul proprietății", { exact: true })
+    .fill("Vila cu grădină");
+  await page
+    .getByLabel("Adresă", { exact: true })
+    .fill("Strada Șipca 9, București");
+  await page.getByLabel("Preț", { exact: true }).fill("850000");
+  await expect(page.locator("[data-guide-editor-next]")).toBeDisabled();
+  await page.getByLabel("Suprafață", { exact: true }).fill("302");
+  await expect(page.locator("[data-guide-editor-next]")).toBeEnabled();
+  const readyTip = await openTip(page);
+  await expect(
+    readyTip.getByRole("button", { name: "Continuă", exact: true }),
+  ).toBeEnabled();
+  await readyTip.getByRole("button", { name: "Continuă", exact: true }).click();
+  await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
+    "data-guide-editor-step",
+    "1",
+  );
+  const photoTip = await openTip(page);
+  await expect(
+    photoTip.getByRole("button", { name: "Continuă", exact: true }),
+  ).toBeDisabled();
+  await expect(photoTip).toContainText("Adaugă cel puțin o fotografie.");
+  await page.locator("[data-guide-editor] button").nth(2).click();
+  await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
+    "data-guide-editor-step",
+    "1",
+  );
+  expect(state.checkoutPosts).toBe(0);
+});
+
+test("normal step validation applies after the guide has been dismissed, including checkout deep links", async ({
+  page,
+}) => {
+  await guideFixture(page, {
+    status: "dismissed",
+    emptyDetails: true,
+    emptyPhotos: true,
+  });
+  await page.setViewportSize({ width: 390, height: 850 });
+  await page.goto(`/panou/proprietati/${id}?checkout=cancelled`);
+  await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
+    "data-guide-editor-step",
+    "0",
+  );
+  await expect(page.locator(".guide-coachmark")).toHaveCount(0);
+  await page.locator("[data-guide-editor] button").nth(2).click();
+  await expect(page.locator(".editor-error")).toContainText(
+    "Adaugă un titlu de minimum 5 caractere.",
+  );
+  await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
+    "data-guide-editor-step",
+    "0",
+  );
 });

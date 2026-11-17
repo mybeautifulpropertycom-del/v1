@@ -34,7 +34,7 @@
   position: fixed;
   z-index: 82;
   padding: 14px 16px;
-  border: 1px solid #e0e5dc;
+  border: 1px solid #b3c3a4;
   border-radius: 10px;
   background: #fffefb;
   box-shadow: 0 6px 28px #1c2d2021;
@@ -45,8 +45,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 5px;
+  gap: 9px;
+  margin-bottom: 9px;
   color: #7b8577;
   font-size: 10px;
 }
@@ -63,13 +63,56 @@
   color: #75806f;
 }
 .guide-tip h2 {
-  margin: 0 0 6px;
+  margin: 0;
   font:
     600 16px/1.3 "Nunito Sans Variable",
     Arial,
     sans-serif;
   letter-spacing: -0.02em;
   color: #28392c;
+}
+.guide-tip-counter {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.guide-tip-pointer {
+  position: fixed;
+  z-index: 82;
+  width: 10px;
+  height: 10px;
+  background: #fffefb;
+  border-left: 1px solid #b3c3a4;
+  border-bottom: 1px solid #b3c3a4;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.guide-tip .guide-tip-requirement {
+  margin-top: 10px;
+  color: #647552;
+  font-size: 11px;
+}
+.guide-tip .guide-tip-next {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #304d36;
+  color: #fff;
+}
+.guide-tip .guide-tip-next:disabled {
+  background: #ecebe7;
+  color: #8b8d83;
+  opacity: 1;
+  cursor: not-allowed;
+}
+.editor-content .form-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.editor-step-requirement {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: #69775d;
+  text-align: right;
 }
 .guide-tip p {
   margin: 0;

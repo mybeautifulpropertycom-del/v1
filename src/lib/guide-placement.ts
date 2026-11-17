@@ -10,6 +10,7 @@ export function guidePlacement(
   },
   panelHeight: number,
   viewport: { left: number; top: number; width: number; height: number },
+  options: { besideHeading?: boolean } = {},
 ) {
   const { left, top, width: vw, height: vh } = viewport;
   const clamp = (value: number, min: number, max: number) =>
@@ -24,6 +25,31 @@ export function guidePlacement(
     anchor.left < left + 260 &&
     anchor.width < 240 &&
     anchor.right + width + 26 < left + vw;
+  const besideHeading =
+    Boolean(options.besideHeading) && anchor.right + width + 54 <= left + vw;
+  const side = besideNavigation || besideHeading;
+  const x = clamp(
+    besideHeading
+      ? anchor.right + 40
+      : besideNavigation
+        ? anchor.right + 14
+        : anchor.right - width,
+    left + 12,
+    left + vw - width - 12,
+  );
+  const y = clamp(
+    besideHeading
+      ? anchor.top - 40
+      : besideNavigation
+        ? anchor.top
+        : options.besideHeading && above >= top + 12
+          ? above
+          : below + height <= top + vh - 12
+            ? below
+            : above,
+    top + 12,
+    top + vh - height - 12,
+  );
   return {
     visible:
       anchor.width > 0 &&
@@ -32,22 +58,22 @@ export function guidePlacement(
       anchor.left < left + vw &&
       anchor.bottom > top + 8 &&
       anchor.top < top + vh - 8,
-    dotX: clamp(anchor.right - 14, left + 4, left + vw - 34),
-    dotY: clamp(anchor.top - 14, top + 4, top + vh - 34),
-    x: clamp(
-      besideNavigation ? anchor.right + 14 : anchor.right - width,
-      left + 12,
-      left + vw - width - 12,
+    dotX: clamp(
+      options.besideHeading ? anchor.right + 5 : anchor.right - 14,
+      left + 4,
+      left + vw - 34,
     ),
-    y: clamp(
-      besideNavigation
-        ? anchor.top
-        : below + height <= top + vh - 12
-          ? below
-          : above,
-      top + 12,
-      top + vh - height - 12,
+    dotY: clamp(
+      options.besideHeading
+        ? anchor.top + (anchor.height - 30) / 2
+        : anchor.top - 14,
+      top + 4,
+      top + vh - 34,
     ),
+    x,
+    y,
+    arrowX: side ? x - 5 : null,
+    arrowY: clamp(anchor.top + anchor.height / 2 - 5, y + 14, y + height - 22),
     width,
     maxHeight,
   };

@@ -21,6 +21,8 @@ type Tip = {
   focus?: HTMLElement;
   advance?: HTMLButtonElement;
   finish?: boolean;
+  requirement?: string;
+  besideHeading?: boolean;
 };
 const find = <T extends HTMLElement = HTMLElement>(selector: string) =>
   document.querySelector<T>(selector);
@@ -54,6 +56,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
   const beacon = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const autoOpened = useRef(new Set<string>());
   const open = tip !== null && openKey === tip.key;
   const [position, setPosition] = useState<ReturnType<
     typeof guidePlacement
@@ -76,7 +79,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       if (editor && progress.step !== 0 && progress.step !== 3) {
         const step = Number(editor.dataset.guideEditorStep);
         const selectors = [
-          "[data-guide-details]",
+          "[data-guide-details-title]",
           "[data-guide-photos]",
           "[data-guide-design]",
         ];
@@ -91,16 +94,14 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             "Stilul prezentării",
           ][step],
           body: [
-            "Completează adresa, prețul și detaliile locuinței. Apoi continuă cu fotografiile.",
+            "Completează informațiile locuinței. Apoi continuăm cu fotografiile.",
             "Încarcă fotografiile proprietății. Prima fotografie va fi coperta prezentării.",
             "Alege un model. În previzualizare vei putea verifica și edita textele înainte de publicare.",
           ][step],
           anchor,
-          action: [
-            "Adaugă fotografiile",
-            "Alege modelul",
-            "Vezi previzualizarea",
-          ][step],
+          action: "Continuă",
+          requirement: editor.dataset.guideRequirement || undefined,
+          besideHeading: true,
           advance:
             find<HTMLButtonElement>(
               step === 2 ? "[data-guide-preview]" : "[data-guide-editor-next]",
@@ -203,6 +204,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           old?.key === next?.key &&
           old?.anchor === next?.anchor &&
           old?.advance === next?.advance &&
+          old?.requirement === next?.requirement &&
           old?.href === next?.href
             ? old
             : next,
@@ -215,7 +217,13 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["data-guide-editor-step", "aria-modal", "open"],
+      attributeFilter: [
+        "data-guide-editor-step",
+        "data-guide-requirement",
+        "disabled",
+        "aria-modal",
+        "open",
+      ],
     });
     window.addEventListener("resize", update);
     return () => {
@@ -232,41 +240,69 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     }
     let frame = 0;
     const measure = () => {
+      const viewport = window.visualViewport;
+      const next = guidePlacement(
+        tip.anchor.getBoundingClientRect(),
+        panel.current?.getBoundingClientRect().height ?? 220,
+        {
+          left: viewport?.offsetLeft ?? 0,
+          top: viewport?.offsetTop ?? 0,
+          width: viewport?.width ?? innerWidth,
+          height: viewport?.height ?? innerHeight,
+        },
+        { besideHeading: tip.besideHeading },
+      );
+      setPosition((old) =>
+        JSON.stringify(old) === JSON.stringify(next) ? old : next,
+      );
+    };
+    const schedule = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const viewport = window.visualViewport;
-        const next = guidePlacement(
-          tip.anchor.getBoundingClientRect(),
-          panel.current?.getBoundingClientRect().height ?? 220,
-          {
-            left: viewport?.offsetLeft ?? 0,
-            top: viewport?.offsetTop ?? 0,
-            width: viewport?.width ?? innerWidth,
-            height: viewport?.height ?? innerHeight,
-          },
-        );
-        setPosition((old) =>
-          JSON.stringify(old) === JSON.stringify(next) ? old : next,
-        );
-      });
+      frame = requestAnimationFrame(measure);
     };
     measure();
-    const observer = new ResizeObserver(measure);
+    const observer = new ResizeObserver(schedule);
     observer.observe(tip.anchor);
     if (panel.current) observer.observe(panel.current);
-    window.addEventListener("scroll", measure, true);
-    window.addEventListener("resize", measure);
-    window.visualViewport?.addEventListener("resize", measure);
-    window.visualViewport?.addEventListener("scroll", measure);
+    window.addEventListener("scroll", schedule, true);
+    window.addEventListener("resize", schedule);
+    window.visualViewport?.addEventListener("resize", schedule);
+    window.visualViewport?.addEventListener("scroll", schedule);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
-      window.removeEventListener("scroll", measure, true);
-      window.removeEventListener("resize", measure);
-      window.visualViewport?.removeEventListener("resize", measure);
-      window.visualViewport?.removeEventListener("scroll", measure);
+      window.removeEventListener("scroll", schedule, true);
+      window.removeEventListener("resize", schedule);
+      window.visualViewport?.removeEventListener("resize", schedule);
+      window.visualViewport?.removeEventListener("scroll", schedule);
     };
   }, [tip, open, error]);
+
+  useEffect(() => {
+    if (!enabled || !tip || !position?.visible) return;
+    const key = `${workspace.profile.id}:${tip.key}`;
+    if (autoOpened.current.has(key)) return;
+    autoOpened.current.add(key);
+    // Remember automatic openings on this browser. Closing the guide itself
+    // remains account-wide through the existing Supabase state.
+    const storageKey = `up-guide-opened:${workspace.profile.id}`;
+    try {
+      const saved: unknown = JSON.parse(
+        localStorage.getItem(storageKey) || "[]",
+      );
+      const seen = Array.isArray(saved)
+        ? saved.filter((item): item is string => typeof item === "string")
+        : [];
+      if (seen.includes(tip.key)) return;
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify([...seen.slice(-20), tip.key]),
+      );
+    } catch {
+      /* Private browsing still has the in-memory guard. */
+    }
+    setOpenKey(tip.key);
+  }, [enabled, tip?.key, position?.visible, workspace.profile.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -309,7 +345,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       void close("completed");
       return;
     }
-    if (tip.advance?.disabled) return;
+    if (tip.advance?.disabled || tip.requirement) return;
     setOpenKey(null);
     if (tip.advance) {
       // Use the editor's existing save/validation flow. Never click publication/payment.
@@ -320,6 +356,17 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     }
   }
   if (!enabled || !tip || !position?.visible) return null;
+  const number = tip.key.startsWith("profile")
+    ? 1
+    : tip.key === "editor-1"
+      ? 3
+      : tip.key === "editor-2"
+        ? 4
+        : tip.key === "publish" || tip.key === "preview-link"
+          ? 5
+          : tip.key.startsWith("messages")
+            ? 6
+            : 2;
   return createPortal(
     <div className="guide-coachmark">
       <button
@@ -354,7 +401,13 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           aria-label="Ghid de început"
         >
           <div className="guide-tip-header">
-            <span>{tip.label}</span>
+            <h2>{tip.title}</h2>
+            <span
+              className="guide-tip-counter"
+              aria-label={`Pasul ${number} din 6`}
+            >
+              {number} / 6
+            </span>
             <button
               type="button"
               className="guide-tip-collapse"
@@ -367,8 +420,16 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
               <X size={14} />
             </button>
           </div>
-          <h2>{tip.title}</h2>
           <p>{tip.body}</p>
+          {tip.requirement && (
+            <p
+              className="guide-tip-requirement"
+              id={`${panelId}-requirement`}
+              aria-live="polite"
+            >
+              {tip.requirement}
+            </p>
+          )}
           {error && (
             <p className="guide-tip-error" role="alert">
               {error}
@@ -392,7 +453,12 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
               <button
                 type="button"
                 className="guide-tip-next"
-                disabled={busy || tip.advance?.disabled}
+                disabled={
+                  busy || tip.advance?.disabled || Boolean(tip.requirement)
+                }
+                aria-describedby={
+                  tip.requirement ? `${panelId}-requirement` : undefined
+                }
                 onClick={act}
               >
                 {busy ? "Se salvează…" : tip.action}
@@ -401,6 +467,13 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             )}
           </div>
         </div>
+      )}
+      {open && position.arrowX !== null && (
+        <span
+          className="guide-tip-pointer"
+          aria-hidden="true"
+          style={{ left: position.arrowX, top: position.arrowY }}
+        />
       )}
     </div>,
     document.body,

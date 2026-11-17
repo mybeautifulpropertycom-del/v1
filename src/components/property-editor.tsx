@@ -41,6 +41,10 @@ import { useWorkspace } from "./workspace-provider";
 import { TemplateMiniature } from "./template-miniature";
 import { editWebsiteCopy, hasWebsiteDescriptions } from "@/lib/property-story";
 import { preparePropertyWebsite } from "@/lib/request-property-story";
+import {
+  propertyDetailsErrors,
+  propertyStepRequirement,
+} from "@/lib/property-editor-validation";
 
 export function PropertyEditor({
   id,
@@ -94,8 +98,14 @@ export function PropertyEditor({
   const [customAmenity, setCustomAmenity] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const t = ro.editor;
+  const stepRequirement = propertyStepRequirement(property, step);
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).has("checkout")) setStep(2);
+    if (
+      new URLSearchParams(window.location.search).has("checkout") &&
+      !propertyDetailsErrors(property).length &&
+      property.images.length
+    )
+      setStep(2);
   }, []);
   useEffect(() => {
     function beforeUnload(e: BeforeUnloadEvent) {
@@ -180,8 +190,22 @@ export function PropertyEditor({
     }
   }
   async function goToStep(next: number) {
-    if (busy || uploading) return;
+    if (busy || uploading || next === step) return;
+    if (next > step) {
+      const detailsErrors = propertyDetailsErrors(property);
+      if (detailsErrors.length) {
+        setStep(0);
+        setError(detailsErrors.join(" "));
+        return;
+      }
+      if (next === 2 && !property.images.length) {
+        setStep(1);
+        setError("Adaugă cel puțin o fotografie.");
+        return;
+      }
+    }
     if (next === 2 && !(await persist(false, false, false))) return;
+    setError("");
     setStep(next);
   }
   async function addFiles(files: FileList | File[] | null) {
@@ -351,6 +375,7 @@ export function PropertyEditor({
         className="editor-steps"
         data-guide-editor
         data-guide-editor-step={step}
+        data-guide-requirement={stepRequirement}
       >
         {t.steps.map((label, index) => (
           <button
@@ -403,7 +428,7 @@ export function PropertyEditor({
               <section className="form-card">
                 <div className="form-section-title">
                   <span>01</span>
-                  <h2>{t.details}</h2>
+                  <h2 data-guide-details-title>{t.details}</h2>
                 </div>
                 <div className="field-grid">
                   <label className="full-width">
@@ -796,6 +821,10 @@ export function PropertyEditor({
               <button
                 className="button dark"
                 data-guide-editor-next
+                disabled={busy || uploading || Boolean(stepRequirement)}
+                aria-describedby={
+                  stepRequirement ? "editor-step-requirement" : undefined
+                }
                 onClick={() => goToStep(step + 1)}
               >
                 {preparing
@@ -820,6 +849,14 @@ export function PropertyEditor({
                   ? "Se pregătește site-ul…"
                   : "Deschide editorul site-ului"}
               </button>
+            )}
+            {step < 2 && stepRequirement && (
+              <small
+                id="editor-step-requirement"
+                className="editor-step-requirement"
+              >
+                {stepRequirement}
+              </small>
             )}
           </div>
         </fieldset>

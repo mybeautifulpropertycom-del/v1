@@ -42,3 +42,33 @@ test("coachmarks fit narrow screens, viewport edges and the space above a mobile
   );
   assert.equal(hidden.visible, false);
 });
+
+test("a heading hint connects beside its red point on desktop and stays inside a narrow phone viewport", () => {
+  const heading = {
+    left: 360,
+    right: 610,
+    top: 410,
+    bottom: 438,
+    width: 250,
+    height: 28,
+  };
+  const desktop = guidePlacement(
+    heading,
+    220,
+    { left: 0, top: 0, width: 1440, height: 1000 },
+    { besideHeading: true },
+  );
+  assert.ok(desktop.dotX > heading.right);
+  assert.ok(desktop.x > desktop.dotX + 30);
+  assert.equal(desktop.arrowX, desktop.x - 5);
+  const mobile = guidePlacement(
+    { ...heading, left: 45, right: 286, width: 241 },
+    260,
+    { left: 0, top: 0, width: 320, height: 650 },
+    { besideHeading: true },
+  );
+  assert.ok(mobile.x >= 12);
+  assert.ok(mobile.x + mobile.width <= 308);
+  assert.ok(mobile.y + 260 <= 638);
+  assert.equal(mobile.arrowX, null);
+});
