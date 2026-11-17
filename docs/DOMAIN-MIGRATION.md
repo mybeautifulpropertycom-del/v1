@@ -104,9 +104,11 @@ istorici `mbp`/`higgsfield` rămân pentru compatibilitatea instalării BytePlus
    ```
 
    Adresa este Config server-side; cheia RESEND_API_KEY rămâne Secret. Numele
-   expeditorului este automat „Următoarea Proprietate”. Până când noua variabilă
-   este setată, aplicația păstrează expeditorul verificat anterior
-   `account@mybeautifulproperty.com`, ca notificările să poată continua.
+   expeditorului este automat „Următoarea Proprietate”. După verificarea noului
+   domeniu, expeditorul implicit al notificărilor noi este tot
+   `contact@urmatoarea-proprietate.ro`. Mesajele deja pregătite pentru reîncercare
+   păstrează expeditorul inițial, pentru a nu altera cererea idempotentă.
+
 4. Separat, în Supabase → Authentication → SMTP, schimbați numele și adresa
    expeditorului numai după verificarea domeniului în furnizorul SMTP. Revizuiți
    și linkurile/numele vechi din șabloanele e-mailurilor de autentificare.

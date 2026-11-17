@@ -50,7 +50,11 @@ export async function POST(request: Request) {
       );
     after(async () => {
       try {
-        await runLeadEmailWorker();
+        const delivery = await runLeadEmailWorker();
+        if (!delivery.configured)
+          console.warn(
+            JSON.stringify({ event: "lead_notification_not_configured" }),
+          );
       } catch {
         console.warn(
           JSON.stringify({ event: "lead_notification_worker_failed" }),

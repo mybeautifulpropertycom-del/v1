@@ -1,10 +1,8 @@
-import { PLATFORM_NAME } from "./platform-brand";
+import { PLATFORM_CONTACT_EMAIL, PLATFORM_NAME } from "./platform-brand";
 // Server routes only. Resend and Supabase service credentials never reach clients.
 import { createClient } from "@supabase/supabase-js";
 
-// Retain the currently verified sender until the new email domain is verified.
-// Set RESEND_FROM_EMAIL to contact@urmatoarea-proprietate.ro at email cutover.
-const legacySenderEmail = "account@mybeautifulproperty.com";
+// The new domain is verified. Frozen retry payloads keep their original sender.
 
 type Details = {
   agentName: string;
@@ -44,7 +42,7 @@ export function leadEmailConfiguration(
   const apiKey = env.RESEND_API_KEY?.trim();
   const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
-  const senderEmail = env.RESEND_FROM_EMAIL?.trim() || legacySenderEmail;
+  const senderEmail = env.RESEND_FROM_EMAIL?.trim() || PLATFORM_CONTACT_EMAIL;
   if (
     senderEmail.length > 254 ||
     !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(senderEmail)
@@ -77,7 +75,7 @@ export function leadEmailConfiguration(
 export function leadEmailPayload(
   job: Pick<Job, "recipient" | "details">,
   inboxUrl: string,
-  senderEmail = legacySenderEmail,
+  senderEmail = PLATFORM_CONTACT_EMAIL,
 ): LeadEmailPayload {
   const d = job.details;
   const subject = `Solicitare nouă: ${d.propertyTitle}`

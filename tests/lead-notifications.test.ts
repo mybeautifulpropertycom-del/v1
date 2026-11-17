@@ -31,7 +31,10 @@ test("lead email escapes untrusted content, uses the owner and supplies the inbo
   );
   assert.deepEqual(payload.to, ["owner@example.com"]);
   assert.equal(payload.reply_to, "buyer@example.com");
-  assert.ok(payload.from.includes("account@mybeautifulproperty.com"));
+  assert.equal(
+    payload.from,
+    "Următoarea Proprietate <contact@urmatoarea-proprietate.ro>",
+  );
   assert.ok(!payload.html.includes("<script>"));
   assert.ok(!payload.html.includes("<img onerror"));
   assert.ok(payload.html.includes("&lt;script&gt;"));
@@ -67,7 +70,15 @@ test("notification worker freezes payloads and retries with the same Resend idem
     }
     throw new Error("Unexpected request");
   };
-  assert.equal((await runLeadEmailWorker({ env, fetcher })).sent, 0);
+  assert.equal(
+    (
+      await runLeadEmailWorker({
+        env: { ...env, RESEND_FROM_EMAIL: "account@mybeautifulproperty.com" },
+        fetcher,
+      })
+    ).sent,
+    0,
+  );
   assert.equal(
     (
       await runLeadEmailWorker({
