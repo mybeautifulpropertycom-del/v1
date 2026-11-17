@@ -277,41 +277,53 @@ export function AtelierWebsite({
             </a>
           </div>
           <div className="atelier-title-row">
-            <h1>
-              <EditableText
-                field="title"
-                value={property.title || "O altă perspectivă."}
-                onEdit={onEdit}
-              />
-              <em className="atelier-opening-accent">
-                {propertyOpeningAccent(property, copy.heroLine)}
-              </em>
-            </h1>
             <div className="atelier-intro-copy">
+              <span className="atelier-kicker atelier-opening-accent">
+                {propertyOpeningAccent(property, copy.heroLine)}
+              </span>
+              <h1>
+                <EditableText
+                  field="title"
+                  value={property.title || "O altă perspectivă."}
+                  onEdit={onEdit}
+                />
+              </h1>
               <p>{text("introBody")}</p>
+            </div>
+            <div className="atelier-intro-price">
+              <span className="atelier-kicker">
+                {property.transaction === "rent"
+                  ? "Chirie lunară"
+                  : "Preț de vânzare"}
+              </span>
+              <p className="atelier-price" aria-label={formatPrice(property)}>
+                <span>
+                  {property.price.toLocaleString("ro-RO", {
+                    maximumFractionDigits: 0,
+                  })}
+                </span>{" "}
+                <small>{property.currency}</small>
+                {property.transaction === "rent" && (
+                  <small className="atelier-price-period">/ lună</small>
+                )}
+              </p>
               {tour()}
             </div>
           </div>
           <dl className="atelier-facts">
             <div>
-              <dt>
-                {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
-              </dt>
-              <dd>{formatPrice(property)}</dd>
-            </div>
-            <div>
-              <dt>Dormitoare</dt>
-              <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
-            </div>
-            <div>
-              <dt>Băi</dt>
-              <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
-            </div>
-            <div>
               <dt>Suprafață locuibilă</dt>
               <dd>
                 {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
               </dd>
+            </div>
+            <div>
+              <dt>Dormitoare</dt>
+              <dd>{property.bedrooms}</dd>
+            </div>
+            <div>
+              <dt>Băi</dt>
+              <dd>{property.bathrooms}</dd>
             </div>
             <div>
               <dt>Tipul proprietății</dt>

@@ -296,62 +296,99 @@
   gap: 25px;
   align-items: center;
 }
+.atelier-intro-top > .atelier-kicker {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.atelier-intro-top > .atelier-kicker > svg {
+  flex-shrink: 0;
+}
 .atelier-title-row {
   display: grid;
-  grid-template-columns: 1.45fr 1fr;
-  gap: 9%;
-  padding: 35px 0 60px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.85fr);
+  gap: clamp(36px, 7vw, 110px);
+  padding: 42px 0 38px;
+  align-items: center;
 }
 .atelier-title-row h1 {
   font: 600 clamp(36px, 4.4vw, 66px)/1.12 var(--serif);
   letter-spacing: -0.035em;
   overflow-wrap: anywhere;
 }
-.atelier-title-row .atelier-opening-accent {
-  display: block;
-  margin-top: 12px;
+.atelier-intro-copy .atelier-opening-accent {
+  margin-bottom: 12px;
   color: #7b826e;
-  font-size: 0.65em;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: -0.035em;
 }
 .atelier-intro-copy {
-  max-width: 390px;
-  justify-self: end;
+  min-width: 0;
+  max-width: 620px;
 }
-.atelier-intro-copy .atelier-button {
-  margin-top: 24px;
+.atelier-intro-copy > p {
+  margin-top: 16px;
+  max-width: 560px;
+}
+.atelier-intro-price {
+  min-width: 0;
+}
+.atelier-intro-price .atelier-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  margin: 12px 0 22px;
+  font: 400 clamp(36px, 3.25vw, 48px)/1.15 var(--serif);
+  letter-spacing: -0.035em;
+  color: var(--at-ink);
+}
+.atelier-price > span {
+  overflow-wrap: anywhere;
+}
+.atelier-price > small {
+  font-size: 0.55em;
+  letter-spacing: -0.015em;
+}
+.atelier-price > .atelier-price-period {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.atelier-intro-price .atelier-button {
+  width: 100%;
+  justify-content: space-between;
+  gap: 16px;
+}
+.atelier-intro-price .atelier-button svg {
+  flex-shrink: 0;
+  transform: rotate(45deg);
 }
 .atelier-facts {
   display: grid;
-  grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  padding: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 28px 0 0;
+  border-top: 1px solid var(--at-line);
 }
 .atelier-facts > div {
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 22px;
-  padding: 24px 20px;
+  gap: 8px;
+  padding: 0 28px;
   min-width: 0;
-  border: 1px solid var(--at-line);
-  background: #efefe7;
 }
 .atelier-facts > div:first-child {
-  background: #292e29;
-  border-color: #292e29;
-  color: #f2f1e8;
+  padding-left: 0;
+}
+.atelier-facts > div + div::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: var(--at-line);
 }
 .atelier-facts dt {
   font-size: 10px;
   letter-spacing: 0.04em;
   color: var(--at-muted);
-}
-.atelier-facts > div:first-child dt {
-  color: #c5caba;
 }
 .atelier-facts dd {
   font: clamp(24px, 2.5vw, 36px)/1.15 var(--serif);
@@ -939,30 +976,51 @@
     padding-top: 28px;
   }
   .atelier-intro-top > a {
-    display: none;
+    align-self: flex-start;
+  }
+  .atelier-intro-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
   .atelier-title-row {
     grid-template-columns: 1fr;
-    gap: 25px;
-    padding: 25px 0 35px;
+    gap: 32px;
+    padding: 38px 0 30px;
   }
   .atelier-title-row h1 {
     font-size: clamp(32px, 8.2vw, 42px);
+    max-width: 10ch;
   }
   .atelier-intro-copy {
     max-width: none;
-    justify-self: stretch;
+  }
+  .atelier-intro-price .atelier-price {
+    font-size: clamp(32px, 10.25vw, 42px);
   }
   .atelier-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    padding-top: 0;
   }
   .atelier-facts > div {
-    padding: 20px;
-    gap: 16px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--at-line);
   }
-  .atelier-facts > div:first-child {
-    grid-column: 1 / -1;
+  .atelier-facts > div:nth-child(2n) {
+    padding-left: 24px;
+  }
+  .atelier-facts > div:nth-child(2n + 1) {
+    padding-right: 20px;
+  }
+  .atelier-facts > div:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+  .atelier-facts > div + div::before {
+    top: 22px;
+    bottom: 22px;
+  }
+  .atelier-facts > div:nth-child(2n + 1)::before {
+    display: none;
   }
   .atelier-facts dd {
     font-size: 30px;
