@@ -8,185 +8,39 @@ import { ArrowRight, X } from "lucide-react";
 import { agentGuideProgress } from "@/lib/agent-onboarding";
 import { publicationPackages } from "@/lib/publication-packages";
 import { useWorkspace } from "./workspace-provider";
+import { guidePlacement } from "@/lib/guide-placement";
 
 type Tip = {
   key: string;
+  label: string;
   title: string;
   body: string;
   anchor: HTMLElement;
   action: string;
-  number: number;
   href?: string;
   focus?: HTMLElement;
   advance?: HTMLButtonElement;
   finish?: boolean;
   requirement?: string;
-  editing?: boolean;
+  besideHeading?: boolean;
 };
 const find = <T extends HTMLElement = HTMLElement>(selector: string) =>
   document.querySelector<T>(selector);
-const target = (id: string) => find(`[data-guide-target="${CSS.escape(id)}"]`);
-const control = (element: HTMLElement | null) =>
-  element?.querySelector<HTMLElement>(
-    'input:not([type="file"]), select, textarea',
-  ) ?? undefined;
-function navigationTarget(href: string) {
-  const menu = target("mobile-menu");
-  if (menu && menu.getBoundingClientRect().width > 0) return menu;
-  return target(`nav-${href.split("/").pop()}`);
-}
-
-// Follow the focused field until blur, even if its value becomes valid mid-word.
-// Outside a field, highlight the first required value still missing.
-function fieldTip(
-  group: "profile" | "property",
-  next: HTMLElement | null,
-  advance: HTMLButtonElement | null,
-): Tip | null {
-  const fields = Array.from(
-    document.querySelectorAll<HTMLElement>(`[data-guide-field="${group}"]`),
-  );
-  const focused = document.activeElement?.closest<HTMLElement>(
-    `[data-guide-field="${group}"]`,
-  );
-  const missing = fields.filter(
-    (field) => field.dataset.guideValid === "false",
-  );
-  const anchor = focused && fields.includes(focused) ? focused : missing[0];
-  if (!anchor) return null;
-  const valid = anchor.dataset.guideValid === "true";
-  return {
-    key: `field-${anchor.dataset.guideTarget}`,
-    anchor,
-    number: group === "profile" ? 1 : 2,
-    title: anchor.dataset.guideTitle || "Datele proprietății",
-    body:
-      anchor.dataset.guideDescription ||
-      "Completează informațiile pentru prezentare.",
-    action:
-      valid && !missing.length
-        ? "Continuă"
-        : valid
-          ? "Următorul câmp"
-          : "Completează câmpul",
-    requirement: anchor.dataset.guideError,
-    editing: control(anchor) === document.activeElement,
-    ...(valid && !missing.length && advance
-      ? { advance }
-      : { focus: control(valid ? (missing[0] ?? next) : anchor) }),
-  };
-}
-
-function GuideDialog({
-  tip,
-  busy,
-  error,
-  onClose,
-  onDismiss,
-  onAct,
-}: {
-  tip: Tip;
-  busy: boolean;
-  error: string;
-  onClose: () => void;
-  onDismiss: () => void;
-  onAct: () => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const descriptionId = useId();
-  useEffect(() => {
-    const previousFocus = document.activeElement as HTMLElement | null;
-    const overflow = document.body.style.overflow;
-    dialog.current?.showModal();
-    document.body.style.overflow = "hidden";
-    return () => {
-      dialog.current?.close();
-      document.body.style.overflow = overflow;
-      if (previousFocus?.isConnected)
-        previousFocus.focus({ preventScroll: true });
-    };
-  }, []);
+function inView(element: HTMLElement | null) {
+  if (!element) return false;
+  const rect = element.getBoundingClientRect();
   return (
-    <dialog
-      ref={dialog}
-      data-agent-guide-dialog
-      className="guide-dialog"
-      aria-label="Ghid de început"
-      aria-describedby={descriptionId}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-      onClick={(event) => {
-        if (event.target !== event.currentTarget) return;
-        const rect = event.currentTarget.getBoundingClientRect();
-        if (
-          event.clientX < rect.left ||
-          event.clientX > rect.right ||
-          event.clientY < rect.top ||
-          event.clientY > rect.bottom
-        )
-          onClose();
-      }}
-    >
-      <div className="guide-tip-header">
-        <h2>{tip.title}</h2>
-        <span
-          className="guide-tip-counter"
-          aria-label={`Pasul ${tip.number} din 6`}
-        >
-          {tip.number} / 6
-        </span>
-        <button
-          type="button"
-          autoFocus
-          className="guide-tip-collapse"
-          aria-label="Restrânge indiciul"
-          onClick={onClose}
-        >
-          <X size={16} />
-        </button>
-      </div>
-      <p id={descriptionId}>{tip.body}</p>
-      {tip.requirement && (
-        <p className="guide-tip-requirement">{tip.requirement}</p>
-      )}
-      {error && (
-        <p className="guide-tip-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="guide-tip-actions">
-        <button
-          type="button"
-          className="guide-tip-dismiss"
-          disabled={busy}
-          onClick={onDismiss}
-        >
-          Închide ghidul
-        </button>
-        {tip.href ? (
-          <Link href={tip.href} onClick={onClose}>
-            {tip.action}
-            <ArrowRight size={14} />
-          </Link>
-        ) : (
-          <button
-            type="button"
-            className="guide-tip-next"
-            disabled={
-              busy ||
-              Boolean(tip.advance && (tip.advance.disabled || tip.requirement))
-            }
-            onClick={onAct}
-          >
-            {busy ? "Se salvează…" : tip.action}
-            <ArrowRight size={14} />
-          </button>
-        )}
-      </div>
-    </dialog>
+    rect.width > 0 &&
+    rect.height > 0 &&
+    rect.right > 0 &&
+    rect.left < innerWidth
   );
+}
+function navigationTarget(href: string) {
+  const menu = find("[data-guide-menu]");
+  if (inView(menu)) return menu;
+  const link = find(`.sidebar nav a[href="${href}"]`);
+  return inView(link) ? link : null;
 }
 
 export function AgentGuide({ preview = false }: { preview?: boolean }) {
@@ -196,13 +50,18 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     !workspace.demo && !workspace.isAdmin && workspace.guideStatus === "active";
   const progress = agentGuideProgress(workspace);
   const [tip, setTip] = useState<Tip | null>(null);
-  const tipRef = useRef(tip);
-  tipRef.current = tip;
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const beacon = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const panelId = useId();
-  const open = Boolean(tip && openKey === tip.key);
+  const autoOpened = useRef(new Set<string>());
+  const open = tip !== null && openKey === tip.key;
+  const [inViewport, setInViewport] = useState(false);
+  const [position, setPosition] = useState<
+    (ReturnType<typeof guidePlacement> & { mode: "absolute" | "fixed" }) | null
+  >(null);
 
   useEffect(() => {
     if (!enabled) {
@@ -210,8 +69,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       return;
     }
     function resolveTip(): Tip | null {
-      // Keep the selected explanation stable while its modal owns focus.
-      if (find("dialog[data-agent-guide-dialog][open]")) return tipRef.current;
+      // Leave menus, photo dialogs and payment dialogs unobstructed.
       if (
         find(
           'dialog[open], [role="dialog"][aria-modal="true"], .sidebar-overlay',
@@ -221,111 +79,102 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       const editor = find("[data-guide-editor-step]");
       if (editor && progress.step !== 0 && progress.step !== 3) {
         const step = Number(editor.dataset.guideEditorStep);
-        const advance = find<HTMLButtonElement>(
-          step === 2 ? "[data-guide-preview]" : "[data-guide-editor-next]",
-        );
-        if (step === 0) {
-          const field = fieldTip("property", target("property-next"), advance);
-          if (field) return field;
-        }
-        const anchor = target(
-          ["property-next", "property-photos", "property-design"][step],
-        );
+        const selectors = [
+          "[data-guide-details-title]",
+          "[data-guide-photos]",
+          "[data-guide-design]",
+        ];
+        const anchor = find(selectors[step]);
         if (!anchor) return null;
         return {
           key: `editor-${step}`,
-          number: step + 2,
-          anchor,
+          label: ["Detaliile", "Fotografiile", "Modelul"][step],
           title: [
             "Detaliile proprietății",
             "Fotografiile proprietății",
             "Stilul prezentării",
           ][step],
           body: [
-            "Detaliile esențiale sunt completate. Poți continua cu fotografiile.",
+            "Completează informațiile locuinței. Apoi continuăm cu fotografiile.",
             "Încarcă fotografiile proprietății. Prima fotografie va fi coperta prezentării.",
             "Alege un model. În previzualizare vei putea verifica și edita textele înainte de publicare.",
           ][step],
+          anchor,
           action: "Continuă",
           requirement: editor.dataset.guideRequirement || undefined,
-          advance: advance ?? undefined,
+          besideHeading: true,
+          advance:
+            find<HTMLButtonElement>(
+              step === 2 ? "[data-guide-preview]" : "[data-guide-editor-next]",
+            ) ?? undefined,
         };
       }
       if (progress.step === 0) {
-        if (path === "/panou/profil") {
-          const save = find<HTMLButtonElement>(
-            '[data-guide-target="profile-save"] button',
-          );
-          const field = fieldTip("profile", target("profile-save"), save);
-          if (field) return field;
-          const anchor = target("profile-save");
-          if (!anchor) return null;
-          return {
-            key: "profile-save",
-            number: 1,
-            anchor,
-            title: "Salvează profilul",
-            body: "Datele de contact sunt pregătite. Salvează-le pentru a le folosi în prezentările proprietăților.",
-            action: "Salvează profilul",
-            advance: save ?? undefined,
-          };
-        }
-        const anchor = navigationTarget("/panou/profil");
+        const contact =
+          path === "/panou/profil"
+            ? find<HTMLInputElement>(
+                "[data-guide-contact] input:not([type=file])",
+              )
+            : null;
+        const anchor = contact ?? navigationTarget("/panou/profil");
         if (!anchor) return null;
         return {
-          key: "profile-link",
-          number: 1,
-          anchor,
+          key: contact ? "profile-contact" : "profile-link",
+          label: "Profilul tău",
           title: "Datele tale de contact",
           body: "Datele salvate în profil apar în prezentarea proprietății, astfel încât persoanele interesate să te poată contacta.",
+          anchor,
           action: "Completează profilul",
-          href: "/panou/profil",
+          ...(contact ? { focus: contact } : { href: "/panou/profil" }),
         };
       }
       if (progress.step === 3) {
         const here = path === "/panou/mesaje";
         const anchor = here
-          ? target("messages")
+          ? find("[data-guide-messages]")
           : preview
-            ? target("preview-back")
+            ? find("[data-guide-back]")
             : navigationTarget("/panou/mesaje");
         if (!anchor) return null;
         return {
           key: here ? "messages-inbox" : "messages-link",
-          number: 6,
-          anchor,
+          label: "Mesajele",
           title: "Solicitările, într-un singur loc",
           body: "În Mesaje ajung cererile de vizionare și mesajele din formularele proprietăților. Primești și notificări la e-mailul contului.",
+          anchor,
           action: here ? "Am înțeles" : "Deschide mesajele",
           ...(here ? { finish: true } : { href: "/panou/mesaje" }),
         };
       }
       if (preview) {
-        const anchor = target("publish");
+        const anchor = find<HTMLButtonElement>("[data-guide-publish]");
         if (!anchor) return null;
         return {
           key: "publish",
-          number: 5,
-          anchor,
+          label: "Publicarea",
           title: "Publică atunci când ești pregătit",
           body: `De aici alegi prezentarea cu fotografii (${publicationPackages.photos.price} lei) sau cu videoclip (${publicationPackages.video.price} lei). Proprietatea se publică după confirmarea plății.`,
+          anchor,
           action: "Am înțeles",
-          focus: find("[data-guide-publish]") ?? undefined,
+          focus: anchor,
         };
       }
       const property = progress.property;
-      if (path === "/panou/profil" && !target("next-property")) return null;
+      const propertyLink = property
+        ? find<HTMLAnchorElement>(
+            `[data-guide-property="${CSS.escape(property.id)}"]`,
+          )
+        : null;
+      const addLink = find<HTMLAnchorElement>("[data-guide-add-property]");
+      const nextLink = find<HTMLAnchorElement>("[data-guide-next-property]");
+      if (path === "/panou/profil" && !nextLink) return null;
       const anchor =
-        target("next-property") ??
-        (property ? target(`property-${property.id}`) : null) ??
-        target("add-property") ??
-        navigationTarget("/panou");
+        nextLink ?? propertyLink ?? addLink ?? navigationTarget("/panou");
       if (!anchor) return null;
       const ready = progress.step === 2;
       return {
         key: ready ? "preview-link" : "property-link",
-        number: ready ? 5 : 2,
-        anchor,
+        label: "Proprietatea",
         title: ready
           ? "Verifică prezentarea"
           : property
@@ -334,6 +183,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
         body: ready
           ? "Verifică fotografiile și textele în previzualizare. Publici când prezentarea este pregătită."
           : "Adaugă detaliile și fotografiile proprietății. Poți salva o ciornă și reveni oricând.",
+        anchor,
         action: ready
           ? "Vezi previzualizarea"
           : property
@@ -347,7 +197,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       };
     }
     let frame = 0;
-    const update = () => {
+    function update() {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const next = resolveTip();
@@ -356,14 +206,12 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           old?.anchor === next?.anchor &&
           old?.advance === next?.advance &&
           old?.requirement === next?.requirement &&
-          old?.editing === next?.editing &&
-          old?.focus === next?.focus &&
           old?.href === next?.href
             ? old
             : next,
         );
       });
-    };
+    }
     update();
     const observer = new MutationObserver(update);
     observer.observe(document.body, {
@@ -373,57 +221,179 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       attributeFilter: [
         "data-guide-editor-step",
         "data-guide-requirement",
-        "data-guide-valid",
-        "data-guide-error",
         "disabled",
         "aria-modal",
         "open",
       ],
     });
-    document.addEventListener("focusin", update);
-    document.addEventListener("focusout", update);
     window.addEventListener("resize", update);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
-      document.removeEventListener("focusin", update);
-      document.removeEventListener("focusout", update);
       window.removeEventListener("resize", update);
     };
   }, [enabled, path, preview, progress.step, progress.property?.id]);
 
   useLayoutEffect(() => {
-    if (!enabled || !tip) return;
-    const anchor = tip.anchor;
-    anchor.dataset.guideActive = "true";
-    const input = anchor.dataset.guideField ? control(anchor) : undefined;
-    const measure = () => {
-      if (!input) return;
-      const field = input.getBoundingClientRect();
-      const wrapper = anchor.getBoundingClientRect();
-      anchor.style.setProperty(
-        "--guide-control-top",
-        `${field.top - wrapper.top}px`,
+    if (!tip) {
+      setPosition(null);
+      return;
+    }
+    let frame = 0;
+    let layoutWidth = innerWidth;
+    let attached: {
+      x: number;
+      y: number;
+      arrowX: number | null;
+      arrowY: number;
+      maxHeight: number;
+    } | null = null;
+    const pinned = () => {
+      for (
+        let element: HTMLElement | null = tip.anchor;
+        element;
+        element = element.parentElement
+      ) {
+        const placement = getComputedStyle(element).position;
+        if (placement === "fixed" || placement === "sticky") return true;
+      }
+      return false;
+    };
+    const measure = (reset = false) => {
+      if (reset) attached = null;
+      const rect = tip.anchor.getBoundingClientRect();
+      const mode = pinned() ? ("fixed" as const) : ("absolute" as const);
+      const offsetX = mode === "absolute" ? scrollX : 0;
+      const offsetY = mode === "absolute" ? scrollY : 0;
+      const next = guidePlacement(
+        rect,
+        panel.current?.getBoundingClientRect().height ?? 220,
+        {
+          left: 0,
+          top: 0,
+          width: innerWidth,
+          height: innerHeight,
+        },
+        { besideHeading: tip.besideHeading },
       );
-      anchor.style.setProperty(
-        "--guide-control-right",
-        `${wrapper.right - field.right}px`,
+      // Choose a side once, then retain that offset from the element.
+      // Content/layout changes can move the element without flipping the card.
+      attached ??= {
+        x: next.x - rect.left,
+        y: next.y - rect.top,
+        arrowX: next.arrowX === null ? null : next.arrowX - rect.left,
+        arrowY: next.arrowY - rect.top,
+        maxHeight: next.maxHeight,
+      };
+      const stable = {
+        ...next,
+        mode,
+        visible:
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.right > 0 &&
+          rect.left < innerWidth,
+        x: rect.left + offsetX + attached.x,
+        y: rect.top + offsetY + attached.y,
+        dotX: next.dotX + offsetX,
+        dotY:
+          (tip.besideHeading
+            ? rect.top + (rect.height - 30) / 2
+            : rect.top - 14) + offsetY,
+        arrowX:
+          attached.arrowX === null
+            ? null
+            : rect.left + offsetX + attached.arrowX,
+        arrowY: rect.top + offsetY + attached.arrowY,
+        maxHeight: attached.maxHeight,
+      };
+      setPosition((old) =>
+        JSON.stringify(old) === JSON.stringify(stable) ? old : stable,
       );
+    };
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => measure());
+    };
+    const resize = () => {
+      // Mobile browser chrome and keyboards change height during scrolling.
+      // Only a width change calls for a new responsive placement.
+      if (innerWidth !== layoutWidth) {
+        layoutWidth = innerWidth;
+        measure(true);
+      }
     };
     measure();
-    // Only local layout changes matter. There is no scroll positioning loop.
-    const observer = input ? new ResizeObserver(measure) : null;
-    if (input) {
-      observer?.observe(input);
-      observer?.observe(anchor);
-    }
+    const observer = new ResizeObserver(schedule);
+    observer.observe(tip.anchor);
+    const content = tip.anchor.closest<HTMLElement>(".workspace-main");
+    if (content) observer.observe(content);
+    window.addEventListener("resize", resize);
     return () => {
-      observer?.disconnect();
-      delete anchor.dataset.guideActive;
-      anchor.style.removeProperty("--guide-control-top");
-      anchor.style.removeProperty("--guide-control-right");
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", resize);
     };
-  }, [enabled, tip?.anchor]);
+  }, [tip?.key, tip?.anchor, open]);
+
+  useEffect(() => {
+    setInViewport(false);
+    if (!tip) return;
+    const observer = new IntersectionObserver((entries) =>
+      setInViewport(entries.some((entry) => entry.isIntersecting)),
+    );
+    observer.observe(tip.anchor);
+    return () => observer.disconnect();
+  }, [tip?.anchor]);
+
+  useEffect(() => {
+    if (!enabled || !tip || !position?.visible || !inViewport) return;
+    const key = `${workspace.profile.id}:${tip.key}`;
+    if (autoOpened.current.has(key)) return;
+    autoOpened.current.add(key);
+    // Remember automatic openings on this browser. Closing the guide itself
+    // remains account-wide through the existing Supabase state.
+    const storageKey = `up-guide-opened:${workspace.profile.id}`;
+    try {
+      const saved: unknown = JSON.parse(
+        localStorage.getItem(storageKey) || "[]",
+      );
+      const seen = Array.isArray(saved)
+        ? saved.filter((item): item is string => typeof item === "string")
+        : [];
+      if (seen.includes(tip.key)) return;
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify([...seen.slice(-20), tip.key]),
+      );
+    } catch {
+      /* Private browsing still has the in-memory guard. */
+    }
+    setOpenKey(tip.key);
+  }, [enabled, tip?.key, position?.visible, inViewport, workspace.profile.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    function outside(event: PointerEvent) {
+      if (
+        !panel.current?.contains(event.target as Node) &&
+        !beacon.current?.contains(event.target as Node)
+      )
+        setOpenKey(null);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpenKey(null);
+        beacon.current?.focus();
+      }
+    }
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
 
   async function close(status: "dismissed" | "completed") {
     if (busy) return;
@@ -443,57 +413,146 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       void close("completed");
       return;
     }
-    if (tip.advance && (tip.advance.disabled || tip.requirement)) return;
-    const { advance, focus } = tip;
+    if (tip.advance?.disabled || tip.requirement) return;
     setOpenKey(null);
-    requestAnimationFrame(() => {
-      // Existing validation and saves run through their original buttons.
-      // Publication/payment buttons are focus targets only.
-      if (advance?.isConnected && !advance.disabled) advance.click();
-      else if (focus?.isConnected) {
-        focus.scrollIntoView({ behavior: "instant", block: "center" });
-        focus.focus({ preventScroll: true });
-      }
-    });
+    if (tip.advance) {
+      // Use the editor's existing save/validation flow. Never click publication/payment.
+      tip.advance.click();
+    } else if (tip.focus) {
+      tip.focus.scrollIntoView({ behavior: "instant", block: "center" });
+      tip.focus.focus({ preventScroll: true });
+    }
   }
-  const slot = tip?.anchor.querySelector<HTMLElement>("[data-guide-slot]");
-  if (!enabled || !tip || !slot) return null;
-  return (
-    <>
-      {createPortal(
-        <span className="guide-coachmark">
-          <button
-            type="button"
-            className="guide-beacon"
-            tabIndex={tip.editing ? -1 : 0}
-            aria-label={`Ghid: ${tip.title}`}
-            title="Ghid de început"
-            aria-expanded={open}
-            aria-controls={open ? panelId : undefined}
-            onClick={() => {
-              setError("");
-              setOpenKey(tip.key);
-            }}
-          >
-            <span aria-hidden="true" />
-          </button>
-        </span>,
-        slot,
+  if (!enabled || !tip || !position?.visible) return null;
+  const number = tip.key.startsWith("profile")
+    ? 1
+    : tip.key === "editor-1"
+      ? 3
+      : tip.key === "editor-2"
+        ? 4
+        : tip.key === "publish" || tip.key === "preview-link"
+          ? 5
+          : tip.key.startsWith("messages")
+            ? 6
+            : 2;
+  return createPortal(
+    <div className="guide-coachmark">
+      <button
+        ref={beacon}
+        type="button"
+        className="guide-beacon"
+        style={{
+          position: position.mode,
+          left: position.dotX,
+          top: position.dotY,
+        }}
+        aria-label={`Ghid: ${tip.title}`}
+        title="Ghid de început"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        onClick={() => {
+          setError("");
+          setOpenKey(open ? null : tip.key);
+        }}
+      >
+        <span aria-hidden="true" />
+      </button>
+      {open && (
+        <div
+          ref={panel}
+          id={panelId}
+          className="guide-tip"
+          style={{
+            position: position.mode,
+            left: position.x,
+            top: position.y,
+            width: position.width,
+            maxHeight: position.maxHeight,
+          }}
+          role="dialog"
+          aria-modal="false"
+          aria-label="Ghid de început"
+        >
+          <div className="guide-tip-header">
+            <h2>{tip.title}</h2>
+            <span
+              className="guide-tip-counter"
+              aria-label={`Pasul ${number} din 6`}
+            >
+              {number} / 6
+            </span>
+            <button
+              type="button"
+              className="guide-tip-collapse"
+              aria-label="Restrânge indiciul"
+              onClick={() => {
+                setOpenKey(null);
+                beacon.current?.focus();
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <p>{tip.body}</p>
+          {tip.requirement && (
+            <p
+              className="guide-tip-requirement"
+              id={`${panelId}-requirement`}
+              aria-live="polite"
+            >
+              {tip.requirement}
+            </p>
+          )}
+          {error && (
+            <p className="guide-tip-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="guide-tip-actions">
+            <button
+              type="button"
+              className="guide-tip-dismiss"
+              disabled={busy}
+              onClick={() => void close("dismissed")}
+            >
+              Închide ghidul
+            </button>
+            {tip.href ? (
+              <Link href={tip.href} onClick={() => setOpenKey(null)}>
+                {tip.action}
+                <ArrowRight size={13} />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="guide-tip-next"
+                disabled={
+                  busy || tip.advance?.disabled || Boolean(tip.requirement)
+                }
+                aria-describedby={
+                  tip.requirement ? `${panelId}-requirement` : undefined
+                }
+                onClick={act}
+              >
+                {busy ? "Se salvează…" : tip.action}
+                <ArrowRight size={13} />
+              </button>
+            )}
+          </div>
+        </div>
       )}
-      {open &&
-        createPortal(
-          <div id={panelId}>
-            <GuideDialog
-              tip={tip}
-              busy={busy}
-              error={error}
-              onClose={() => setOpenKey(null)}
-              onDismiss={() => void close("dismissed")}
-              onAct={act}
-            />
-          </div>,
-          document.body,
-        )}
-    </>
+      {open && position.arrowX !== null && (
+        <span
+          className="guide-tip-pointer"
+          aria-hidden="true"
+          style={{
+            position: position.mode,
+            left: position.arrowX,
+            top: position.arrowY,
+          }}
+        />
+      )}
+    </div>,
+    document.body,
   );
 }

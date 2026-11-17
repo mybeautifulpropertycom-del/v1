@@ -1,5 +1,4 @@
 "use client";
-import { GuideTarget } from "./guide-target";
 import { PLATFORM_CONTACT_EMAIL } from "@/lib/platform-brand";
 import { BrandSymbol } from "./brand-symbol";
 import { AgentAvatar } from "./agent-avatar";
@@ -99,26 +98,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           )}
           {nav.map(({ href, label, icon: Icon }) => (
-            <GuideTarget key={href} id={`nav-${href.split("/").pop()}`}>
-              <Link
-                href={href}
-                aria-label={
-                  href === "/panou/mesaje" && unreadCount > 0
-                    ? `Mesaje, ${unreadCount} mesaje necitite`
-                    : undefined
-                }
-                className={`nav-link ${(href === "/panou" ? path === href || path.includes("/proprietati/") : path === href) ? "active" : ""}`}
-                onClick={() => setMenu(false)}
-              >
-                <Icon size={19} />
-                <span>{label}</span>
-                {href === "/panou/mesaje" && unreadCount > 0 && (
-                  <span className="inbox-unread-badge" aria-hidden="true">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                )}
-              </Link>
-            </GuideTarget>
+            <Link
+              key={href}
+              href={href}
+              aria-label={
+                href === "/panou/mesaje" && unreadCount > 0
+                  ? `Mesaje, ${unreadCount} mesaje necitite`
+                  : undefined
+              }
+              className={`nav-link ${(href === "/panou" ? path === href || path.includes("/proprietati/") : path === href) ? "active" : ""}`}
+              onClick={() => setMenu(false)}
+            >
+              <Icon size={19} />
+              <span>{label}</span>
+              {href === "/panou/mesaje" && unreadCount > 0 && (
+                <span className="inbox-unread-badge" aria-hidden="true">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Link>
           ))}
         </nav>
         <div className="sidebar-bottom">
@@ -156,20 +154,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="main-column">
         <header className="topbar">
           <div className="topbar-left">
-            <GuideTarget
-              id="mobile-menu"
-              inline
-              className="guide-mobile-target"
+            <button
+              className="icon-button mobile-menu"
+              data-guide-menu
+              aria-label="Deschide meniul"
+              onClick={() => setMenu(true)}
             >
-              <button
-                className="icon-button mobile-menu"
-                data-guide-menu
-                aria-label="Deschide meniul"
-                onClick={() => setMenu(true)}
-              >
-                <Menu size={22} />
-              </button>
-            </GuideTarget>
+              <Menu size={22} />
+            </button>
             <span className="topbar-breadcrumb">
               Spațiul tău de lucru <span>/</span>{" "}
               <strong>

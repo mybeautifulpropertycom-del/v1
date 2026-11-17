@@ -1,5 +1,4 @@
 "use client";
-import { GuideTarget } from "./guide-target";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Check, Inbox, Mail, Phone } from "lucide-react";
@@ -109,13 +108,11 @@ export function Inquiries() {
       <div className="page-heading compact">
         <div>
           <span className="eyebrow">CONVERSAȚIILE BUNE ÎNCEP AICI</span>
-          <GuideTarget id="messages" inline>
-            <h1 data-guide-messages>
-              Un mesaj nou.
-              <br />
-              <em>O nouă posibilitate.</em>
-            </h1>
-          </GuideTarget>
+          <h1 data-guide-messages>
+            Un mesaj nou.
+            <br />
+            <em>O nouă posibilitate.</em>
+          </h1>
           <p>Mesaje primite prin formularele proprietăților.</p>
         </div>
       </div>

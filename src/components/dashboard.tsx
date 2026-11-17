@@ -1,5 +1,4 @@
 "use client";
-import { GuideTarget } from "./guide-target";
 import { propertyTypeLabel } from "@/lib/model";
 
 import Link from "next/link";
@@ -80,14 +79,12 @@ function PropertyCard({
             {property.transaction === "sale" ? "De vânzare" : "De închiriat"}
           </span>
         </div>
-        <GuideTarget id={`property-${property.id}`} inline>
-          <Link
-            href={`/panou/proprietati/${property.id}`}
-            data-guide-property={property.id}
-          >
-            <h3>{property.title || "Proprietate fără titlu"}</h3>
-          </Link>
-        </GuideTarget>
+        <Link
+          href={`/panou/proprietati/${property.id}`}
+          data-guide-property={property.id}
+        >
+          <h3>{property.title || "Proprietate fără titlu"}</h3>
+        </Link>
         <p className="location">
           <MapPin size={14} />
           {property.location || "Adresă necompletată"}
@@ -186,16 +183,14 @@ export function Dashboard() {
             pregătim următoarea ta proprietate.
           </p>
         </div>
-        <GuideTarget id="add-property" inline className="guide-add-target">
-          <Link
-            href={complete ? "/panou/proprietati/noua" : "/panou/profil"}
-            className="button primary"
-            data-guide-add-property
-          >
-            <Plus size={18} />
-            Adaugă o proprietate
-          </Link>
-        </GuideTarget>
+        <Link
+          href={complete ? "/panou/proprietati/noua" : "/panou/profil"}
+          className="button primary"
+          data-guide-add-property
+        >
+          <Plus size={18} />
+          Adaugă o proprietate
+        </Link>
       </div>
       <section className="stats-grid" aria-label="Prezentarea proprietăților">
         <div className="stat-card">
