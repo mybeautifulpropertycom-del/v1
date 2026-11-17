@@ -7,6 +7,7 @@
 - Dashboard/admin screens, previews, template samples, registration and password-reset pages remain noindex. Robots permits fetching their noindex tags and application assets; API routes are disallowed. Vercel preview deployments opt out of indexing.
 - `/sitemap.xml` is a sitemap index. `/sitemap.xml/main.xml` contains the homepage. Property sitemaps contain up to 1,000 current published URLs each. New publications, edits and unpublishing are reflected automatically; Vercel caches XML for up to five minutes. Dates come from database updates, not the request clock. Drafts, old URL aliases, private contact data and demo listings are excluded.
 - Database failures return a temporary 503, rather than a misleading empty property sitemap.
+- The approved house logo is available as `/icon.svg`, a 96×96 `/icon.png` and a 48×48 `/favicon.ico`. Next.js adds the icon links to the HTML head. All three assets are public and crawlable; no Search Console favicon upload is needed.
 
 ## Activate on the existing installation
 
@@ -31,6 +32,8 @@ Future property listings need no manual SEO setup. Their real content supplies t
 The homepage currently focuses on sign-in with a short service introduction. Broader search visibility will need useful public content about how the service works, its price and actual examples, alongside complete and distinctive property presentations. That is a separate content task requiring approved copy; this technical setup does not change the owner's visible wording or create placeholder marketing pages.
 
 Google may rewrite search titles/descriptions, and sitemap submission does not guarantee indexing, a completion date, ranking or a rich result. RealEstateListing JSON-LD describes the page; no special Google real-estate rich result is promised.
+
+If search still displays the former brand title or the generic globe, inspect the production homepage in Search Console after Vercel is Ready, test the live URL and request indexing once. This requests a recrawl; it does not force Google's displayed title or favicon, which can update separately. The configured homepage title is `Următoarea Proprietate - Prezintă Proprietatea Eficient` and its description is the owner's approved Romanian text.
 
 ## Validation
 

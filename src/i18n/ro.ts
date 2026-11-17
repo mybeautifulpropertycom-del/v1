@@ -34,7 +34,7 @@ export const ro = {
       "Adaugă numele, e-mailul și telefonul înainte de a crea prima proprietate.",
   },
   editor: {
-    eyebrow: "PUNE-ȚI PROPRIETATEA ÎN VALOARE",
+    eyebrow: "PUNE PROPRIETATEA ÎN VALOARE",
     newTitle: "O nouă poveste începe aici.",
     editTitle: "Fiecare detaliu contează.",
     intro:
