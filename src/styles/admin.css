@@ -38,7 +38,7 @@
   font-size: 13px;
 }
 .admin-controls input,
-.admin-property-toolbar input {
+.admin-property-toolbar input:not([type="radio"]) {
   min-width: 280px;
   max-width: 100%;
   border: 1px solid #dce2da;
@@ -133,7 +133,7 @@
   .admin-property-toolbar label {
     width: 100%;
   }
-  .admin-property-toolbar input {
+  .admin-property-toolbar input:not([type="radio"]) {
     min-width: 0;
   }
   .admin-pagination {
