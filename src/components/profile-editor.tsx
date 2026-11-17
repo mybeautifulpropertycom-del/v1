@@ -1,4 +1,5 @@
 "use client";
+import { GuideTarget } from "./guide-target";
 import { AgentAvatar } from "./agent-avatar";
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,11 @@ import {
   UserRound,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
-import { MAX_PROFILE_BIO_LENGTH, profileErrors } from "@/lib/model";
+import {
+  MAX_PROFILE_BIO_LENGTH,
+  profileErrors,
+  profileFieldErrors,
+} from "@/lib/model";
 import { ro } from "@/i18n/ro";
 
 export function ProfileEditor() {
@@ -33,6 +38,7 @@ export function ProfileEditor() {
     return () => clearTimeout(timer);
   }, [redirecting, router]);
   const t = ro.profile;
+  const guideIssues = profileFieldErrors(form);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (uploading || busy || redirecting) return;
@@ -151,20 +157,28 @@ export function ProfileEditor() {
             </div>
           </div>
           <div className="field-grid">
-            <label>
-              {t.name}
-              <input
-                required
-                autoComplete="name"
-                maxLength={100}
-                placeholder="Numele tău"
-                value={form.name}
-                onChange={(e) => {
-                  setSaved(false);
-                  setForm({ ...form, name: e.target.value });
-                }}
-              />
-            </label>
+            <GuideTarget
+              id="profile-name"
+              field="profile"
+              issue={guideIssues.name}
+              title="Numele tău"
+              description="Numele salvat aici apare în prezentările proprietăților."
+            >
+              <label>
+                {t.name}
+                <input
+                  required
+                  autoComplete="name"
+                  maxLength={100}
+                  placeholder="Numele tău"
+                  value={form.name}
+                  onChange={(e) => {
+                    setSaved(false);
+                    setForm({ ...form, name: e.target.value });
+                  }}
+                />
+              </label>
+            </GuideTarget>
             <label>
               {t.agency}
               <input
@@ -175,30 +189,46 @@ export function ProfileEditor() {
                 onChange={(e) => setForm({ ...form, agency: e.target.value })}
               />
             </label>
-            <label>
-              {t.email}
-              <input
-                required
-                type="email"
-                autoComplete="email"
-                maxLength={254}
-                placeholder="nume@email.ro"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </label>
-            <label>
-              {t.phone}
-              <input
-                required
-                type="tel"
-                autoComplete="tel"
-                maxLength={30}
-                placeholder="+40 700 000 000"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </label>
+            <GuideTarget
+              id="profile-email"
+              field="profile"
+              issue={guideIssues.email}
+              title="E-mailul de contact"
+              description="Această adresă apare în prezentare. Notificările despre solicitări ajung la adresa contului."
+            >
+              <label>
+                {t.email}
+                <input
+                  required
+                  type="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  placeholder="nume@email.ro"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </label>
+            </GuideTarget>
+            <GuideTarget
+              id="profile-phone"
+              field="profile"
+              issue={guideIssues.phone}
+              title="Telefonul de contact"
+              description="Adaugă numărul la care te pot contacta persoanele interesate."
+            >
+              <label>
+                {t.phone}
+                <input
+                  required
+                  type="tel"
+                  autoComplete="tel"
+                  maxLength={30}
+                  placeholder="+40 700 000 000"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </label>
+            </GuideTarget>
             <label className="full-width">
               {t.bio}
               <textarea
@@ -231,23 +261,27 @@ export function ProfileEditor() {
               <ShieldCheck size={15} />
               Datele tale publice de contact
             </span>
-            <button
-              className="button primary"
-              disabled={busy || uploading || redirecting}
-            >
-              <Save size={16} />
-              {busy ? ro.common.saving : ro.common.save}
-            </button>
+            <GuideTarget id="profile-save" inline>
+              <button
+                className="button primary"
+                disabled={busy || uploading || redirecting}
+              >
+                <Save size={16} />
+                {busy ? ro.common.saving : ro.common.save}
+              </button>
+            </GuideTarget>
           </div>
           {saved && !redirecting && (
-            <Link
-              className="success-next"
-              data-guide-next-property
-              href="/panou/proprietati/noua"
-            >
-              Profilul este pregătit. Adaugă prima proprietate{" "}
-              <ArrowRight size={17} />
-            </Link>
+            <GuideTarget id="next-property" inline>
+              <Link
+                className="success-next"
+                data-guide-next-property
+                href="/panou/proprietati/noua"
+              >
+                Profilul este pregătit. Adaugă prima proprietate{" "}
+                <ArrowRight size={17} />
+              </Link>
+            </GuideTarget>
           )}
         </form>
         <aside>

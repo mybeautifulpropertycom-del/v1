@@ -8,39 +8,185 @@ import { ArrowRight, X } from "lucide-react";
 import { agentGuideProgress } from "@/lib/agent-onboarding";
 import { publicationPackages } from "@/lib/publication-packages";
 import { useWorkspace } from "./workspace-provider";
-import { guidePlacement } from "@/lib/guide-placement";
 
 type Tip = {
   key: string;
-  label: string;
   title: string;
   body: string;
   anchor: HTMLElement;
   action: string;
+  number: number;
   href?: string;
   focus?: HTMLElement;
   advance?: HTMLButtonElement;
   finish?: boolean;
   requirement?: string;
-  besideHeading?: boolean;
+  editing?: boolean;
 };
 const find = <T extends HTMLElement = HTMLElement>(selector: string) =>
   document.querySelector<T>(selector);
-function inView(element: HTMLElement | null) {
-  if (!element) return false;
-  const rect = element.getBoundingClientRect();
-  return (
-    rect.width > 0 &&
-    rect.height > 0 &&
-    rect.right > 0 &&
-    rect.left < innerWidth
-  );
-}
+const target = (id: string) => find(`[data-guide-target="${CSS.escape(id)}"]`);
+const control = (element: HTMLElement | null) =>
+  element?.querySelector<HTMLElement>(
+    'input:not([type="file"]), select, textarea',
+  ) ?? undefined;
 function navigationTarget(href: string) {
-  const menu = find("[data-guide-menu]");
-  if (inView(menu)) return menu;
-  const link = find(`.sidebar nav a[href="${href}"]`);
-  return inView(link) ? link : null;
+  const menu = target("mobile-menu");
+  if (menu && menu.getBoundingClientRect().width > 0) return menu;
+  return target(`nav-${href.split("/").pop()}`);
+}
+
+// Follow the focused field until blur, even if its value becomes valid mid-word.
+// Outside a field, highlight the first required value still missing.
+function fieldTip(
+  group: "profile" | "property",
+  next: HTMLElement | null,
+  advance: HTMLButtonElement | null,
+): Tip | null {
+  const fields = Array.from(
+    document.querySelectorAll<HTMLElement>(`[data-guide-field="${group}"]`),
+  );
+  const focused = document.activeElement?.closest<HTMLElement>(
+    `[data-guide-field="${group}"]`,
+  );
+  const missing = fields.filter(
+    (field) => field.dataset.guideValid === "false",
+  );
+  const anchor = focused && fields.includes(focused) ? focused : missing[0];
+  if (!anchor) return null;
+  const valid = anchor.dataset.guideValid === "true";
+  return {
+    key: `field-${anchor.dataset.guideTarget}`,
+    anchor,
+    number: group === "profile" ? 1 : 2,
+    title: anchor.dataset.guideTitle || "Datele proprietății",
+    body:
+      anchor.dataset.guideDescription ||
+      "Completează informațiile pentru prezentare.",
+    action:
+      valid && !missing.length
+        ? "Continuă"
+        : valid
+          ? "Următorul câmp"
+          : "Completează câmpul",
+    requirement: anchor.dataset.guideError,
+    editing: control(anchor) === document.activeElement,
+    ...(valid && !missing.length && advance
+      ? { advance }
+      : { focus: control(valid ? (missing[0] ?? next) : anchor) }),
+  };
+}
+
+function GuideDialog({
+  tip,
+  busy,
+  error,
+  onClose,
+  onDismiss,
+  onAct,
+}: {
+  tip: Tip;
+  busy: boolean;
+  error: string;
+  onClose: () => void;
+  onDismiss: () => void;
+  onAct: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const descriptionId = useId();
+  useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    dialog.current?.showModal();
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.current?.close();
+      document.body.style.overflow = overflow;
+      if (previousFocus?.isConnected)
+        previousFocus.focus({ preventScroll: true });
+    };
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      data-agent-guide-dialog
+      className="guide-dialog"
+      aria-label="Ghid de început"
+      aria-describedby={descriptionId}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX < rect.left ||
+          event.clientX > rect.right ||
+          event.clientY < rect.top ||
+          event.clientY > rect.bottom
+        )
+          onClose();
+      }}
+    >
+      <div className="guide-tip-header">
+        <h2>{tip.title}</h2>
+        <span
+          className="guide-tip-counter"
+          aria-label={`Pasul ${tip.number} din 6`}
+        >
+          {tip.number} / 6
+        </span>
+        <button
+          type="button"
+          autoFocus
+          className="guide-tip-collapse"
+          aria-label="Restrânge indiciul"
+          onClick={onClose}
+        >
+          <X size={16} />
+        </button>
+      </div>
+      <p id={descriptionId}>{tip.body}</p>
+      {tip.requirement && (
+        <p className="guide-tip-requirement">{tip.requirement}</p>
+      )}
+      {error && (
+        <p className="guide-tip-error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="guide-tip-actions">
+        <button
+          type="button"
+          className="guide-tip-dismiss"
+          disabled={busy}
+          onClick={onDismiss}
+        >
+          Închide ghidul
+        </button>
+        {tip.href ? (
+          <Link href={tip.href} onClick={onClose}>
+            {tip.action}
+            <ArrowRight size={14} />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className="guide-tip-next"
+            disabled={
+              busy ||
+              Boolean(tip.advance && (tip.advance.disabled || tip.requirement))
+            }
+            onClick={onAct}
+          >
+            {busy ? "Se salvează…" : tip.action}
+            <ArrowRight size={14} />
+          </button>
+        )}
+      </div>
+    </dialog>
+  );
 }
 
 export function AgentGuide({ preview = false }: { preview?: boolean }) {
@@ -50,17 +196,13 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     !workspace.demo && !workspace.isAdmin && workspace.guideStatus === "active";
   const progress = agentGuideProgress(workspace);
   const [tip, setTip] = useState<Tip | null>(null);
+  const tipRef = useRef(tip);
+  tipRef.current = tip;
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const beacon = useRef<HTMLButtonElement>(null);
-  const panel = useRef<HTMLDivElement>(null);
   const panelId = useId();
-  const autoOpened = useRef(new Set<string>());
-  const open = tip !== null && openKey === tip.key;
-  const [position, setPosition] = useState<ReturnType<
-    typeof guidePlacement
-  > | null>(null);
+  const open = Boolean(tip && openKey === tip.key);
 
   useEffect(() => {
     if (!enabled) {
@@ -68,7 +210,8 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       return;
     }
     function resolveTip(): Tip | null {
-      // Leave menus, photo dialogs and payment dialogs unobstructed.
+      // Keep the selected explanation stable while its modal owns focus.
+      if (find("dialog[data-agent-guide-dialog][open]")) return tipRef.current;
       if (
         find(
           'dialog[open], [role="dialog"][aria-modal="true"], .sidebar-overlay',
@@ -78,102 +221,111 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       const editor = find("[data-guide-editor-step]");
       if (editor && progress.step !== 0 && progress.step !== 3) {
         const step = Number(editor.dataset.guideEditorStep);
-        const selectors = [
-          "[data-guide-details-title]",
-          "[data-guide-photos]",
-          "[data-guide-design]",
-        ];
-        const anchor = find(selectors[step]);
+        const advance = find<HTMLButtonElement>(
+          step === 2 ? "[data-guide-preview]" : "[data-guide-editor-next]",
+        );
+        if (step === 0) {
+          const field = fieldTip("property", target("property-next"), advance);
+          if (field) return field;
+        }
+        const anchor = target(
+          ["property-next", "property-photos", "property-design"][step],
+        );
         if (!anchor) return null;
         return {
           key: `editor-${step}`,
-          label: ["Detaliile", "Fotografiile", "Modelul"][step],
+          number: step + 2,
+          anchor,
           title: [
             "Detaliile proprietății",
             "Fotografiile proprietății",
             "Stilul prezentării",
           ][step],
           body: [
-            "Completează informațiile locuinței. Apoi continuăm cu fotografiile.",
+            "Detaliile esențiale sunt completate. Poți continua cu fotografiile.",
             "Încarcă fotografiile proprietății. Prima fotografie va fi coperta prezentării.",
             "Alege un model. În previzualizare vei putea verifica și edita textele înainte de publicare.",
           ][step],
-          anchor,
           action: "Continuă",
           requirement: editor.dataset.guideRequirement || undefined,
-          besideHeading: true,
-          advance:
-            find<HTMLButtonElement>(
-              step === 2 ? "[data-guide-preview]" : "[data-guide-editor-next]",
-            ) ?? undefined,
+          advance: advance ?? undefined,
         };
       }
       if (progress.step === 0) {
-        const contact =
-          path === "/panou/profil"
-            ? find<HTMLInputElement>(
-                "[data-guide-contact] input:not([type=file])",
-              )
-            : null;
-        const anchor = contact ?? navigationTarget("/panou/profil");
+        if (path === "/panou/profil") {
+          const save = find<HTMLButtonElement>(
+            '[data-guide-target="profile-save"] button',
+          );
+          const field = fieldTip("profile", target("profile-save"), save);
+          if (field) return field;
+          const anchor = target("profile-save");
+          if (!anchor) return null;
+          return {
+            key: "profile-save",
+            number: 1,
+            anchor,
+            title: "Salvează profilul",
+            body: "Datele de contact sunt pregătite. Salvează-le pentru a le folosi în prezentările proprietăților.",
+            action: "Salvează profilul",
+            advance: save ?? undefined,
+          };
+        }
+        const anchor = navigationTarget("/panou/profil");
         if (!anchor) return null;
         return {
-          key: contact ? "profile-contact" : "profile-link",
-          label: "Profilul tău",
+          key: "profile-link",
+          number: 1,
+          anchor,
           title: "Datele tale de contact",
           body: "Datele salvate în profil apar în prezentarea proprietății, astfel încât persoanele interesate să te poată contacta.",
-          anchor,
           action: "Completează profilul",
-          ...(contact ? { focus: contact } : { href: "/panou/profil" }),
+          href: "/panou/profil",
         };
       }
       if (progress.step === 3) {
         const here = path === "/panou/mesaje";
         const anchor = here
-          ? find("[data-guide-messages]")
+          ? target("messages")
           : preview
-            ? find("[data-guide-back]")
+            ? target("preview-back")
             : navigationTarget("/panou/mesaje");
         if (!anchor) return null;
         return {
           key: here ? "messages-inbox" : "messages-link",
-          label: "Mesajele",
+          number: 6,
+          anchor,
           title: "Solicitările, într-un singur loc",
           body: "În Mesaje ajung cererile de vizionare și mesajele din formularele proprietăților. Primești și notificări la e-mailul contului.",
-          anchor,
           action: here ? "Am înțeles" : "Deschide mesajele",
           ...(here ? { finish: true } : { href: "/panou/mesaje" }),
         };
       }
       if (preview) {
-        const anchor = find<HTMLButtonElement>("[data-guide-publish]");
+        const anchor = target("publish");
         if (!anchor) return null;
         return {
           key: "publish",
-          label: "Publicarea",
+          number: 5,
+          anchor,
           title: "Publică atunci când ești pregătit",
           body: `De aici alegi prezentarea cu fotografii (${publicationPackages.photos.price} lei) sau cu videoclip (${publicationPackages.video.price} lei). Proprietatea se publică după confirmarea plății.`,
-          anchor,
           action: "Am înțeles",
-          focus: anchor,
+          focus: find("[data-guide-publish]") ?? undefined,
         };
       }
       const property = progress.property;
-      const propertyLink = property
-        ? find<HTMLAnchorElement>(
-            `[data-guide-property="${CSS.escape(property.id)}"]`,
-          )
-        : null;
-      const addLink = find<HTMLAnchorElement>("[data-guide-add-property]");
-      const nextLink = find<HTMLAnchorElement>("[data-guide-next-property]");
-      if (path === "/panou/profil" && !nextLink) return null;
+      if (path === "/panou/profil" && !target("next-property")) return null;
       const anchor =
-        nextLink ?? propertyLink ?? addLink ?? navigationTarget("/panou");
+        target("next-property") ??
+        (property ? target(`property-${property.id}`) : null) ??
+        target("add-property") ??
+        navigationTarget("/panou");
       if (!anchor) return null;
       const ready = progress.step === 2;
       return {
         key: ready ? "preview-link" : "property-link",
-        label: "Proprietatea",
+        number: ready ? 5 : 2,
+        anchor,
         title: ready
           ? "Verifică prezentarea"
           : property
@@ -182,7 +334,6 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
         body: ready
           ? "Verifică fotografiile și textele în previzualizare. Publici când prezentarea este pregătită."
           : "Adaugă detaliile și fotografiile proprietății. Poți salva o ciornă și reveni oricând.",
-        anchor,
         action: ready
           ? "Vezi previzualizarea"
           : property
@@ -196,7 +347,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       };
     }
     let frame = 0;
-    function update() {
+    const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const next = resolveTip();
@@ -205,12 +356,14 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           old?.anchor === next?.anchor &&
           old?.advance === next?.advance &&
           old?.requirement === next?.requirement &&
+          old?.editing === next?.editing &&
+          old?.focus === next?.focus &&
           old?.href === next?.href
             ? old
             : next,
         );
       });
-    }
+    };
     update();
     const observer = new MutationObserver(update);
     observer.observe(document.body, {
@@ -220,112 +373,57 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       attributeFilter: [
         "data-guide-editor-step",
         "data-guide-requirement",
+        "data-guide-valid",
+        "data-guide-error",
         "disabled",
         "aria-modal",
         "open",
       ],
     });
+    document.addEventListener("focusin", update);
+    document.addEventListener("focusout", update);
     window.addEventListener("resize", update);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      document.removeEventListener("focusin", update);
+      document.removeEventListener("focusout", update);
       window.removeEventListener("resize", update);
     };
   }, [enabled, path, preview, progress.step, progress.property?.id]);
 
   useLayoutEffect(() => {
-    if (!tip) {
-      setPosition(null);
-      return;
-    }
-    let frame = 0;
+    if (!enabled || !tip) return;
+    const anchor = tip.anchor;
+    anchor.dataset.guideActive = "true";
+    const input = anchor.dataset.guideField ? control(anchor) : undefined;
     const measure = () => {
-      const viewport = window.visualViewport;
-      const next = guidePlacement(
-        tip.anchor.getBoundingClientRect(),
-        panel.current?.getBoundingClientRect().height ?? 220,
-        {
-          left: viewport?.offsetLeft ?? 0,
-          top: viewport?.offsetTop ?? 0,
-          width: viewport?.width ?? innerWidth,
-          height: viewport?.height ?? innerHeight,
-        },
-        { besideHeading: tip.besideHeading },
+      if (!input) return;
+      const field = input.getBoundingClientRect();
+      const wrapper = anchor.getBoundingClientRect();
+      anchor.style.setProperty(
+        "--guide-control-top",
+        `${field.top - wrapper.top}px`,
       );
-      setPosition((old) =>
-        JSON.stringify(old) === JSON.stringify(next) ? old : next,
+      anchor.style.setProperty(
+        "--guide-control-right",
+        `${wrapper.right - field.right}px`,
       );
-    };
-    const schedule = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(measure);
     };
     measure();
-    const observer = new ResizeObserver(schedule);
-    observer.observe(tip.anchor);
-    if (panel.current) observer.observe(panel.current);
-    window.addEventListener("scroll", schedule, true);
-    window.addEventListener("resize", schedule);
-    window.visualViewport?.addEventListener("resize", schedule);
-    window.visualViewport?.addEventListener("scroll", schedule);
+    // Only local layout changes matter. There is no scroll positioning loop.
+    const observer = input ? new ResizeObserver(measure) : null;
+    if (input) {
+      observer?.observe(input);
+      observer?.observe(anchor);
+    }
     return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      window.removeEventListener("scroll", schedule, true);
-      window.removeEventListener("resize", schedule);
-      window.visualViewport?.removeEventListener("resize", schedule);
-      window.visualViewport?.removeEventListener("scroll", schedule);
+      observer?.disconnect();
+      delete anchor.dataset.guideActive;
+      anchor.style.removeProperty("--guide-control-top");
+      anchor.style.removeProperty("--guide-control-right");
     };
-  }, [tip, open, error]);
-
-  useEffect(() => {
-    if (!enabled || !tip || !position?.visible) return;
-    const key = `${workspace.profile.id}:${tip.key}`;
-    if (autoOpened.current.has(key)) return;
-    autoOpened.current.add(key);
-    // Remember automatic openings on this browser. Closing the guide itself
-    // remains account-wide through the existing Supabase state.
-    const storageKey = `up-guide-opened:${workspace.profile.id}`;
-    try {
-      const saved: unknown = JSON.parse(
-        localStorage.getItem(storageKey) || "[]",
-      );
-      const seen = Array.isArray(saved)
-        ? saved.filter((item): item is string => typeof item === "string")
-        : [];
-      if (seen.includes(tip.key)) return;
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify([...seen.slice(-20), tip.key]),
-      );
-    } catch {
-      /* Private browsing still has the in-memory guard. */
-    }
-    setOpenKey(tip.key);
-  }, [enabled, tip?.key, position?.visible, workspace.profile.id]);
-
-  useEffect(() => {
-    if (!open) return;
-    function outside(event: PointerEvent) {
-      if (
-        !panel.current?.contains(event.target as Node) &&
-        !beacon.current?.contains(event.target as Node)
-      )
-        setOpenKey(null);
-    }
-    function escape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpenKey(null);
-        beacon.current?.focus();
-      }
-    }
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [open]);
+  }, [enabled, tip?.anchor]);
 
   async function close(status: "dismissed" | "completed") {
     if (busy) return;
@@ -345,137 +443,57 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       void close("completed");
       return;
     }
-    if (tip.advance?.disabled || tip.requirement) return;
+    if (tip.advance && (tip.advance.disabled || tip.requirement)) return;
+    const { advance, focus } = tip;
     setOpenKey(null);
-    if (tip.advance) {
-      // Use the editor's existing save/validation flow. Never click publication/payment.
-      tip.advance.click();
-    } else if (tip.focus) {
-      tip.focus.scrollIntoView({ behavior: "instant", block: "center" });
-      tip.focus.focus({ preventScroll: true });
-    }
+    requestAnimationFrame(() => {
+      // Existing validation and saves run through their original buttons.
+      // Publication/payment buttons are focus targets only.
+      if (advance?.isConnected && !advance.disabled) advance.click();
+      else if (focus?.isConnected) {
+        focus.scrollIntoView({ behavior: "instant", block: "center" });
+        focus.focus({ preventScroll: true });
+      }
+    });
   }
-  if (!enabled || !tip || !position?.visible) return null;
-  const number = tip.key.startsWith("profile")
-    ? 1
-    : tip.key === "editor-1"
-      ? 3
-      : tip.key === "editor-2"
-        ? 4
-        : tip.key === "publish" || tip.key === "preview-link"
-          ? 5
-          : tip.key.startsWith("messages")
-            ? 6
-            : 2;
-  return createPortal(
-    <div className="guide-coachmark">
-      <button
-        ref={beacon}
-        type="button"
-        className="guide-beacon"
-        style={{ left: position.dotX, top: position.dotY }}
-        aria-label={`Ghid: ${tip.title}`}
-        title="Ghid de început"
-        aria-expanded={open}
-        aria-controls={open ? panelId : undefined}
-        onClick={() => {
-          setError("");
-          setOpenKey(open ? null : tip.key);
-        }}
-      >
-        <span aria-hidden="true" />
-      </button>
-      {open && (
-        <div
-          ref={panel}
-          id={panelId}
-          className="guide-tip"
-          style={{
-            left: position.x,
-            top: position.y,
-            width: position.width,
-            maxHeight: position.maxHeight,
-          }}
-          role="dialog"
-          aria-modal="false"
-          aria-label="Ghid de început"
-        >
-          <div className="guide-tip-header">
-            <h2>{tip.title}</h2>
-            <span
-              className="guide-tip-counter"
-              aria-label={`Pasul ${number} din 6`}
-            >
-              {number} / 6
-            </span>
-            <button
-              type="button"
-              className="guide-tip-collapse"
-              aria-label="Restrânge indiciul"
-              onClick={() => {
-                setOpenKey(null);
-                beacon.current?.focus();
-              }}
-            >
-              <X size={14} />
-            </button>
-          </div>
-          <p>{tip.body}</p>
-          {tip.requirement && (
-            <p
-              className="guide-tip-requirement"
-              id={`${panelId}-requirement`}
-              aria-live="polite"
-            >
-              {tip.requirement}
-            </p>
-          )}
-          {error && (
-            <p className="guide-tip-error" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="guide-tip-actions">
-            <button
-              type="button"
-              className="guide-tip-dismiss"
-              disabled={busy}
-              onClick={() => void close("dismissed")}
-            >
-              Închide ghidul
-            </button>
-            {tip.href ? (
-              <Link href={tip.href} onClick={() => setOpenKey(null)}>
-                {tip.action}
-                <ArrowRight size={13} />
-              </Link>
-            ) : (
-              <button
-                type="button"
-                className="guide-tip-next"
-                disabled={
-                  busy || tip.advance?.disabled || Boolean(tip.requirement)
-                }
-                aria-describedby={
-                  tip.requirement ? `${panelId}-requirement` : undefined
-                }
-                onClick={act}
-              >
-                {busy ? "Se salvează…" : tip.action}
-                <ArrowRight size={13} />
-              </button>
-            )}
-          </div>
-        </div>
+  const slot = tip?.anchor.querySelector<HTMLElement>("[data-guide-slot]");
+  if (!enabled || !tip || !slot) return null;
+  return (
+    <>
+      {createPortal(
+        <span className="guide-coachmark">
+          <button
+            type="button"
+            className="guide-beacon"
+            tabIndex={tip.editing ? -1 : 0}
+            aria-label={`Ghid: ${tip.title}`}
+            title="Ghid de început"
+            aria-expanded={open}
+            aria-controls={open ? panelId : undefined}
+            onClick={() => {
+              setError("");
+              setOpenKey(tip.key);
+            }}
+          >
+            <span aria-hidden="true" />
+          </button>
+        </span>,
+        slot,
       )}
-      {open && position.arrowX !== null && (
-        <span
-          className="guide-tip-pointer"
-          aria-hidden="true"
-          style={{ left: position.arrowX, top: position.arrowY }}
-        />
-      )}
-    </div>,
-    document.body,
+      {open &&
+        createPortal(
+          <div id={panelId}>
+            <GuideDialog
+              tip={tip}
+              busy={busy}
+              error={error}
+              onClose={() => setOpenKey(null)}
+              onDismiss={() => void close("dismissed")}
+              onAct={act}
+            />
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

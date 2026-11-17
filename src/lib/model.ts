@@ -132,13 +132,26 @@ export function createProperty(ownerId: string): Property {
 }
 
 export function profileErrors(profile: Profile): string[] {
-  const errors: string[] = [];
-  if (profile.name.trim().length < 2) errors.push("Adaugă numele complet.");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email))
-    errors.push("Adaugă o adresă de e-mail validă.");
-  if (profile.phone.replace(/\D/g, "").length < 8)
-    errors.push("Adaugă un număr de telefon valid.");
-  return errors;
+  return Object.values(profileFieldErrors(profile)).filter(
+    (error): error is string => Boolean(error),
+  );
+}
+
+export function profileFieldErrors(profile: Profile) {
+  return {
+    name: profile.name.trim().length < 2 ? "Adaugă numele complet." : null,
+    email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)
+      ? "Adaugă o adresă de e-mail validă."
+      : null,
+    phone:
+      profile.phone.replace(/\D/g, "").length < 8
+        ? "Adaugă un număr de telefon valid."
+        : null,
+  };
+}
+
+export function isReservedPropertyAddress(location: string) {
+  return platformPageSlugs.has(slugify(location));
 }
 
 export function publicationErrors(
@@ -149,7 +162,7 @@ export function publicationErrors(
   if (property.title.trim().length < 5)
     errors.push("Titlul trebuie să conțină cel puțin 5 caractere.");
   if (!property.location.trim()) errors.push("Adaugă adresa proprietății.");
-  if (platformPageSlugs.has(slugify(property.location)))
+  if (isReservedPropertyAddress(property.location))
     errors.push(reservedAddressError);
   if (property.description.trim().length < 30)
     errors.push("Adaugă o descriere de cel puțin 30 de caractere.");
@@ -163,7 +176,7 @@ export function publicationErrors(
 
 export function propertyErrors(property: Property): string[] {
   const errors: string[] = [];
-  if (platformPageSlugs.has(slugify(property.location)))
+  if (isReservedPropertyAddress(property.location))
     errors.push(reservedAddressError);
   if (
     !Number.isFinite(property.price) ||

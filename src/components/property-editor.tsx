@@ -1,6 +1,7 @@
 "use client";
 import { PLATFORM_DOMAIN } from "@/lib/platform-brand";
 import { propertyTypeLabel } from "@/lib/model";
+import { GuideTarget } from "./guide-target";
 import { PropertyImage } from "./property-image";
 import { PriceInput } from "./price-input";
 import { PropertySharing } from "./property-sharing";
@@ -42,6 +43,7 @@ import { TemplateMiniature } from "./template-miniature";
 import { editWebsiteCopy, hasWebsiteDescriptions } from "@/lib/property-story";
 import { preparePropertyWebsite } from "@/lib/request-property-story";
 import {
+  propertyDetailFieldErrors,
   propertyDetailsErrors,
   propertyStepRequirement,
 } from "@/lib/property-editor-validation";
@@ -98,6 +100,7 @@ export function PropertyEditor({
   const [customAmenity, setCustomAmenity] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const t = ro.editor;
+  const guideIssues = propertyDetailFieldErrors(property);
   const stepRequirement = propertyStepRequirement(property, step);
   useEffect(() => {
     if (
@@ -431,34 +434,52 @@ export function PropertyEditor({
                   <h2 data-guide-details-title>{t.details}</h2>
                 </div>
                 <div className="field-grid">
-                  <label className="full-width">
-                    Titlul proprietății
-                    <input
-                      data-guide-details
-                      value={property.title}
-                      maxLength={160}
-                      placeholder="O locuință cu o perspectivă deosebită."
-                      onChange={(e) => update("title", e.target.value)}
+                  <GuideTarget
+                    id="property-title"
+                    field="property"
+                    issue={guideIssues.title}
+                    title="Titlul proprietății"
+                    description="Titlul apare la începutul prezentării. Alege un titlu de cel puțin 5 caractere."
+                    className="full-width"
+                  >
+                    <label>
+                      Titlul proprietății
+                      <input
+                        data-guide-details
+                        value={property.title}
+                        maxLength={160}
+                        placeholder="O locuință cu o perspectivă deosebită."
+                        onChange={(e) => update("title", e.target.value)}
+                      />
+                    </label>
+                  </GuideTarget>
+                  <GuideTarget
+                    id="property-location"
+                    field="property"
+                    issue={guideIssues.location}
+                    title="Adresa proprietății"
+                    description="Adaugă adresa completă. Aceasta apare în prezentare și stabilește locația de pe hartă."
+                    className="full-width"
+                  >
+                    <PropertyAddressInput
+                      value={property.location}
+                      placeId={property.google_place_id}
+                      disabled={busy}
+                      onChange={(location, placeId) => {
+                        if (saving.current) return;
+                        setProperty((p) => ({
+                          ...p,
+                          location,
+                          // Keep old installations usable until Maps is activated.
+                          ...(placeId || p.google_place_id !== undefined
+                            ? { google_place_id: placeId }
+                            : {}),
+                        }));
+                        setDirty(true);
+                        setPublished(false);
+                      }}
                     />
-                  </label>
-                  <PropertyAddressInput
-                    value={property.location}
-                    placeId={property.google_place_id}
-                    disabled={busy}
-                    onChange={(location, placeId) => {
-                      if (saving.current) return;
-                      setProperty((p) => ({
-                        ...p,
-                        location,
-                        // Keep old installations usable until Maps is activated.
-                        ...(placeId || p.google_place_id !== undefined
-                          ? { google_place_id: placeId }
-                          : {}),
-                      }));
-                      setDirty(true);
-                      setPublished(false);
-                    }}
-                  />
+                  </GuideTarget>
                   <label>
                     Tipul proprietății
                     <select
@@ -491,14 +512,22 @@ export function PropertyEditor({
                       <option value="rent">De închiriat</option>
                     </select>
                   </label>
-                  <label>
-                    Preț
-                    <PriceInput
-                      value={property.price}
-                      currency={property.currency}
-                      onChange={(value) => update("price", value)}
-                    />
-                  </label>
+                  <GuideTarget
+                    id="property-price"
+                    field="property"
+                    issue={guideIssues.price}
+                    title="Prețul proprietății"
+                    description="Introdu prețul de vânzare sau chiria, în moneda aleasă."
+                  >
+                    <label>
+                      Preț
+                      <PriceInput
+                        value={property.price}
+                        currency={property.currency}
+                        onChange={(value) => update("price", value)}
+                      />
+                    </label>
+                  </GuideTarget>
                   <label>
                     Monedă
                     <select
@@ -519,17 +548,25 @@ export function PropertyEditor({
                       )}
                     </select>
                   </label>
-                  <label>
-                    Suprafață
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={property.area || ""}
-                      placeholder="120"
-                      onChange={(e) => update("area", Number(e.target.value))}
-                    />
-                  </label>
+                  <GuideTarget
+                    id="property-area"
+                    field="property"
+                    issue={guideIssues.area}
+                    title="Suprafața proprietății"
+                    description="Introdu suprafața locuinței în metri pătrați."
+                  >
+                    <label>
+                      Suprafață
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={property.area || ""}
+                        placeholder="120"
+                        onChange={(e) => update("area", Number(e.target.value))}
+                      />
+                    </label>
+                  </GuideTarget>
                   <label>
                     Unitatea de suprafață
                     <select
@@ -639,171 +676,175 @@ export function PropertyEditor({
             </>
           )}
           {step === 1 && (
-            <section className="form-card">
-              <div className="form-section-title">
-                <span>02</span>
-                <h2 data-guide-photos>{t.photography}</h2>
-              </div>
-              <p className="form-intro">
-                Fotografiile bune fac prima impresie. Prima fotografie devine
-                coperta.
-              </p>
-              {uploading ? (
-                <div className="upload-area uploading" aria-busy="true">
-                  <div
-                    className="photo-upload-progress"
-                    role="progressbar"
-                    aria-label="Se încarcă fotografiile"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={uploadProgress.percent}
-                  >
-                    <svg viewBox="0 0 88 88" aria-hidden="true">
-                      <circle
-                        className="photo-upload-track"
-                        cx="44"
-                        cy="44"
-                        r="38"
-                      />
-                      <circle
-                        className="photo-upload-value"
-                        cx="44"
-                        cy="44"
-                        r="38"
-                        pathLength="100"
-                        strokeDasharray="100"
-                        strokeDashoffset={100 - uploadProgress.percent}
-                      />
-                    </svg>
-                    <strong>{uploadProgress.percent}%</strong>
-                  </div>
-                  <strong>Se pregătesc și se încarcă fotografiile…</strong>
-                  <p role="status">
-                    {uploadProgress.completed} din {uploadProgress.total}{" "}
-                    fotografii încărcate
-                  </p>
-                  <small>
-                    Optimizăm în format WebP. Păstrează pagina deschisă.
-                  </small>
+            <GuideTarget id="property-photos">
+              <section className="form-card">
+                <div className="form-section-title">
+                  <span>02</span>
+                  <h2 data-guide-photos>{t.photography}</h2>
                 </div>
-              ) : (
-                <button
-                  className="upload-area"
-                  disabled={uploading || busy}
-                  onClick={() => fileInput.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    void addFiles(e.dataTransfer.files);
-                  }}
-                >
-                  <span>
-                    <Upload size={26} />
-                  </span>
-                  <strong>Trage fotografiile aici</strong>
-                  <p>sau apasă pentru a alege fișierele</p>
-                  <small>
-                    JPG / JPEG, PNG, WebP · Maximum 10 MB fiecare ·{" "}
-                    {property.images.length}/{MAX_PROPERTY_PHOTOS} fotografii
-                  </small>
-                </button>
-              )}
-              <input
-                ref={fileInput}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                hidden
-                onChange={(e) => void addFiles(e.target.files)}
-              />
-              <div className="image-editor-grid">
-                {property.images.map((image, i) => (
-                  <div className="image-editor-card" key={image}>
-                    <PropertyImage
-                      src={image}
-                      alt={`Fotografia proprietății ${i + 1}`}
-                      sizes="(max-width: 640px) 45vw, 240px"
-                    />
-                    <span className="image-order">
-                      {i === 0
-                        ? "Fotografie de copertă"
-                        : String(i + 1).padStart(2, "0")}
-                    </span>
-                    <button
-                      className="image-remove"
-                      disabled={uploading}
-                      aria-label={`Elimină fotografia ${i + 1}`}
-                      onClick={() =>
-                        update(
-                          "images",
-                          property.images.filter((_, j) => j !== i),
-                        )
-                      }
+                <p className="form-intro">
+                  Fotografiile bune fac prima impresie. Prima fotografie devine
+                  coperta.
+                </p>
+                {uploading ? (
+                  <div className="upload-area uploading" aria-busy="true">
+                    <div
+                      className="photo-upload-progress"
+                      role="progressbar"
+                      aria-label="Se încarcă fotografiile"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={uploadProgress.percent}
                     >
-                      <X size={15} />
-                    </button>
-                    {i > 0 && (
+                      <svg viewBox="0 0 88 88" aria-hidden="true">
+                        <circle
+                          className="photo-upload-track"
+                          cx="44"
+                          cy="44"
+                          r="38"
+                        />
+                        <circle
+                          className="photo-upload-value"
+                          cx="44"
+                          cy="44"
+                          r="38"
+                          pathLength="100"
+                          strokeDasharray="100"
+                          strokeDashoffset={100 - uploadProgress.percent}
+                        />
+                      </svg>
+                      <strong>{uploadProgress.percent}%</strong>
+                    </div>
+                    <strong>Se pregătesc și se încarcă fotografiile…</strong>
+                    <p role="status">
+                      {uploadProgress.completed} din {uploadProgress.total}{" "}
+                      fotografii încărcate
+                    </p>
+                    <small>
+                      Optimizăm în format WebP. Păstrează pagina deschisă.
+                    </small>
+                  </div>
+                ) : (
+                  <button
+                    className="upload-area"
+                    disabled={uploading || busy}
+                    onClick={() => fileInput.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      void addFiles(e.dataTransfer.files);
+                    }}
+                  >
+                    <span>
+                      <Upload size={26} />
+                    </span>
+                    <strong>Trage fotografiile aici</strong>
+                    <p>sau apasă pentru a alege fișierele</p>
+                    <small>
+                      JPG / JPEG, PNG, WebP · Maximum 10 MB fiecare ·{" "}
+                      {property.images.length}/{MAX_PROPERTY_PHOTOS} fotografii
+                    </small>
+                  </button>
+                )}
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  hidden
+                  onChange={(e) => void addFiles(e.target.files)}
+                />
+                <div className="image-editor-grid">
+                  {property.images.map((image, i) => (
+                    <div className="image-editor-card" key={image}>
+                      <PropertyImage
+                        src={image}
+                        alt={`Fotografia proprietății ${i + 1}`}
+                        sizes="(max-width: 640px) 45vw, 240px"
+                      />
+                      <span className="image-order">
+                        {i === 0
+                          ? "Fotografie de copertă"
+                          : String(i + 1).padStart(2, "0")}
+                      </span>
                       <button
-                        className="make-cover"
+                        className="image-remove"
                         disabled={uploading}
+                        aria-label={`Elimină fotografia ${i + 1}`}
                         onClick={() =>
-                          update("images", [
-                            image,
-                            ...property.images.filter((_, j) => j !== i),
-                          ])
+                          update(
+                            "images",
+                            property.images.filter((_, j) => j !== i),
+                          )
                         }
                       >
-                        Setează drept copertă
+                        <X size={15} />
                       </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {property.images.length === 0 && (
-                <p className="photo-tip">
-                  <Sparkles size={16} />
-                  Începe cu o fotografie panoramică, bine luminată.
-                </p>
-              )}
-            </section>
+                      {i > 0 && (
+                        <button
+                          className="make-cover"
+                          disabled={uploading}
+                          onClick={() =>
+                            update("images", [
+                              image,
+                              ...property.images.filter((_, j) => j !== i),
+                            ])
+                          }
+                        >
+                          Setează drept copertă
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {property.images.length === 0 && (
+                  <p className="photo-tip">
+                    <Sparkles size={16} />
+                    Începe cu o fotografie panoramică, bine luminată.
+                  </p>
+                )}
+              </section>
+            </GuideTarget>
           )}
           {step === 2 && (
-            <section className="form-card">
-              <div className="form-section-title">
-                <span>03</span>
-                <h2 data-guide-design>{t.design}</h2>
-              </div>
-              <p className="form-intro">
-                Aceeași proprietate. Trei stiluri diferite. Alege-l pe cel care
-                spune povestea ta.
-              </p>
-              <div className="template-choices">
-                {templates.map((template) => (
-                  <button
-                    key={template.id}
-                    className={`template-choice ${property.template === template.id ? "selected" : ""}`}
-                    aria-pressed={property.template === template.id}
-                    onClick={() => update("template", template.id)}
-                  >
-                    <TemplateMiniature
-                      template={template.id}
-                      image={property.images[0]}
-                    />
-                    <div>
-                      <span>
-                        <strong>{template.name}</strong>
-                        <small>{template.tag}</small>
-                      </span>
-                      <span className="radio-circle">
-                        {property.template === template.id && (
-                          <Check size={14} />
-                        )}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
+            <GuideTarget id="property-design">
+              <section className="form-card">
+                <div className="form-section-title">
+                  <span>03</span>
+                  <h2 data-guide-design>{t.design}</h2>
+                </div>
+                <p className="form-intro">
+                  Aceeași proprietate. Trei stiluri diferite. Alege-l pe cel
+                  care spune povestea ta.
+                </p>
+                <div className="template-choices">
+                  {templates.map((template) => (
+                    <button
+                      key={template.id}
+                      className={`template-choice ${property.template === template.id ? "selected" : ""}`}
+                      aria-pressed={property.template === template.id}
+                      onClick={() => update("template", template.id)}
+                    >
+                      <TemplateMiniature
+                        template={template.id}
+                        image={property.images[0]}
+                      />
+                      <div>
+                        <span>
+                          <strong>{template.name}</strong>
+                          <small>{template.tag}</small>
+                        </span>
+                        <span className="radio-circle">
+                          {property.template === template.id && (
+                            <Check size={14} />
+                          )}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </GuideTarget>
           )}
           <div className="editor-step-actions">
             {step > 0 ? (
@@ -818,37 +859,41 @@ export function PropertyEditor({
               <span />
             )}
             {step < 2 ? (
-              <button
-                className="button dark"
-                data-guide-editor-next
-                disabled={busy || uploading || Boolean(stepRequirement)}
-                aria-describedby={
-                  stepRequirement ? "editor-step-requirement" : undefined
-                }
-                onClick={() => goToStep(step + 1)}
-              >
-                {preparing
-                  ? "Se pregătește site-ul…"
-                  : step === 0
-                    ? "Adaugă fotografiile"
-                    : "Alege designul"}
-                <ArrowRight size={17} />
-              </button>
+              <GuideTarget id="property-next" inline>
+                <button
+                  className="button dark"
+                  data-guide-editor-next
+                  disabled={busy || uploading || Boolean(stepRequirement)}
+                  aria-describedby={
+                    stepRequirement ? "editor-step-requirement" : undefined
+                  }
+                  onClick={() => goToStep(step + 1)}
+                >
+                  {preparing
+                    ? "Se pregătește site-ul…"
+                    : step === 0
+                      ? "Adaugă fotografiile"
+                      : "Alege designul"}
+                  <ArrowRight size={17} />
+                </button>
+              </GuideTarget>
             ) : (
-              <button
-                className="button primary"
-                data-guide-preview
-                disabled={busy || uploading}
-                onClick={async () => {
-                  const value = await persist(false, false, false);
-                  if (value) router.push(`/previzualizare/${value.id}`);
-                }}
-              >
-                <Globe2 size={16} />
-                {preparing
-                  ? "Se pregătește site-ul…"
-                  : "Deschide editorul site-ului"}
-              </button>
+              <GuideTarget id="property-preview" inline>
+                <button
+                  className="button primary"
+                  data-guide-preview
+                  disabled={busy || uploading}
+                  onClick={async () => {
+                    const value = await persist(false, false, false);
+                    if (value) router.push(`/previzualizare/${value.id}`);
+                  }}
+                >
+                  <Globe2 size={16} />
+                  {preparing
+                    ? "Se pregătește site-ul…"
+                    : "Deschide editorul site-ului"}
+                </button>
+              </GuideTarget>
             )}
             {step < 2 && stepRequirement && (
               <small

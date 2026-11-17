@@ -1,4 +1,5 @@
 "use client";
+import { GuideTarget } from "./guide-target";
 import Link from "next/link";
 import { OwnerVideoDownload } from "./owner-video-download";
 import { AgentGuide } from "./agent-guide";
@@ -182,17 +183,19 @@ export function PropertyPreview({ id }: { id: string }) {
           </span>
         </div>
         <div>
-          <Link
-            className="text-button"
-            data-guide-back
-            href={`/panou/proprietati/${id}`}
-            onClick={(e) => {
-              if (dirty && !confirm("Pleci fără să salvezi modificările?"))
-                e.preventDefault();
-            }}
-          >
-            Detaliile proprietății
-          </Link>
+          <GuideTarget id="preview-back" inline>
+            <Link
+              className="text-button"
+              data-guide-back
+              href={`/panou/proprietati/${id}`}
+              onClick={(e) => {
+                if (dirty && !confirm("Pleci fără să salvezi modificările?"))
+                  e.preventDefault();
+              }}
+            >
+              Detaliile proprietății
+            </Link>
+          </GuideTarget>
           {editing ? (
             <>
               <button
@@ -241,15 +244,17 @@ export function PropertyPreview({ id }: { id: string }) {
               Vezi site-ul publicat <ExternalLink size={15} />
             </Link>
           ) : (
-            <button
-              className="button primary"
-              data-guide-publish
-              disabled={busy || preparing}
-              onClick={() => void publication.publish()}
-            >
-              <Globe2 size={16} />
-              Publică proprietatea
-            </button>
+            <GuideTarget id="publish" inline>
+              <button
+                className="button primary"
+                data-guide-publish
+                disabled={busy || preparing}
+                onClick={() => void publication.publish()}
+              >
+                <Globe2 size={16} />
+                Publică proprietatea
+              </button>
+            </GuideTarget>
           )}
         </div>
       </div>
