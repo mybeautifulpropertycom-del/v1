@@ -351,7 +351,7 @@ function Neighbourhood({
         <div className="neighbourhood-panel">
           <h3>
             Locuri aproape de noua ta locuință
-            {property.template === "minimal" ? "" : "."}
+            {property.template === "editorial" ? "." : ""}
           </h3>
           <div
             className="neighbourhood-categories"

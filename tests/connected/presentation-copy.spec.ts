@@ -32,7 +32,7 @@ async function checkPresentation(
     "Fotografii care reflectă realitatea",
   );
   await expect(page.locator(".mortgage-intro h2")).toHaveText(
-    "Estimează bugetul cu ușurință:",
+    "Estimează bugetul cu ușurință",
   );
   await expect(page.locator(".mortgage-intro p")).toHaveText(
     presentationCopy.mortgage.subtitle,

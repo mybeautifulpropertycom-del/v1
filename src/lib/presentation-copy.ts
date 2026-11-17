@@ -19,7 +19,7 @@ export const presentationCopy = {
     accent: "locuința ta",
   },
   mortgage: {
-    title: "Estimează bugetul cu ușurință:",
+    title: "Estimează bugetul cu ușurință",
     subtitle:
       "Cunoaște ratele lunare, costul creditului și planul de rambursare pentru această locuință.",
   },

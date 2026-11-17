@@ -11,7 +11,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect(calculator).toBeVisible();
     await expect(
       calculator.getByRole("heading", {
-        name: "Estimează bugetul cu ușurință:",
+        name: "Estimează bugetul cu ușurință",
         exact: true,
       }),
     ).toBeVisible();

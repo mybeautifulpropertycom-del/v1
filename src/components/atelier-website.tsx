@@ -440,7 +440,7 @@ export function AtelierWebsite({
           <section className="atelier-film atelier-pad" id="film">
             <div className="atelier-film-heading">
               <h2>
-                Pășește înăuntru.<em>Simte-te acasă.</em>
+                Videoclip <em>de prezentare.</em>
               </h2>
             </div>
             {film?.src && videoPanel}
