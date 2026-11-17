@@ -21,7 +21,16 @@ test("guide activation excludes existing profiles, enrols new ones once and isol
       new URL("../supabase/sql-editor-agent-onboarding.sql", import.meta.url),
       "utf8",
     );
-    await db.exec(installer);
+    // Upgrade a database that already ran the original onboarding migration.
+    await db.exec(
+      await readFile(
+        new URL(
+          "../supabase/migrations/202611170002_agent_onboarding.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
     assert.equal(
       (await db.query("select * from agent_onboarding")).rows.length,
       0,
@@ -33,6 +42,26 @@ test("guide activation excludes existing profiles, enrols new ones once and isol
       2,
     );
     await db.exec(`set role authenticated; set app.user_id='${a}';`);
+    assert.deepEqual(
+      (await db.query("select creation_seen from agent_onboarding")).rows,
+      [{ creation_seen: false }],
+    );
+    assert.equal(
+      (
+        await db.query(
+          "update agent_onboarding set creation_seen=true where owner_id=$1 returning creation_seen",
+          [b],
+        )
+      ).rows.length,
+      0,
+    );
+    await db.exec(
+      "update agent_onboarding set creation_seen=true; update agent_onboarding set creation_seen=false;",
+    );
+    assert.deepEqual(
+      (await db.query("select creation_seen from agent_onboarding")).rows,
+      [{ creation_seen: true }],
+    );
     assert.deepEqual(
       (await db.query("select owner_id,status from agent_onboarding")).rows,
       [{ owner_id: a, status: "active" }],
@@ -69,6 +98,14 @@ test("guide activation excludes existing profiles, enrols new ones once and isol
     );
     await db.exec("reset role;");
     await db.exec(installer);
+    assert.deepEqual(
+      (
+        await db.query(
+          "select creation_seen from agent_onboarding order by owner_id",
+        )
+      ).rows,
+      [{ creation_seen: true }, { creation_seen: false }],
+    );
     assert.deepEqual(
       (await db.query("select status from agent_onboarding order by owner_id"))
         .rows,

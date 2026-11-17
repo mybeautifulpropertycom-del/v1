@@ -37,11 +37,6 @@ export const propertyGuideFields = [
     body: "Introdu suprafața locuinței în metri pătrați.",
   },
   {
-    id: "area_unit",
-    title: "Unitatea de suprafață",
-    body: "Suprafața este exprimată în metri pătrați. Confirmă această unitate și continuă.",
-  },
-  {
     id: "bedrooms",
     title: "Dormitoarele",
     body: "Adaugă numărul de dormitoare. Pentru o locuință fără dormitor separat, poți introduce zero.",
@@ -67,6 +62,20 @@ export const propertyGuideFields = [
 
 export type PropertyGuideField = (typeof propertyGuideFields)[number]["id"];
 
+// Moving further through the form also accepts valid defaults before that
+// field. Invalid required facts stay pending; optional sections stay optional.
+export function completePropertyGuideThrough(
+  completed: ReadonlySet<string>,
+  issues: Partial<Record<PropertyGuideField, string | null | undefined>>,
+  id: PropertyGuideField,
+) {
+  const next = new Set(completed);
+  const index = propertyGuideFields.findIndex((field) => field.id === id);
+  for (const field of propertyGuideFields.slice(0, index + 1))
+    if (!issues[field.id]) next.add(field.id);
+  return next;
+}
+
 export function nextPropertyGuideField(
   completed: ReadonlySet<string>,
   issues: Partial<Record<PropertyGuideField, string | null>>,
@@ -80,7 +89,7 @@ export function nextPropertyGuideField(
 
 export function propertyGuideIssues(
   property: Property,
-): Record<PropertyGuideField, string | null> {
+): Record<PropertyGuideField | "area_unit", string | null> {
   return {
     title:
       property.title.trim().length < 5

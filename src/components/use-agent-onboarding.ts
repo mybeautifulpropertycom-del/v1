@@ -9,9 +9,32 @@ export function useAgentOnboarding(
   isAdmin: boolean,
 ) {
   const [status, setStatus] = useState<GuideStatus | null>(null);
+  const [creationSeenOwner, setCreationSeenOwner] = useState<string | null>(
+    null,
+  );
   const version = useRef(0);
+  const storageKey = ownerId ? `up-guide-creation-seen:${ownerId}` : null;
+  const markGuideCreationSeen = useCallback(async () => {
+    if (!ownerId || isAdmin || !storageKey) return;
+    setCreationSeenOwner(ownerId);
+    try {
+      localStorage.setItem(storageKey, "1");
+    } catch {
+      /* Account persistence still works without browser storage. */
+    }
+    const db = getSupabase();
+    if (!db) return;
+    // The browser fallback also covers older installations and temporary
+    // network failures. The next successful load retries the account update.
+    await db
+      .from("agent_onboarding")
+      .update({ creation_seen: true })
+      .eq("owner_id", ownerId)
+      .eq("status", "active");
+  }, [ownerId, isAdmin, storageKey]);
   useEffect(() => {
     setStatus(null);
+    setCreationSeenOwner(null);
     const db = getSupabase();
     if (!ownerId || isAdmin || !db) return;
     let active = true;
@@ -20,11 +43,31 @@ export function useAgentOnboarding(
       const request = ++version.current;
       const { data, error } = await db!
         .from("agent_onboarding")
-        .select("status")
+        .select("*")
         .eq("owner_id", ownerId!)
         .maybeSingle();
-      if (active && request === version.current && !error)
+      if (active && request === version.current && !error) {
         setStatus(data?.status ?? null);
+        let localSeen = false;
+        try {
+          localSeen =
+            storageKey !== null && localStorage.getItem(storageKey) === "1";
+        } catch {
+          /* Account persistence does not require browser storage. */
+        }
+        if (data?.creation_seen || localSeen) {
+          setCreationSeenOwner(ownerId!);
+          if (data?.creation_seen) {
+            try {
+              if (storageKey) localStorage.setItem(storageKey, "1");
+            } catch {
+              /* Storage is optional. */
+            }
+          } else if (data?.status === "active") {
+            void markGuideCreationSeen();
+          }
+        }
+      }
       // An installation without the migration still has a working workspace.
     }
     void load();
@@ -39,7 +82,7 @@ export function useAgentOnboarding(
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [ownerId, isAdmin]);
+  }, [ownerId, isAdmin, storageKey, markGuideCreationSeen]);
 
   const closeGuide = useCallback(
     async (next: "dismissed" | "completed") => {
@@ -59,5 +102,11 @@ export function useAgentOnboarding(
     },
     [ownerId, isAdmin],
   );
-  return { guideStatus: isAdmin ? null : status, closeGuide };
+  return {
+    guideStatus: isAdmin ? null : status,
+    guideCreationSeen:
+      !isAdmin && Boolean(ownerId && creationSeenOwner === ownerId),
+    markGuideCreationSeen,
+    closeGuide,
+  };
 }

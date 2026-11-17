@@ -34,12 +34,28 @@ const agentOnboarding = await readFile(
   new URL("202611170002_agent_onboarding.sql", directory),
   "utf8",
 );
+const agentGuideFlow = await readFile(
+  new URL("202611170003_agent_guide_flow.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-agent-guide-flow.sql", import.meta.url),
+  `-- Existing installations with MBP_AGENT_ONBOARDING_READY. Safe to rerun.
+-- Remembers walkthrough progress only; no property, billing or account changes.
+begin;
+${agentGuideFlow.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_AGENT_GUIDE_FLOW_READY' as status;
+`,
+);
 await writeFile(
   new URL("../supabase/sql-editor-agent-onboarding.sql", import.meta.url),
   `-- Existing installations: run this ENTIRE file. Safe to rerun.
 -- Enrols only future profiles. Does not change existing accounts, properties or payments.
 begin;
 ${agentOnboarding.trim()}
+${agentGuideFlow.trim()}
 notify pgrst, 'reload schema';
 commit;
 select 'MBP_AGENT_ONBOARDING_READY' as status;

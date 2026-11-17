@@ -9,6 +9,7 @@ import { agentGuideProgress } from "@/lib/agent-onboarding";
 import { publicationPackages } from "@/lib/publication-packages";
 import { useWorkspace } from "./workspace-provider";
 import {
+  completePropertyGuideThrough,
   nextPropertyGuideField,
   propertyGuideFields,
   type PropertyGuideField,
@@ -29,6 +30,7 @@ type Tip = {
   requirement?: string;
   besideHeading?: boolean;
   fieldId?: PropertyGuideField;
+  profileFieldId?: "agency" | "phone";
   highlight?: boolean;
   fieldTarget?: HTMLElement;
   editing?: boolean;
@@ -58,6 +60,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
   const enabled =
     !workspace.demo && !workspace.isAdmin && workspace.guideStatus === "active";
   const progress = agentGuideProgress(workspace);
+  const messagesOnly = workspace.guideCreationSeen && !preview;
   const [tip, setTip] = useState<Tip | null>(null);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,6 +72,9 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
   const tipRef = useRef(tip);
   tipRef.current = tip;
   const journey = useRef<{ key: string; done: Set<string> } | null>(null);
+  const profileJourney = useRef<{ key: string; done: Set<string> } | null>(
+    null,
+  );
   const open = tip !== null && openKey === tip.key;
   const [inViewport, setInViewport] = useState(false);
   const [position, setPosition] = useState<
@@ -88,9 +94,10 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       } catch {
         /* Memory is sufficient if storage is unavailable. */
       }
-      const validIds = new Set<string>(
-        propertyGuideFields.map((field) => field.id),
-      );
+      const validIds = new Set<string>([
+        ...propertyGuideFields.map((field) => field.id),
+        "design",
+      ]);
       journey.current = {
         key,
         done: new Set(
@@ -120,14 +127,60 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     const element = fieldElement(id);
     if (!element || element.dataset.guideIssue) return false;
     const state = fieldJourney();
-    state.done.add(id);
+    const issues = Object.fromEntries(
+      propertyGuideFields.map((field) => [
+        field.id,
+        fieldElement(field.id)?.dataset.guideIssue,
+      ]),
+    );
+    state.done = completePropertyGuideThrough(
+      state.done,
+      issues,
+      id as PropertyGuideField,
+    );
+    persistJourney(state);
+    return true;
+  }
+  function persistJourney(state: { key: string; done: Set<string> }) {
     try {
       localStorage.setItem(state.key, JSON.stringify([...state.done]));
     } catch {
       /* Keep the in-memory progress. */
     }
-    return true;
   }
+  function profileFields() {
+    const key = `up-profile-guide:${workspace.profile.id}`;
+    if (profileJourney.current?.key !== key) {
+      let done: string[] = [];
+      try {
+        const stored: unknown = JSON.parse(localStorage.getItem(key) || "[]");
+        if (Array.isArray(stored))
+          done = stored.filter((id) => id === "agency" || id === "phone");
+      } catch {
+        /* Storage is optional. */
+      }
+      profileJourney.current = { key, done: new Set(done) };
+    }
+    return profileJourney.current;
+  }
+  function rememberProfileField(id: "agency" | "phone") {
+    const input = find(`[data-profile-guide-field="${id}"]`);
+    if (!input || input.dataset.guideIssue) return;
+    const state = profileFields();
+    state.done.add("agency");
+    state.done.add(id);
+    persistJourney(state);
+  }
+
+  useEffect(() => {
+    if (enabled && preview && !workspace.guideCreationSeen)
+      void workspace.markGuideCreationSeen();
+  }, [
+    enabled,
+    preview,
+    workspace.guideCreationSeen,
+    workspace.markGuideCreationSeen,
+  ]);
 
   useEffect(() => {
     if (!enabled) {
@@ -149,7 +202,12 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       )
         return null;
       const editor = find("[data-guide-editor-step]");
-      if (editor && progress.step !== 0 && progress.step !== 3) {
+      if (
+        editor &&
+        !messagesOnly &&
+        progress.step !== 0 &&
+        progress.step !== 3
+      ) {
         const step = Number(editor.dataset.guideEditorStep);
         const focused =
           step === 0
@@ -159,11 +217,15 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             : null;
         const fieldTarget =
           step === 0
-            ? (focused ?? remainingField())
+            ? (focused ?? remainingField() ?? find("[data-guide-editor-next]"))
             : find(
                 step === 1
-                  ? "[data-guide-photo-input]"
-                  : "[data-guide-design-input]",
+                  ? Number(editor.dataset.guidePhotoCount) > 0
+                    ? "[data-guide-editor-next]"
+                    : "[data-guide-photo-input]"
+                  : fieldJourney().done.has("design")
+                    ? "[data-guide-preview]"
+                    : "[data-guide-design-input]",
               );
         const anchor = find(
           [
@@ -201,11 +263,22 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             ) ?? undefined,
         };
       }
-      if (progress.step === 0) {
+      if (progress.step === 0 && !messagesOnly) {
+        const done = profileFields().done;
+        const phone = find<HTMLInputElement>(
+          '[data-profile-guide-field="phone"]',
+        );
+        const profileFieldId = !done.has("agency")
+          ? "agency"
+          : !done.has("phone") || phone?.dataset.guideIssue
+            ? "phone"
+            : undefined;
         const contact =
           path === "/panou/profil"
-            ? find<HTMLInputElement>(
-                "[data-guide-contact] input:not([type=file])",
+            ? find<HTMLElement>(
+                profileFieldId
+                  ? `[data-profile-guide-field="${profileFieldId}"]`
+                  : "[data-guide-profile-save]",
               )
             : null;
         const anchor = contact ?? navigationTarget("/panou/profil");
@@ -216,12 +289,28 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           title: "Datele tale de contact",
           body: "Datele salvate în profil apar în prezentarea proprietății, astfel încât persoanele interesate să te poată contacta.",
           anchor,
-          action: "Completează profilul",
+          action: contact
+            ? profileFieldId
+              ? "Continuă"
+              : "Salvează profilul"
+            : "Completează profilul",
           highlight: Boolean(contact),
-          ...(contact ? { focus: contact } : { href: "/panou/profil" }),
+          profileFieldId: contact ? profileFieldId : undefined,
+          ...(contact
+            ? profileFieldId
+              ? {
+                  focus:
+                    profileFieldId === "agency"
+                      ? (phone ?? contact)
+                      : phone?.dataset.guideIssue
+                        ? phone
+                        : (find("[data-guide-profile-save]") ?? contact),
+                }
+              : { advance: contact as HTMLButtonElement }
+            : { href: "/panou/profil" }),
         };
       }
-      if (progress.step === 3) {
+      if (progress.step === 3 || messagesOnly) {
         const here = path === "/panou/mesaje";
         const anchor = here
           ? find("[data-guide-messages]")
@@ -299,6 +388,8 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           old?.anchor === next?.anchor &&
           old?.fieldTarget === next?.fieldTarget &&
           old?.fieldId === next?.fieldId &&
+          old?.profileFieldId === next?.profileFieldId &&
+          old?.focus === next?.focus &&
           old?.advance === next?.advance &&
           old?.requirement === next?.requirement &&
           old?.action === next?.action &&
@@ -320,6 +411,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
         "data-guide-requirement",
         "data-guide-issue",
         "data-guide-empty",
+        "data-guide-photo-count",
         "disabled",
         "aria-modal",
         "open",
@@ -348,13 +440,48 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
         !element.contains(related)
       )
         rememberField(element.dataset.propertyGuideField!);
+      const contact = (event.target as Element).closest<HTMLElement>(
+        "[data-profile-guide-field]",
+      );
+      if (contact && !guidePointer && !related?.closest(".guide-coachmark"))
+        rememberProfileField(
+          contact.dataset.profileGuideField as "agency" | "phone",
+        );
       update();
+    };
+    const chooseDesign = (event: MouseEvent) => {
+      if ((event.target as Element).closest("[data-guide-template-choice]")) {
+        const state = fieldJourney();
+        state.done.add("design");
+        persistJourney(state);
+        update();
+      }
+    };
+    const skipSignupFields = (event: KeyboardEvent) => {
+      if (
+        path === "/panou/profil" &&
+        progress.step === 0 &&
+        !messagesOnly &&
+        event.key === "Tab" &&
+        !event.shiftKey &&
+        (event.target as Element).matches('[data-profile-guide-field="agency"]')
+      ) {
+        const phone = find<HTMLInputElement>(
+          '[data-profile-guide-field="phone"]',
+        );
+        if (phone) {
+          event.preventDefault();
+          phone.focus();
+        }
+      }
     };
     document.addEventListener("pointerdown", pointer, true);
     document.addEventListener("focusout", blur);
     document.addEventListener("focusin", update);
     document.addEventListener("input", update);
     document.addEventListener("change", update);
+    document.addEventListener("click", chooseDesign);
+    document.addEventListener("keydown", skipSignupFields);
     window.addEventListener("resize", update);
     return () => {
       cancelAnimationFrame(frame);
@@ -365,9 +492,18 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       document.removeEventListener("focusin", update);
       document.removeEventListener("input", update);
       document.removeEventListener("change", update);
+      document.removeEventListener("click", chooseDesign);
+      document.removeEventListener("keydown", skipSignupFields);
       window.removeEventListener("resize", update);
     };
-  }, [enabled, path, preview, progress.step, progress.property?.id]);
+  }, [
+    enabled,
+    path,
+    preview,
+    progress.step,
+    progress.property?.id,
+    messagesOnly,
+  ]);
 
   useLayoutEffect(() => {
     if (!enabled || !tip?.highlight) return;
@@ -567,6 +703,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     }
     if (tip.advance?.disabled || tip.requirement) return;
     if (tip.fieldId) rememberField(tip.fieldId);
+    if (tip.profileFieldId) rememberProfileField(tip.profileFieldId);
     setOpenKey(null);
     if (tip.advance) {
       // Use the editor's existing save/validation flow. Never click publication/payment.
@@ -647,7 +784,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             </button>
           </div>
           <p>{tip.body}</p>
-          {tip.requirement && (
+          {tip.requirement && !tip.key.startsWith("editor-") && (
             <p
               className="guide-tip-requirement"
               id={`${panelId}-requirement`}
@@ -683,7 +820,9 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
                   busy || tip.advance?.disabled || Boolean(tip.requirement)
                 }
                 aria-describedby={
-                  tip.requirement ? `${panelId}-requirement` : undefined
+                  tip.requirement && !tip.key.startsWith("editor-")
+                    ? `${panelId}-requirement`
+                    : undefined
                 }
                 onClick={act}
               >

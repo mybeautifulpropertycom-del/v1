@@ -30,6 +30,8 @@ type WorkspaceContext = Workspace & {
   isAdmin: boolean;
   unreadCount: number;
   guideStatus: GuideStatus | null;
+  guideCreationSeen: boolean;
+  markGuideCreationSeen: () => Promise<void>;
   closeGuide: (status: "dismissed" | "completed") => Promise<void>;
   refreshUnread: () => Promise<void>;
   saveProfile: (profile: Profile) => Promise<void>;
@@ -88,10 +90,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const { unreadCount, refreshUnread } = useUnreadInquiries(state?.profile.id);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const { guideStatus, closeGuide } = useAgentOnboarding(
-    state?.profile.id,
-    isAdmin,
-  );
+  const { guideStatus, guideCreationSeen, markGuideCreationSeen, closeGuide } =
+    useAgentOnboarding(state?.profile.id, isAdmin);
   const [toast, setToast] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const notify = useCallback((message: string) => {
@@ -415,6 +415,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         isAdmin,
         unreadCount,
         guideStatus,
+        guideCreationSeen,
+        markGuideCreationSeen,
         closeGuide,
         refreshUnread,
         saveProfile,

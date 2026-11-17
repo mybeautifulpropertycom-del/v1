@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { demoWorkspace } from "../src/lib/demo";
 import {
+  completePropertyGuideThrough,
   nextPropertyGuideField,
   propertyGuideFields,
   propertyGuideIssues,
@@ -20,7 +21,6 @@ test("the field tour includes every detail plus notes and amenities, even when d
       "price",
       "currency",
       "area",
-      "area_unit",
       "bedrooms",
       "bathrooms",
       "description",
@@ -52,6 +52,20 @@ test("the field tour includes every detail plus notes and amenities, even when d
     propertyGuideFields.find((field) => field.id === "amenities")?.optional,
     true,
   );
+});
+
+test("leaving area accepts untouched valid defaults, skips the single unit, and preserves invalid facts", () => {
+  const property = demoWorkspace().properties[0];
+  const issues = propertyGuideIssues(property);
+  const done = completePropertyGuideThrough(new Set(), issues, "area");
+  assert.ok(done.has("currency"));
+  assert.equal(nextPropertyGuideField(done, issues)?.id, "bedrooms");
+  assert.ok(!done.has("description"));
+  const invalid = { ...issues, price: "Adaugă prețul." };
+  const partial = completePropertyGuideThrough(new Set(), invalid, "area");
+  assert.equal(nextPropertyGuideField(partial, invalid)?.id, "price");
+  const edited = { ...issues, area: "Adaugă suprafața." };
+  assert.equal(nextPropertyGuideField(done, edited)?.id, "area");
 });
 
 test("field guidance reports invalid facts and accepts legacy units, currencies and valid zero room counts", () => {

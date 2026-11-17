@@ -14,6 +14,8 @@ async function guideFixture(
     emptyDetails?: boolean;
     emptyPhotos?: boolean;
     emptyOptional?: boolean;
+    creationSeen?: boolean;
+    legacySchema?: boolean;
   } = {},
 ) {
   const state = await workspace(
@@ -37,14 +39,29 @@ async function guideFixture(
   };
   let status = options.status === undefined ? "active" : options.status;
   let failClosing = false;
+  let creationSeen = options.creationSeen ?? false;
   let checkoutPosts = 0;
   await page.route(/\/rest\/v1\/agent_onboarding(?:\?|$)/, async (route) => {
     if (route.request().method() === "PATCH") {
       if (failClosing)
         return route.fulfill({ status: 500, json: { message: "Save failed" } });
-      status = route.request().postDataJSON().status;
+      const patch = route.request().postDataJSON();
+      if (patch.creation_seen && options.legacySchema)
+        return route.fulfill({
+          status: 400,
+          json: { message: "Unknown column", code: "PGRST204" },
+        });
+      if (patch.status) status = patch.status;
+      if (patch.creation_seen) creationSeen = true;
     }
-    return route.fulfill({ json: status ? { status } : null });
+    return route.fulfill({
+      json: status
+        ? {
+            status,
+            ...(options.legacySchema ? {} : { creation_seen: creationSeen }),
+          }
+        : null,
+    });
   });
   await page.route(/\/rest\/v1\/profiles(?:\?|$)/, async (route) => {
     if (route.request().method() === "PATCH")
@@ -77,6 +94,9 @@ async function guideFixture(
     },
     get status() {
       return status;
+    },
+    get creationSeen() {
+      return creationSeen;
     },
     get checkoutPosts() {
       return checkoutPosts;
@@ -141,13 +161,22 @@ test("a new agent gets an automatic compact hint once, with only a red point aft
   const tip = await openTip(page);
   await tip.getByRole("link", { name: "Completează profilul" }).click();
   const profileTip = await openTip(page);
+  await expect(page.locator('[data-guide-highlight="true"]')).toHaveAttribute(
+    "data-profile-guide-field",
+    "agency",
+  );
   await profileTip
-    .getByRole("button", { name: "Completează profilul" })
+    .getByRole("button", { name: "Continuă", exact: true })
     .click();
   await expect(
-    page.locator("[data-guide-contact] input:not([type=file])").first(),
+    page.locator('[data-profile-guide-field="phone"]'),
   ).toBeFocused();
   await page.getByLabel("Număr de telefon", { exact: true }).fill("0755436284");
+  await page.getByLabel("Număr de telefon", { exact: true }).press("Tab");
+  await expect(page.locator("[data-guide-profile-save]")).toHaveAttribute(
+    "data-guide-highlight",
+    "true",
+  );
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
     .click();
@@ -364,6 +393,9 @@ test("one section card stays beside its heading while red borders walk through e
   await expect(tip).toContainText(
     "Completează informațiile locuinței. Apoi continuăm cu fotografiile.",
   );
+  await expect(tip).not.toContainText(
+    "Adaugă un titlu de minimum 5 caractere.",
+  );
   await expect(
     tip.getByRole("button", { name: "Continuă", exact: true }),
   ).toBeDisabled();
@@ -384,9 +416,7 @@ test("one section card stays beside its heading while red borders walk through e
     ["type", "House"],
     ["transaction", "sale"],
     ["price", "850000"],
-    ["currency", "EUR"],
     ["area", "302"],
-    ["area_unit", "sqm"],
     ["bedrooms", "4"],
     ["bathrooms", "3"],
     [
@@ -425,8 +455,13 @@ test("one section card stays beside its heading while red borders walk through e
         path: testInfo.outputPath("highlight-only-desktop.png"),
       });
     }
-    await input.press("Tab");
-    if (field === "currency") {
+    if (field === "price")
+      await page.locator('[data-property-guide-field="area"]').focus();
+    else await input.press("Tab");
+    if (field === "area") {
+      await expect(
+        page.locator('[data-property-guide-field="bedrooms"]'),
+      ).toBeFocused();
       await page
         .getByRole("button", { name: "Salvează modificările", exact: true })
         .click();
@@ -436,7 +471,8 @@ test("one section card stays beside its heading while red borders walk through e
       await page.reload();
       await expect(active()).toHaveAttribute(
         "data-property-guide-field",
-        "area",
+        // Tab visited the valid bedroom default before saving the draft.
+        "bathrooms",
       );
     }
   }
@@ -464,6 +500,11 @@ test("one section card stays beside its heading while red borders walk through e
   await page.screenshot({
     path: testInfo.outputPath("highlight-only-amenities.png"),
   });
+  await page.locator("[data-guide-details-title]").click();
+  await expect(page.locator("[data-guide-editor-next]")).toHaveAttribute(
+    "data-guide-highlight",
+    "true",
+  );
   const card = await openTip(page);
   await expect(
     card.getByRole("heading", { name: "Detaliile proprietății" }),
@@ -481,7 +522,41 @@ test("one section card stays beside its heading while red borders walk through e
   await expect(
     photos.getByRole("button", { name: "Continuă", exact: true }),
   ).toBeDisabled();
-  await expect(photos).toContainText("Adaugă cel puțin o fotografie.");
+  await expect(photos).not.toContainText("Adaugă cel puțin o fotografie.");
+  await photos.getByRole("button", { name: "Restrânge indiciul" }).click();
+  await page.route("**/storage/v1/object/property-images/**", (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({ json: { Key: "uploaded" } })
+      : route.fallback(),
+  );
+  await page
+    .locator("input[type=file]")
+    .setInputFiles("public/images/villa.jpg");
+  await expect(page.locator(".image-editor-card")).toHaveCount(1);
+  await expect(page.locator("[data-guide-photo-input]")).not.toHaveAttribute(
+    "data-guide-highlight",
+  );
+  await expect(page.locator("[data-guide-editor-next]")).toHaveAttribute(
+    "data-guide-highlight",
+    "true",
+  );
+  await page.screenshot({ path: testInfo.outputPath("photos-next.png") });
+  await page.locator("[data-guide-editor-next]").click();
+  await expect(page.locator("[data-guide-design-input]")).toHaveAttribute(
+    "data-guide-highlight",
+    "true",
+  );
+  const design = await openTip(page);
+  await design.getByRole("button", { name: "Restrânge indiciul" }).click();
+  await page.locator("[data-guide-template-choice]").first().click();
+  await expect(page.locator("[data-guide-design-input]")).not.toHaveAttribute(
+    "data-guide-highlight",
+  );
+  await expect(page.locator("[data-guide-preview]")).toHaveAttribute(
+    "data-guide-highlight",
+    "true",
+  );
+  await page.screenshot({ path: testInfo.outputPath("design-next.png") });
   expect(state.checkoutPosts).toBe(0);
 });
 
@@ -504,7 +579,6 @@ test("a phone can visit and leave optional sections empty without adding markers
     "price",
     "currency",
     "area",
-    "area_unit",
     "bedrooms",
     "bathrooms",
   ]) {
@@ -564,4 +638,99 @@ test("normal step validation applies after the guide has been dismissed, includi
     "data-guide-editor-step",
     "0",
   );
+});
+
+test("entering the site editor leaves only Messages on return, even without publication and without browser memory", async ({
+  page,
+}) => {
+  const state = await guideFixture(page);
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto(`/previzualizare/${id}`);
+  await expect.poll(() => state.creationSeen).toBe(true);
+  await expect(await openTip(page)).toContainText(
+    "Publică atunci când ești pregătit",
+  );
+  await page.locator("[data-guide-back]").click();
+  await expect(page).toHaveURL(new RegExp(`/panou/proprietati/${id}$`));
+  await expect(
+    page.getByRole("button", {
+      name: "Ghid: Solicitările, într-un singur loc",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "Ghid de început" }),
+  ).toBeVisible();
+  let tip = await openTip(page);
+  await expect(tip).toContainText("Solicitările, într-un singur loc");
+  await expect(page.locator('[data-guide-highlight="true"]')).toHaveCount(0);
+  expect(state.property.status).toBe("draft");
+  await page.evaluate(() => {
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith("up-guide") || key.startsWith("up-property-guide"))
+        localStorage.removeItem(key);
+  });
+  await page.goto("/panou");
+  tip = await openTip(page);
+  await expect(tip).toContainText("Solicitările, într-un singur loc");
+  await tip.getByRole("link", { name: "Deschide mesajele" }).click();
+  tip = await openTip(page);
+  await tip.getByRole("button", { name: "Am înțeles", exact: true }).click();
+  await expect(page.locator(".guide-coachmark")).toHaveCount(0);
+  expect(state.status).toBe("completed");
+  expect(state.checkoutPosts).toBe(0);
+});
+
+test("a database awaiting the flow upgrade still remembers the editor on this browser", async ({
+  page,
+}) => {
+  const state = await guideFixture(page, { legacySchema: true });
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto(`/previzualizare/${id}`);
+  await openTip(page);
+  await page.locator("[data-guide-back]").click();
+  await expect(page).toHaveURL(new RegExp(`/panou/proprietati/${id}$`));
+  await expect(
+    page.getByRole("dialog", { name: "Ghid de început" }),
+  ).toBeVisible();
+  await expect(await openTip(page)).toContainText(
+    "Solicitările, într-un singur loc",
+  );
+  await page.reload();
+  await expect(await openTip(page)).toContainText(
+    "Solicitările, într-un singur loc",
+  );
+  expect(state.creationSeen).toBe(false);
+  expect(state.status).toBe("active");
+  expect(state.checkoutPosts).toBe(0);
+});
+
+test("the profile tour starts at the optional agency and Tab skips the signup email to reach phone", async ({
+  page,
+}) => {
+  await guideFixture(page, { fresh: true });
+  await page.setViewportSize({ width: 390, height: 850 });
+  await page.goto("/panou/profil");
+  const tip = await openTip(page);
+  await tip.getByRole("button", { name: "Restrânge indiciul" }).click();
+  const agency = page.locator('[data-profile-guide-field="agency"]');
+  const phone = page.locator('[data-profile-guide-field="phone"]');
+  await expect(agency).toHaveAttribute("data-guide-highlight", "true");
+  await agency.fill("");
+  await agency.press("Tab");
+  await expect(phone).toBeFocused();
+  await expect(phone).toHaveAttribute("data-guide-highlight", "true");
+  await phone.fill("07");
+  await phone.press("Tab");
+  await expect(phone).toHaveAttribute("data-guide-highlight", "true");
+  await phone.fill("0755436284");
+  await phone.press("Tab");
+  await expect(page.locator("[data-guide-profile-save]")).toHaveAttribute(
+    "data-guide-highlight",
+    "true",
+  );
+  await expect(
+    page.locator(
+      '[data-guide-contact] input[autocomplete="name"][data-guide-highlight="true"], [data-guide-contact] input[type="email"][data-guide-highlight="true"]',
+    ),
+  ).toHaveCount(0);
 });

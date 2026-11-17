@@ -379,6 +379,7 @@ export function PropertyEditor({
         data-guide-editor-step={step}
         data-guide-property-id={property.id}
         data-guide-requirement={stepRequirement}
+        data-guide-photo-count={property.images.length}
       >
         {t.steps.map((label, index) => (
           <button
@@ -550,8 +551,7 @@ export function PropertyEditor({
                   <label>
                     Unitatea de suprafață
                     <select
-                      data-property-guide-field="area_unit"
-                      data-guide-issue={guideIssues.area_unit || undefined}
+                      disabled
                       value={property.area_unit}
                       onChange={(e) =>
                         update(
@@ -819,6 +819,7 @@ export function PropertyEditor({
                   <button
                     key={template.id}
                     className={`template-choice ${property.template === template.id ? "selected" : ""}`}
+                    data-guide-template-choice
                     aria-pressed={property.template === template.id}
                     onClick={() => update("template", template.id)}
                   >

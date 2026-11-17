@@ -168,6 +168,7 @@ export function ProfileEditor() {
             <label>
               {t.agency}
               <input
+                data-profile-guide-field="agency"
                 autoComplete="organization"
                 maxLength={120}
                 placeholder="Agenția ta imobiliară"
@@ -190,6 +191,12 @@ export function ProfileEditor() {
             <label>
               {t.phone}
               <input
+                data-profile-guide-field="phone"
+                data-guide-issue={
+                  form.phone.replace(/\D/g, "").length < 8
+                    ? "Adaugă un număr de telefon valid."
+                    : undefined
+                }
                 required
                 type="tel"
                 autoComplete="tel"
@@ -232,6 +239,7 @@ export function ProfileEditor() {
               Datele tale publice de contact
             </span>
             <button
+              data-guide-profile-save
               className="button primary"
               disabled={busy || uploading || redirecting}
             >
