@@ -427,7 +427,7 @@ export function HeritageWebsite({
             </div>
           )}
           <div className="heritage-gallery-footer">
-            <p>Descoperă restul la o vizionare.</p>
+            <p>Locația face diferența.</p>
             {tourButton("heritage-button heritage-button-outline")}
           </div>
         </section>
