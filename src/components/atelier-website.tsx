@@ -22,11 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
-import {
-  propertyStory,
-  propertyOpeningAccent,
-  type WebsiteCopyField,
-} from "@/lib/property-story";
+import { propertyStory, type WebsiteCopyField } from "@/lib/property-story";
 import { EditableText } from "./website-editable-text";
 import type { PropertyWebsiteProps } from "./property-website";
 import { PropertyPhotoDialog } from "./property-photo-dialog";
@@ -264,22 +260,19 @@ export function AtelierWebsite({
         </section>
         <section className="atelier-intro atelier-pad" id="residence">
           <div className="atelier-intro-top">
-            <span className="atelier-kicker">
-              <MapPin size={13} />
-              <EditableText
-                field="location"
-                value={property.location || "Adresa proprietății"}
-                onEdit={onEdit}
-              />
-            </span>
             <a href="#details" className="atelier-text-link">
               Descoperă detaliile <ArrowRight size={16} />
             </a>
           </div>
           <div className="atelier-title-row">
             <div className="atelier-intro-copy">
-              <span className="atelier-kicker atelier-opening-accent">
-                {propertyOpeningAccent(property, copy.heroLine)}
+              <span className="atelier-kicker atelier-intro-address">
+                <MapPin size={13} />
+                <EditableText
+                  field="location"
+                  value={property.location || "Adresa proprietății"}
+                  onEdit={onEdit}
+                />
               </span>
               <h1>
                 <EditableText
@@ -312,18 +305,18 @@ export function AtelierWebsite({
           </div>
           <dl className="atelier-facts">
             <div>
-              <dt>Suprafață locuibilă</dt>
-              <dd>
-                {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
-              </dd>
-            </div>
-            <div>
               <dt>Dormitoare</dt>
               <dd>{property.bedrooms}</dd>
             </div>
             <div>
               <dt>Băi</dt>
               <dd>{property.bathrooms}</dd>
+            </div>
+            <div>
+              <dt>Suprafață locuibilă</dt>
+              <dd>
+                {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
+              </dd>
             </div>
             <div>
               <dt>Tipul proprietății</dt>
