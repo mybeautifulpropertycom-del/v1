@@ -346,7 +346,7 @@ function Neighbourhood({
           )}
         </div>
         <div className="neighbourhood-panel">
-          <h3>Locuri utile, aproape de casă.</h3>
+          <h3>Locuri aproape de noua ta locuință.</h3>
           <div
             className="neighbourhood-categories"
             role="group"
