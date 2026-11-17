@@ -480,7 +480,7 @@ export function HeritageWebsite({
           >
             <div className="heritage-film-heading">
               <h2 id="heritage-film-title">
-                Imaginează-ți <em>următorul capitol.</em>
+                Videoclip <em>de prezentare</em>
               </h2>
               <span className="heritage-kicker">LOCUINȚA PRINDE VIAȚĂ</span>
             </div>

@@ -20,7 +20,10 @@ import {
   type NearbyCategory,
 } from "@/lib/property-location";
 
-type MappedProperty = Pick<PublicProperty, "location" | "google_place_id">;
+type MappedProperty = Pick<
+  PublicProperty,
+  "location" | "google_place_id" | "template"
+>;
 export function PropertyNeighbourhood({
   property,
   sample = false,
@@ -346,7 +349,10 @@ function Neighbourhood({
           )}
         </div>
         <div className="neighbourhood-panel">
-          <h3>Locuri aproape de noua ta locuință.</h3>
+          <h3>
+            Locuri aproape de noua ta locuință
+            {property.template === "minimal" ? "" : "."}
+          </h3>
           <div
             className="neighbourhood-categories"
             role="group"

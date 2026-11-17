@@ -2,6 +2,8 @@
 .heritage-website {
   --sans: "Nunito Sans Variable", Arial, sans-serif;
   --serif: var(--sans);
+  --heritage-kicker-font: 500 9px/1.7 var(--sans);
+  --heritage-kicker-spacing: 1.7px;
   --heritage-paper: #f6f3e9;
   --heritage-ink: #304536;
   --heritage-muted: #727a66;
@@ -37,10 +39,17 @@
 .heritage-kicker {
   display: block;
   color: var(--heritage-muted);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 1.7px;
-  line-height: 1.7;
+  font: var(--heritage-kicker-font);
+  letter-spacing: var(--heritage-kicker-spacing);
+  text-transform: uppercase;
+}
+.heritage-website .heritage-story > .heritage-section-label > span,
+.heritage-website .heritage-story-copy > .heritage-kicker,
+.heritage-website .heritage-details-copy > .heritage-kicker,
+.heritage-website .neighbourhood-heading > .neighbourhood-kicker,
+.heritage-website .mortgage-intro .mortgage-eyebrow {
+  font: var(--heritage-kicker-font);
+  letter-spacing: var(--heritage-kicker-spacing);
   text-transform: uppercase;
 }
 .heritage-website h2 {
@@ -297,7 +306,7 @@
   margin-bottom: 45px;
 }
 .heritage-story > .heritage-section-label {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 .heritage-section-label > span:first-child {
   display: flex;
@@ -961,7 +970,7 @@
     padding-top: 48px;
   }
   .heritage-story > .heritage-section-label {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
   .heritage-nav {
     min-height: 70px;
