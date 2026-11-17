@@ -6,7 +6,8 @@ export const publicationPackages = {
     amount: 14900,
     price: 149,
     includesVideo: false,
-    description: "Prezentarea proprietății, cu fotografii, detalii și hartă.",
+    description:
+      "Prezentarea proprietății, cu fotografii, detalii, hartă și calculator de credit.",
   },
   video: {
     id: "video",
@@ -15,7 +16,7 @@ export const publicationPackages = {
     price: 249,
     includesVideo: true,
     description:
-      "Prezentarea proprietății și un videoclip din fotografiile tale.",
+      "Prezentarea proprietății și un videoclip creat din fotografiile tale.",
   },
 } as const;
 
