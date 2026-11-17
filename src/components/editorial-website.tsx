@@ -564,7 +564,7 @@ export function EditorialWebsite({
             <div className="estate-section-heading">
               <div>
                 <h2 id="film-title">
-                  Înainte să pășești <em>înăuntru.</em>
+                  Videoclip <em>de prezentare</em>
                 </h2>
               </div>
               <p>
