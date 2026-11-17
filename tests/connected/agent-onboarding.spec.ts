@@ -203,7 +203,7 @@ test("contextual hints follow details, photographs and design through the existi
   const title = page.getByLabel("Titlul proprietății", { exact: true });
   await title.fill("Titlu nesalvat pentru test");
   let tip = await openTip(page);
-  await expect(tip).toContainText("Denumirea locuinței");
+  await expect(tip).toContainText("Detaliile proprietății");
   await tip.getByRole("button", { name: "Restrânge indiciul" }).click();
   await page.locator("[data-guide-editor-next]").click();
   await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
@@ -347,7 +347,7 @@ test("existing accounts and administrators do not see first-time hints", async (
   await expect(page.locator(".guide-coachmark")).toHaveCount(0);
 });
 
-test("the combined guide walks every field, preserves progress and keeps notes and amenities in the journey", async ({
+test("one section card stays beside its heading while red borders walk through every field", async ({
   page,
 }, testInfo) => {
   const state = await guideFixture(page, {
@@ -357,10 +357,27 @@ test("the combined guide walks every field, preserves progress and keeps notes a
   });
   await page.goto(`/panou/proprietati/${id}`);
   const active = () => page.locator('[data-guide-highlight="true"]');
-  let tip = await openTip(page);
-  await expect(tip).toContainText("Adaugă un titlu de minimum 5 caractere.");
-  await expect(page.locator("[data-guide-editor-next]")).toBeDisabled();
-  await tip.getByRole("button", { name: "Completează câmpul" }).click();
+  const tip = await openTip(page);
+  await expect(
+    tip.getByRole("heading", { name: "Detaliile proprietății" }),
+  ).toBeVisible();
+  await expect(tip).toContainText(
+    "Completează informațiile locuinței. Apoi continuăm cu fotografiile.",
+  );
+  await expect(
+    tip.getByRole("button", { name: "Continuă", exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: /^Ghid:/ })).toHaveCount(1);
+  const coordinates = await page
+    .getByRole("button", { name: /^Ghid:/ })
+    .evaluate((element) => ({
+      left: element.style.left,
+      top: element.style.top,
+    }));
+  await page.screenshot({
+    path: testInfo.outputPath("section-card-desktop.png"),
+  });
+  await tip.getByRole("button", { name: "Restrânge indiciul" }).click();
   const steps = [
     ["title", "Vila cu grădină"],
     ["location", "Strada Șipca 9, București"],
@@ -379,21 +396,36 @@ test("the combined guide walks every field, preserves progress and keeps notes a
   ];
   for (const [field, value] of steps) {
     const input = page.locator(`[data-property-guide-field="${field}"]`);
-    await expect(active()).toHaveAttribute("data-property-guide-field", field);
+    await input.focus();
     if (await input.evaluate((element) => element.tagName === "SELECT"))
       await input.selectOption(value);
     else await input.fill(value);
-    // Neither typing a valid value nor selecting an option jumps focus ahead.
     await expect(input).toBeFocused();
     await expect(active()).toHaveAttribute("data-property-guide-field", field);
+    await expect(input).toHaveCSS("border-color", "rgb(217, 105, 71)");
+    await expect(page.getByRole("button", { name: /^Ghid:/ })).toHaveCount(1);
+    // The single marker belongs to the section heading, never the input corner.
+    expect(
+      await page
+        .getByRole("button", { name: /^Ghid:/ })
+        .evaluate((element) => ({
+          left: element.style.left,
+          top: element.style.top,
+        })),
+    ).toEqual(coordinates);
     if (field === "title") {
-      await expect(input).toHaveCSS("border-color", "rgb(217, 105, 71)");
+      const box = (await input.boundingBox())!;
+      const dot = (await page
+        .getByRole("button", { name: /^Ghid:/ })
+        .boundingBox())!;
+      expect(
+        Math.abs(dot.x + dot.width / 2 - box.x - box.width),
+      ).toBeGreaterThan(80);
       await page.screenshot({
-        path: testInfo.outputPath("combined-desktop-field.png"),
+        path: testInfo.outputPath("highlight-only-desktop.png"),
       });
     }
-    tip = await openTip(page);
-    await tip.getByRole("button", { name: "Continuă", exact: true }).click();
+    await input.press("Tab");
     if (field === "currency") {
       await page
         .getByRole("button", { name: "Salvează modificările", exact: true })
@@ -426,12 +458,17 @@ test("the combined guide walks every field, preserves progress and keeps notes a
     "data-property-guide-field",
     "amenities",
   );
-  tip = await openTip(page);
-  await expect(tip).toContainText("Dotări și facilități");
+  await expect(
+    page.getByRole("dialog", { name: "Ghid de început" }),
+  ).toHaveCount(0);
   await page.screenshot({
-    path: testInfo.outputPath("combined-amenities-card.png"),
+    path: testInfo.outputPath("highlight-only-amenities.png"),
   });
-  await tip.getByRole("button", { name: "Continuă", exact: true }).click();
+  const card = await openTip(page);
+  await expect(
+    card.getByRole("heading", { name: "Detaliile proprietății" }),
+  ).toBeVisible();
+  await card.getByRole("button", { name: "Continuă", exact: true }).click();
   await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
     "data-guide-editor-step",
     "1",
@@ -448,16 +485,17 @@ test("the combined guide walks every field, preserves progress and keeps notes a
   expect(state.checkoutPosts).toBe(0);
 });
 
-test("default choices are visited and optional notes or amenities can be explicitly skipped on a phone", async ({
+test("a phone can visit and leave optional sections empty without adding markers to fields", async ({
   page,
 }, testInfo) => {
   const state = await guideFixture(page, { emptyOptional: true });
   await page.setViewportSize({ width: 390, height: 850 });
   await page.goto(`/panou/proprietati/${id}`);
+  const card = await openTip(page);
   await expect(
-    page.getByRole("dialog", { name: "Ghid de început" }),
+    card.getByRole("heading", { name: "Detaliile proprietății" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Restrânge indiciul" }).click();
+  await card.getByRole("button", { name: "Restrânge indiciul" }).click();
   for (const field of [
     "title",
     "location",
@@ -478,14 +516,22 @@ test("default choices are visited and optional notes or amenities can be explici
     "data-property-guide-field",
     "description",
   );
-  let tip = await openTip(page);
-  await expect(tip).toContainText("Spune povestea locuinței");
+  await expect(
+    page.getByRole("dialog", { name: "Ghid de început" }),
+  ).toHaveCount(0);
+  const notes = page.locator('[data-property-guide-field="description"]');
+  await notes.evaluate((element) =>
+    element.scrollIntoView({ block: "center", behavior: "instant" }),
+  );
   await page.screenshot({
-    path: testInfo.outputPath("combined-phone-story.png"),
+    path: testInfo.outputPath("highlight-only-phone.png"),
   });
-  await tip.getByRole("button", { name: "Continuă fără notițe" }).click();
-  tip = await openTip(page);
-  await tip.getByRole("button", { name: "Continuă fără facilități" }).click();
+  await notes.press("Tab");
+  await expect(page.locator('[data-guide-highlight="true"]')).toHaveAttribute(
+    "data-property-guide-field",
+    "amenities",
+  );
+  await page.locator("[data-guide-editor-next]").click();
   await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
     "data-guide-editor-step",
     "1",

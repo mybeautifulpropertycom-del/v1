@@ -30,6 +30,7 @@ type Tip = {
   besideHeading?: boolean;
   fieldId?: PropertyGuideField;
   highlight?: boolean;
+  fieldTarget?: HTMLElement;
   editing?: boolean;
 };
 const find = <T extends HTMLElement = HTMLElement>(selector: string) =>
@@ -127,15 +128,6 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     }
     return true;
   }
-  function focusField(element: HTMLElement) {
-    element.scrollIntoView({ behavior: "instant", block: "center" });
-    const input = element.matches("input,select,textarea")
-      ? element
-      : element.querySelector<HTMLElement>(
-          "button:not(:disabled),input,select,textarea",
-        );
-    input?.focus({ preventScroll: true });
-  }
 
   useEffect(() => {
     if (!enabled) {
@@ -159,45 +151,27 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       const editor = find("[data-guide-editor-step]");
       if (editor && progress.step !== 0 && progress.step !== 3) {
         const step = Number(editor.dataset.guideEditorStep);
-        if (step === 0) {
-          const focused = document.activeElement?.closest<HTMLElement>(
-            "[data-property-guide-field]",
-          );
-          const anchor = focused ?? remainingField();
-          const definition = propertyGuideFields.find(
-            (field) => field.id === anchor?.dataset.propertyGuideField,
-          );
-          if (anchor && definition) {
-            const empty =
-              anchor instanceof HTMLTextAreaElement
-                ? !anchor.value.trim()
-                : anchor.dataset.guideEmpty === "true";
-            return {
-              key: `field-${definition.id}`,
-              label: "Detaliile",
-              title: definition.title,
-              body: definition.body,
-              anchor,
-              fieldId: definition.id,
-              highlight: true,
-              editing: Boolean(focused),
-              action: anchor.dataset.guideIssue
-                ? "Completează câmpul"
-                : definition.id === "description" && empty
-                  ? "Continuă fără notițe"
-                  : definition.id === "amenities" && empty
-                    ? "Continuă fără facilități"
-                    : "Continuă",
-              requirement: anchor.dataset.guideIssue,
-            };
-          }
-        }
-        const selectors = [
-          "[data-guide-editor-next]",
-          "[data-guide-photo-input]",
-          "[data-guide-design-input]",
-        ];
-        const anchor = find(selectors[step]);
+        const focused =
+          step === 0
+            ? document.activeElement?.closest<HTMLElement>(
+                "[data-property-guide-field]",
+              )
+            : null;
+        const fieldTarget =
+          step === 0
+            ? (focused ?? remainingField())
+            : find(
+                step === 1
+                  ? "[data-guide-photo-input]"
+                  : "[data-guide-design-input]",
+              );
+        const anchor = find(
+          [
+            "[data-guide-details-title]",
+            "[data-guide-photos]",
+            "[data-guide-design]",
+          ][step],
+        );
         if (!anchor) return null;
         return {
           key: `editor-${step}`,
@@ -214,8 +188,13 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           ][step],
           anchor,
           action: "Continuă",
+          besideHeading: true,
           requirement: editor.dataset.guideRequirement || undefined,
-          highlight: step > 0,
+          fieldId: fieldTarget?.dataset.propertyGuideField as
+            PropertyGuideField | undefined,
+          fieldTarget: fieldTarget ?? undefined,
+          highlight: Boolean(fieldTarget),
+          editing: Boolean(focused),
           advance:
             find<HTMLButtonElement>(
               step === 2 ? "[data-guide-preview]" : "[data-guide-editor-next]",
@@ -318,6 +297,8 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
         setTip((old) =>
           old?.key === next?.key &&
           old?.anchor === next?.anchor &&
+          old?.fieldTarget === next?.fieldTarget &&
+          old?.fieldId === next?.fieldId &&
           old?.advance === next?.advance &&
           old?.requirement === next?.requirement &&
           old?.action === next?.action &&
@@ -390,11 +371,12 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
 
   useLayoutEffect(() => {
     if (!enabled || !tip?.highlight) return;
-    tip.anchor.dataset.guideHighlight = "true";
+    const field = tip.fieldTarget ?? tip.anchor;
+    field.dataset.guideHighlight = "true";
     return () => {
-      delete tip.anchor.dataset.guideHighlight;
+      delete field.dataset.guideHighlight;
     };
-  }, [enabled, tip?.anchor, tip?.highlight]);
+  }, [enabled, tip?.anchor, tip?.fieldTarget, tip?.highlight]);
 
   useLayoutEffect(() => {
     if (!tip) {
@@ -583,22 +565,8 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       void close("completed");
       return;
     }
-    if (tip.fieldId) {
-      if (tip.requirement) {
-        setOpenKey(null);
-        requestAnimationFrame(() => focusField(tip.anchor));
-        return;
-      }
-      rememberField(tip.fieldId);
-      const next = remainingField();
-      setOpenKey(null);
-      requestAnimationFrame(() => {
-        if (next) focusField(next);
-        else find<HTMLButtonElement>("[data-guide-editor-next]")?.click();
-      });
-      return;
-    }
     if (tip.advance?.disabled || tip.requirement) return;
+    if (tip.fieldId) rememberField(tip.fieldId);
     setOpenKey(null);
     if (tip.advance) {
       // Use the editor's existing save/validation flow. Never click publication/payment.
@@ -712,9 +680,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
                 type="button"
                 className="guide-tip-next"
                 disabled={
-                  busy ||
-                  tip.advance?.disabled ||
-                  Boolean(tip.requirement && !tip.fieldId)
+                  busy || tip.advance?.disabled || Boolean(tip.requirement)
                 }
                 aria-describedby={
                   tip.requirement ? `${panelId}-requirement` : undefined

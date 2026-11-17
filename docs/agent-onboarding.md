@@ -2,9 +2,9 @@
 
 Ghidul apare ca un punct roșu lângă elementul relevant din panou sau din previzualizarea privată. Cardul compact se deschide automat la prima întâlnire cu fiecare pas și poate fi redeschis din punct. Cardul are maximum 300px, contur verde discret, săgeată de legătură când este spațiu lateral și un contor pentru cele șase etape. Nu are etichetă în afara cardului și nu ocupă spațiu în pagină. Se adresează conturilor noi de agenți; administratorii, vizitatorii paginilor publice și modul demonstrativ nu îl văd.
 
-Etapele sunt profilul, detaliile proprietății, fotografiile, modelul, publicarea și Mesaje. În editor, cardurile existente sunt combinate cu o bordură roșie pe controlul activ; titlul câmpului rămâne în afară. Sunt parcurse, în ordine, denumirea, adresa, tipul proprietății, tipul ofertei, prețul, moneda, suprafața, unitatea de suprafață, dormitoarele, băile, notițele și facilitățile. Fotografiile și modelul au apoi propriile indicii.
+Etapele sunt profilul, detaliile proprietății, fotografiile, modelul, publicarea și Mesaje. În editor, cardul rămâne ancorat la titlul etapei, cu un singur punct lângă acesta. Evidențierea este separată: bordura roșie se aplică doar controlului activ, fără punct sau card propriu și cu titlul câmpului în afară. Sunt parcurse, în ordine, denumirea, adresa, tipul proprietății, tipul ofertei, prețul, moneda, suprafața, unitatea de suprafață, dormitoarele, băile, notițele și facilitățile. Fotografiile și modelul au apoi propriile indicii.
 
-Ghidul rămâne pe câmp cât timp agentul scrie. După părăsirea unui câmp valid, evidențiază următorul; nu mută automat focusul în timpul tastării. Din card, „Continuă” confirmă și valorile deja selectate și duce explicit la câmpul următor. Notițele și facilitățile sunt opționale și au acțiuni explicite de continuare fără completare. În zona facilităților se pot face mai multe selecții înainte de continuare. Cardurile nu se deschid automat în timpul editării unui control; punctul le poate redeschide oricând.
+Ghidul rămâne pe câmp cât timp agentul scrie. După părăsirea unui câmp valid, evidențiază următorul; nu mută automat focusul în timpul tastării. Cardul păstrează titlul, explicația și butonul „Continuă” ale etapei. Acesta trece la etapa următoare prin butonul normal al editorului, cu aceeași validare. Notițele și facilitățile rămân opționale și pot fi lăsate necompletate. În zona facilităților se pot face mai multe selecții înainte de continuare. Cardurile nu se deschid automat în timpul editării unui control; punctul le poate redeschide oricând.
 
 Parcurgerea câmpurilor este memorată în browser, separat pe agent și proprietate, folosind doar identificatorii câmpurilor. Nu sunt stocate aici textele sau valorile introduse. După salvarea ciornei și reîncărcare, ghidul reia următorul câmp neparcurs; o valoare devenită invalidă este evidențiată din nou. Închiderea definitivă a ghidului rămâne în contul Supabase, pe toate dispozitivele.
 
@@ -19,7 +19,7 @@ Cardurile își păstrează poziția față de elementul explicat. Pentru conți
 - `codex/guide-baseline-1563eab`: aspectul anterior al cardurilor, înainte de încercarea cu chenare.
 - `codex/guide-fields-02b43f3`: câmpuri cu borduri roșii, punct în colț, ghidare după blur și dialog centrat la apăsare.
 - `codex/guide-cards-stable-d985ecc`: cardurile anterioare, cu poziția stabilizată la scroll, înainte de combinarea cu traseul complet pe câmpuri.
-- Versiunea curentă combină aceste carduri cu evidențierea roșie și parcurgerea tuturor câmpurilor. Revenirea între variante este o schimbare de interfață, fără modificări ale proprietăților, plăților sau stării din Supabase.
+- Versiunea curentă combină cardurile fixe lângă titlurile etapelor cu bordura roșie independentă pe câmpuri. Nu există puncte sau carduri pentru fiecare câmp. Revenirea între variante este o schimbare de interfață, fără modificări ale proprietăților, plăților sau stării din Supabase.
 
 ## Activare pe proiectul existent
 
