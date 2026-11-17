@@ -599,19 +599,9 @@ export function HeritageWebsite({
             <div>
               <span className="heritage-kicker">FĂ LOC PENTRU CE URMEAZĂ</span>
               <h2>
-                <EditableText
-                  field="copy.settingTitle"
-                  value={copy.settingTitle}
-                  onEdit={onEdit}
-                />
+                {presentationCopy.heritageSetting.title}
                 <br />
-                <em>
-                  <EditableText
-                    field="copy.settingAccent"
-                    value={copy.settingAccent}
-                    onEdit={onEdit}
-                  />
-                </em>
+                <em>{presentationCopy.heritageSetting.accent}</em>
               </h2>
               <p>
                 <EditableText
