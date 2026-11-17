@@ -306,7 +306,12 @@
   margin-bottom: 45px;
 }
 .heritage-story > .heritage-section-label {
-  margin-bottom: 16px;
+  margin-bottom: 15px;
+}
+@media (min-width: 768px) {
+  .heritage-story > .heritage-section-heading {
+    align-items: flex-start;
+  }
 }
 .heritage-section-label > span:first-child {
   display: flex;
