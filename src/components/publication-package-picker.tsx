@@ -1,5 +1,4 @@
 "use client";
-import { Film, Images } from "lucide-react";
 import {
   publicationPackages,
   type PublicationPackage,
@@ -24,7 +23,6 @@ export function PublicationPackagePicker({
       <div className="publication-package-options">
         {(["photos", "video"] as const).map((id) => {
           const offer = publicationPackages[id];
-          const Icon = offer.includesVideo ? Film : Images;
           return (
             <label
               className="publication-package"
@@ -40,10 +38,7 @@ export function PublicationPackagePicker({
                 onChange={() => onChange(id)}
               />
               <span className="publication-package-content">
-                <span className="publication-package-name">
-                  <Icon size={21} strokeWidth={1.5} />
-                  {offer.name}
-                </span>
+                <span className="publication-package-name">{offer.name}</span>
                 <strong>
                   {administrator ? (
                     "Gratuit"

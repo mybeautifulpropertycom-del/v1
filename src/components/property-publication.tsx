@@ -623,7 +623,12 @@ export function usePropertyPublication(options: {
             ? "MOD DE TEST STRIPE"
             : "O PRIMĂ IMPRESIE MEMORABILĂ"}
         </span>
-        <h2 id="publish-dialog-title">
+        <h2
+          id="publish-dialog-title"
+          className={
+            phase === "choose" ? "publication-choice-heading" : undefined
+          }
+        >
           {phase === "success"
             ? "Proprietatea este publicată."
             : phase === "choose"
