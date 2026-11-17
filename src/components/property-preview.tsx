@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { OwnerVideoDownload } from "./owner-video-download";
+import { AgentGuide } from "./agent-guide";
 import { useEffect, useRef, useState } from "react";
 import { Pencil, Save, Globe2, ExternalLink } from "lucide-react";
 import { usePropertyPublication } from "./property-publication";
@@ -241,6 +242,7 @@ export function PropertyPreview({ id }: { id: string }) {
           ) : (
             <button
               className="button primary"
+              data-guide-publish
               disabled={busy || preparing}
               onClick={() => void publication.publish()}
             >
@@ -250,6 +252,7 @@ export function PropertyPreview({ id }: { id: string }) {
           )}
         </div>
       </div>
+      <AgentGuide preview />
       <div className="property-video-status-strip">
         {publication.videoStatus}
       </div>

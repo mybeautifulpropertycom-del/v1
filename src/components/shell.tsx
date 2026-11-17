@@ -2,6 +2,7 @@
 import { PLATFORM_CONTACT_EMAIL } from "@/lib/platform-brand";
 import { BrandSymbol } from "./brand-symbol";
 import { AgentAvatar } from "./agent-avatar";
+import { AgentGuide } from "./agent-guide";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -200,7 +201,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         )}
-        <main className="workspace-main">{children}</main>
+        <main className="workspace-main">
+          <AgentGuide />
+          {children}
+        </main>
         <footer className="workspace-footer">
           <span>O prezentare frumoasă pentru fiecare proprietate.</span>
           <span>

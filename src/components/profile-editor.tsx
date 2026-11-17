@@ -68,7 +68,7 @@ export function ProfileEditor() {
         </div>
       </div>
       <div className="profile-layout">
-        <form className="form-card" onSubmit={submit}>
+        <form className="form-card" data-guide-contact onSubmit={submit}>
           <div className="form-card-heading">
             <span className="section-icon">
               <UserRound size={22} />

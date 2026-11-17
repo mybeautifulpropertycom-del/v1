@@ -347,7 +347,7 @@ export function PropertyEditor({
           </button>
         </div>
       </div>
-      <div className="editor-steps">
+      <div className="editor-steps" data-guide-editor>
         {t.steps.map((label, index) => (
           <button
             key={label}
@@ -802,6 +802,7 @@ export function PropertyEditor({
             ) : (
               <button
                 className="button primary"
+                data-guide-preview
                 disabled={busy || uploading}
                 onClick={async () => {
                   const value = await persist(false, false, false);

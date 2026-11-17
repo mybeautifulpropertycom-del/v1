@@ -84,6 +84,8 @@ export async function workspace(
     }
     if (url.pathname === "/rest/v1/rpc/is_platform_admin")
       return route.fulfill({ json: isAdmin });
+    if (url.pathname === "/rest/v1/agent_onboarding")
+      return route.fulfill({ json: null });
     if (url.pathname === "/auth/v1/user") return route.fulfill({ json: user });
     if (url.pathname === "/rest/v1/profiles") {
       if (route.request().method() === "PATCH") {

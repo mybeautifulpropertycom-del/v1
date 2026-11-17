@@ -10,6 +10,7 @@ import "@/styles/publication-packages.css";
 import "@/styles/property-print.css";
 import "@/styles/neighbourhood.css";
 import "@/styles/workspace-typography.css";
+import "@/styles/agent-guide.css";
 import { htmlLanguage } from "@/i18n/config";
 import { HOME_TITLE, HOME_DESCRIPTION, siteOrigin } from "@/lib/seo";
 

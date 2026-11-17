@@ -22,11 +22,15 @@ import { readDemo, writeDemo } from "@/lib/demo-storage";
 import { uploadPropertyPhoto } from "@/lib/photo-upload";
 import { getSupabase, supabaseConfigured } from "@/lib/supabase";
 import { useUnreadInquiries } from "./use-unread-inquiries";
+import { useAgentOnboarding } from "./use-agent-onboarding";
+import type { GuideStatus } from "@/lib/agent-onboarding";
 
 type WorkspaceContext = Workspace & {
   demo: boolean;
   isAdmin: boolean;
   unreadCount: number;
+  guideStatus: GuideStatus | null;
+  closeGuide: (status: "dismissed" | "completed") => Promise<void>;
   refreshUnread: () => Promise<void>;
   saveProfile: (profile: Profile) => Promise<void>;
   saveProperty: (property: Property, publish?: boolean) => Promise<Property>;
@@ -84,6 +88,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const { unreadCount, refreshUnread } = useUnreadInquiries(state?.profile.id);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const { guideStatus, closeGuide } = useAgentOnboarding(
+    state?.profile.id,
+    isAdmin,
+  );
   const [toast, setToast] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const notify = useCallback((message: string) => {
@@ -406,6 +414,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         demo: !supabaseConfigured,
         isAdmin,
         unreadCount,
+        guideStatus,
+        closeGuide,
         refreshUnread,
         saveProfile,
         saveProperty,

@@ -30,6 +30,21 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const agentOnboarding = await readFile(
+  new URL("202611170002_agent_onboarding.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-agent-onboarding.sql", import.meta.url),
+  `-- Existing installations: run this ENTIRE file. Safe to rerun.
+-- Enrols only future profiles. Does not change existing accounts, properties or payments.
+begin;
+${agentOnboarding.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_AGENT_ONBOARDING_READY' as status;
+`,
+);
 const propertyMaps = await readFile(
   new URL("202611040001_property_maps.sql", directory),
   "utf8",
