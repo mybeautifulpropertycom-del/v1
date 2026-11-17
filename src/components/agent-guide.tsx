@@ -8,6 +8,11 @@ import { ArrowRight, X } from "lucide-react";
 import { agentGuideProgress } from "@/lib/agent-onboarding";
 import { publicationPackages } from "@/lib/publication-packages";
 import { useWorkspace } from "./workspace-provider";
+import {
+  nextPropertyGuideField,
+  propertyGuideFields,
+  type PropertyGuideField,
+} from "@/lib/property-guide";
 import { guidePlacement } from "@/lib/guide-placement";
 
 type Tip = {
@@ -23,6 +28,9 @@ type Tip = {
   finish?: boolean;
   requirement?: string;
   besideHeading?: boolean;
+  fieldId?: PropertyGuideField;
+  highlight?: boolean;
+  editing?: boolean;
 };
 const find = <T extends HTMLElement = HTMLElement>(selector: string) =>
   document.querySelector<T>(selector);
@@ -57,11 +65,77 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
   const panel = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const autoOpened = useRef(new Set<string>());
+  const tipRef = useRef(tip);
+  tipRef.current = tip;
+  const journey = useRef<{ key: string; done: Set<string> } | null>(null);
   const open = tip !== null && openKey === tip.key;
   const [inViewport, setInViewport] = useState(false);
   const [position, setPosition] = useState<
     (ReturnType<typeof guidePlacement> & { mode: "absolute" | "fixed" }) | null
   >(null);
+
+  function fieldElement(id: string) {
+    return find<HTMLElement>(`[data-property-guide-field="${id}"]`);
+  }
+  function fieldJourney() {
+    const editor = find("[data-guide-property-id]");
+    const key = `up-property-guide:${workspace.profile.id}:${editor?.dataset.guidePropertyId || ""}`;
+    if (journey.current?.key !== key) {
+      let stored: unknown = [];
+      try {
+        stored = JSON.parse(localStorage.getItem(key) || "[]");
+      } catch {
+        /* Memory is sufficient if storage is unavailable. */
+      }
+      const validIds = new Set<string>(
+        propertyGuideFields.map((field) => field.id),
+      );
+      journey.current = {
+        key,
+        done: new Set(
+          Array.isArray(stored)
+            ? stored.filter(
+                (id): id is string =>
+                  typeof id === "string" && validIds.has(id),
+              )
+            : [],
+        ),
+      };
+    }
+    return journey.current;
+  }
+  function remainingField() {
+    const { done } = fieldJourney();
+    const issues = Object.fromEntries(
+      propertyGuideFields.map((field) => [
+        field.id,
+        fieldElement(field.id)?.dataset.guideIssue,
+      ]),
+    );
+    const next = nextPropertyGuideField(done, issues);
+    return next ? fieldElement(next.id) : null;
+  }
+  function rememberField(id: string) {
+    const element = fieldElement(id);
+    if (!element || element.dataset.guideIssue) return false;
+    const state = fieldJourney();
+    state.done.add(id);
+    try {
+      localStorage.setItem(state.key, JSON.stringify([...state.done]));
+    } catch {
+      /* Keep the in-memory progress. */
+    }
+    return true;
+  }
+  function focusField(element: HTMLElement) {
+    element.scrollIntoView({ behavior: "instant", block: "center" });
+    const input = element.matches("input,select,textarea")
+      ? element
+      : element.querySelector<HTMLElement>(
+          "button:not(:disabled),input,select,textarea",
+        );
+    input?.focus({ preventScroll: true });
+  }
 
   useEffect(() => {
     if (!enabled) {
@@ -69,6 +143,12 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       return;
     }
     function resolveTip(): Tip | null {
+      if (
+        tipRef.current?.fieldId &&
+        (panel.current?.contains(document.activeElement) ||
+          beacon.current === document.activeElement)
+      )
+        return tipRef.current;
       // Leave menus, photo dialogs and payment dialogs unobstructed.
       if (
         find(
@@ -79,10 +159,43 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       const editor = find("[data-guide-editor-step]");
       if (editor && progress.step !== 0 && progress.step !== 3) {
         const step = Number(editor.dataset.guideEditorStep);
+        if (step === 0) {
+          const focused = document.activeElement?.closest<HTMLElement>(
+            "[data-property-guide-field]",
+          );
+          const anchor = focused ?? remainingField();
+          const definition = propertyGuideFields.find(
+            (field) => field.id === anchor?.dataset.propertyGuideField,
+          );
+          if (anchor && definition) {
+            const empty =
+              anchor instanceof HTMLTextAreaElement
+                ? !anchor.value.trim()
+                : anchor.dataset.guideEmpty === "true";
+            return {
+              key: `field-${definition.id}`,
+              label: "Detaliile",
+              title: definition.title,
+              body: definition.body,
+              anchor,
+              fieldId: definition.id,
+              highlight: true,
+              editing: Boolean(focused),
+              action: anchor.dataset.guideIssue
+                ? "Completează câmpul"
+                : definition.id === "description" && empty
+                  ? "Continuă fără notițe"
+                  : definition.id === "amenities" && empty
+                    ? "Continuă fără facilități"
+                    : "Continuă",
+              requirement: anchor.dataset.guideIssue,
+            };
+          }
+        }
         const selectors = [
-          "[data-guide-details-title]",
-          "[data-guide-photos]",
-          "[data-guide-design]",
+          "[data-guide-editor-next]",
+          "[data-guide-photo-input]",
+          "[data-guide-design-input]",
         ];
         const anchor = find(selectors[step]);
         if (!anchor) return null;
@@ -102,7 +215,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           anchor,
           action: "Continuă",
           requirement: editor.dataset.guideRequirement || undefined,
-          besideHeading: true,
+          highlight: step > 0,
           advance:
             find<HTMLButtonElement>(
               step === 2 ? "[data-guide-preview]" : "[data-guide-editor-next]",
@@ -125,6 +238,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           body: "Datele salvate în profil apar în prezentarea proprietății, astfel încât persoanele interesate să te poată contacta.",
           anchor,
           action: "Completează profilul",
+          highlight: Boolean(contact),
           ...(contact ? { focus: contact } : { href: "/panou/profil" }),
         };
       }
@@ -206,6 +320,8 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           old?.anchor === next?.anchor &&
           old?.advance === next?.advance &&
           old?.requirement === next?.requirement &&
+          old?.action === next?.action &&
+          old?.editing === next?.editing &&
           old?.href === next?.href
             ? old
             : next,
@@ -221,18 +337,64 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       attributeFilter: [
         "data-guide-editor-step",
         "data-guide-requirement",
+        "data-guide-issue",
+        "data-guide-empty",
         "disabled",
         "aria-modal",
         "open",
       ],
     });
+    let guidePointer = false;
+    let pointerTimer: ReturnType<typeof setTimeout> | undefined;
+    const pointer = (event: PointerEvent) => {
+      guidePointer = Boolean(
+        (event.target as Element).closest(".guide-coachmark"),
+      );
+      clearTimeout(pointerTimer);
+      pointerTimer = setTimeout(() => {
+        guidePointer = false;
+      }, 0);
+    };
+    const blur = (event: FocusEvent) => {
+      const element = (event.target as Element).closest<HTMLElement>(
+        "[data-property-guide-field]",
+      );
+      const related = event.relatedTarget as Element | null;
+      if (
+        element &&
+        !guidePointer &&
+        !related?.closest(".guide-coachmark") &&
+        !element.contains(related)
+      )
+        rememberField(element.dataset.propertyGuideField!);
+      update();
+    };
+    document.addEventListener("pointerdown", pointer, true);
+    document.addEventListener("focusout", blur);
+    document.addEventListener("focusin", update);
+    document.addEventListener("input", update);
+    document.addEventListener("change", update);
     window.addEventListener("resize", update);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      clearTimeout(pointerTimer);
+      document.removeEventListener("pointerdown", pointer, true);
+      document.removeEventListener("focusout", blur);
+      document.removeEventListener("focusin", update);
+      document.removeEventListener("input", update);
+      document.removeEventListener("change", update);
       window.removeEventListener("resize", update);
     };
   }, [enabled, path, preview, progress.step, progress.property?.id]);
+
+  useLayoutEffect(() => {
+    if (!enabled || !tip?.highlight) return;
+    tip.anchor.dataset.guideHighlight = "true";
+    return () => {
+      delete tip.anchor.dataset.guideHighlight;
+    };
+  }, [enabled, tip?.anchor, tip?.highlight]);
 
   useLayoutEffect(() => {
     if (!tip) {
@@ -347,7 +509,8 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
   }, [tip?.anchor]);
 
   useEffect(() => {
-    if (!enabled || !tip || !position?.visible || !inViewport) return;
+    if (!enabled || !tip || !position?.visible || !inViewport || tip.editing)
+      return;
     const key = `${workspace.profile.id}:${tip.key}`;
     if (autoOpened.current.has(key)) return;
     autoOpened.current.add(key);
@@ -370,7 +533,14 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       /* Private browsing still has the in-memory guard. */
     }
     setOpenKey(tip.key);
-  }, [enabled, tip?.key, position?.visible, inViewport, workspace.profile.id]);
+  }, [
+    enabled,
+    tip?.key,
+    tip?.editing,
+    position?.visible,
+    inViewport,
+    workspace.profile.id,
+  ]);
 
   useEffect(() => {
     if (!open) return;
@@ -411,6 +581,21 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     if (!tip) return;
     if (tip.finish) {
       void close("completed");
+      return;
+    }
+    if (tip.fieldId) {
+      if (tip.requirement) {
+        setOpenKey(null);
+        requestAnimationFrame(() => focusField(tip.anchor));
+        return;
+      }
+      rememberField(tip.fieldId);
+      const next = remainingField();
+      setOpenKey(null);
+      requestAnimationFrame(() => {
+        if (next) focusField(next);
+        else find<HTMLButtonElement>("[data-guide-editor-next]")?.click();
+      });
       return;
     }
     if (tip.advance?.disabled || tip.requirement) return;
@@ -527,7 +712,9 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
                 type="button"
                 className="guide-tip-next"
                 disabled={
-                  busy || tip.advance?.disabled || Boolean(tip.requirement)
+                  busy ||
+                  tip.advance?.disabled ||
+                  Boolean(tip.requirement && !tip.fieldId)
                 }
                 aria-describedby={
                   tip.requirement ? `${panelId}-requirement` : undefined

@@ -9,6 +9,19 @@
     sans-serif;
   color: #28392c;
 }
+:is(input, select, textarea, button)[data-guide-highlight="true"] {
+  border-color: #d96947;
+  box-shadow: 0 0 0 1px #d9694733;
+}
+:is(
+  .guide-facilities,
+  .template-choices,
+  .upload-area
+)[data-guide-highlight="true"] {
+  outline: 1px solid #d9694780;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
 .guide-beacon {
   position: absolute;
   z-index: 81;

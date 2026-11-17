@@ -2,6 +2,7 @@
 import { PLATFORM_DOMAIN } from "@/lib/platform-brand";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyImage } from "./property-image";
+import { propertyGuideIssues } from "@/lib/property-guide";
 import { PriceInput } from "./price-input";
 import { PropertySharing } from "./property-sharing";
 import { PropertyAddressInput } from "./property-address-input";
@@ -98,6 +99,7 @@ export function PropertyEditor({
   const [customAmenity, setCustomAmenity] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const t = ro.editor;
+  const guideIssues = propertyGuideIssues(property);
   const stepRequirement = propertyStepRequirement(property, step);
   useEffect(() => {
     if (
@@ -375,6 +377,7 @@ export function PropertyEditor({
         className="editor-steps"
         data-guide-editor
         data-guide-editor-step={step}
+        data-guide-property-id={property.id}
         data-guide-requirement={stepRequirement}
       >
         {t.steps.map((label, index) => (
@@ -435,6 +438,8 @@ export function PropertyEditor({
                     Titlul proprietății
                     <input
                       data-guide-details
+                      data-property-guide-field="title"
+                      data-guide-issue={guideIssues.title || undefined}
                       value={property.title}
                       maxLength={160}
                       placeholder="O locuință cu o perspectivă deosebită."
@@ -442,6 +447,8 @@ export function PropertyEditor({
                     />
                   </label>
                   <PropertyAddressInput
+                    guideField="location"
+                    guideIssue={guideIssues.location}
                     value={property.location}
                     placeId={property.google_place_id}
                     disabled={busy}
@@ -462,6 +469,8 @@ export function PropertyEditor({
                   <label>
                     Tipul proprietății
                     <select
+                      data-property-guide-field="type"
+                      data-guide-issue={guideIssues.type || undefined}
                       value={
                         property.type === "Town House" ? "House" : property.type
                       }
@@ -479,6 +488,8 @@ export function PropertyEditor({
                   <label>
                     Tipul ofertei
                     <select
+                      data-property-guide-field="transaction"
+                      data-guide-issue={guideIssues.transaction || undefined}
                       value={property.transaction}
                       onChange={(e) =>
                         update(
@@ -494,6 +505,8 @@ export function PropertyEditor({
                   <label>
                     Preț
                     <PriceInput
+                      guideField="price"
+                      guideIssue={guideIssues.price}
                       value={property.price}
                       currency={property.currency}
                       onChange={(value) => update("price", value)}
@@ -502,6 +515,8 @@ export function PropertyEditor({
                   <label>
                     Monedă
                     <select
+                      data-property-guide-field="currency"
+                      data-guide-issue={guideIssues.currency || undefined}
                       value={property.currency}
                       onChange={(e) =>
                         update(
@@ -522,6 +537,8 @@ export function PropertyEditor({
                   <label>
                     Suprafață
                     <input
+                      data-property-guide-field="area"
+                      data-guide-issue={guideIssues.area || undefined}
                       type="number"
                       min="0"
                       step="0.01"
@@ -533,6 +550,8 @@ export function PropertyEditor({
                   <label>
                     Unitatea de suprafață
                     <select
+                      data-property-guide-field="area_unit"
+                      data-guide-issue={guideIssues.area_unit || undefined}
                       value={property.area_unit}
                       onChange={(e) =>
                         update(
@@ -547,6 +566,8 @@ export function PropertyEditor({
                   <label>
                     Dormitoare
                     <input
+                      data-property-guide-field="bedrooms"
+                      data-guide-issue={guideIssues.bedrooms || undefined}
                       type="number"
                       min="0"
                       max="100"
@@ -559,6 +580,8 @@ export function PropertyEditor({
                   <label>
                     Băi
                     <input
+                      data-property-guide-field="bathrooms"
+                      data-guide-issue={guideIssues.bathrooms || undefined}
                       type="number"
                       min="0"
                       max="100"
@@ -579,6 +602,8 @@ export function PropertyEditor({
                 <label>
                   Descriere
                   <textarea
+                    data-property-guide-field="description"
+                    data-guide-issue={guideIssues.description || undefined}
                     rows={7}
                     maxLength={12000}
                     value={property.description}
@@ -595,45 +620,52 @@ export function PropertyEditor({
                   </small>
                 </label>
                 <label className="amenity-label">Dotări și facilități</label>
-                <div className="amenity-options">
-                  {amenities.map((v) => (
+                <div
+                  className="guide-facilities"
+                  data-property-guide-field="amenities"
+                  data-guide-issue={guideIssues.amenities || undefined}
+                  data-guide-empty={property.amenities.length === 0}
+                >
+                  <div className="amenity-options">
+                    {amenities.map((v) => (
+                      <button
+                        key={v}
+                        className={
+                          property.amenities.includes(v) ? "selected" : ""
+                        }
+                        aria-pressed={property.amenities.includes(v)}
+                        onClick={() => toggleAmenity(v)}
+                      >
+                        {property.amenities.includes(v) && <Check size={13} />}
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="custom-amenity">
+                    <input
+                      aria-label="Dotare personalizată"
+                      maxLength={60}
+                      placeholder="Adaugă o dotare…"
+                      value={customAmenity}
+                      onChange={(e) => setCustomAmenity(e.target.value)}
+                    />
                     <button
-                      key={v}
-                      className={
-                        property.amenities.includes(v) ? "selected" : ""
+                      className="button secondary"
+                      disabled={
+                        !customAmenity.trim() || property.amenities.length >= 30
                       }
-                      aria-pressed={property.amenities.includes(v)}
-                      onClick={() => toggleAmenity(v)}
+                      onClick={() => {
+                        if (!property.amenities.includes(customAmenity.trim()))
+                          update("amenities", [
+                            ...property.amenities,
+                            customAmenity.trim(),
+                          ]);
+                        setCustomAmenity("");
+                      }}
                     >
-                      {property.amenities.includes(v) && <Check size={13} />}
-                      {v}
+                      Adaugă
                     </button>
-                  ))}
-                </div>
-                <div className="custom-amenity">
-                  <input
-                    aria-label="Dotare personalizată"
-                    maxLength={60}
-                    placeholder="Adaugă o dotare…"
-                    value={customAmenity}
-                    onChange={(e) => setCustomAmenity(e.target.value)}
-                  />
-                  <button
-                    className="button secondary"
-                    disabled={
-                      !customAmenity.trim() || property.amenities.length >= 30
-                    }
-                    onClick={() => {
-                      if (!property.amenities.includes(customAmenity.trim()))
-                        update("amenities", [
-                          ...property.amenities,
-                          customAmenity.trim(),
-                        ]);
-                      setCustomAmenity("");
-                    }}
-                  >
-                    Adaugă
-                  </button>
+                  </div>
                 </div>
               </section>
             </>
@@ -649,7 +681,11 @@ export function PropertyEditor({
                 coperta.
               </p>
               {uploading ? (
-                <div className="upload-area uploading" aria-busy="true">
+                <div
+                  className="upload-area uploading"
+                  data-guide-photo-input
+                  aria-busy="true"
+                >
                   <div
                     className="photo-upload-progress"
                     role="progressbar"
@@ -689,6 +725,7 @@ export function PropertyEditor({
               ) : (
                 <button
                   className="upload-area"
+                  data-guide-photo-input
                   disabled={uploading || busy}
                   onClick={() => fileInput.current?.click()}
                   onDragOver={(e) => e.preventDefault()}
@@ -777,7 +814,7 @@ export function PropertyEditor({
                 Aceeași proprietate. Trei stiluri diferite. Alege-l pe cel care
                 spune povestea ta.
               </p>
-              <div className="template-choices">
+              <div className="template-choices" data-guide-design-input>
                 {templates.map((template) => (
                   <button
                     key={template.id}

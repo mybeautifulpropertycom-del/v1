@@ -141,6 +141,10 @@ export function profileErrors(profile: Profile): string[] {
   return errors;
 }
 
+export function isReservedPropertyAddress(location: string) {
+  return platformPageSlugs.has(slugify(location));
+}
+
 export function publicationErrors(
   property: Property,
   profile: Profile,

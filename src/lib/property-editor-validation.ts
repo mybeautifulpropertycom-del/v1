@@ -1,16 +1,16 @@
 import { propertyErrors, type Property } from "./model";
+import { propertyGuideIssues } from "./property-guide";
 
 // A draft can be saved at any point. Advancing through the editor requires
 // the facts that a property presentation needs, even when the guide is closed.
 export function propertyDetailsErrors(property: Property): string[] {
-  const errors: string[] = [];
-  if (property.title.trim().length < 5)
-    errors.push("Adaugă un titlu de minimum 5 caractere.");
-  if (!property.location.trim()) errors.push("Adaugă adresa proprietății.");
-  if (!Number.isFinite(property.price) || property.price <= 0)
-    errors.push("Adaugă un preț mai mare decât zero.");
-  if (!Number.isFinite(property.area) || property.area <= 0)
-    errors.push("Adaugă suprafața proprietății.");
+  const issues = propertyGuideIssues(property);
+  const errors = [
+    issues.title,
+    issues.location,
+    issues.price,
+    issues.area,
+  ].filter((issue): issue is string => Boolean(issue));
   return [...new Set([...errors, ...propertyErrors(property)])];
 }
 

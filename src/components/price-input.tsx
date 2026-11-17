@@ -7,10 +7,14 @@ export function PriceInput({
   value,
   currency,
   onChange,
+  guideField,
+  guideIssue,
 }: {
   value: number;
   currency: Property["currency"];
   onChange: (value: number) => void;
+  guideField?: string;
+  guideIssue?: string | null;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const caret = useRef<number | null>(null);
@@ -42,6 +46,8 @@ export function PriceInput({
   });
   return (
     <input
+      data-property-guide-field={guideField}
+      data-guide-issue={guideIssue || undefined}
       ref={input}
       type="text"
       inputMode="decimal"

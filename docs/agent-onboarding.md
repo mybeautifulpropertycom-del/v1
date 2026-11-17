@@ -2,7 +2,13 @@
 
 Ghidul apare ca un punct roșu lângă elementul relevant din panou sau din previzualizarea privată. Cardul compact se deschide automat la prima întâlnire cu fiecare pas și poate fi redeschis din punct. Cardul are maximum 300px, contur verde discret, săgeată de legătură când este spațiu lateral și un contor pentru cele șase etape. Nu are etichetă în afara cardului și nu ocupă spațiu în pagină. Se adresează conturilor noi de agenți; administratorii, vizitatorii paginilor publice și modul demonstrativ nu îl văd.
 
-Etapele sunt profilul, detaliile proprietății, fotografiile, modelul, publicarea și Mesaje. Butonul cardului din editor este „Continuă”. Trecerea la fotografii cere titlu valid, adresă, preț pozitiv și suprafață pozitivă, plus respectarea limitelor existente. Trecerea la model cere și cel puțin o fotografie. Aceste reguli se aplică ghidului, butoanelor normale și navigării între etape, inclusiv conturilor fără ghid. Prima cerință lipsă apare în card și lângă butonul normal. Ciornele incomplete pot fi în continuare salvate. În previzualizare, ghidul indică butonul de publicare fără a-l apăsa. O plată începută, anulată sau refuzată nu finalizează pasul de publicare.
+Etapele sunt profilul, detaliile proprietății, fotografiile, modelul, publicarea și Mesaje. În editor, cardurile existente sunt combinate cu o bordură roșie pe controlul activ; titlul câmpului rămâne în afară. Sunt parcurse, în ordine, denumirea, adresa, tipul proprietății, tipul ofertei, prețul, moneda, suprafața, unitatea de suprafață, dormitoarele, băile, notițele și facilitățile. Fotografiile și modelul au apoi propriile indicii.
+
+Ghidul rămâne pe câmp cât timp agentul scrie. După părăsirea unui câmp valid, evidențiază următorul; nu mută automat focusul în timpul tastării. Din card, „Continuă” confirmă și valorile deja selectate și duce explicit la câmpul următor. Notițele și facilitățile sunt opționale și au acțiuni explicite de continuare fără completare. În zona facilităților se pot face mai multe selecții înainte de continuare. Cardurile nu se deschid automat în timpul editării unui control; punctul le poate redeschide oricând.
+
+Parcurgerea câmpurilor este memorată în browser, separat pe agent și proprietate, folosind doar identificatorii câmpurilor. Nu sunt stocate aici textele sau valorile introduse. După salvarea ciornei și reîncărcare, ghidul reia următorul câmp neparcurs; o valoare devenită invalidă este evidențiată din nou. Închiderea definitivă a ghidului rămâne în contul Supabase, pe toate dispozitivele.
+
+Validarea continuării rămâne comună ghidului, butoanelor și taburilor editorului: titlu valid, adresă, preț pozitiv și suprafață pozitivă înainte de fotografii, cel puțin o fotografie înainte de model. Ciornele incomplete se pot salva. Ghidul oferă întreaga succesiune de câmpuri, iar navigarea manuală rămâne disponibilă cu aceste validări. În previzualizare, indică butonul de publicare fără a-l apăsa. Publicarea are loc doar după confirmarea plății sau acordarea accesului gratuit de către administrator.
 
 „Restrânge indiciul”, Escape sau apăsarea în afara lui lasă doar punctul. „Închide ghidul” îl închide definitiv. După publicare, „Deschide mesajele” duce la inbox, unde „Am înțeles” finalizează ghidul. Starea este păstrată în baza de date, separată pentru fiecare cont; se reîncarcă la autentificare și la revenirea în filă. Un ghid închis nu poate fi reactivat de o filă veche. Nu este necesară primirea unui lead real pentru finalizarea ghidului.
 
@@ -12,7 +18,8 @@ Cardurile își păstrează poziția față de elementul explicat. Pentru conți
 
 - `codex/guide-baseline-1563eab`: aspectul anterior al cardurilor, înainte de încercarea cu chenare.
 - `codex/guide-fields-02b43f3`: câmpuri cu borduri roșii, punct în colț, ghidare după blur și dialog centrat la apăsare.
-- Versiunea curentă folosește cardurile anterioare, cu poziția stabilizată la scroll. Revenirea între variante este o schimbare de interfață, fără modificări ale proprietăților, plăților sau stării din Supabase.
+- `codex/guide-cards-stable-d985ecc`: cardurile anterioare, cu poziția stabilizată la scroll, înainte de combinarea cu traseul complet pe câmpuri.
+- Versiunea curentă combină aceste carduri cu evidențierea roșie și parcurgerea tuturor câmpurilor. Revenirea între variante este o schimbare de interfață, fără modificări ale proprietăților, plăților sau stării din Supabase.
 
 ## Activare pe proiectul existent
 

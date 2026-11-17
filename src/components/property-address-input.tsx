@@ -12,11 +12,15 @@ export function PropertyAddressInput({
   placeId,
   disabled,
   onChange,
+  guideField,
+  guideIssue,
 }: {
   value: string;
   placeId?: string | null;
   disabled?: boolean;
   onChange: (address: string, placeId: string | null) => void;
+  guideField?: string;
+  guideIssue?: string | null;
 }) {
   const id = useId();
   const enabled = mapsEnabled();
@@ -147,6 +151,8 @@ export function PropertyAddressInput({
     <div className="property-address-field full-width">
       <label htmlFor={id}>Adresă</label>
       <input
+        data-property-guide-field={guideField}
+        data-guide-issue={guideIssue || undefined}
         ref={input}
         id={id}
         value={value}
