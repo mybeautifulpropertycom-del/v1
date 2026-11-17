@@ -671,8 +671,7 @@ export function EditorialWebsite({
           </div>
           <form className="estate-inquiry" onSubmit={submit}>
             <h3 className="presentation-inquiry-heading">
-              {presentationCopy.inquiry.lead}{" "}
-              <em>{presentationCopy.inquiry.accent}</em>
+              {presentationCopy.inquiry.title}
             </h3>
             <p>{presentationCopy.inquiry.subtitle}</p>
             <label>

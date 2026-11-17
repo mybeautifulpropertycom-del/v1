@@ -105,11 +105,7 @@ async function checkPresentation(
     await expect(contact.locator("form h3")).toHaveText(
       presentationCopy.inquiry.title,
     );
-    await expect(contact.locator("form h3 em")).toHaveText("când ai timp");
-    await expect(contact.locator("form h3 em")).toHaveCSS(
-      "color",
-      prefix === "estate" ? "rgb(106, 128, 104)" : "rgb(123, 130, 110)",
-    );
+    await expect(contact.locator("form h3 em")).toHaveCount(0);
     await expect(contact.locator("form > p").first()).toHaveText(
       presentationCopy.inquiry.subtitle,
     );

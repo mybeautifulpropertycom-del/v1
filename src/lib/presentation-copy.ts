@@ -26,9 +26,7 @@ export const presentationCopy = {
   },
   neighbourhood: "Cunoaște zonele din apropiere",
   inquiry: {
-    title: "Programează o vizionare când ai timp",
-    lead: "Programează o vizionare",
-    accent: "când ai timp",
+    title: "Programează o vizionare",
     subtitle:
       "Completează acest formular pentru a programa o vizionare a proprietății.",
   },
