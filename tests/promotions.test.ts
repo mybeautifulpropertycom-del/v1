@@ -29,6 +29,9 @@ let order: Record<string, any>,
   available: boolean,
   isAdmin: boolean,
   refunded: number;
+let legacySession: Record<string, any> | null;
+let customerPosts: URLSearchParams[];
+let saveRace: "same_session" | "cancelled" | null;
 let stripePosts: URLSearchParams[],
   applied: Record<string, unknown>[],
   writes: string[],
@@ -41,6 +44,7 @@ const metadata = {
   promotion_package: "start",
 };
 beforeEach(() => {
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_live_fake";
   process.env.STRIPE_CHECKOUT_MODE = "live";
   process.env.STRIPE_SECRET_KEY = "sk_live_fake";
   process.env.STRIPE_LIVE_PAYMENTS_ENABLED = "true";
@@ -67,6 +71,9 @@ beforeEach(() => {
     payment_status: "unpaid",
     url: "https://checkout.stripe.com/c/pay/cs_promotion",
     mode: "payment",
+    ui_mode: "elements",
+    customer: "cus_promotion",
+    client_secret: "cs_promotion_secret_fake",
     amount_total: 30000,
     currency: "ron",
     metadata,
@@ -76,6 +83,9 @@ beforeEach(() => {
   authorized = available = true;
   isAdmin = false;
   refunded = 0;
+  legacySession = null;
+  customerPosts = [];
+  saveRace = null;
   stripePosts = [];
   applied = [];
   writes = [];
@@ -134,7 +144,15 @@ globalThis.fetch = async (input, init) => {
       return Response.json({ ...demoWorkspace().profile, id: owner });
     if (url.pathname.endsWith("/promotion_orders")) {
       if (method === "PATCH") {
-        Object.assign(order, JSON.parse(String(init?.body)));
+        const update = JSON.parse(String(init?.body));
+        if (update.checkout_session_id && saveRace) {
+          if (saveRace === "same_session")
+            order.checkout_session_id = update.checkout_session_id;
+          else order.payment_status = "cancelled";
+          saveRace = null;
+          return Response.json(null);
+        }
+        Object.assign(order, update);
         return Response.json(
           url.searchParams.get("select") === "id" ? { id: orderId } : null,
         );
@@ -147,11 +165,21 @@ globalThis.fetch = async (input, init) => {
     throw new Error("Unexpected database call");
   }
   assert.equal(url.hostname, "api.stripe.com");
+  if (url.pathname.startsWith("/v1/customers") && method === "POST") {
+    customerPosts.push(new URLSearchParams(String(init?.body)));
+    return Response.json({ id: "cus_promotion" });
+  }
+  if (url.pathname === "/v1/checkout/sessions/cs_legacy")
+    return Response.json(legacySession);
+  if (url.pathname === "/v1/checkout/sessions/cs_legacy/expire") {
+    legacySession!.status = "expired";
+    return Response.json(legacySession);
+  }
   if (url.pathname === "/v1/checkout/sessions" && method === "POST") {
     stripePosts.push(new URLSearchParams(String(init?.body)));
     assert.equal(
       new Headers(init?.headers).get("idempotency-key"),
-      `up-promotion-${order.livemode ? "live" : "test"}-${orderId}`,
+      `up-promotion-card-${order.livemode ? "live" : "test"}-${orderId}`,
     );
     return Response.json(session);
   }
@@ -273,7 +301,7 @@ test("Stripe amount comes from the server package, returns to promotion, and rep
     "ron",
   );
   assert.match(
-    stripePosts[0].get("success_url")!,
+    stripePosts[0].get("return_url")!,
     /\/panou\/promovare\?payment=success/,
   );
   assert.equal(
@@ -286,6 +314,102 @@ test("Stripe amount comes from the server package, returns to promotion, and rep
   assert.equal(stripePosts.length, 1);
   assert.deepEqual(writes, []);
 });
+test("card checkout uses account contact details and disables Link and saved cards", async () => {
+  const result = await POST(
+    request({
+      propertyId,
+      package: "start",
+      targetArea: "Brașov",
+      notes: "",
+      name: "Forged",
+      email: "forged@example.com",
+    }),
+  );
+  const body = await result.json();
+  assert.equal(body.clientSecret, session.client_secret);
+  assert.equal(body.orderId, orderId);
+  assert.equal(body.billingDetails.name, demoWorkspace().profile.name);
+  assert.equal(body.billingDetails.email, "agent@example.com");
+  assert.equal(body.billingDetails.phone, demoWorkspace().profile.phone);
+  assert.equal(customerPosts[0].get("name"), body.billingDetails.name);
+  assert.equal(customerPosts[0].get("email"), body.billingDetails.email);
+  assert.equal(stripePosts[0].get("customer"), "cus_promotion");
+  assert.equal(stripePosts[0].get("ui_mode"), "elements");
+  assert.equal(stripePosts[0].get("wallet_options[link][display]"), "never");
+  assert.equal(
+    stripePosts[0].get("saved_payment_method_options[payment_method_save]"),
+    "disabled",
+  );
+  assert.equal(stripePosts[0].has("success_url"), false);
+  assert.equal(stripePosts[0].has("customer_email"), false);
+  assert.equal(stripePosts[0].get("allowed_payment_method_types[0]"), "card");
+  assert.equal(
+    (await POST(request({ action: "resume", orderId }))).status,
+    200,
+  );
+  assert.equal(stripePosts.length, 1);
+  assert.equal(customerPosts.length, 2); // Saved contact refreshed on resume.
+});
+test("legacy hosted sessions expire before their one idempotent card replacement", async () => {
+  legacySession = {
+    ...session,
+    id: "cs_legacy",
+    ui_mode: "hosted_page",
+    client_secret: null,
+    customer: null,
+  };
+  order.checkout_session_id = "cs_legacy";
+  const response = await POST(request());
+  assert.equal(response.status, 200);
+  assert.equal(legacySession.status, "expired");
+  assert.equal(order.checkout_session_id, "cs_promotion");
+  assert.equal((await POST(request())).status, 200);
+  assert.equal(stripePosts.length, 1);
+});
+test("expired card sessions cannot create a second payment for the same order", async () => {
+  order.checkout_session_id = session.id;
+  session.status = "expired";
+  assert.equal(
+    (await POST(request({ action: "resume", orderId }))).status,
+    409,
+  );
+  assert.equal(order.payment_status, "cancelled");
+  assert.equal(stripePosts.length, 0);
+});
+test("concurrent identical session saves never expire the other request's payable session", async () => {
+  saveRace = "same_session";
+  const response = await POST(request());
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).clientSecret, session.client_secret);
+  assert.equal(session.status, "open");
+  assert.equal(stripePosts.length, 1);
+});
+test("a cancellation that wins an in-flight checkout expires the new Stripe session", async () => {
+  saveRace = "cancelled";
+  const response = await POST(request());
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { processing: true, orderId });
+  assert.equal(session.status, "expired");
+  assert.equal(order.payment_status, "cancelled");
+});
+test("completed unpaid sessions wait for confirmation without creating another checkout", async () => {
+  order.checkout_session_id = session.id;
+  session.status = "complete";
+  const response = await POST(request({ action: "resume", orderId }));
+  assert.deepEqual(await response.json(), { processing: true, orderId });
+  assert.equal(stripePosts.length, 0);
+  assert.equal(applied.length, 0);
+});
+
+test("missing or mismatched publishable keys cannot create a payment", async () => {
+  for (const value of ["", "pk_test_wrong"]) {
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = value;
+    assert.equal((await POST(request())).status, 503);
+  }
+  assert.equal(stripePosts.length, 0);
+  assert.equal(customerPosts.length, 0);
+});
+
 test("an existing pending budget cannot be silently changed and a paid session never offers a new charge", async () => {
   assert.equal(
     (
@@ -304,7 +428,7 @@ test("an existing pending budget cannot be silently changed and a paid session n
   session.payment_status = "paid";
   session.status = "complete";
   const response = await POST(request());
-  assert.deepEqual(await response.json(), { processing: true });
+  assert.deepEqual(await response.json(), { processing: true, orderId });
   assert.equal(stripePosts.length, 0);
   assert.equal(applied.length, 1);
 });

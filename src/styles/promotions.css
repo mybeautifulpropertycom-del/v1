@@ -523,3 +523,29 @@
     font-size: 16px;
   }
 }
+
+.promotion-payment-security {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.promotion-payment-contact {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 24px;
+  overflow-wrap: anywhere;
+}
+.promotion-payment-contact span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.promotion-payment .publish-pay-button {
+  width: 100%;
+  margin-top: 20px;
+}
+.promotion-payment-result {
+  padding: 20px;
+  background: #eff4eb;
+  border-radius: 12px;
+}

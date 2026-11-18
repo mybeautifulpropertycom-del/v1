@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { stripeElementsFixture } from "./stripe-elements-fixture";
 import { workspace, id, owner } from "./workspace-fixture";
 import {
   promotionPackages,
@@ -52,6 +53,23 @@ async function fixture(page: Page, published = true, admin = false) {
   let orders: PromotionOrder[] = [];
   let posts: Record<string, unknown>[] = [];
   let enabled = true;
+  await stripeElementsFixture(page);
+  await page.exposeFunction("markPromotionPaid", () => {
+    orders = orders.map((item) => ({
+      ...item,
+      payment_status: "paid",
+      paid_at: new Date().toISOString(),
+    }));
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "__paymentCompleted", {
+      set() {
+        void (
+          window as unknown as { markPromotionPaid: () => void }
+        ).markPromotionPaid();
+      },
+    });
+  });
   await page.route("**/api/promotions", (route) => {
     expect(route.request().headers().authorization).toBe(
       `Bearer ${state.token}`,
@@ -84,7 +102,21 @@ async function fixture(page: Page, published = true, admin = false) {
         }),
       ];
     return route.fulfill({
-      json: { url: "https://checkout.stripe.com/c/pay/promotion-test" },
+      json:
+        orders[0]?.payment_status === "paid"
+          ? { processing: true, orderId }
+          : {
+              orderId,
+              clientSecret: "cs_live_browser_secret_fake",
+              publishableKey: "pk_live_browser",
+              amount: orders[0]?.amount || 50000,
+              mode: "live",
+              billingDetails: {
+                name: "Saved Agent",
+                email: "saved@example.com",
+                phone: "+40700123456",
+              },
+            },
     });
   });
   await page.route("https://checkout.stripe.com/**", (route) =>
@@ -151,7 +183,7 @@ test("Promotion replaces Studio, has three actual budgets and adapts to desktop 
   await expect(page).toHaveURL(/\/panou\/promovare$/);
 });
 
-test("buying Plus reviews the saved property and brief, then hands off to Stripe without granting campaign status", async ({
+test("buying Plus uses the existing card form inside the dialog and only confirms after server payment verification", async ({
   page,
 }, testInfo) => {
   const state = await fixture(page);
@@ -172,11 +204,26 @@ test("buying Plus reviews the saved property and brief, then hands off to Stripe
     path: testInfo.outputPath("promotion-checkout-review.png"),
   });
   await dialog
-    .getByRole("button", { name: "Plătește 500 RON prin Stripe", exact: true })
+    .getByRole("button", { name: "Continuă la plată", exact: true })
     .click();
-  await expect(page).toHaveURL(
-    "https://checkout.stripe.com/c/pay/promotion-test",
-  );
+  await expect(page).toHaveURL(/\/panou\/promovare$/);
+  await expect(dialog.getByLabel("Numărul cardului")).toBeVisible();
+  await expect(dialog).toContainText("Saved Agent");
+  await expect(dialog).toContainText("saved@example.com");
+  await expect(dialog).toContainText("+40700123456");
+  await expect(dialog).toContainText("Vila cu grădină");
+  await page.screenshot({
+    path: testInfo.outputPath("promotion-card-desktop.png"),
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await dialog.evaluate(
+      (element) => element.scrollWidth <= element.clientWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: testInfo.outputPath("promotion-card-phone.png"),
+  });
   expect(state.posts).toEqual([
     {
       propertyId: id,
@@ -185,6 +232,38 @@ test("buying Plus reviews the saved property and brief, then hands off to Stripe
       notes: "Promovați zona centrală și curtea proprietății.",
     },
   ]);
+  await dialog
+    .getByRole("button", { name: "Plătește 500 RON", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("heading", { name: "Plată confirmată" }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/panou\/promovare$/);
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { __confirmArguments: { returnUrl: string } })
+          .__confirmArguments.returnUrl,
+    ),
+  ).toContain(`/panou/promovare?payment=success&order=${orderId}`);
+  expect(state.posts).toHaveLength(2);
+  expect(state.posts[1]).toEqual({ action: "resume", orderId });
+  await dialog
+    .getByRole("button", { name: "Închide alegerea promovării" })
+    .click();
+  await expect(
+    page.getByText("În așteptarea pregătirii", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Campanie activă", { exact: true })).toHaveCount(
+    0,
+  );
+});
+
+test("a return URL cannot mark an unpaid promotion as paid", async ({
+  page,
+}) => {
+  const state = await fixture(page);
+  state.orders = [order()];
   await page.goto(`/panou/promovare?payment=success&order=${orderId}`);
   await expect(
     page.getByText("Plată în așteptare", { exact: true }),
@@ -192,18 +271,46 @@ test("buying Plus reviews the saved property and brief, then hands off to Stripe
   await expect(page.getByText("Plată confirmată", { exact: true })).toHaveCount(
     0,
   );
-  expect(state.posts).toHaveLength(1);
-  state.orders = [
-    order({ payment_status: "paid", paid_at: "2026-11-18T12:01:00Z" }),
-  ];
-  await page.getByRole("button", { name: "Actualizează", exact: true }).click();
+  expect(state.posts).toHaveLength(0);
+});
+
+test("pending payments reopen in a dialog, handle a declined card and do not leave the dashboard", async ({
+  page,
+}) => {
+  const state = await fixture(page);
+  state.orders = [order()];
+  await page.goto("/panou/promovare");
+  await page
+    .getByRole("button", { name: "Continuă plata", exact: true })
+    .click();
+  let dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Numărul cardului")).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Închide alegerea promovării" })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Continuă plata", exact: true })
+    .click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Numărul cardului")).toBeVisible();
+  await page.evaluate(() => {
+    (window as unknown as { __declinePayment: boolean }).__declinePayment =
+      true;
+  });
+  await dialog
+    .getByRole("button", { name: "Plătește 500 RON", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toHaveText("Cardul a fost refuzat.");
+  expect(state.orders[0].payment_status).toBe("pending");
+  await expect(page).toHaveURL(/\/panou\/promovare$/);
+  await dialog
+    .getByRole("button", { name: "Plătește 500 RON", exact: true })
+    .click();
   await expect(
-    page.getByText("În așteptarea pregătirii", { exact: true }),
+    dialog.getByRole("heading", { name: "Plată confirmată" }),
   ).toBeVisible();
-  await expect(page.getByText("Campanie activă", { exact: true })).toHaveCount(
-    0,
-  );
-  expect(state.posts).toHaveLength(1);
+  expect(state.posts.every((item) => item.action === "resume")).toBe(true);
 });
 
 test("an unpublished property cannot open checkout", async ({ page }) => {

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -9,7 +9,6 @@ import {
   Megaphone,
   Search,
   SlidersHorizontal,
-  X,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
 import { promotionRequest } from "@/lib/promotion-client";
@@ -23,7 +22,11 @@ import {
   type PromotionPackage,
 } from "@/lib/promotion-packages";
 import { publicPath, type Property } from "@/lib/model";
-import { trapDialogFocus } from "./website-dialog-focus";
+import {
+  PromotionDialog,
+  PromotionPaymentPanel,
+  type PromotionPayment,
+} from "./promotion-payment";
 
 function Purchase({
   property,
@@ -36,7 +39,7 @@ function Purchase({
   onClose: () => void;
   onUpdated: () => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
+  const [payment, setPayment] = useState<PromotionPayment | null>(null);
   const [area, setArea] = useState(
     property.location.split(",").at(-1)?.trim().slice(0, 160) || "",
   );
@@ -44,18 +47,6 @@ function Purchase({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const pack = promotionPackages[offer];
-  useEffect(() => {
-    const element = dialog.current,
-      previous = document.activeElement as HTMLElement | null;
-    const overflow = document.body.style.overflow;
-    element?.showModal();
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = overflow;
-      previous?.focus({ preventScroll: true });
-    };
-  }, []);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (busy) return;
@@ -69,16 +60,11 @@ function Purchase({
         notes: notes.trim(),
       });
       onUpdated();
-      if (
-        data.url &&
-        new URL(data.url).origin === "https://checkout.stripe.com"
-      )
-        window.location.assign(data.url);
-      else {
+      if (data.clientSecret || data.processing) setPayment(data);
+      else
         setError(
-          "Plata este în curs de confirmare. Verifică starea comenzii în lista de promovări.",
+          "Formularul securizat de plată nu este disponibil. Încearcă din nou.",
         );
-      }
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Plata nu a putut fi pregătită.",
@@ -89,25 +75,7 @@ function Purchase({
     }
   }
   return (
-    <dialog
-      ref={dialog}
-      className="promotion-dialog"
-      aria-labelledby="promotion-purchase-title"
-      onKeyDown={trapDialogFocus}
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!busy) onClose();
-      }}
-    >
-      <button
-        type="button"
-        className="promotion-dialog-close"
-        aria-label="Închide alegerea promovării"
-        disabled={busy}
-        onClick={onClose}
-      >
-        <X size={20} />
-      </button>
+    <PromotionDialog busy={busy} onClose={onClose}>
       <span className="eyebrow">PROMOVARE GOOGLE SEARCH</span>
       <h2 id="promotion-purchase-title">
         Pregătim promovarea proprietății tale.
@@ -122,68 +90,75 @@ function Purchase({
           <span>Pachet {pack.name} · buget Google Ads</span>
         </div>
       </div>
-      <form onSubmit={submit}>
-        <fieldset disabled={busy}>
-          <label>
-            Zona în care vrei să promovezi
-            <input
-              required
-              minLength={2}
-              maxLength={160}
-              value={area}
-              onChange={(event) => setArea(event.target.value)}
-              placeholder="Ex: Brașov și împrejurimi"
-            />
-            <small>
-              Alegem direcționarea împreună, înainte de lansarea campaniei.
-            </small>
-          </label>
-          <div className="promotion-keywords">
-            <span>Căutări de la care putem porni</span>
-            {promotionKeywords(property, area || "zona aleasă").map(
-              (keyword) => (
-                <small key={keyword}>{keyword}</small>
-              ),
-            )}
-          </div>
-          <label>
-            Ce ar trebui să știm despre promovare?{" "}
-            <span className="promotion-optional">Opțional</span>
-            <textarea
-              rows={3}
-              maxLength={1000}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Zone prioritare, ce vrei să evidențiem sau alte detalii utile."
-            />
-          </label>
-          <p className="promotion-purchase-note">
-            Întreaga sumă este buget publicitar. Configurarea și administrarea
-            sunt incluse. După confirmarea plății, te contactăm pentru detaliile
-            campaniei și o lansăm manual din contul nostru Google Ads.
-          </p>
-          <p className="promotion-purchase-note">
-            Este o plată unică. Perioada campaniei se stabilește înainte de
-            lansare, în funcție de buget și costurile căutărilor; plata nu
-            pornește automat anunțurile.
-          </p>
-          {error && (
-            <p role="alert" className="form-error">
-              {error}
+      {payment ? (
+        <PromotionPaymentPanel
+          payment={payment}
+          onUpdated={onUpdated}
+          onBusyChange={setBusy}
+        />
+      ) : (
+        <form onSubmit={submit}>
+          <fieldset disabled={busy}>
+            <label>
+              Zona în care vrei să promovezi
+              <input
+                required
+                minLength={2}
+                maxLength={160}
+                value={area}
+                onChange={(event) => setArea(event.target.value)}
+                placeholder="Ex: Brașov și împrejurimi"
+              />
+              <small>
+                Alegem direcționarea împreună, înainte de lansarea campaniei.
+              </small>
+            </label>
+            <div className="promotion-keywords">
+              <span>Căutări de la care putem porni</span>
+              {promotionKeywords(property, area || "zona aleasă").map(
+                (keyword) => (
+                  <small key={keyword}>{keyword}</small>
+                ),
+              )}
+            </div>
+            <label>
+              Ce ar trebui să știm despre promovare?{" "}
+              <span className="promotion-optional">Opțional</span>
+              <textarea
+                rows={3}
+                maxLength={1000}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Zone prioritare, ce vrei să evidențiem sau alte detalii utile."
+              />
+            </label>
+            <p className="promotion-purchase-note">
+              Întreaga sumă este buget publicitar. Configurarea și administrarea
+              sunt incluse. După confirmarea plății, te contactăm pentru
+              detaliile campaniei și o lansăm manual din contul nostru Google
+              Ads.
             </p>
-          )}
-          <button
-            className="button primary full-button"
-            disabled={busy || area.trim().length < 2}
-          >
-            {busy
-              ? "Pregătim plata securizată…"
-              : `Plătește ${pack.price.toLocaleString("ro-RO")} RON prin Stripe`}
-            <ChevronRight size={17} />
-          </button>
-        </fieldset>
-      </form>
-    </dialog>
+            <p className="promotion-purchase-note">
+              Este o plată unică. Perioada campaniei se stabilește înainte de
+              lansare, în funcție de buget și costurile căutărilor; plata nu
+              pornește automat anunțurile.
+            </p>
+            {error && (
+              <p role="alert" className="form-error">
+                {error}
+              </p>
+            )}
+            <button
+              className="button primary full-button"
+              disabled={busy || area.trim().length < 2}
+            >
+              {busy ? "Pregătim plata securizată…" : "Continuă la plată"}
+              <ChevronRight size={17} />
+            </button>
+          </fieldset>
+        </form>
+      )}
+    </PromotionDialog>
   );
 }
 
@@ -198,6 +173,7 @@ function OrderCard({
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [payment, setPayment] = useState<PromotionPayment | null>(null);
   const [stopForm, setStopForm] = useState(false),
     [stopReason, setStopReason] = useState("");
   const campaign =
@@ -218,11 +194,8 @@ function OrderCard({
         ...(reason ? { reason } : {}),
       });
       if (data.requested) setStopForm(false);
-      if (
-        data.url &&
-        new URL(data.url).origin === "https://checkout.stripe.com"
-      )
-        window.location.assign(data.url);
+      if (kind === "resume" && (data.clientSecret || data.processing))
+        setPayment(data);
       onRefresh();
     } catch (e) {
       setError(
@@ -235,6 +208,35 @@ function OrderCard({
   }
   return (
     <article className="promotion-order">
+      {payment && (
+        <PromotionDialog
+          busy={busy}
+          onClose={() => {
+            setPayment(null);
+            onRefresh();
+          }}
+        >
+          <span className="eyebrow">PROMOVARE GOOGLE SEARCH</span>
+          <h2 id="promotion-purchase-title">Continuă plata promovării.</h2>
+          <div className="promotion-summary">
+            <div>
+              <strong>{order.snapshot.title}</strong>
+              <span>{order.target_area}</span>
+            </div>
+            <div>
+              <strong>
+                {(order.amount / 100).toLocaleString("ro-RO")} RON
+              </strong>
+              <span>Buget Google Ads</span>
+            </div>
+          </div>
+          <PromotionPaymentPanel
+            payment={payment}
+            onUpdated={onRefresh}
+            onBusyChange={setBusy}
+          />
+        </PromotionDialog>
+      )}
       <div className="promotion-order-heading">
         <div>
           <h3>{order.snapshot.title}</h3>

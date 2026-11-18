@@ -41,7 +41,13 @@ export async function GET(request: Request) {
     let enabled = false;
     try {
       const config = stripeConfiguration();
-      enabled = !config.live || livePaymentsEnabled();
+      enabled =
+        (!config.live || livePaymentsEnabled()) &&
+        Boolean(
+          process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim().startsWith(
+            config.live ? "pk_live_" : "pk_test_",
+          ),
+        );
     } catch {
       /* Packages remain visible before payment activation. */
     }
@@ -95,7 +101,17 @@ export async function POST(request: Request) {
           "Proprietatea trebuie să fie publicată pentru promovare.",
           409,
         );
-      return await promotionCheckout(config, order);
+      const { data: profile, error: profileError } = await db
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      if (profileError || !profile)
+        throw new BillingError("Completează profilul de agent.", 400);
+      return await promotionCheckout(config, order, {
+        ...profile,
+        email: user.email || profile.email,
+      });
     }
     if (config.live && !livePaymentsEnabled())
       throw new BillingError("Plățile reale nu sunt încă activate.");
@@ -166,7 +182,10 @@ export async function POST(request: Request) {
         "Ai deja o plată în așteptare pentru această proprietate. Continuă sau anulează acea plată din comenzile tale înainte de a alege alt pachet.",
         409,
       );
-    return await promotionCheckout(config, reserved);
+    return await promotionCheckout(config, reserved, {
+      ...contact,
+      email: user.email || contact.email,
+    });
   } catch (error) {
     return billingFailure(error);
   }
