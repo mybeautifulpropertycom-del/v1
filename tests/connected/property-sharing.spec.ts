@@ -83,8 +83,33 @@ test("published listings show three stacked sharing cards and copy the saved can
     /Unsaved headline/,
   );
   await expect(
-    modal.getByRole("link", { name: /Deschide grupurile Facebook/ }),
-  ).toHaveAttribute("href", "https://www.facebook.com/groups/joins/");
+    modal.getByRole("link", { name: /Deschide distribuirea pe Facebook/ }),
+  ).toHaveAttribute("href", propertyShareLinks(state.property)!.facebook);
+  // Inspect the real navigation target with Facebook's page intercepted:
+  // no account access, composer interaction or actual post during the test.
+  await page
+    .context()
+    .route("https://www.facebook.com/**", (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        body: "<title>Facebook Share</title>",
+      }),
+    );
+  const [facebook] = await Promise.all([
+    page.waitForEvent("popup"),
+    modal
+      .getByRole("link", { name: /Deschide distribuirea pe Facebook/ })
+      .click(),
+  ]);
+  await expect(facebook).toHaveURL(
+    propertyShareLinks(state.property)!.facebook,
+  );
+  const sharedUrl = new URL(facebook.url());
+  expect(sharedUrl.pathname).toBe("/sharer/sharer.php");
+  expect(sharedUrl.searchParams.get("u")).toBe(
+    propertyShareLinks(state.property)!.url,
+  );
+  await facebook.close();
   await modal
     .getByRole("button", { name: "Copiază textul", exact: true })
     .click();

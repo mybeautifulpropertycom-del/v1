@@ -184,8 +184,8 @@ export function PropertyGroupPost({
         </button>
       </div>
       <p className="property-group-intro">
-        Copiază textul, descarcă fotografiile, apoi alege grupul pe Facebook.
-        Acolo lipești textul și atașezi imaginile.
+        Pregătește textul, apoi deschide fereastra de distribuire Facebook.
+        Acolo alege un grup ca destinație și adaugă textul postării.
       </p>
       <label className="property-group-text">
         Textul postării
@@ -321,8 +321,9 @@ export function PropertyGroupPost({
               : "Descarcă fotografiile"}
         </button>
         <small>
-          Primești o arhivă ZIP cu fotografiile JPG și textul postării.
-          Dezarhiveaz-o înainte de a atașa imaginile pe Facebook.
+          Primești o arhivă ZIP cu fotografiile JPG și textul postării. Le poți
+          folosi și pentru o postare nouă cu fotografii în grup. Dezarhivează
+          arhiva înainte de a atașa imaginile.
         </small>
       </div>
       {downloadError && (
@@ -331,14 +332,14 @@ export function PropertyGroupPost({
         </p>
       )}
       <div className="property-group-footer">
-        <p>Grupul și publicarea finală se aleg pe Facebook.</p>
+        <p>În Facebook, alege „Distribuie într-un grup”, apoi grupul dorit.</p>
         <a
           className="button primary"
-          href={propertyShareLinks(property)!.facebookGroups}
+          href={propertyShareLinks(property)!.facebook}
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Facebook size={16} /> Deschide grupurile Facebook{" "}
+          <Facebook size={16} /> Deschide distribuirea pe Facebook{" "}
           <ExternalLink size={14} />
         </a>
       </div>

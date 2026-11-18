@@ -12,7 +12,6 @@ export function propertyShareLinks(property: Property | PublicProperty) {
   return {
     url,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    facebookGroups: "https://www.facebook.com/groups/joins/",
     x: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(property.title)}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
     email: `mailto:?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(`${property.title}\n${property.location}\n\n${url}`)}`,
