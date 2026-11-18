@@ -46,7 +46,11 @@ function order(overrides: Partial<PromotionOrder> = {}): PromotionOrder {
 async function fixture(page: Page, published = true, admin = false) {
   const state = await workspace(
     page,
-    { status: published ? "published" : "draft", title: "Vila cu grădină" },
+    {
+      status: published ? "published" : "draft",
+      title: "Vila cu grădină",
+      location: "Strada Test 9, Brașov 500001, România",
+    },
     [],
     admin,
   );
@@ -196,7 +200,18 @@ test("buying Plus uses the existing card form inside the dialog and only confirm
   });
   await expect(dialog).toContainText("Vila cu grădină");
   await expect(dialog).toContainText("500 RON");
-  await dialog.getByLabel("Zona în care vrei să promovezi").fill("Brașov");
+  const area = dialog.getByLabel("Zona în care vrei să promovezi");
+  await expect(area).toHaveValue("Brașov");
+  await expect(dialog.locator(".promotion-keywords")).not.toContainText(
+    "500001",
+  );
+  await expect(dialog.locator(".promotion-purchase-note")).toHaveCount(1);
+  await area.fill("Brașov 500001");
+  await expect(dialog.locator(".promotion-keywords")).not.toContainText(
+    "500001",
+  );
+  await area.press("Tab");
+  await expect(area).toHaveValue("Brașov");
   await dialog
     .getByLabel(/Ce ar trebui să știm/)
     .fill("Promovați zona centrală și curtea proprietății.");

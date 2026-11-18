@@ -5,6 +5,8 @@ import { demoWorkspace } from "../src/lib/demo";
 import {
   promotionPackages,
   promotionKeywords,
+  promotionTargetArea,
+  defaultPromotionTargetArea,
 } from "../src/lib/promotion-packages";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://promotion-tests.supabase.co";
@@ -259,6 +261,52 @@ test("all promotion packages are exact RON budgets and keyword examples respect 
     /casă de închiriat Brașov/,
   );
 });
+test("promotion defaults and keywords remove postal codes while preserving town and sector numbers", () => {
+  for (const location of [
+    "Strada Test 9, Brașov 500001",
+    "Strada Test 9, 500001 Brașov",
+    "Strada Test 9, Brașov, RO-500001, România",
+  ]) {
+    assert.equal(defaultPromotionTargetArea(location), "Brașov");
+  }
+  assert.equal(
+    defaultPromotionTargetArea("Strada Test, 1 Decembrie 077005, Romania"),
+    "1 Decembrie",
+  );
+  assert.equal(
+    promotionTargetArea("București 010101, Sector 1"),
+    "București, Sector 1",
+  );
+  assert.deepEqual(
+    promotionKeywords({ type: "House", transaction: "rent" }, "Brașov 500001"),
+    ["casă de închiriat Brașov", "închiriere casă Brașov"],
+  );
+});
+test("the saved campaign area and keyword examples exclude postal codes even in direct API requests", async () => {
+  const response = await POST(
+    request({
+      propertyId,
+      package: "start",
+      targetArea: "Brașov 500001",
+      notes: "",
+    }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(reserve[0].area, "Brașov");
+  assert.deepEqual((reserve[0].listing_snapshot as any).keywords, [
+    "casă de vânzare Brașov",
+    "vânzare casă Brașov",
+  ]);
+});
+test("a postal code alone cannot be used as a promotion area", async () => {
+  const response = await POST(
+    request({ propertyId, package: "start", targetArea: "500001", notes: "" }),
+  );
+  assert.equal(response.status, 400);
+  assert.equal(reserve.length, 0);
+  assert.equal(stripePosts.length, 0);
+});
+
 test("promotion checkout authenticates and requires an owned published listing", async () => {
   assert.equal((await POST(request({}, false))).status, 401);
   authorized = false;

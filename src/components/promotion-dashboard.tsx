@@ -14,6 +14,8 @@ import { useWorkspace } from "./workspace-provider";
 import { promotionRequest } from "@/lib/promotion-client";
 import {
   campaignLabels,
+  defaultPromotionTargetArea,
+  promotionTargetArea,
   paymentLabels,
   promotionKeywords,
   promotionPackages,
@@ -41,7 +43,7 @@ function Purchase({
 }) {
   const [payment, setPayment] = useState<PromotionPayment | null>(null);
   const [area, setArea] = useState(
-    property.location.split(",").at(-1)?.trim().slice(0, 160) || "",
+    defaultPromotionTargetArea(property.location),
   );
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -56,7 +58,7 @@ function Purchase({
       const data = await promotionRequest({
         propertyId: property.id,
         package: offer,
-        targetArea: area.trim(),
+        targetArea: promotionTargetArea(area),
         notes: notes.trim(),
       });
       onUpdated();
@@ -107,6 +109,7 @@ function Purchase({
                 maxLength={160}
                 value={area}
                 onChange={(event) => setArea(event.target.value)}
+                onBlur={() => setArea(promotionTargetArea(area))}
                 placeholder="Ex: Brașov și împrejurimi"
               />
               <small>
@@ -115,11 +118,12 @@ function Purchase({
             </label>
             <div className="promotion-keywords">
               <span>Căutări de la care putem porni</span>
-              {promotionKeywords(property, area || "zona aleasă").map(
-                (keyword) => (
-                  <small key={keyword}>{keyword}</small>
-                ),
-              )}
+              {promotionKeywords(
+                property,
+                promotionTargetArea(area) || "zona aleasă",
+              ).map((keyword) => (
+                <small key={keyword}>{keyword}</small>
+              ))}
             </div>
             <label>
               Ce ar trebui să știm despre promovare?{" "}
@@ -136,12 +140,8 @@ function Purchase({
               Întreaga sumă este buget publicitar. Configurarea și administrarea
               sunt incluse. După confirmarea plății, te contactăm pentru
               detaliile campaniei și o lansăm manual din contul nostru Google
-              Ads.
-            </p>
-            <p className="promotion-purchase-note">
-              Este o plată unică. Perioada campaniei se stabilește înainte de
-              lansare, în funcție de buget și costurile căutărilor; plata nu
-              pornește automat anunțurile.
+              Ads. Este o plată unică. Perioada campaniei se stabilește înainte
+              de lansare, în funcție de buget și costurile căutărilor.
             </p>
             {error && (
               <p role="alert" className="form-error">
@@ -150,7 +150,7 @@ function Purchase({
             )}
             <button
               className="button primary full-button"
-              disabled={busy || area.trim().length < 2}
+              disabled={busy || promotionTargetArea(area).length < 2}
             >
               {busy ? "Pregătim plata securizată…" : "Continuă la plată"}
               <ChevronRight size={17} />
@@ -221,7 +221,7 @@ function OrderCard({
           <div className="promotion-summary">
             <div>
               <strong>{order.snapshot.title}</strong>
-              <span>{order.target_area}</span>
+              <span>{promotionTargetArea(order.target_area)}</span>
             </div>
             <div>
               <strong>
@@ -241,7 +241,7 @@ function OrderCard({
         <div>
           <h3>{order.snapshot.title}</h3>
           <p>
-            {order.target_area} ·{" "}
+            {promotionTargetArea(order.target_area)} ·{" "}
             {new Date(order.created_at).toLocaleDateString("ro-RO")}
           </p>
         </div>

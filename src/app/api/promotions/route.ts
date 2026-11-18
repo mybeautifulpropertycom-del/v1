@@ -13,6 +13,7 @@ import {
 import {
   isPromotionPackage,
   promotionKeywords,
+  promotionTargetArea,
 } from "@/lib/promotion-packages";
 import {
   cancelPromotion,
@@ -148,8 +149,10 @@ export async function POST(request: Request) {
       throw new BillingError("Completează profilul de agent.", 400);
     const p = property as Property,
       contact = profile as Profile;
-    const area = body.targetArea.trim(),
+    const area = promotionTargetArea(body.targetArea),
       notes = body.notes.trim();
+    if (area.length < 2)
+      throw new BillingError("Completează orașul sau zona de promovare.", 400);
     const { data: reserved, error: reserveError } = await billingDatabase(
       config,
     ).rpc("reserve_promotion_order", {

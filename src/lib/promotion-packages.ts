@@ -87,6 +87,27 @@ export const paymentLabels: Record<PromotionPaymentStatus, string> = {
   disputed: "Plată contestată",
   cancelled: "Plată anulată",
 };
+// Romanian postal codes belong to the listing address, not the campaign area.
+// Preserve meaningful numbers such as Sector 1 and the town 1 Decembrie.
+export function promotionTargetArea(value: string) {
+  return value
+    .replace(/\b(?:RO[-\s]*)?\d{6}\b/gi, "")
+    .split(",")
+    .map((part) => part.trim().replace(/\s+/g, " "))
+    .filter(Boolean)
+    .join(", ");
+}
+export function defaultPromotionTargetArea(location: string) {
+  return (
+    promotionTargetArea(location)
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part && !/^(?:rom[aâ]nia|ro)$/i.test(part))
+      .at(-1)
+      ?.slice(0, 160) || ""
+  );
+}
+
 export function promotionKeywords(
   property: { type: string; transaction: string },
   area: string,
@@ -103,8 +124,9 @@ export function promotionKeywords(
     )[property.type] || "proprietate";
   const transaction =
     property.transaction === "rent" ? "de închiriat" : "de vânzare";
+  const place = promotionTargetArea(area);
   return [
-    `${type} ${transaction} ${area}`,
-    `${property.transaction === "rent" ? "închiriere" : "vânzare"} ${type} ${area}`,
+    `${type} ${transaction} ${place}`.trim(),
+    `${property.transaction === "rent" ? "închiriere" : "vânzare"} ${type} ${place}`.trim(),
   ];
 }
