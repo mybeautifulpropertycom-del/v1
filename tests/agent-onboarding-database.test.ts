@@ -62,6 +62,23 @@ test("guide activation excludes existing profiles, enrols new ones once and isol
       (await db.query("select creation_seen from agent_onboarding")).rows,
       [{ creation_seen: true }],
     );
+    // The new milestone remains private and monotonic like creation progress.
+    assert.equal(
+      (
+        await db.query(
+          "update agent_onboarding set promotion_seen=true where owner_id=$1 returning promotion_seen",
+          [b],
+        )
+      ).rows.length,
+      0,
+    );
+    await db.exec(
+      "update agent_onboarding set promotion_seen=true; update agent_onboarding set promotion_seen=false;",
+    );
+    assert.deepEqual(
+      (await db.query("select promotion_seen from agent_onboarding")).rows,
+      [{ promotion_seen: true }],
+    );
     assert.deepEqual(
       (await db.query("select owner_id,status from agent_onboarding")).rows,
       [{ owner_id: a, status: "active" }],
@@ -97,7 +114,24 @@ test("guide activation excludes existing profiles, enrols new ones once and isol
       `set app.user_id='${b}'; update agent_onboarding set status='completed';`,
     );
     await db.exec("reset role;");
+    const promotionUpgrade = await readFile(
+      new URL(
+        "../supabase/sql-editor-agent-guide-promotion.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    await db.exec(promotionUpgrade);
+    await db.exec(promotionUpgrade);
     await db.exec(installer);
+    assert.deepEqual(
+      (
+        await db.query(
+          "select promotion_seen from agent_onboarding order by owner_id",
+        )
+      ).rows,
+      [{ promotion_seen: true }, { promotion_seen: false }],
+    );
     assert.deepEqual(
       (
         await db.query(

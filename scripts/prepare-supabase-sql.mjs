@@ -46,12 +46,29 @@ const agentGuideFlow = await readFile(
   new URL("202611170003_agent_guide_flow.sql", directory),
   "utf8",
 );
+const agentGuidePromotion = await readFile(
+  new URL("202611180002_agent_guide_promotion.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-agent-guide-promotion.sql", import.meta.url),
+  `-- Existing installations with the agent guide. Run the ENTIRE file. Safe to rerun.
+-- Remembers the optional promotion step only. Does not reopen guides, charge, publish or launch campaigns.
+begin;
+${agentGuideFlow.trim()}
+${agentGuidePromotion.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_AGENT_GUIDE_PROMOTION_READY' as status;
+`,
+);
 await writeFile(
   new URL("../supabase/sql-editor-agent-guide-flow.sql", import.meta.url),
   `-- Existing installations with MBP_AGENT_ONBOARDING_READY. Safe to rerun.
 -- Remembers walkthrough progress only; no property, billing or account changes.
 begin;
 ${agentGuideFlow.trim()}
+${agentGuidePromotion.trim()}
 notify pgrst, 'reload schema';
 commit;
 select 'MBP_AGENT_GUIDE_FLOW_READY' as status;
@@ -64,6 +81,7 @@ await writeFile(
 begin;
 ${agentOnboarding.trim()}
 ${agentGuideFlow.trim()}
+${agentGuidePromotion.trim()}
 notify pgrst, 'reload schema';
 commit;
 select 'MBP_AGENT_ONBOARDING_READY' as status;

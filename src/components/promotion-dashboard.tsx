@@ -447,7 +447,7 @@ export function PromotionDashboard() {
       <div className="page-heading compact">
         <div>
           <span className="eyebrow">PROMOVARE PENTRU PROPRIETĂȚI</span>
-          <h1>Fii prezent în căutările potrivite.</h1>
+          <h1 data-guide-promotions>Fii prezent în căutările potrivite.</h1>
           <p>
             Promovăm site-ul proprietății în Google Search, cu anunțuri și
             cuvinte cheie pentru ceea ce vinzi sau închiriezi, în zona aleasă.

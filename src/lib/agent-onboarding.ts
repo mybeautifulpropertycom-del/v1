@@ -5,6 +5,7 @@ export const guideSteps = [
   "Profilul tău",
   "Proprietatea",
   "Publicarea",
+  "Promovarea",
   "Mesajele",
 ] as const;
 

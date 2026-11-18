@@ -12,6 +12,28 @@ export function useAgentOnboarding(
   const [creationSeenOwner, setCreationSeenOwner] = useState<string | null>(
     null,
   );
+  const [promotionSeenOwner, setPromotionSeenOwner] = useState<string | null>(
+    null,
+  );
+  const promotionStorageKey = ownerId
+    ? `up-guide-promotion-seen:${ownerId}`
+    : null;
+  const markGuidePromotionSeen = useCallback(async () => {
+    if (!ownerId || isAdmin || !promotionStorageKey) return;
+    setPromotionSeenOwner(ownerId);
+    try {
+      localStorage.setItem(promotionStorageKey, "1");
+    } catch {
+      /* Storage is optional. */
+    }
+    const db = getSupabase();
+    if (!db) return;
+    await db
+      .from("agent_onboarding")
+      .update({ promotion_seen: true })
+      .eq("owner_id", ownerId)
+      .eq("status", "active");
+  }, [ownerId, isAdmin, promotionStorageKey]);
   const version = useRef(0);
   const storageKey = ownerId ? `up-guide-creation-seen:${ownerId}` : null;
   const markGuideCreationSeen = useCallback(async () => {
@@ -35,6 +57,7 @@ export function useAgentOnboarding(
   useEffect(() => {
     setStatus(null);
     setCreationSeenOwner(null);
+    setPromotionSeenOwner(null);
     const db = getSupabase();
     if (!ownerId || isAdmin || !db) return;
     let active = true;
@@ -54,6 +77,25 @@ export function useAgentOnboarding(
             storageKey !== null && localStorage.getItem(storageKey) === "1";
         } catch {
           /* Account persistence does not require browser storage. */
+        }
+        let localPromotionSeen = false;
+        try {
+          localPromotionSeen =
+            promotionStorageKey !== null &&
+            localStorage.getItem(promotionStorageKey) === "1";
+        } catch {
+          /* Account persistence works without browser storage. */
+        }
+        if (data?.promotion_seen || localPromotionSeen) {
+          setPromotionSeenOwner(ownerId!);
+          if (data?.promotion_seen) {
+            try {
+              if (promotionStorageKey)
+                localStorage.setItem(promotionStorageKey, "1");
+            } catch {
+              /* Storage is optional. */
+            }
+          } else if (data?.status === "active") void markGuidePromotionSeen();
         }
         if (data?.creation_seen || localSeen) {
           setCreationSeenOwner(ownerId!);
@@ -82,7 +124,14 @@ export function useAgentOnboarding(
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [ownerId, isAdmin, storageKey, markGuideCreationSeen]);
+  }, [
+    ownerId,
+    isAdmin,
+    storageKey,
+    markGuideCreationSeen,
+    promotionStorageKey,
+    markGuidePromotionSeen,
+  ]);
 
   const closeGuide = useCallback(
     async (next: "dismissed" | "completed") => {
@@ -107,6 +156,9 @@ export function useAgentOnboarding(
     guideCreationSeen:
       !isAdmin && Boolean(ownerId && creationSeenOwner === ownerId),
     markGuideCreationSeen,
+    guidePromotionSeen:
+      !isAdmin && Boolean(ownerId && promotionSeenOwner === ownerId),
+    markGuidePromotionSeen,
     closeGuide,
   };
 }

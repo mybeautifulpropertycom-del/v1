@@ -15,6 +15,7 @@ async function guideFixture(
     emptyPhotos?: boolean;
     emptyOptional?: boolean;
     creationSeen?: boolean;
+    promotionSeen?: boolean;
     legacySchema?: boolean;
   } = {},
 ) {
@@ -40,25 +41,30 @@ async function guideFixture(
   let status = options.status === undefined ? "active" : options.status;
   let failClosing = false;
   let creationSeen = options.creationSeen ?? false;
+  let promotionSeen = options.promotionSeen ?? false;
+  let promotionPosts = 0;
   let checkoutPosts = 0;
   await page.route(/\/rest\/v1\/agent_onboarding(?:\?|$)/, async (route) => {
     if (route.request().method() === "PATCH") {
       if (failClosing)
         return route.fulfill({ status: 500, json: { message: "Save failed" } });
       const patch = route.request().postDataJSON();
-      if (patch.creation_seen && options.legacySchema)
+      if ((patch.creation_seen || patch.promotion_seen) && options.legacySchema)
         return route.fulfill({
           status: 400,
           json: { message: "Unknown column", code: "PGRST204" },
         });
       if (patch.status) status = patch.status;
       if (patch.creation_seen) creationSeen = true;
+      if (patch.promotion_seen) promotionSeen = true;
     }
     return route.fulfill({
       json: status
         ? {
             status,
-            ...(options.legacySchema ? {} : { creation_seen: creationSeen }),
+            ...(options.legacySchema
+              ? {}
+              : { creation_seen: creationSeen, promotion_seen: promotionSeen }),
           }
         : null,
     });
@@ -88,6 +94,10 @@ async function guideFixture(
     if (route.request().method() === "POST") checkoutPosts++;
     return route.fulfill({ json: { purchased: false } });
   });
+  await page.route("**/api/promotions", (route) => {
+    if (route.request().method() === "POST") promotionPosts++;
+    return route.fulfill({ json: { orders: [], enabled: true, mode: "live" } });
+  });
   return {
     get property() {
       return state.property;
@@ -97,6 +107,12 @@ async function guideFixture(
     },
     get creationSeen() {
       return creationSeen;
+    },
+    get promotionSeen() {
+      return promotionSeen;
+    },
+    get promotionPosts() {
+      return promotionPosts;
     },
     get checkoutPosts() {
       return checkoutPosts;
@@ -339,15 +355,25 @@ test("a card beside the sticky publication toolbar stays stationary with its but
   expect(Math.abs(pointAfter.y - pointBefore.y)).toBeLessThan(2);
 });
 
-test("after publication a hint opens Messages, where the guide can be completed once", async ({
+test("after publication the optional Promotion step precedes Messages and never starts checkout", async ({
   page,
 }) => {
   const state = await guideFixture(page, { published: true });
   await page.goto(`/previzualizare/${id}`);
   let tip = await openTip(page);
-  await tip.getByRole("link", { name: "Deschide mesajele" }).click();
+  await expect(tip.getByLabel("Pasul 6 din 7")).toBeVisible();
+  await tip.getByRole("link", { name: "Descoperă promovarea" }).click();
+  await expect(page).toHaveURL(/\/panou\/promovare$/);
+  tip = await openTip(page);
+  await expect(tip).toContainText("Promovarea este opțională");
+  await expect(tip).toContainText("fără să cumperi");
+  await expect(page.locator(".promotion-package")).toHaveCount(3);
+  expect(state.promotionSeen).toBe(false);
+  await tip.getByRole("link", { name: "Continuă la Mesaje" }).click();
+  await expect.poll(() => state.promotionSeen).toBe(true);
   await expect(page).toHaveURL(/\/panou\/mesaje$/);
   tip = await openTip(page);
+  await expect(tip.getByLabel("Pasul 7 din 7")).toBeVisible();
   await expect(tip).toContainText("cererile de vizionare");
   await expect(tip).toContainText("e-mailul contului");
   await tip.getByRole("button", { name: "Am înțeles" }).click();
@@ -644,7 +670,7 @@ test("normal step validation applies after the guide has been dismissed, includi
   );
 });
 
-test("entering the site editor leaves only Messages on return, even without publication and without browser memory", async ({
+test("entering the site editor leaves Promotion and Messages on return, even without publication and without browser memory", async ({
   page,
 }) => {
   const state = await guideFixture(page);
@@ -658,20 +684,32 @@ test("entering the site editor leaves only Messages on return, even without publ
   await expect(page).toHaveURL(new RegExp(`/panou/proprietati/${id}$`));
   await expect(
     page.getByRole("button", {
-      name: "Ghid: Solicitările, într-un singur loc",
+      name: "Ghid: Promovează proprietatea",
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("dialog", { name: "Ghid de început" }),
   ).toBeVisible();
   let tip = await openTip(page);
-  await expect(tip).toContainText("Solicitările, într-un singur loc");
+  await expect(tip).toContainText("Promovează proprietatea");
   await expect(page.locator('[data-guide-highlight="true"]')).toHaveCount(0);
   expect(state.property.status).toBe("draft");
   await page.evaluate(() => {
     for (const key of Object.keys(localStorage))
       if (key.startsWith("up-guide") || key.startsWith("up-property-guide"))
         localStorage.removeItem(key);
+  });
+  await page.goto("/panou");
+  tip = await openTip(page);
+  await expect(tip).toContainText("Promovează proprietatea");
+  await tip.getByRole("link", { name: "Descoperă promovarea" }).click();
+  tip = await openTip(page);
+  await tip.getByRole("link", { name: "Continuă la Mesaje" }).click();
+  await expect.poll(() => state.promotionSeen).toBe(true);
+  // A new browser reuses saved milestones, even if publication is still pending.
+  await page.evaluate(() => {
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith("up-guide")) localStorage.removeItem(key);
   });
   await page.goto("/panou");
   tip = await openTip(page);
@@ -696,16 +734,80 @@ test("a database awaiting the flow upgrade still remembers the editor on this br
   await expect(
     page.getByRole("dialog", { name: "Ghid de început" }),
   ).toBeVisible();
-  await expect(await openTip(page)).toContainText(
-    "Solicitările, într-un singur loc",
-  );
+  await expect(await openTip(page)).toContainText("Promovează proprietatea");
   await page.reload();
-  await expect(await openTip(page)).toContainText(
-    "Solicitările, într-un singur loc",
-  );
+  await expect(await openTip(page)).toContainText("Promovează proprietatea");
   expect(state.creationSeen).toBe(false);
   expect(state.status).toBe("active");
   expect(state.checkoutPosts).toBe(0);
+});
+
+test("promotion hint fits desktop and phone and preserves its place after reload", async ({
+  page,
+}, testInfo) => {
+  const state = await guideFixture(page, { creationSeen: true });
+  await page.goto("/panou/promovare");
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.locator(".sidebar").evaluate(async (element) => {
+      await Promise.all(
+        element.getAnimations().map((animation) => animation.finished),
+      );
+    });
+    const tip = await openTip(page);
+    await expect(tip.getByLabel("Pasul 6 din 7")).toBeVisible();
+    const box = (await tip.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(11);
+    expect(box.x + box.width).toBeLessThanOrEqual(width - 11);
+    await page.screenshot({
+      path: testInfo.outputPath(`promotion-guide-${width}.png`),
+    });
+  }
+  await page.reload();
+  let tip = await openTip(page);
+  await expect(tip).toContainText("Promovează proprietatea");
+  await tip.getByRole("link", { name: "Continuă la Mesaje" }).click();
+  await expect.poll(() => state.promotionSeen).toBe(true);
+  await page.goto("/panou/promovare");
+  tip = await openTip(page);
+  await expect(tip).toContainText("Solicitările, într-un singur loc");
+  expect(state.promotionPosts).toBe(0);
+  expect(state.checkoutPosts).toBe(0);
+});
+
+test("promotion progress survives a pending database upgrade in this browser", async ({
+  page,
+}) => {
+  const state = await guideFixture(page, {
+    published: true,
+    legacySchema: true,
+  });
+  await page.goto("/panou/promovare");
+  let tip = await openTip(page);
+  await tip.getByRole("link", { name: "Continuă la Mesaje" }).click();
+  await page.goto("/panou");
+  await page.reload();
+  tip = await openTip(page);
+  await expect(tip).toContainText("Solicitările, într-un singur loc");
+  expect(state.promotionSeen).toBe(false);
+  expect(state.promotionPosts).toBe(0);
+});
+
+test("manual navigation to Messages can skip promotion and completed guides stay closed", async ({
+  page,
+}) => {
+  const state = await guideFixture(page, { creationSeen: true });
+  await page.goto("/panou/mesaje");
+  const tip = await openTip(page);
+  await expect(tip).toContainText("Solicitările, într-un singur loc");
+  await tip.getByRole("button", { name: "Am înțeles", exact: true }).click();
+  expect(state.status).toBe("completed");
+  await page.goto("/panou/promovare");
+  await expect(
+    page.getByRole("heading", { name: "Fii prezent în căutările potrivite." }),
+  ).toBeVisible();
+  await expect(page.locator(".guide-coachmark")).toHaveCount(0);
+  expect(state.promotionPosts).toBe(0);
 });
 
 test("the profile tour starts at the optional agency and Tab skips the signup email to reach phone", async ({

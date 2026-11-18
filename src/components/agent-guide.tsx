@@ -30,6 +30,7 @@ type Tip = {
   focus?: HTMLElement;
   advance?: HTMLButtonElement;
   finish?: boolean;
+  promotionComplete?: boolean;
   requirement?: string;
   besideHeading?: boolean;
   fieldId?: PropertyGuideField;
@@ -63,7 +64,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
   const enabled =
     !workspace.demo && !workspace.isAdmin && workspace.guideStatus === "active";
   const progress = agentGuideProgress(workspace);
-  const messagesOnly = workspace.guideCreationSeen && !preview;
+  const afterCreation = workspace.guideCreationSeen && !preview;
   const [tip, setTip] = useState<Tip | null>(null);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -191,6 +192,24 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
   ]);
 
   useEffect(() => {
+    // Manual navigation to Messages can skip the optional promotion tour.
+    if (
+      enabled &&
+      path === "/panou/mesaje" &&
+      (afterCreation || progress.step === 3) &&
+      !workspace.guidePromotionSeen
+    )
+      void workspace.markGuidePromotionSeen();
+  }, [
+    enabled,
+    path,
+    afterCreation,
+    progress.step,
+    workspace.guidePromotionSeen,
+    workspace.markGuidePromotionSeen,
+  ]);
+
+  useEffect(() => {
     if (!enabled) {
       setTip(null);
       return;
@@ -212,7 +231,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       const editor = find("[data-guide-editor-step]");
       if (
         editor &&
-        !messagesOnly &&
+        !afterCreation &&
         progress.step !== 0 &&
         progress.step !== 3
       ) {
@@ -271,7 +290,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             ) ?? undefined,
         };
       }
-      if (progress.step === 0 && !messagesOnly) {
+      if (progress.step === 0 && !afterCreation) {
         const done = profileFields().done;
         const focused = document.activeElement?.closest<HTMLElement>(
           "[data-profile-guide-field]",
@@ -333,7 +352,32 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             : { href: "/panou/profil" }),
         };
       }
-      if (progress.step === 3 || messagesOnly) {
+      if (
+        (progress.step === 3 || afterCreation) &&
+        !workspace.guidePromotionSeen &&
+        path !== "/panou/mesaje"
+      ) {
+        const here = path === "/panou/promovare";
+        const anchor = here
+          ? find("[data-guide-promotions]")
+          : preview
+            ? find("[data-guide-back]")
+            : navigationTarget("/panou/promovare");
+        if (!anchor) return null;
+        return {
+          key: here ? "promotion-packages" : "promotion-link",
+          label: "Promovarea",
+          title: "Promovează proprietatea",
+          body: here
+            ? "Alegi o proprietate publicată și un pachet Google Search. Bugetul merge integral în Google Ads. Promovarea este opțională; poți continua ghidul fără să cumperi."
+            : "După publicare, poți promova proprietatea în Google Search. Este opțional. Vezi pachetele, apoi îți arătăm unde primești solicitările.",
+          anchor,
+          action: here ? "Continuă la Mesaje" : "Descoperă promovarea",
+          href: here ? "/panou/mesaje" : "/panou/promovare",
+          promotionComplete: here,
+        };
+      }
+      if (progress.step === 3 || afterCreation) {
         const here = path === "/panou/mesaje";
         const anchor = here
           ? find("[data-guide-messages]")
@@ -509,7 +553,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
       if (
         path === "/panou/profil" &&
         progress.step === 0 &&
-        !messagesOnly &&
+        !afterCreation &&
         event.key === "Tab" &&
         !event.shiftKey &&
         (event.target as Element).matches('[data-profile-guide-field="agency"]')
@@ -552,7 +596,8 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
     preview,
     progress.step,
     progress.property?.id,
-    messagesOnly,
+    afterCreation,
+    workspace.guidePromotionSeen,
   ]);
 
   useLayoutEffect(() => {
@@ -772,9 +817,11 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
         ? 4
         : tip.key === "publish" || tip.key === "preview-link"
           ? 5
-          : tip.key.startsWith("messages")
+          : tip.key.startsWith("promotion")
             ? 6
-            : 2;
+            : tip.key.startsWith("messages")
+              ? 7
+              : 2;
   return createPortal(
     <div className="guide-coachmark">
       <button
@@ -817,9 +864,9 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
             <h2>{tip.title}</h2>
             <span
               className="guide-tip-counter"
-              aria-label={`Pasul ${number} din 6`}
+              aria-label={`Pasul ${number} din 7`}
             >
-              {number} / 6
+              {number} / 7
             </span>
             <button
               type="button"
@@ -858,7 +905,14 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
               Închide ghidul
             </button>
             {tip.href ? (
-              <Link href={tip.href} onClick={() => setOpenKey(null)}>
+              <Link
+                href={tip.href}
+                onClick={() => {
+                  setOpenKey(null);
+                  if (tip.promotionComplete)
+                    void workspace.markGuidePromotionSeen();
+                }}
+              >
                 {tip.action}
                 <ArrowRight size={13} />
               </Link>
