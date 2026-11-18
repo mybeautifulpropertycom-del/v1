@@ -1,4 +1,3 @@
-import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 // Server-only use: this module is imported exclusively by the API route.
 import type { Property } from "./model";
 import {
@@ -13,35 +12,7 @@ import {
   type StoryOutputDiagnostic,
 } from "./property-story-error";
 
-export function approvedStoryImages(
-  property: Property,
-  projectUrl: string,
-): string[] | null {
-  if (!property.images.length || property.images.length > MAX_PROPERTY_PHOTOS)
-    return null;
-  const origin = new URL(projectUrl).origin;
-  const prefix = `/storage/v1/object/public/property-images/${property.owner_id}/${property.id}/`;
-  for (const image of property.images) {
-    try {
-      const url = new URL(image);
-      if (
-        url.origin !== origin ||
-        url.username ||
-        url.password ||
-        url.search ||
-        url.hash ||
-        !url.pathname.startsWith(prefix) ||
-        !/^[a-zA-Z0-9_-]+\.(webp|png|jpe?g)$/i.test(
-          url.pathname.slice(prefix.length),
-        )
-      )
-        return null;
-    } catch {
-      return null;
-    }
-  }
-  return property.images;
-}
+export { approvedPropertyImages as approvedStoryImages } from "./property-images";
 
 export const storyVoiceInstructions = `Write in natural, everyday Romanian with correct diacritics, like a thoughtful agent explaining a home to one person. Use concrete nouns, active verbs, familiar words and varied sentence lengths. Sound warm and specific without being overfamiliar. Use contractions when they fit, but never add deliberate mistakes, slang or a claim that a human wrote the copy.
 Let useful facts carry the appeal. Use adjectives sparingly, only when they add supported information; never stack them. Avoid philosophical language, metaphors, grand promises, superlatives and polished-sounding filler. Do not use stock phrases such as "a sanctuary", "an oasis", "nestled", "unparalleled", "exquisite", "elevated living", "a symphony of", "where elegance meets", "more than a home", "your next chapter", "curated lifestyle" or "seamlessly blends". Do not mechanically replace these with equally vague synonyms. In Romanian, also avoid empty praise such as "spectaculos", "impresionant", "rafinat", "de vis", "oază de liniște" and "eleganță desăvârșită". Prefer a useful, verifiable detail to an ornamental adjective.

@@ -26,6 +26,7 @@
     "@higgsfield/client": "^0.2.6",
     "@stripe/stripe-js": "^10.1.0",
     "@supabase/supabase-js": "^2.118.0",
+    "fflate": "0.8.2",
     "lucide-react": "^0.468.0",
     "next": "16.4.2",
     "react": "^19.2.0",
