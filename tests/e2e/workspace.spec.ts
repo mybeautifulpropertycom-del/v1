@@ -84,7 +84,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
     "Modificările au fost salvate",
   );
   await page
-    .getByRole("button", { name: "Retrage site-ul de la publicare" })
+    .getByRole("button", { name: "Șterge site-ul publicat" })
     .click();
   await expect(page.locator(".published-card")).toHaveCount(0);
   await page.reload();

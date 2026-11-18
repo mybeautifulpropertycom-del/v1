@@ -69,7 +69,7 @@ test("published listings show three stacked sharing cards and copy the saved can
     share.getByRole("button", { name: "Link copiat" }),
   ).toBeVisible();
   await page.getByLabel("Titlul proprietății").fill("Unsaved headline");
-  await share.getByRole("button", { name: "Publică pe grupuri" }).click();
+  await share.getByRole("button", { name: "Publică pe Facebook" }).click();
   const modal = page.getByRole("dialog", {
     name: "Pregătește postarea pentru grupuri",
   });
@@ -127,9 +127,9 @@ test("published listings show three stacked sharing cards and copy the saved can
   await page.keyboard.press("Escape");
   await expect(modal).toHaveCount(0);
   await expect(
-    share.getByRole("button", { name: "Publică pe grupuri" }),
+    share.getByRole("button", { name: "Publică pe Facebook" }),
   ).toBeFocused();
-  await share.getByRole("button", { name: "Publică pe grupuri" }).click();
+  await share.getByRole("button", { name: "Publică pe Facebook" }).click();
   await expect(modal.getByLabel("Textul postării")).toHaveValue(
     /O locuință pregătită/,
   );
@@ -139,7 +139,7 @@ test("published listings show three stacked sharing cards and copy the saved can
     .click();
   await page
     .getByRole("button", {
-      name: "Retrage site-ul de la publicare",
+      name: "Șterge site-ul publicat",
       exact: true,
     })
     .click();
@@ -267,7 +267,7 @@ test("selected photos download as one JPEG archive with the edited post and pres
     },
   );
   await page.goto(`/panou/proprietati/${id}`);
-  await page.getByRole("button", { name: "Publică pe grupuri" }).click();
+  await page.getByRole("button", { name: "Publică pe Facebook" }).click();
   const dialog = page.getByRole("dialog", {
     name: "Pregătește postarea pentru grupuri",
   });
@@ -338,7 +338,7 @@ test("manual edits survive a late AI reply; a failed AI request leaves facts and
     });
   });
   await page.goto(`/panou/proprietati/${id}`);
-  await page.getByRole("button", { name: "Publică pe grupuri" }).click();
+  await page.getByRole("button", { name: "Publică pe Facebook" }).click();
   const dialog = page.getByRole("dialog", {
     name: "Pregătește postarea pentru grupuri",
   });
@@ -355,7 +355,7 @@ test("manual edits survive a late AI reply; a failed AI request leaves facts and
     .getByRole("button", { name: "Închide pregătirea postării" })
     .click();
   await page.evaluate(() => sessionStorage.clear());
-  await page.getByRole("button", { name: "Publică pe grupuri" }).click();
+  await page.getByRole("button", { name: "Publică pe Facebook" }).click();
   await expect(dialog.getByRole("alert")).toContainText(
     "Poți folosi sau edita textul afișat",
   );
@@ -384,7 +384,7 @@ test("blocked popups or clipboard permission keep the edited post available with
     }),
   );
   await page.goto(`/panou/proprietati/${id}`);
-  await page.getByRole("button", { name: "Publică pe grupuri" }).click();
+  await page.getByRole("button", { name: "Publică pe Facebook" }).click();
   const dialog = page.getByRole("dialog", {
     name: "Pregătește postarea pentru grupuri",
   });

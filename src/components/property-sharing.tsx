@@ -39,7 +39,7 @@ export function PropertySharing({ property }: { property: Property }) {
       </h4>
       <div className="property-share-links">
         <button type="button" onClick={() => setOpen(true)}>
-          <Facebook size={18} /> Publică pe grupuri
+          <Facebook size={18} /> Publică pe Facebook
         </button>
         <button type="button" onClick={copyLink}>
           {copied ? <Check size={18} /> : <Link2 size={18} />}

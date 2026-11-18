@@ -994,7 +994,7 @@ export function PropertyEditor({
                 disabled={busy}
                 onClick={() => persist(false, true)}
               >
-                Retrage site-ul de la publicare
+                Șterge site-ul publicat
               </button>
             </div>
           )}
