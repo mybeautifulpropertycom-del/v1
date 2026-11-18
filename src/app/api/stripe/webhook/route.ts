@@ -3,6 +3,7 @@ import { after } from "next/server";
 import { wakeVideoWorker } from "@/lib/higgsfield-worker";
 import type Stripe from "stripe";
 import { handleLiveWebhook } from "@/lib/stripe-live";
+import { promotionWebhook } from "@/lib/promotion-server";
 import {
   billingDatabase,
   billingFailure,
@@ -38,6 +39,8 @@ export async function POST(request: Request) {
         "The Stripe event does not match the configured payment mode.",
         400,
       );
+    if (await promotionWebhook(config, event))
+      return billingJson({ received: true });
     if (config.live) {
       const response = await handleLiveWebhook(config, event);
       if (videoEnabled()) after(wakeVideoWorker);
@@ -75,7 +78,11 @@ export async function POST(request: Request) {
     // A property/account may have been deleted while Checkout was open. Keep
     // the test receipt, without ever recreating or publishing that property.
     if (
-      !supportedPackage(order.amount, order.currency, order.includes_video ?? true) ||
+      !supportedPackage(
+        order.amount,
+        order.currency,
+        order.includes_video ?? true,
+      ) ||
       order.amount !== session.amount_total ||
       order.currency !== session.currency ||
       (order.property_id && order.property_id !== property_id) ||

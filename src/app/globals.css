@@ -1,6 +1,7 @@
 @import "../styles/website.css";
 @import "../styles/editorial.css";
 @import "../styles/heritage.css";
+@import "../styles/promotions.css";
 
 :root {
   --paper: #f8f9f7;

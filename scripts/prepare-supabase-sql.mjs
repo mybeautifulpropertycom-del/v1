@@ -30,6 +30,14 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const promotions = await readFile(
+  new URL("202611180001_property_promotions.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-promotions.sql", import.meta.url),
+  `-- Existing installations: run this entire file. Safe to rerun. No payments or campaigns are created.\nbegin;\n${promotions.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_PROMOTION_PACKAGES_READY' as status;\n`,
+);
 const agentOnboarding = await readFile(
   new URL("202611170002_agent_onboarding.sql", directory),
   "utf8",

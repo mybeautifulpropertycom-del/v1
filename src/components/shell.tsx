@@ -21,7 +21,7 @@ import {
   Plus,
   ShieldCheck,
   UserRound,
-  Video,
+  Megaphone,
   X,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
@@ -33,7 +33,7 @@ const nav = [
     label: "Modele prezentare",
     icon: LayoutTemplate,
   },
-  { href: "/panou/video", label: "Studio video", icon: Video },
+  { href: "/panou/promovare", label: "Promovare", icon: Megaphone },
   { href: "/panou/mesaje", label: "Mesaje", icon: Inbox },
   { href: "/panou/profil", label: "Profilul meu", icon: UserRound },
 ];

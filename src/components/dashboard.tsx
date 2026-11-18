@@ -20,7 +20,7 @@ import {
   Search,
   SlidersHorizontal,
   Square,
-  Video,
+  Megaphone,
   X,
 } from "lucide-react";
 import { DeleteAction } from "./delete-action";
@@ -403,17 +403,17 @@ export function Dashboard() {
       </section>
       <div className="video-teaser">
         <span className="video-teaser-icon">
-          <Video size={21} />
+          <Megaphone size={21} />
         </span>
         <div>
-          <strong>Fotografiile tale prind viață.</strong>
+          <strong>Proprietatea ta, în căutările potrivite.</strong>
           <span>
-            Pune proprietățile în valoare. Transformă fotografiile într-un film
-            de prezentare.
+            Promovează site-ul proprietății în Google Search, cu un buget ales
+            de tine.
           </span>
         </div>
-        <Link href="/panou/video">
-          Deschide studioul video <ArrowRight size={16} />
+        <Link href="/panou/promovare">
+          Vezi pachetele de promovare <ArrowRight size={16} />
         </Link>
       </div>
     </>

@@ -96,6 +96,11 @@ export function AdminDashboard() {
           selectate, inclusiv filmul de prezentare.
         </p>
       </header>
+      <p>
+        <Link className="button secondary" href="/panou/administrare/promovare">
+          Comenzi de promovare Google Ads
+        </Link>
+      </p>
       <div className="admin-controls">
         <div className="admin-tabs" aria-label="Secțiuni de administrare">
           <button

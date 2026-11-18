@@ -6,7 +6,7 @@ export const platformRedirects = [
   ["/dashboard/profile", "/panou/profil"],
   ["/dashboard/inquiries", "/panou/mesaje"],
   ["/dashboard/admin", "/panou/administrare"],
-  ["/dashboard/video", "/panou/video"],
+  ["/dashboard/video", "/panou/promovare"],
   ["/dashboard", "/panou"],
   ["/templates/:path*", "/modele/:path*"],
   ["/preview/:path*", "/previzualizare/:path*"],
