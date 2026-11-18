@@ -82,23 +82,25 @@ test("published listings show three stacked sharing cards and copy the saved can
   await expect(modal.getByLabel("Textul postării")).not.toHaveValue(
     /Unsaved headline/,
   );
+  const editedPost =
+    (await modal.getByLabel("Textul postării").inputValue()) +
+    "\nMesaj verificat și editat de agent.";
+  await modal.getByLabel("Textul postării").fill(editedPost);
   await expect(
-    modal.getByRole("link", { name: /Deschide distribuirea pe Facebook/ }),
-  ).toHaveAttribute("href", propertyShareLinks(state.property)!.facebook);
+    modal.getByRole("button", { name: "Postează pe Facebook", exact: true }),
+  ).toBeEnabled();
   // Inspect the real navigation target with Facebook's page intercepted:
   // no account access, composer interaction or actual post during the test.
-  await page
-    .context()
-    .route("https://www.facebook.com/**", (route) =>
-      route.fulfill({
-        contentType: "text/html",
-        body: "<title>Facebook Share</title>",
-      }),
-    );
+  await page.context().route("https://www.facebook.com/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<title>Facebook Share</title>",
+    }),
+  );
   const [facebook] = await Promise.all([
     page.waitForEvent("popup"),
     modal
-      .getByRole("link", { name: /Deschide distribuirea pe Facebook/ })
+      .getByRole("button", { name: "Postează pe Facebook", exact: true })
       .click(),
   ]);
   await expect(facebook).toHaveURL(
@@ -109,13 +111,14 @@ test("published listings show three stacked sharing cards and copy the saved can
   expect(sharedUrl.searchParams.get("u")).toBe(
     propertyShareLinks(state.property)!.url,
   );
+  expect(await facebook.evaluate(() => window.opener === null)).toBe(true);
   await facebook.close();
-  await modal
-    .getByRole("button", { name: "Copiază textul", exact: true })
-    .click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
-    /\/saved-public-address$/,
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    editedPost,
   );
+  await expect(
+    modal.getByRole("button", { name: "Text copiat", exact: true }),
+  ).toBeVisible();
   await modal.screenshot({ path: testInfo.outputPath("group-post-phone.png") });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await modal.screenshot({
@@ -362,4 +365,69 @@ test("manual edits survive a late AI reply; a failed AI request leaves facts and
   await expect(
     dialog.getByRole("button", { name: "Descarcă fotografiile" }),
   ).toBeEnabled();
+});
+
+test("blocked popups or clipboard permission keep the edited post available with a normal Share link", async ({
+  page,
+}) => {
+  const state = await workspace(page, { status: "published" });
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.route("**/api/property-share", (route) =>
+    route.fulfill({
+      json: {
+        text: propertyGroupPost(
+          state.property,
+          "O introducere pregătită pentru postarea din grup.",
+        ),
+        source: propertyShareSource(state.property),
+      },
+    }),
+  );
+  await page.goto(`/panou/proprietati/${id}`);
+  await page.getByRole("button", { name: "Publică pe grupuri" }).click();
+  const dialog = page.getByRole("dialog", {
+    name: "Pregătește postarea pentru grupuri",
+  });
+  await expect(dialog.getByLabel("Textul postării")).toHaveValue(
+    /O introducere pregătită/,
+  );
+  const edited =
+    "Postarea exactă verificată de agent, fără înlocuire automată.";
+  await dialog.getByLabel("Textul postării").fill(edited);
+  await page.evaluate(() => {
+    window.open = () => null;
+  });
+  await dialog
+    .getByRole("button", { name: "Postează pe Facebook", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toContainText("Textul a fost copiat");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    edited,
+  );
+  await expect(
+    dialog.getByRole("link", { name: "Deschide Facebook Share", exact: true }),
+  ).toHaveAttribute("href", propertyShareLinks(state.property)!.facebook);
+  await page.evaluate(() => {
+    navigator.clipboard.writeText = async () => {
+      throw new DOMException("Denied", "NotAllowedError");
+    };
+  });
+  await dialog
+    .getByRole("button", { name: "Postează pe Facebook", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toContainText(
+    "Copiază textul selectat",
+  );
+  await expect(dialog.getByLabel("Textul postării")).toHaveValue(edited);
+  expect(
+    await dialog
+      .getByLabel("Textul postării")
+      .evaluate(
+        (element: HTMLTextAreaElement) =>
+          element.selectionEnd - element.selectionStart,
+      ),
+  ).toBe(edited.length);
+  await expect(
+    dialog.getByRole("link", { name: "Deschide Facebook Share", exact: true }),
+  ).toBeVisible();
 });

@@ -40,6 +40,8 @@ export function PropertyGroupPost({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
+  const [sharing, setSharing] = useState(false);
+  const [shareFallback, setShareFallback] = useState(false);
   const [selected, setSelected] = useState(() =>
     property.images.map((_, index) => index),
   );
@@ -158,6 +160,54 @@ export function PropertyGroupPost({
       setDownloading(false);
     }
   }
+  async function postToFacebook() {
+    if (sharing || !text.trim()) return;
+    setSharing(true);
+    setCopyError("");
+    setShareFallback(false);
+    edited.current = true;
+    remember(text);
+    let popup: Window | null = null;
+    let textCopied = false;
+    try {
+      // Start copying while this page is focused. Reserve the new window in
+      // the same click, before awaiting clipboard permission (also on Safari).
+      const copying = navigator.clipboard.writeText(text);
+      try {
+        popup = window.open("about:blank", "_blank");
+        if (popup) popup.opener = null;
+      } catch {
+        /* A normal link remains available if popups are blocked. */
+      }
+      await copying;
+      textCopied = true;
+      setCopied(true);
+      if (popup && !popup.closed) {
+        popup.location.replace(propertyShareLinks(property)!.facebook);
+      } else {
+        setCopyError(
+          "Textul a fost copiat. Deschide Facebook Share din linkul de mai jos, apoi lipește textul.",
+        );
+        setShareFallback(true);
+      }
+    } catch {
+      popup?.close();
+      if (!textCopied) {
+        textarea.current?.focus();
+        textarea.current?.select();
+        setCopyError(
+          "Copiază textul selectat din meniul telefonului sau cu Ctrl+C / Cmd+C, apoi deschide Facebook Share mai jos.",
+        );
+      } else {
+        setCopyError(
+          "Textul a fost copiat. Deschide Facebook Share din linkul de mai jos.",
+        );
+      }
+      setShareFallback(true);
+    } finally {
+      setSharing(false);
+    }
+  }
   return (
     <dialog
       ref={dialog}
@@ -184,8 +234,9 @@ export function PropertyGroupPost({
         </button>
       </div>
       <p className="property-group-intro">
-        Pregătește textul, apoi deschide fereastra de distribuire Facebook.
-        Acolo alege un grup ca destinație și adaugă textul postării.
+        Verifică sau editează textul, apoi apasă „Postează pe Facebook”. Îl
+        copiem pentru tine și deschidem Share cu linkul proprietății. În
+        Facebook, lipește textul și alege grupul dorit.
       </p>
       <label className="property-group-text">
         Textul postării
@@ -199,6 +250,8 @@ export function PropertyGroupPost({
             setText(event.target.value);
             remember(event.target.value);
             setCopied(false);
+            setCopyError("");
+            setShareFallback(false);
           }}
         />
       </label>
@@ -225,6 +278,19 @@ export function PropertyGroupPost({
       {copyError && (
         <p className="property-group-error" role="alert">
           {copyError}
+          {shareFallback && (
+            <>
+              <br />
+              <a
+                href={propertyShareLinks(property)!.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-button"
+              >
+                Deschide Facebook Share
+              </a>
+            </>
+          )}
         </p>
       )}
       {error && (
@@ -332,16 +398,19 @@ export function PropertyGroupPost({
         </p>
       )}
       <div className="property-group-footer">
-        <p>În Facebook, alege „Distribuie într-un grup”, apoi grupul dorit.</p>
-        <a
+        <p>
+          Textul se copiază la apăsare. În Facebook, lipește-l și alege grupul.
+        </p>
+        <button
+          type="button"
           className="button primary"
-          href={propertyShareLinks(property)!.facebook}
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={postToFacebook}
+          disabled={sharing || !text.trim()}
         >
-          <Facebook size={16} /> Deschide distribuirea pe Facebook{" "}
+          <Facebook size={16} />{" "}
+          {sharing ? "Se deschide Facebook…" : "Postează pe Facebook"}{" "}
           <ExternalLink size={14} />
-        </a>
+        </button>
       </div>
     </dialog>
   );
