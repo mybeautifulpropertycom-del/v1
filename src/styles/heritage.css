@@ -215,15 +215,15 @@
   right: 4%;
   display: inline-flex;
   align-items: center;
-  gap: 18px;
-  min-height: 44px;
+  gap: 12px;
+  min-height: 40px;
   max-width: 92%;
-  padding: 12px 18px;
+  padding: 10px 14px;
   background: var(--heritage-paper);
   color: var(--heritage-ink);
   border: 1px solid #ffffff4d;
   border-radius: 0;
-  font: 600 13px/1.4 var(--sans);
+  font: 600 12px/1.4 var(--sans);
   transition: background 0.2s;
 }
 .heritage-hero-photos:hover {
@@ -231,6 +231,8 @@
 }
 .heritage-hero-photos svg {
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
 }
 .heritage-hero-summary {
   display: grid;
@@ -276,11 +278,11 @@
   display: inline;
   margin: 0 4px 0 0;
   overflow-wrap: anywhere;
-  font: 600 15px/1.5 var(--sans);
+  font: 600 16px/1.5 var(--sans);
 }
 .heritage-facts dt {
   display: inline;
-  font: 400 14px/1.5 var(--sans);
+  font: 400 15px/1.5 var(--sans);
 }
 .heritage-facts .sr-only {
   position: absolute;
@@ -1045,10 +1047,14 @@
     top: 18px;
     right: 6%;
     max-width: 88%;
-    min-height: 40px;
-    padding: 10px 12px;
-    gap: 12px;
-    font-size: 11px;
+    min-height: 36px;
+    padding: 8px 10px;
+    gap: 10px;
+    font-size: 10px;
+  }
+  .heritage-hero-photos svg {
+    width: 12px;
+    height: 12px;
   }
   .heritage-hero-summary {
     display: block;
@@ -1075,7 +1081,7 @@
   }
   .heritage-facts dd,
   .heritage-facts dt {
-    font-size: 13px;
+    font-size: 14px;
   }
   .heritage-facts > div:first-child dd {
     font-size: 32px;
