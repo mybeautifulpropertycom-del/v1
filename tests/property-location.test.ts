@@ -104,7 +104,14 @@ test("transport categories and badges use Google types and never guess unsupport
     "Metrou · Autobuz",
   );
   assert.equal(transportTypeLabel(["light_rail_station"]), "Tramvai");
-  assert.equal(transportTypeLabel(["train_station"]), "Tren");
+  assert.equal(transportTypeLabel(["train_station"]), "Stație de transport");
+  const configuredModes: readonly string[] = nearbyTransportModes.map(
+    (mode) => mode.id,
+  );
+  const configuredTypes: readonly string[] = nearbyTransportModes[0].types;
+  assert.ok(!configuredModes.includes("train"));
+  assert.ok(!configuredTypes.includes("train_station"));
+  assert.ok(!configuredTypes.includes("transit_station"));
   assert.equal(transportTypeLabel(["transit_station"]), "Stație de transport");
   assert.equal(transportTypeLabel(), "Stație de transport");
 });

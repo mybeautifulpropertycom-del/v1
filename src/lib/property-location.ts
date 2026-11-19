@@ -8,19 +8,11 @@ export const nearbyTransportModes = [
   {
     id: "all",
     label: "Toate",
-    types: [
-      "subway_station",
-      "light_rail_station",
-      "bus_stop",
-      "bus_station",
-      "train_station",
-      "transit_station",
-    ],
+    types: ["subway_station", "light_rail_station", "bus_stop", "bus_station"],
   },
   { id: "metro", label: "Metrou", types: ["subway_station"] },
   { id: "tram", label: "Tramvai", types: ["light_rail_station"] },
   { id: "bus", label: "Autobuz", types: ["bus_stop", "bus_station"] },
-  { id: "train", label: "Tren", types: ["train_station"] },
 ] as const;
 export type NearbyTransportMode = (typeof nearbyTransportModes)[number];
 

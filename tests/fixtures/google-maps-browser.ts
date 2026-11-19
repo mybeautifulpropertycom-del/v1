@@ -162,6 +162,13 @@ export async function mockGoogleMaps(page: Page) {
                 businessStatus: "OPERATIONAL",
               },
               {
+                id: "ChIJ-transit-unspecified",
+                displayName: "Stație de transport",
+                types: ["transit_station"],
+                location: point(44.427, 26.1025),
+                businessStatus: "OPERATIONAL",
+              },
+              {
                 id: "ChIJ-bus-far",
                 displayName: "Stație îndepărtată",
                 types: ["bus_stop"],
@@ -175,8 +182,15 @@ export async function mockGoogleMaps(page: Page) {
                 location: point(44.427, 26.1025),
                 businessStatus: "CLOSED_PERMANENTLY",
               },
-            ].filter((place) =>
-              place.types.some((type) => request.includedTypes.includes(type)),
+            ].filter(
+              (place) =>
+                // Include a rail-only outlier to verify the UI rejects it even
+                // if a provider response contains an unexpected station type.
+                place.id === "ChIJ-train" ||
+                place.id === "ChIJ-transit-unspecified" ||
+                place.types.some((type) =>
+                  request.includedTypes.includes(type),
+                ),
             ),
           };
         }

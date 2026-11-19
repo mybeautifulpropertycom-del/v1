@@ -305,7 +305,8 @@ function Neighbourhood({
             return false;
           if (
             transit &&
-            (place.businessStatus === "CLOSED_PERMANENTLY" ||
+            (!mode.types.some((type) => place.types?.includes(type)) ||
+              place.businessStatus === "CLOSED_PERMANENTLY" ||
               distanceKilometers(centre.current!, place.location.toJSON()) >
                 searchRadius / 1000)
           )

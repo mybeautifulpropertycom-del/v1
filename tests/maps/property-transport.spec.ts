@@ -16,14 +16,13 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     await section
       .getByRole("button", { name: "Transport", exact: true })
       .click();
-    await expect(section.locator(".neighbourhood-card")).toHaveCount(4);
+    await expect(section.locator(".neighbourhood-card")).toHaveCount(3);
     await expect(
       section.locator(".neighbourhood-card-copy > button > span:last-child"),
     ).toHaveText([
       "Stația de autobuz Test",
       "Stația de tramvai Test",
       "Stația de metrou Test",
-      "Gara Test",
     ]);
     await expect(
       section.getByText("Stație îndepărtată", { exact: true }),
@@ -39,6 +38,17 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     ).toHaveText("130 m distanță");
     const request = await page.evaluate(() => window.__mapsTest.searches[1]);
     expect(request.locationRestriction.radius).toBe(1500);
+    expect(request.includedTypes).not.toContain("train_station");
+    expect(request.includedTypes).not.toContain("transit_station");
+    await expect(
+      section.getByRole("button", { name: "Tren", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      section.getByText("Stație de transport", { exact: true }),
+    ).toHaveCount(0);
+    await expect(section.getByText("Gara Test", { exact: true })).toHaveCount(
+      0,
+    );
     expect(request.fields).toContain("types");
     expect(request.fields).toContain("businessStatus");
     expect(request.fields).not.toContain("photos");
@@ -64,7 +74,6 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       ["Metrou", "Stația de metrou Test", ["subway_station"]],
       ["Autobuz", "Stația de autobuz Test", ["bus_stop", "bus_station"]],
       ["Tramvai", "Stația de tramvai Test", ["light_rail_station"]],
-      ["Tren", "Gara Test", ["train_station"]],
     ] as const) {
       await modes.getByRole("button", { name: mode, exact: true }).click();
       await expect(section.locator(".neighbourhood-card")).toHaveCount(1);
@@ -81,7 +90,7 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       ).toEqual(types);
     }
     expect(await page.evaluate(() => window.__mapsTest.searches)).toHaveLength(
-      6,
+      5,
     );
     await modes.getByRole("button", { name: "Metrou", exact: true }).click();
     await expect(section.locator(".neighbourhood-card")).toHaveCount(1);
@@ -95,9 +104,9 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     ).toHaveAttribute("aria-pressed", "true");
     await expect(section.locator(".neighbourhood-card")).toHaveCount(1);
     await modes.getByRole("button", { name: "Toate", exact: true }).click();
-    await expect(section.locator(".neighbourhood-card")).toHaveCount(4);
+    await expect(section.locator(".neighbourhood-card")).toHaveCount(3);
     expect(await page.evaluate(() => window.__mapsTest.searches)).toHaveLength(
-      6,
+      5,
     );
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 1000 });
@@ -160,6 +169,6 @@ test("transport errors remain retryable and do not replace a failure with an inv
   await section
     .getByRole("button", { name: "Reîncarcă locurile", exact: true })
     .click();
-  await expect(section.locator(".neighbourhood-card")).toHaveCount(4);
+  await expect(section.locator(".neighbourhood-card")).toHaveCount(3);
   expect(await page.evaluate(() => window.__mapsTest.searches)).toHaveLength(3);
 });
