@@ -25,9 +25,12 @@ for (const url of ["/modele/editorial", "/p/rent-price-test-editorial-house"]) {
       const action = page
         .locator(".estate-hero-actions")
         .getByRole("button", { name: "Programează o vizionare", exact: true });
-      // The model's preview bar takes extra space on compact screens; the
-      // requested taller hero remains fully usable with normal scrolling.
-      if (url.startsWith("/p/") || viewport.height >= 667) {
+      // The taller hero fits a regular phone screen. Shorter screens,
+      // especially with the model's preview bar, use normal scrolling.
+      if (
+        viewport.height >= 844 ||
+        (url.startsWith("/p/") && viewport.height >= 667)
+      ) {
         await expect(action).toBeInViewport({ ratio: 1 });
         expect(await page.evaluate(() => scrollY)).toBe(0);
       } else {
