@@ -14,7 +14,12 @@ export default defineConfig({
       executablePath:
         process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ||
         (existsSync("/usr/bin/chromium") ? "/usr/bin/chromium" : undefined),
-      args: ["--no-sandbox"],
+      args: [
+        "--no-sandbox",
+        // Chat tests intercept the script; other suites must not create live
+        // Jivo visitors when they open the dashboard.
+        "--host-resolver-rules=MAP code.jivosite.com ~NOTFOUND",
+      ],
     },
   },
   projects: [

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DashboardChat } from "@/components/dashboard-chat";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/nunito-sans";
 import "@fontsource-variable/playfair-display";
@@ -28,7 +29,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang={htmlLanguage}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <DashboardChat />
+      </body>
     </html>
   );
 }
