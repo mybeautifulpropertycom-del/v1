@@ -5,7 +5,7 @@ export const promotionPackages = {
     price: 300,
     amount: 30000,
     description:
-      "Un prim buget pentru căutările relevante din zona proprietății.",
+      "Un prim buget pentru promovarea proprietății pe Google Search.",
   },
   plus: {
     id: "plus",
@@ -13,7 +13,7 @@ export const promotionPackages = {
     price: 500,
     amount: 50000,
     description:
-      "Mai mult buget pentru testarea și ajustarea căutărilor relevante.",
+      "Mai mult buget pentru vizibilitate și potențiali cumpărători sau chiriași.",
   },
   extended: {
     id: "extended",
