@@ -4,6 +4,38 @@ import { formatPrice } from "../../src/lib/model";
 import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
 
+for (const url of ["/modele/editorial", "/p/rent-price-test-editorial-house"]) {
+  test(`Editorial viewing action fits the first phone screen at ${url}`, async ({
+    page,
+  }) => {
+    await page.route("**/_next/image?**", (route) =>
+      route.fulfill({
+        path: "public/images/villa.jpg",
+        contentType: "image/jpeg",
+      }),
+    );
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 375, height: 667 },
+      { width: 320, height: 568 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(url);
+      await page.evaluate(() => document.fonts.ready);
+      const action = page
+        .locator(".estate-hero-actions")
+        .getByRole("button", { name: "Programează o vizionare", exact: true });
+      await expect(action).toBeInViewport({ ratio: 1 });
+      expect(await page.evaluate(() => scrollY)).toBe(0);
+      await action.click();
+      await expect(
+        page.getByRole("dialog", { name: /Să ne întâlnim/ }),
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+    }
+  });
+}
+
 for (const source of ["saved", "sample", "published"] as const) {
   test(`Editorial hero works with ${source} listings on desktop and phones`, async ({
     page,
