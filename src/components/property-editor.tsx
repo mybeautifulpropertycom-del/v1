@@ -68,13 +68,14 @@ export function PropertyEditor({
       ...source,
       amenities: [
         ...new Set(
-          source.amenities.map((value) =>
-            ["garaj pentru două mașini", "two-car garage"].includes(
-              value.trim().toLowerCase(),
-            )
-              ? "Loc de parcare"
-              : value,
-          ),
+          source.amenities.map((value) => {
+            const key = value.trim().toLowerCase();
+            if (["garaj pentru două mașini", "two-car garage"].includes(key))
+              return "Loc de parcare";
+            if (["încălzire centrală", "central heating"].includes(key))
+              return "Centrală termică";
+            return value;
+          }),
         ),
       ],
     };
@@ -338,7 +339,10 @@ export function PropertyEditor({
       "Supraveghere video",
       "Alarmă",
       "Balcon",
-      "Încălzire centrală",
+      "Video Interfon",
+      "Aer Condiționat",
+      "Smart TV",
+      "Centrală termică",
       "Panouri solare",
       "Bucătărie cu insulă",
       "Dressing",

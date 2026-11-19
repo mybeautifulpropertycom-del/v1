@@ -73,7 +73,7 @@ test("studios and the new amenities persist, replace the old parking label and a
   const state = await workspace(page, {
     type: "Condo",
     images: [],
-    amenities: ["Garaj pentru două mașini"],
+    amenities: ["Garaj pentru două mașini", "Încălzire centrală"],
   });
   await page.route("**/api/property-story", (route) => route.abort());
   await page.goto(`/panou/proprietati/${id}`);
@@ -85,7 +85,21 @@ test("studios and the new amenities persist, replace the old parking label and a
   await expect(
     page.getByRole("button", { name: "Garaj pentru două mașini", exact: true }),
   ).toHaveCount(0);
-  for (const name of ["WiFi", "Supraveghere video", "Alarmă", "Balcon"])
+  await expect(
+    page.getByRole("button", { name: "Centrală termică", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("button", { name: "Încălzire centrală", exact: true }),
+  ).toHaveCount(0);
+  for (const name of [
+    "WiFi",
+    "Supraveghere video",
+    "Alarmă",
+    "Balcon",
+    "Video Interfon",
+    "Aer Condiționat",
+    "Smart TV",
+  ])
     await page.getByRole("button", { name, exact: true }).click();
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
@@ -96,10 +110,14 @@ test("studios and the new amenities persist, replace the old parking label and a
   expect(state.property.type).toBe("Studio");
   expect(state.property.amenities).toEqual([
     "Loc de parcare",
+    "Centrală termică",
     "WiFi",
     "Supraveghere video",
     "Alarmă",
     "Balcon",
+    "Video Interfon",
+    "Aer Condiționat",
+    "Smart TV",
   ]);
   await page.reload();
   await expect(type).toHaveValue("Studio");
