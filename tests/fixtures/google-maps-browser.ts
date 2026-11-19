@@ -20,11 +20,16 @@ type MapsTestState = {
     includedTypes: string[];
     maxResultCount: number;
     rankPreference: string;
+    locationRestriction: {
+      center: { lat: number; lng: number };
+      radius: number;
+    };
   }>;
   photos: number;
   maps: number;
   delay: number;
   failSearch: boolean;
+  emptyTransport: boolean;
 };
 declare global {
   interface Window {
@@ -53,6 +58,7 @@ export async function mockGoogleMaps(page: Page) {
       maps: 0,
       delay: 0,
       failSearch: false,
+      emptyTransport: false,
     });
     let sessionCounter = 0;
     const point = (lat = 44.4268, lng = 26.1025) => ({
@@ -111,6 +117,69 @@ export async function mockGoogleMaps(page: Page) {
       static async searchNearby(request: MapsTestState["searches"][number]) {
         state.searches.push(request);
         if (state.failSearch) throw new Error("Quota exhausted");
+        const transportTypes = [
+          "subway_station",
+          "light_rail_station",
+          "bus_stop",
+          "bus_station",
+          "train_station",
+          "transit_station",
+        ];
+        if (
+          request.includedTypes.some((type) => transportTypes.includes(type))
+        ) {
+          if (state.emptyTransport) return { places: [] };
+          const bus = {
+            id: "ChIJ-bus-near",
+            displayName: "Stația de autobuz Test",
+            types: ["bus_stop", "transit_station"],
+            location: point(44.428, 26.1025),
+            businessStatus: "OPERATIONAL",
+          };
+          return {
+            places: [
+              {
+                id: "ChIJ-metro",
+                displayName: "Stația de metrou Test",
+                types: ["subway_station", "transit_station"],
+                location: point(44.4328, 26.1025),
+                businessStatus: "OPERATIONAL",
+              },
+              bus,
+              { ...bus },
+              {
+                id: "ChIJ-tram",
+                displayName: "Stația de tramvai Test",
+                types: ["light_rail_station", "transit_station"],
+                location: point(44.4298, 26.1025),
+                businessStatus: "OPERATIONAL",
+              },
+              {
+                id: "ChIJ-train",
+                displayName: "Gara Test",
+                types: ["train_station", "transit_station"],
+                location: point(44.4368, 26.1025),
+                businessStatus: "OPERATIONAL",
+              },
+              {
+                id: "ChIJ-bus-far",
+                displayName: "Stație îndepărtată",
+                types: ["bus_stop"],
+                location: point(44.46, 26.1025),
+                businessStatus: "OPERATIONAL",
+              },
+              {
+                id: "ChIJ-metro-closed",
+                displayName: "Stație închisă definitiv",
+                types: ["subway_station"],
+                location: point(44.427, 26.1025),
+                businessStatus: "CLOSED_PERMANENTLY",
+              },
+            ].filter((place) =>
+              place.types.some((type) => request.includedTypes.includes(type)),
+            ),
+          };
+        }
         if (request.includedTypes.includes("park")) return { places: [] };
         return {
           places: [0, 1].map((n) => ({

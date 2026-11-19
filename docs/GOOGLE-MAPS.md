@@ -37,12 +37,24 @@ Search Console verification does not enable these services.
   Schools are requested on initialization; other categories are requested on
   selection. Successful results are reused within the mounted view. This is
   nearby discovery, not an exhaustive list or school zoning advice.
+- **Transport** adds Toate, Metrou, Tramvai, Autobuz and Tren filters. It requests
+  up to six stations within 1.5 km only when selected, using Google's
+  `subway_station`, `light_rail_station`, `bus_stop`, `bus_station`,
+  `train_station` and `transit_station` types. Results are deduplicated by place
+  ID, sorted by straight-line distance, and checked against the radius; places
+  marked permanently closed are excluded. Short distances use metres. Each
+  successful filter is reused within the current view, without persistent storage.
+  Category badges come from Google's types. Line numbers, schedules and walking
+  durations are not inferred or invented. Empty results and API failures remain
+  explicit, with the same retry behavior as other categories.
 - Numbered pins and list entries correspond. Selecting an entry focuses its
   location within the map. No place photographs, photo metadata, or photo-media
   requests are used. Returned data providers retain their attribution links.
-  Custom "Open in Google Maps" / "View place" links are omitted; Google's native
-  map attribution is preserved.
-- Kilometres are straight-line estimates; no routing or travel times are claimed.
+  Generic "Open in Google Maps" / "View place" links are omitted; Google's native
+  map attribution is preserved. Transport cards have a specific **Traseu pe jos**
+  link to Google Maps with origin/destination coordinates and place IDs. The link
+  opens consumer walking directions; it does not call the paid Routes API.
+- Displayed distances are straight-line estimates; no walking distance or travel time is claimed by the platform.
 - Editing an address clears the saved place ID in the editor and inline preview.
   A DB trigger also clears stale IDs on direct updates. Deleting/unpublishing a
   property uses the existing page-access rules.

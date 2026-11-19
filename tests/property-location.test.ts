@@ -2,6 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   distanceKilometers,
+  formatNearbyDistance,
+  nearbyTransportModes,
+  transportTypeLabel,
+  walkingDirectionsLink,
   isRomanianAddress,
   mapsLink,
   PLACE_ID,
@@ -88,4 +92,49 @@ test("sample map accepts only the requested street, house number, city and count
     isTemplateAddress({ addressComponents: addressComponents.slice(0, 3) }),
     false,
   );
+});
+
+test("transport categories and badges use Google types and never guess unsupported service information", () => {
+  assert.deepEqual(
+    nearbyTransportModes.find((mode) => mode.id === "bus")?.types,
+    ["bus_stop", "bus_station"],
+  );
+  assert.equal(
+    transportTypeLabel(["subway_station", "bus_stop"]),
+    "Metrou · Autobuz",
+  );
+  assert.equal(transportTypeLabel(["light_rail_station"]), "Tramvai");
+  assert.equal(transportTypeLabel(["train_station"]), "Tren");
+  assert.equal(transportTypeLabel(["transit_station"]), "Stație de transport");
+  assert.equal(transportTypeLabel(), "Stație de transport");
+});
+test("short nearby distances use metres while Google handles walking routes separately", () => {
+  assert.equal(formatNearbyDistance(0.015), "sub 50 m");
+  assert.equal(formatNearbyDistance(0.35), "350 m");
+  assert.equal(formatNearbyDistance(1.2), "1,2 km");
+  const link = new URL(
+    walkingDirectionsLink(
+      { lat: 44.4268, lng: 26.1025 },
+      { lat: 44.4328, lng: 26.1025 },
+      "ChIJ-home",
+      "ChIJ-metro",
+    ),
+  );
+  assert.equal(link.origin, "https://www.google.com");
+  assert.equal(link.pathname, "/maps/dir/");
+  assert.equal(link.searchParams.get("travelmode"), "walking");
+  assert.equal(link.searchParams.get("origin"), "44.4268,26.1025");
+  assert.equal(link.searchParams.get("destination"), "44.4328,26.1025");
+  assert.equal(link.searchParams.get("origin_place_id"), "ChIJ-home");
+  assert.equal(link.searchParams.get("destination_place_id"), "ChIJ-metro");
+  const invalid = new URL(
+    walkingDirectionsLink(
+      { lat: 0, lng: 0 },
+      { lat: 1, lng: 1 },
+      "<script>",
+      "javascript:bad",
+    ),
+  );
+  assert.equal(invalid.searchParams.has("origin_place_id"), false);
+  assert.equal(invalid.searchParams.has("destination_place_id"), false);
 });

@@ -1,4 +1,5 @@
 "use client";
+import { ArrowUpRight } from "lucide-react";
 import { presentationCopy } from "@/lib/presentation-copy";
 import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import type { PublicProperty } from "@/lib/model";
@@ -10,6 +11,12 @@ import {
 } from "@/lib/template-location";
 import {
   distanceKilometers,
+  formatNearbyDistance,
+  nearbyTransportModes,
+  TRANSPORT_RADIUS_METERS,
+  transportTypeLabel,
+  walkingDirectionsLink,
+  type NearbyTransportMode,
   isRomanianAddress,
   mapsEnabled,
   nearbyCategories,
@@ -76,6 +83,11 @@ function Neighbourhood({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [category, setCategory] = useState<NearbyCategory>(nearbyCategories[0]);
+  const [transportMode, setTransportMode] = useState<NearbyTransportMode>(
+    nearbyTransportModes[0],
+  );
+  const isTransport = category.id === "transport";
+  const radius = isTransport ? TRANSPORT_RADIUS_METERS : NEARBY_RADIUS_METERS;
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -234,11 +246,20 @@ function Neighbourhood({
     };
   });
 
-  async function explore(next: NearbyCategory) {
+  async function explore(
+    next: NearbyCategory,
+    mode: NearbyTransportMode = transportMode,
+  ) {
     if (searching.current || !map.current || !centre.current) return;
     searching.current = true;
     const request = ++currentRequest.current;
     setCategory(next);
+    setTransportMode(mode);
+    const transit = next.id === "transport";
+    const searchRadius = transit
+      ? TRANSPORT_RADIUS_METERS
+      : NEARBY_RADIUS_METERS;
+    const cacheKey = transit ? `transport:${mode.id}` : next.id;
     setBusy(true);
     setError("");
     setPlaces([]);
@@ -252,27 +273,54 @@ function Neighbourhood({
       const placesLibrary = (await maps.importLibrary(
         "places",
       )) as google.maps.PlacesLibrary;
-      let nearby = results.current.get(next.id);
+      let nearby = results.current.get(cacheKey);
       if (!nearby) {
         const response = await withMapsTimeout(
           placesLibrary.Place.searchNearby({
-            fields: ["id", "displayName", "location", "attributions"],
-            includedTypes: [...next.types],
+            fields: [
+              "id",
+              "displayName",
+              "location",
+              "attributions",
+              ...(transit ? ["types", "businessStatus"] : []),
+            ],
+            includedTypes: [...(transit ? mode.types : next.types)],
             maxResultCount: NEARBY_LIMIT,
             locationRestriction: {
               center: centre.current,
-              radius: NEARBY_RADIUS_METERS,
+              radius: searchRadius,
             },
             rankPreference: "DISTANCE",
             language: "ro",
             region: "ro",
           }),
         );
-        nearby = response.places.filter(
-          (place) => place.location && place.id !== homePlaceId.current,
-        );
+        const seen = new Set<string>();
+        nearby = response.places.filter((place) => {
+          if (
+            !place.location ||
+            place.id === homePlaceId.current ||
+            seen.has(place.id)
+          )
+            return false;
+          if (
+            transit &&
+            (place.businessStatus === "CLOSED_PERMANENTLY" ||
+              distanceKilometers(centre.current!, place.location.toJSON()) >
+                searchRadius / 1000)
+          )
+            return false;
+          seen.add(place.id);
+          return true;
+        });
+        if (transit)
+          nearby.sort(
+            (a, b) =>
+              distanceKilometers(centre.current!, a.location!.toJSON()) -
+              distanceKilometers(centre.current!, b.location!.toJSON()),
+          );
         if (request !== currentRequest.current) return;
-        results.current.set(next.id, nearby);
+        results.current.set(cacheKey, nearby);
       }
       if (request !== currentRequest.current) return;
       const { AdvancedMarkerElement } = (await maps.importLibrary(
@@ -370,9 +418,30 @@ function Neighbourhood({
               </button>
             ))}
           </div>
+          {isTransport && (
+            <div
+              className="neighbourhood-transport-modes"
+              role="group"
+              aria-label="Tipul transportului"
+            >
+              {nearbyTransportModes.map((mode) => (
+                <button
+                  type="button"
+                  key={mode.id}
+                  aria-pressed={transportMode.id === mode.id}
+                  disabled={!ready || busy}
+                  onClick={() => void explore(category, mode)}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          )}
           <p className="neighbourhood-note">
-            Până la {NEARBY_LIMIT} locuri în apropiere, pe o rază de aproximativ
-            5 km. Distanțele sunt estimate în linie dreaptă.
+            Până la {NEARBY_LIMIT} {isTransport ? "stații" : "locuri"} în
+            apropiere, pe o rază de aproximativ{" "}
+            {(radius / 1000).toLocaleString("ro-RO")} km. Distanțele sunt
+            estimate în linie dreaptă.
           </p>
           <div className="neighbourhood-results" aria-busy={busy}>
             {ready && busy && (
@@ -380,9 +449,9 @@ function Neighbourhood({
             )}
             {ready && !busy && !places.length && !error && (
               <p role="status">
-                Nu au fost găsite locuri din categoria{" "}
-                {category.label.toLowerCase()} în apropiere. Încearcă altă
-                categorie.
+                {isTransport
+                  ? `Nu au fost găsite stații pentru filtrul „${transportMode.label}” pe o rază de ${(radius / 1000).toLocaleString("ro-RO")} km. Încearcă alt tip de transport.`
+                  : `Nu au fost găsite locuri din categoria ${category.label.toLowerCase()} în apropiere. Încearcă altă categorie.`}
               </p>
             )}
             {ready && error && (
@@ -415,15 +484,39 @@ function Neighbourhood({
                       </span>
                       <span>{place.displayName || "Loc din apropiere"}</span>
                     </button>
+                    {isTransport && (
+                      <small className="neighbourhood-transport-type">
+                        {transportTypeLabel(place.types)}
+                      </small>
+                    )}
                     <p>
-                      {distanceKilometers(
-                        centre.current!,
-                        place.location!.toJSON(),
-                      ).toLocaleString("ro-RO", {
-                        maximumFractionDigits: 1,
-                      })}{" "}
-                      km distanță
+                      {isTransport
+                        ? formatNearbyDistance(
+                            distanceKilometers(
+                              centre.current!,
+                              place.location!.toJSON(),
+                            ),
+                          )
+                        : `${distanceKilometers(centre.current!, place.location!.toJSON()).toLocaleString("ro-RO", { maximumFractionDigits: 1 })} km`}{" "}
+                      distanță
                     </p>
+                    {isTransport && (
+                      <a
+                        className="neighbourhood-directions"
+                        href={walkingDirectionsLink(
+                          centre.current!,
+                          place.location!.toJSON(),
+                          homePlaceId.current,
+                          place.id,
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Traseu pe jos către ${place.displayName || "stație"}`}
+                      >
+                        Traseu pe jos{" "}
+                        <ArrowUpRight size={12} aria-hidden="true" />
+                      </a>
+                    )}
                     {place.attributions?.map((attribution, i) => (
                       <small key={i}>
                         {safeExternalUrl(attribution.providerURI) ? (

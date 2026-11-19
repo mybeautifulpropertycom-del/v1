@@ -3,6 +3,27 @@
 export const PLACE_ID = /^[A-Za-z0-9_-]{1,512}$/;
 export const NEARBY_RADIUS_METERS = 5000; // Five kilometres.
 export const NEARBY_LIMIT = 6;
+export const TRANSPORT_RADIUS_METERS = 1500;
+export const nearbyTransportModes = [
+  {
+    id: "all",
+    label: "Toate",
+    types: [
+      "subway_station",
+      "light_rail_station",
+      "bus_stop",
+      "bus_station",
+      "train_station",
+      "transit_station",
+    ],
+  },
+  { id: "metro", label: "Metrou", types: ["subway_station"] },
+  { id: "tram", label: "Tramvai", types: ["light_rail_station"] },
+  { id: "bus", label: "Autobuz", types: ["bus_stop", "bus_station"] },
+  { id: "train", label: "Tren", types: ["train_station"] },
+] as const;
+export type NearbyTransportMode = (typeof nearbyTransportModes)[number];
+
 export const nearbyCategories = [
   {
     id: "schools",
@@ -26,6 +47,7 @@ export const nearbyCategories = [
     label: "Cultură",
     types: ["museum", "art_gallery", "tourist_attraction"],
   },
+  { id: "transport", label: "Transport", types: nearbyTransportModes[0].types },
 ] as const;
 export type NearbyCategory = (typeof nearbyCategories)[number];
 
@@ -80,4 +102,39 @@ export function safeExternalUrl(value?: string | null): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+export function transportTypeLabel(types?: readonly string[] | null) {
+  const modes = nearbyTransportModes
+    .slice(1)
+    .filter((mode) => mode.types.some((type) => types?.includes(type)));
+  return modes.length
+    ? modes.map((mode) => mode.label).join(" · ")
+    : "Stație de transport";
+}
+
+export function formatNearbyDistance(kilometers: number) {
+  if (kilometers < 0.05) return "sub 50 m";
+  if (kilometers < 1) return `${Math.round(kilometers * 100) * 10} m`;
+  return `${kilometers.toLocaleString("ro-RO", { maximumFractionDigits: 1 })} km`;
+}
+
+// Opens Google's consumer walking directions without making a Routes API call.
+export function walkingDirectionsLink(
+  origin: { lat: number; lng: number },
+  destination: { lat: number; lng: number },
+  originId?: string | null,
+  destinationId?: string | null,
+) {
+  const query = new URLSearchParams({
+    api: "1",
+    origin: `${origin.lat},${origin.lng}`,
+    destination: `${destination.lat},${destination.lng}`,
+    travelmode: "walking",
+  });
+  if (originId && PLACE_ID.test(originId))
+    query.set("origin_place_id", originId);
+  if (destinationId && PLACE_ID.test(destinationId))
+    query.set("destination_place_id", destinationId);
+  return `https://www.google.com/maps/dir/?${query}`;
 }
