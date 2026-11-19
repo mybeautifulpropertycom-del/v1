@@ -1357,7 +1357,7 @@
   }
   .estate-hero-content {
     flex: 0 0 auto;
-    padding: clamp(150px, calc(50svh - 100px), 320px) 6% 0;
+    padding: clamp(150px, calc(60svh - 150px), 350px) 6% 0;
   }
   .estate-hero h1 {
     font-size: clamp(28px, calc(8.6vw - 4px), 36px);
