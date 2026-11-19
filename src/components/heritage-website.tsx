@@ -8,13 +8,11 @@ import { AgentAvatar } from "./agent-avatar";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
-  ArrowDown,
   ArrowLeft,
   ArrowUpRight,
   Asterisk,
-  Expand,
   Film,
   Mail,
   MapPin,
@@ -28,67 +26,6 @@ import { EditableText } from "./website-editable-text";
 import { PropertyPhotoDialog } from "./property-photo-dialog";
 import { ViewingDialog } from "./viewing-dialog";
 
-/** Scroll changes only the cover photograph. Native page scrolling stays intact. */
-function useCoverZoom() {
-  const stage = useRef<HTMLElement>(null);
-  const cover = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const root = stage.current;
-    const frame = cover.current;
-    if (!root || !frame) return;
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-    const desktop = matchMedia("(min-width: 768px) and (min-height: 600px)");
-    let animationFrame = 0;
-    function update() {
-      animationFrame = 0;
-      if (!root || !frame) return;
-      if (reduced.matches) {
-        root.removeAttribute("data-zoom-pinned");
-        root.style.removeProperty("height");
-        frame.style.setProperty("--cover-scale", "1");
-        return;
-      }
-      const distance = desktop.matches
-        ? innerHeight * 0.65
-        : frame.offsetHeight;
-      if (desktop.matches) {
-        root.dataset.zoomPinned = "true";
-        root.style.height = `${frame.offsetHeight + distance}px`;
-      } else {
-        root.removeAttribute("data-zoom-pinned");
-        root.style.removeProperty("height");
-      }
-      const progress = Math.max(
-        0,
-        Math.min(1, -root.getBoundingClientRect().top / Math.max(1, distance)),
-      );
-      frame.style.setProperty("--cover-scale", String(1 + progress * 0.2));
-    }
-    function schedule() {
-      if (!animationFrame) animationFrame = requestAnimationFrame(update);
-    }
-    const resize = new ResizeObserver(schedule);
-    resize.observe(frame);
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    reduced.addEventListener("change", schedule);
-    desktop.addEventListener("change", schedule);
-    update();
-    return () => {
-      cancelAnimationFrame(animationFrame);
-      resize.disconnect();
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      reduced.removeEventListener("change", schedule);
-      desktop.removeEventListener("change", schedule);
-      root.removeAttribute("data-zoom-pinned");
-      root.style.removeProperty("height");
-      frame.style.removeProperty("--cover-scale");
-    };
-  }, []);
-  return { stage, cover };
-}
-
 export function HeritageWebsite({
   property,
   profile,
@@ -100,7 +37,6 @@ export function HeritageWebsite({
   videoIncluded = true,
   previewBackLink,
 }: PropertyWebsiteProps) {
-  const { stage, cover } = useCoverZoom();
   const [viewing, setViewing] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [highlights, setHighlights] = useState(false);
@@ -115,12 +51,18 @@ export function HeritageWebsite({
   const facts = [
     [
       formatPrice(property),
-      property.transaction === "rent" ? "Chirie lunară" : "Preț",
+      sample
+        ? "Preț exemplificativ"
+        : property.transaction === "rent"
+          ? "Chirie lunară"
+          : "Preț de vânzare",
     ],
-    [String(property.bedrooms), "Dormitoare"],
-    [String(property.bathrooms), "Băi"],
-    [property.area.toLocaleString("ro-RO"), `${unit} suprafață locuibilă`],
-    [propertyTypeLabel(property.type), "Tipul proprietății"],
+    [
+      String(property.bedrooms),
+      property.bedrooms === 1 ? "dormitor" : "dormitoare",
+    ],
+    [String(property.bathrooms), property.bathrooms === 1 ? "baie" : "băi"],
+    [size, "Suprafață locuibilă"],
   ];
   const features = property.amenities.length
     ? property.amenities
@@ -183,10 +125,9 @@ export function HeritageWebsite({
         <section
           className="heritage-hero-stage"
           id="home"
-          ref={stage}
           aria-label="Prezentarea proprietății"
         >
-          <div className="heritage-hero" ref={cover}>
+          <div className="heritage-hero">
             <div className="heritage-cover">
               {property.images[0] ? (
                 <PropertyImage
@@ -202,13 +143,20 @@ export function HeritageWebsite({
                 </div>
               )}
             </div>
-            <div className="heritage-hero-copy heritage-pad">
-              <span className="heritage-kicker">
-                Un loc pe care să-l numești acasă ·{" "}
-                {property.transaction === "rent"
-                  ? "De închiriat"
-                  : "De vânzare"}
-              </span>
+            {property.images.length > 0 && (
+              <button
+                type="button"
+                className="heritage-hero-photos"
+                aria-haspopup="dialog"
+                onClick={() => setLightbox(0)}
+              >
+                {property.images.length === 1
+                  ? "Vezi fotografia"
+                  : `Vezi cele ${property.images.length} fotografii`}
+                <ArrowUpRight size={16} />
+              </button>
+            )}
+            <div className="heritage-hero-copy">
               <h1>
                 <EditableText
                   field="title"
@@ -216,55 +164,29 @@ export function HeritageWebsite({
                   onEdit={onEdit}
                 />
               </h1>
-              <p className="heritage-hero-intro">
-                <EditableText
-                  field="copy.heroIntro"
-                  value={copy.heroIntro}
-                  onEdit={onEdit}
-                />
-              </p>
-              {tourButton("heritage-link heritage-hero-tour")}
-            </div>
-            <div className="heritage-hero-bottom heritage-pad">
-              <span>
-                <MapPin size={13} />
+              <p className="heritage-hero-address">
                 <EditableText
                   field="location"
                   value={property.location || "Adresa proprietății tale"}
                   onEdit={onEdit}
                 />
-              </span>
-              <a
-                href="#story"
-                className="heritage-hero-down"
-                aria-label="Descoperă locuința"
-              >
-                <ArrowDown size={17} />
-                <span>
-                  UN NOU CAPITOL
-                  <br />
-                  ÎNCEPE AICI
-                </span>
-              </a>
-              {property.images.length > 0 && (
-                <button type="button" onClick={() => setLightbox(0)}>
-                  <span>
-                    Vezi toate cele {property.images.length} fotografii
-                  </span>
-                  <Expand size={13} />
-                </button>
-              )}
+              </p>
             </div>
           </div>
+          <div className="heritage-hero-summary">
+            <dl className="heritage-facts">
+              {facts.map(([value, label], index) => (
+                <div key={label}>
+                  <dd>{value}</dd>
+                  <dt className={index === 3 ? "sr-only" : undefined}>
+                    {label}
+                  </dt>
+                </div>
+              ))}
+            </dl>
+            {tourButton("heritage-button heritage-hero-action")}
+          </div>
         </section>
-        <dl className="heritage-facts heritage-pad">
-          {facts.map(([value, label]) => (
-            <div key={label}>
-              <dd>{value}</dd>
-              <dt>{label}</dt>
-            </div>
-          ))}
-        </dl>
         <section
           className="heritage-story heritage-section heritage-pad"
           id="story"

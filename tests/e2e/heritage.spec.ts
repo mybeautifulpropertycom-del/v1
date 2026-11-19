@@ -5,39 +5,26 @@ import {
   propertyStorySource,
 } from "../../src/lib/property-story";
 
-async function coverScale(page: import("@playwright/test").Page) {
-  return page
-    .locator(".heritage-cover-image")
-    .evaluate((image) => new DOMMatrix(getComputedStyle(image).transform).a);
-}
-
-test("Heritage cover zooms on scroll, keeps the heading stable, and honors reduced motion", async ({
+test("Heritage hero keeps its summary directly below the photograph during normal scrolling", async ({
   page,
 }) => {
   await page.goto("/modele/minimal");
   const stage = page.locator(".heritage-hero-stage");
-  await expect(stage).toHaveAttribute("data-zoom-pinned", "true");
-  expect(await coverScale(page)).toBe(1);
-  await stage.evaluate((node) =>
-    window.scrollTo({
-      top: node.getBoundingClientRect().top + scrollY + innerHeight * 0.325,
-      behavior: "instant",
-    }),
-  );
-  await expect.poll(() => coverScale(page)).toBeGreaterThan(1.08);
-  expect(await coverScale(page)).toBeLessThan(1.2);
-  await expect(page.locator(".heritage-hero h1")).toHaveCSS(
-    "transform",
-    "none",
-  );
-  const hero = await page.locator(".heritage-hero").boundingBox();
-  expect(hero!.y).toBeCloseTo(0, 0);
-  expect(hero!.height).toBe(page.viewportSize()!.height);
-  const cover = await page.locator(".heritage-cover").boundingBox();
-  expect(cover!.y + cover!.height).toBeCloseTo(page.viewportSize()!.height, 0);
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  const hero = page.locator(".heritage-hero");
+  const summary = page.locator(".heritage-hero-summary");
   await expect(stage).not.toHaveAttribute("data-zoom-pinned");
-  await expect.poll(() => coverScale(page)).toBe(1);
+  const photoBounds = await hero.boundingBox();
+  const summaryBounds = await summary.boundingBox();
+  const bounds = await stage.boundingBox();
+  expect(summaryBounds!.y).toBeCloseTo(photoBounds!.y + photoBounds!.height, 0);
+  expect(bounds!.height).toBeCloseTo(
+    photoBounds!.height + summaryBounds!.height,
+    0,
+  );
+  await page.evaluate(() => window.scrollBy(0, 200));
+  expect((await hero.boundingBox())!.y).toBeCloseTo(photoBounds!.y - 200, 0);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(hero).toHaveCSS("position", "relative");
 });
 
 test("Heritage highlights loop as text, pause on hover, and remain fully readable with reduced motion", async ({
@@ -264,7 +251,6 @@ test("Heritage uses saved listing data, supports inline edits, and fits phones",
       behavior: "instant",
     }),
   );
-  await expect.poll(() => coverScale(page)).toBeGreaterThan(1);
   for (const section of await page.locator("main > section").all()) {
     await section.scrollIntoViewIfNeeded();
     expect(
