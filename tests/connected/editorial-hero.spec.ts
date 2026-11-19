@@ -34,7 +34,9 @@ for (const url of ["/modele/editorial", "/p/rent-price-test-editorial-house"]) {
         await expect(action).toBeInViewport({ ratio: 1 });
         expect(await page.evaluate(() => scrollY)).toBe(0);
       } else {
-        await action.scrollIntoViewIfNeeded();
+        await action.evaluate((element) =>
+          element.scrollIntoView({ block: "center", behavior: "instant" }),
+        );
         await expect(action).toBeInViewport({ ratio: 1 });
       }
       await action.click();

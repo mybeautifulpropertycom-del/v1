@@ -134,11 +134,7 @@ test("the pinned photographs change on scroll and remain separate from the compl
   const bounds = await page.locator(".estate-scenes").boundingBox();
   expect(bounds?.y).toBeCloseTo(0, 0);
   expect(bounds?.height).toBe(page.viewportSize()!.height);
-  expect(
-    await page
-      .locator(".estate-scroll-heading")
-      .evaluate((node) => node.getBoundingClientRect().bottom),
-  ).toBeLessThanOrEqual(0);
+  await expect(page.locator(".estate-scroll-heading")).toHaveCount(0);
   await expect(scroll.locator("button, a, svg")).toHaveCount(0);
   await expect(scroll).not.toContainText("Take a closer look");
   await expect(scroll).not.toContainText("SCROLL TO DISCOVER");

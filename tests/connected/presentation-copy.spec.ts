@@ -58,12 +58,13 @@ async function checkPresentation(
   const contact = page.locator("#contact");
   await expect(contact.locator(".presentation-agent-heading")).toHaveText(
     prefix === "estate"
-      ? "Comunică eficient cu agentul imobiliar"
+      ? "Comunică eficient cu vânzătorul"
       : "Comunică eficient cu agentul",
   );
   if (prefix === "estate") {
     const reference = await page
-      .locator(".estate-scroll-heading h2")
+      .locator(".estate-scene-copy h3")
+      .first()
       .evaluate((el) => getComputedStyle(el).fontSize);
     await expect(contact.locator(".presentation-agent-heading")).toHaveCSS(
       "font-size",

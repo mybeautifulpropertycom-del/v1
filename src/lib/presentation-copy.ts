@@ -25,7 +25,7 @@ export const presentationCopy = {
   },
   agent: {
     title: "Comunică eficient cu agentul",
-    editorialTitle: "Comunică eficient cu agentul imobiliar",
+    editorialTitle: "Comunică eficient cu vânzătorul",
     subtitle: "Obține răspuns rapid la toate întrebările.",
   },
   neighbourhood: "Cunoaște zonele din apropiere",

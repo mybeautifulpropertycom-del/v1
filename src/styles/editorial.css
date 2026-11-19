@@ -176,7 +176,7 @@
   padding: 140px var(--estate-content-gutter) 0;
 }
 .estate-hero h1 {
-  font: 600 clamp(28px, calc(4.6vw - 12px), 56px)/1.08 var(--sans);
+  font: 600 clamp(26px, calc(4.6vw - 14px), 54px)/1.08 var(--sans);
   letter-spacing: -0.035em;
   max-width: 1080px;
   overflow-wrap: anywhere;
@@ -186,7 +186,7 @@
 .estate-hero-content > .estate-location {
   margin-top: 12px;
   max-width: 1000px;
-  font-size: clamp(14px, calc(1.9vw - 4px), 22px);
+  font-size: clamp(13px, calc(1.9vw - 5px), 21px);
   line-height: 1.45;
   color: #f0f1e7;
   overflow-wrap: anywhere;
@@ -329,31 +329,6 @@
   height: 100dvh;
   display: flex;
   flex-direction: column;
-}
-.estate-scroll-heading {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 35px;
-  padding-block: 45px 35px;
-}
-.estate-scroll-heading .estate-eyebrow {
-  color: #b6c6a5;
-  font-size: 9px;
-}
-.estate-scroll-heading h2 {
-  font-size: var(--estate-flow-heading-size);
-}
-.estate-scroll-heading h2 em {
-  color: #c2c9a2;
-}
-.estate-scroll-heading .estate-eyebrow + h2 {
-  margin-top: 18px;
-}
-.estate-scroll-heading > div:last-child > p {
-  font-size: 11px;
-  line-height: 1.8;
-  color: #d0d9c7;
 }
 .estate-scenes {
   position: relative;
@@ -908,19 +883,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 30px;
-  padding-block: 35px;
+  padding-block: 20px;
 }
 .estate-footer .footer-agent-details > a {
   display: block;
   font-family: var(--serif);
   font-size: 22px;
   overflow-wrap: anywhere;
-}
-.estate-footer .footer-agent-details > span {
-  display: block;
-  color: var(--estate-muted);
-  font-size: 10px;
-  margin-top: 7px;
 }
 .estate-footer > a {
   font-size: 9px;
@@ -1360,12 +1329,12 @@
     padding: clamp(200px, calc(60svh - 100px), 400px) 6% 0;
   }
   .estate-hero h1 {
-    font-size: clamp(28px, calc(8.6vw - 4px), 36px);
+    font-size: clamp(27px, calc(8.6vw - 5px), 35px);
     max-width: 100%;
   }
   .estate-hero-content > .estate-location {
     margin-top: 9px;
-    font-size: 15px;
+    font-size: 14px;
   }
   .estate-hero-actions {
     order: 2;
@@ -1440,13 +1409,6 @@
   .estate-story-copy > p {
     font-size: 13px;
     line-height: 1.95;
-  }
-  .estate-scroll-heading {
-    display: block;
-    padding-block: 40px 30px;
-  }
-  .estate-scroll-heading > div:last-child {
-    margin-top: 20px;
   }
   .estate-scene {
     min-height: 520px;
@@ -1561,6 +1523,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 25px;
+    padding-block: 16px;
   }
   .estate-footer > div {
     grid-column: 1/-1;

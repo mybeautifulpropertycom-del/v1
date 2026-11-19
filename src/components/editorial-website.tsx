@@ -107,27 +107,8 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
   return (
     <section
       className="estate-scroll-gallery"
-      aria-labelledby="scroll-gallery-title"
+      aria-label="Descoperă proprietatea în fotografii"
     >
-      <div className="estate-scroll-heading estate-pad">
-        <div>
-          <span className="estate-eyebrow">
-            O locuință, descoperită pas cu pas
-          </span>
-          <h2 id="scroll-gallery-title">
-            Lasă curiozitatea
-            <br />
-            <em>să te îndrume.</em>
-          </h2>
-        </div>
-        <div>
-          <p>
-            Unele detalii merită descoperite în tihnă.
-            <br />
-            Mai rămâi puțin. Descoperă fiecare detaliu.
-          </p>
-        </div>
-      </div>
       <div
         className="estate-scroll-stage"
         ref={stage}
@@ -844,7 +825,6 @@ export function EditorialWebsite({
           <FooterIdentityLogo />
           <div className="footer-agent-details">
             <a href="#home">{profile.agency || profile.name}</a>
-            <span>{property.location}</span>
           </div>
         </div>
         <FooterBrand />
