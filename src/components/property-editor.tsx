@@ -504,12 +504,13 @@ export function PropertyEditor({
                     </select>
                   </label>
                   <label>
-                    Preț
+                    Preț{property.transaction === "rent" ? " / lună" : ""}
                     <PriceInput
                       guideField="price"
                       guideIssue={guideIssues.price}
                       value={property.price}
                       currency={property.currency}
+                      transaction={property.transaction}
                       onChange={(value) => update("price", value)}
                     />
                   </label>

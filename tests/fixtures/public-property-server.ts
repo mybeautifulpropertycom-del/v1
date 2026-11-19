@@ -13,6 +13,28 @@ globalThis.fetch = async (input, init) => {
     : input instanceof Request
       ? await input.clone().json()
       : {};
+  const priceCase =
+    /^(rent|sale)-price-test-(editorial|minimal|panorama)-(apartment|house)$/.exec(
+      body.property_slug || "",
+    );
+  if (priceCase) {
+    const sample = demoWorkspace();
+    return Response.json({
+      videoIncluded: false,
+      property: {
+        ...sample.properties[0],
+        slug: body.property_slug,
+        address_slug: body.property_slug,
+        template: priceCase[2],
+        transaction: priceCase[1],
+        type: priceCase[3] === "apartment" ? "Condo" : "House",
+        currency: "EUR",
+        price: 1500,
+        status: "published",
+      },
+      profile: sample.profile,
+    });
+  }
   const photoOnly = /^photos-test-(editorial|minimal|panorama)$/.exec(
     body.property_slug || "",
   )?.[1];

@@ -37,7 +37,7 @@ test("sharing uses canonical public URLs and safely encodes titles and email tex
 });
 
 const originalFetch = globalThis.fetch;
-test("group posts preserve exact saved facts and rental pricing without inventing payment periods", () => {
+test("group posts preserve exact saved facts and show rentals as a monthly price", () => {
   const property = {
     ...demoWorkspace().properties[0],
     status: "published" as const,
@@ -53,9 +53,11 @@ test("group posts preserve exact saved facts and rental pricing without inventin
   );
   assert.ok(post.includes("De închiriat"));
   assert.ok(post.includes("87,5 m²"));
-  assert.ok(post.includes("1.500 RON"));
+  assert.ok(post.includes("1.500 RON / lună"));
   assert.ok(post.includes(property.location));
-  assert.ok(!post.includes("/lună"));
+  assert.ok(
+    !propertyGroupPost({ ...property, transaction: "sale" }).includes("/ lună"),
+  );
   assert.match(post, /\/locuinta-publicata$/);
   assert.equal(propertyGroupPost({ ...property, status: "draft" }), "");
   assert.notEqual(

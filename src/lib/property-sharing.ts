@@ -21,7 +21,8 @@ export function propertyShareLinks(property: Property | PublicProperty) {
 
 export function propertyShareSource(property: Property | PublicProperty) {
   return JSON.stringify({
-    version: 1,
+    // Rental posts now explicitly include the monthly period in their price.
+    version: property.transaction === "rent" ? 2 : 1,
     url: propertyShareLinks(property)?.url,
     title: property.title,
     description: property.description,
@@ -68,7 +69,7 @@ export function propertyGroupPost(
     "",
     ...(introduction.trim() ? [introduction.trim(), ""] : []),
     details,
-    `Preț: ${number(property.price)} ${property.currency}`,
+    `Preț: ${number(property.price)} ${property.currency}${property.transaction === "rent" ? " / lună" : ""}`,
     ...(property.amenities.length
       ? [`Dotări: ${property.amenities.slice(0, 8).join(", ")}`]
       : []),

@@ -6,12 +6,14 @@ import type { Property } from "@/lib/model";
 export function PriceInput({
   value,
   currency,
+  transaction,
   onChange,
   guideField,
   guideIssue,
 }: {
   value: number;
   currency: Property["currency"];
+  transaction: Property["transaction"];
   onChange: (value: number) => void;
   guideField?: string;
   guideIssue?: string | null;
@@ -32,10 +34,11 @@ export function PriceInput({
       : value
         ? String(value)
         : "";
+  const period = transaction === "rent" ? " / lună" : "";
   function format(amount: string) {
     if (!amount) return "";
     const [whole, fraction] = amount.split(".");
-    return `${(whole || "0").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}${fraction === undefined ? "" : `,${fraction}`} ${symbol}`;
+    return `${(whole || "0").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}${fraction === undefined ? "" : `,${fraction}`} ${symbol}${period}`;
   }
   const display = format(raw);
   useLayoutEffect(() => {
@@ -52,7 +55,7 @@ export function PriceInput({
       type="text"
       inputMode="decimal"
       value={display}
-      placeholder={`1.250.000 ${symbol}`}
+      placeholder={`${transaction === "rent" ? "1.250" : "1.250.000"} ${symbol}${period}`}
       onKeyDown={(event) => {
         const element = event.currentTarget;
         const position = element.selectionStart;
@@ -72,6 +75,7 @@ export function PriceInput({
         ).length;
         const cleaned = text
           .trim()
+          .replace(/\s*\/\s*lun[ăa]\s*$/iu, "")
           .replace(symbol, "")
           .replace(currency, "")
           .replace(/[.\s]/g, "")
