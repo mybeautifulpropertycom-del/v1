@@ -25,7 +25,7 @@ const amenities = [
   "Șemineu",
 ];
 
-for (const count of [3, 9, amenities.length]) {
+for (const count of [3, 4, 9, amenities.length]) {
   test(`Minimal facilities fit short and long lists (${count}) on desktop and phones`, async ({
     page,
   }) => {
@@ -76,22 +76,25 @@ for (const count of [3, 9, amenities.length]) {
                 item.right <= bounds.right &&
                 item.bottom <= bounds.bottom,
             ),
-          imageBehind:
-            image.left <= bounds.left &&
-            image.right >= bounds.right &&
-            image.top <= bounds.top &&
-            image.bottom >= bounds.bottom,
+          imageBesideOrAbove:
+            innerWidth > 767
+              ? Math.abs(image.left - bounds.right) < 1 &&
+                Math.abs(image.top - bounds.top) < 1 &&
+                Math.abs(image.bottom - bounds.bottom) < 1
+              : Math.abs(image.bottom - bounds.top) < 1 &&
+                Math.abs(image.left - bounds.left) < 1 &&
+                Math.abs(image.right - bounds.right) < 1,
           columns: items[1].left > items[0].left ? 2 : 1,
           pageFits: document.documentElement.scrollWidth <= innerWidth,
         };
       });
       expect(layout).toEqual({
         fits: true,
-        imageBehind: true,
-        columns: count > 4 ? 2 : 1,
+        imageBesideOrAbove: true,
+        columns: 2,
         pageFits: true,
       });
-      if (count === 9 && width !== 320)
+      if (count === 4 && width !== 320)
         await section.screenshot({
           path: `/tmp/minimal-facilities-${width}.png`,
         });

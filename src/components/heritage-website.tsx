@@ -434,16 +434,6 @@ export function HeritageWebsite({
           className="heritage-details"
           aria-labelledby="heritage-details-title"
         >
-          <div className="heritage-details-image">
-            {detailPhoto ? (
-              <PropertyImage
-                src={detailPhoto}
-                alt={`${property.title} — detaliu al proprietății`}
-                sizes="100vw"
-                loading="lazy"
-              />
-            ) : null}
-          </div>
           <div className="heritage-details-copy">
             <span className="heritage-kicker">
               {presentationCopy.heritageDetails.label}
@@ -455,13 +445,23 @@ export function HeritageWebsite({
             </h2>
             <ul
               className={
-                features.length > 4 ? "heritage-features-columns" : undefined
+                features.length > 1 ? "heritage-features-columns" : undefined
               }
             >
               {features.map((feature, index) => (
                 <li key={`${feature}-${index}`}>{feature}</li>
               ))}
             </ul>
+          </div>
+          <div className="heritage-details-image">
+            {detailPhoto ? (
+              <PropertyImage
+                src={detailPhoto}
+                alt={`${property.title} — detaliu al proprietății`}
+                sizes="(max-width: 767px) 100vw, 56vw"
+                loading="lazy"
+              />
+            ) : null}
           </div>
         </section>
         {videoIncluded && (film?.src || isPreview) && (

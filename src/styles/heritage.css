@@ -559,47 +559,47 @@
   color: #788369;
 }
 .heritage-details {
-  position: relative;
-  isolation: isolate;
   display: grid;
-  align-items: center;
-  min-height: 680px;
-  padding: clamp(32px, 5vw, 80px);
-  background: #233c2e;
+  grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+  min-height: 560px;
+  background: var(--heritage-ink);
   color: #f5f3e4;
 }
 .heritage-details-image {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+  position: relative;
+  min-width: 0;
 }
 .heritage-details-image > img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 .heritage-details-copy {
-  width: min(100%, 570px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-width: 0;
-  padding: clamp(28px, 3.5vw, 52px);
-  background: #203b2ef0;
-  border: 1px solid #d7dfc91a;
+  padding: clamp(32px, 4vw, 64px);
 }
 .heritage-details-copy .heritage-kicker {
+  display: flex;
+  align-items: center;
+  gap: 18px;
   color: #c3ccb1;
-  margin-bottom: 22px;
+  margin-bottom: 36px;
 }
 .heritage-details-copy .heritage-kicker::after {
   content: "";
-  display: block;
-  width: 52px;
+  flex: 1;
+  min-width: 24px;
   height: 1px;
   background: #b5b18a;
-  margin-top: 18px;
 }
 .heritage-details-copy h2 {
   font-size: clamp(26px, 2.4vw, 38px);
-  margin-bottom: 26px;
+  margin-bottom: 44px;
 }
 .heritage-details-copy h2 em {
   color: #c7cfad;
@@ -607,7 +607,6 @@
 .heritage-details-copy ul {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  column-gap: 24px;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -618,11 +617,15 @@
 .heritage-details-copy li {
   display: flex;
   align-items: center;
-  padding-block: 15px;
-  border-bottom: 1px solid #d7dfc930;
+  padding: 18px 16px 18px 0;
+  border-top: 1px solid #d7dfc94d;
   color: #eeefdf;
   font: 400 15px/1.5 var(--sans);
   overflow-wrap: anywhere;
+}
+.heritage-features-columns li:nth-child(even) {
+  padding-inline: 16px 0;
+  border-left: 1px solid #d7dfc94d;
 }
 .heritage-film {
   padding-bottom: 65px;
@@ -1145,14 +1148,22 @@
     gap: 10px;
   }
   .heritage-details {
-    min-height: 600px;
-    padding: 52px 5%;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
   }
   .heritage-details-copy {
-    padding: 30px 22px;
+    padding: 40px 7%;
   }
-  .heritage-details-copy ul {
-    column-gap: 18px;
+  .heritage-details-image {
+    order: -1;
+    aspect-ratio: 4 / 3;
+  }
+  .heritage-details-copy .heritage-kicker {
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .heritage-details-copy h2 {
+    margin-bottom: 32px;
   }
   .heritage-details-copy li {
     padding-block: 13px;
