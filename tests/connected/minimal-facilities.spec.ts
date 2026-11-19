@@ -49,7 +49,7 @@ for (const count of [3, 4, 9, amenities.length]) {
     const section = page.locator(".heritage-details");
     const panel = section.locator(".heritage-details-copy");
     await expect(section.locator("li")).toHaveText(amenities.slice(0, count));
-    await expect(section.locator("svg, p")).toHaveCount(0);
+    await expect(section.locator("li svg, p")).toHaveCount(0);
     await expect(section.locator("img")).toHaveAttribute(
       "src",
       "/images/kitchen.jpg",
@@ -98,6 +98,26 @@ for (const count of [3, 4, 9, amenities.length]) {
         await section.screenshot({
           path: `/tmp/minimal-facilities-${width}.png`,
         });
+      if (count === 4) {
+        const action = section.getByRole("button", {
+          name: "Programează o vizionare",
+          exact: true,
+        });
+        expect(
+          await action.evaluate(
+            (el) =>
+              el.getBoundingClientRect().top >=
+              el.previousElementSibling!.getBoundingClientRect().bottom,
+          ),
+        ).toBe(true);
+        await action.click();
+        const dialog = page.getByRole("dialog", { name: /Să ne întâlnim/ });
+        await expect(dialog).toBeVisible();
+        await dialog
+          .getByRole("button", { name: "Închide cererea de vizionare" })
+          .click();
+        await expect(dialog).toHaveCount(0);
+      }
     }
   });
 }
@@ -115,7 +135,7 @@ test("Minimal keeps a readable facilities panel when photographs and amenities a
     "O locuință potrivită",
   );
   await expect(section.locator("li")).toHaveCount(4);
-  await expect(section.locator("img, svg, p")).toHaveCount(0);
+  await expect(section.locator("img, li svg, p")).toHaveCount(0);
   expect(await section.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
     true,
   );

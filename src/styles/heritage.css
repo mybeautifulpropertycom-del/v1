@@ -592,10 +592,14 @@
 }
 .heritage-details-copy .heritage-kicker::after {
   content: "";
-  flex: 1;
-  min-width: 24px;
+  flex: 0 0 48px;
   height: 1px;
   background: #b5b18a;
+}
+.heritage-details-copy > .heritage-button {
+  align-self: flex-start;
+  max-width: 100%;
+  margin-top: 32px;
 }
 .heritage-details-copy h2 {
   font-size: clamp(26px, 2.4vw, 38px);

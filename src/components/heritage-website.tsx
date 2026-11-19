@@ -452,6 +452,7 @@ export function HeritageWebsite({
                 <li key={`${feature}-${index}`}>{feature}</li>
               ))}
             </ul>
+            {tourButton("heritage-button heritage-button-paper")}
           </div>
           <div className="heritage-details-image">
             {detailPhoto ? (
