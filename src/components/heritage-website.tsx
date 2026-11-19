@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   Asterisk,
   Film,
-  Expand,
   Mail,
   Phone,
   Plus,
@@ -404,9 +403,6 @@ export function HeritageWebsite({
                   sizes="(max-width: 767px) 100vw, 40vw"
                   loading="lazy"
                 />
-                <span>
-                  Vezi fotografiile <Expand size={15} />
-                </span>
               </button>
             ) : (
               <div className="heritage-image-empty">
@@ -506,14 +502,22 @@ export function HeritageWebsite({
             <div className="heritage-agent-links">
               {profile.phone && (
                 <a href={`tel:${safePhone(profile.phone)}`}>
-                  <Phone size={15} />
-                  <span>{profile.phone}</span>
+                  <Phone size={18} />
+                  <span>
+                    <small>Telefon</small>
+                    {profile.phone}
+                  </span>
+                  <ArrowUpRight size={17} />
                 </a>
               )}
               {profile.email && (
                 <a href={`mailto:${profile.email}`}>
-                  <Mail size={15} />
-                  <span>{profile.email}</span>
+                  <Mail size={18} />
+                  <span>
+                    <small>E-mail</small>
+                    {profile.email}
+                  </span>
+                  <ArrowUpRight size={17} />
                 </a>
               )}
             </div>

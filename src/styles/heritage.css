@@ -9,6 +9,7 @@
   --heritage-muted: #727a66;
   --heritage-sage: #8b967a;
   --heritage-line: #dedfce;
+  --heritage-content-gutter: max(11.5%, calc((100% - 1180px) / 2));
   --estate-paper: var(--heritage-paper);
   --estate-ink: var(--heritage-ink);
   --estate-muted: var(--heritage-muted);
@@ -31,7 +32,10 @@
   box-shadow: 0 0 0 3px #91a07825;
 }
 .heritage-pad {
-  padding-inline: max(11.5%, calc((100% - 1180px) / 2));
+  padding-inline: var(--heritage-content-gutter);
+}
+.heritage-website :is(.property-neighbourhood, .property-mortgage) {
+  padding-inline: var(--heritage-content-gutter);
 }
 .heritage-section {
   padding-block: clamp(65px, 7.5vw, 110px);
@@ -576,7 +580,7 @@
   color: var(--heritage-ink);
 }
 .heritage-details.heritage-section {
-  padding-block: clamp(28px, 3vw, 48px);
+  padding-block: 12px 16px;
 }
 .heritage-details-copy {
   min-width: 0;
@@ -657,24 +661,18 @@
   height: 100%;
   object-fit: cover;
 }
-.heritage-details-image > span {
-  position: absolute;
-  inset: auto 20px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 18px;
-  background: #304536e8;
-  color: #f6f3e9;
-  font: 500 11px/1.5 var(--sans);
-}
 .heritage-details-media .heritage-image-empty {
   width: 100%;
   min-height: 520px;
 }
 .heritage-film {
   padding-bottom: 65px;
+}
+.heritage-gallery.heritage-section {
+  padding-bottom: 28px;
+}
+.heritage-details + .heritage-film {
+  padding-top: 32px;
 }
 .heritage-film video {
   display: block;
@@ -749,8 +747,8 @@
 }
 .heritage-contact {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 8%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr);
+  gap: clamp(32px, 5vw, 80px);
   padding-block: 25px 65px;
   align-items: start;
 }
@@ -797,30 +795,37 @@
   margin: 22px 0;
 }
 .heritage-agent-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  gap: 12px;
   margin-top: 28px;
 }
 .heritage-agent-links a {
-  display: inline-flex;
-  gap: 10px;
+  display: flex;
+  gap: 16px;
   align-items: center;
   max-width: 100%;
-  min-height: 46px;
-  padding: 12px 16px;
-  border: 1px solid #b9c3ae;
-  border-radius: 3px;
-  background: #fffdf580;
-  font-size: 12px;
+  min-height: 68px;
+  padding: 14px 20px;
+  border: 1px solid var(--heritage-line);
+  border-radius: 5px;
+  background: #fffdf7;
+  font-size: 14px;
   line-height: 1.5;
   text-decoration: none;
   color: var(--heritage-ink);
   transition: background-color 160ms, border-color 160ms;
 }
+.heritage-agent-links a[href^="tel:"] {
+  background: var(--heritage-ink);
+  border-color: var(--heritage-ink);
+  color: #fffdf7;
+}
 .heritage-agent-links a:hover {
   background: #e5e9db;
   border-color: #7f916e;
+}
+.heritage-agent-links a[href^="tel:"]:hover {
+  background: #22392a;
 }
 .heritage-agent-links a > svg {
   flex-shrink: 0;
@@ -829,14 +834,27 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.heritage-agent-links a small {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.heritage-agent-links a > svg:last-child {
+  margin-left: auto;
+}
 .heritage-agent h2,
 .heritage-film-heading h2 {
   font-size: clamp(26px, 2.56vw, 38px);
 }
 .heritage-inquiry {
   min-width: 0;
-  padding: 0 0 0 clamp(24px, 3vw, 44px);
-  border-left: 1px solid var(--heritage-line);
+  padding: clamp(24px, 2.5vw, 36px);
+  background: #fffdf7;
+  border: 1px solid var(--heritage-line);
+  border-radius: 6px;
 }
 .heritage-inquiry h3 {
   font: 600 clamp(24px, 2vw, 28px)/1.25 var(--sans);
@@ -844,7 +862,7 @@
   color: var(--heritage-ink);
 }
 .heritage-inquiry > p:first-of-type {
-  margin: 12px 0 30px;
+  margin: 12px 0 24px;
   font-size: 12px;
   line-height: 1.8;
   color: var(--heritage-muted);
@@ -852,9 +870,9 @@
 .heritage-inquiry label {
   display: block;
   min-width: 0;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   color: var(--heritage-ink);
-  font: 500 12px/1.6 var(--sans);
+  font: 500 13px/1.6 var(--sans);
 }
 .heritage-inquiry label > span {
   color: var(--heritage-muted);
@@ -864,12 +882,11 @@
   display: block;
   width: 100%;
   min-width: 0;
-  padding: 12px 0;
-  margin-top: 4px;
-  border: 0;
-  border-bottom: 1px solid #bfc7b3;
-  border-radius: 0;
-  background: transparent;
+  padding: 12px 14px;
+  margin-top: 8px;
+  border: 1px solid #d2d8c9;
+  border-radius: 4px;
+  background: #fff;
   color: var(--heritage-ink);
   font: 400 16px/1.5 var(--sans);
 }
@@ -893,7 +910,7 @@
   gap: 24px;
 }
 .heritage-inquiry > .heritage-button {
-  width: auto;
+  width: 100%;
   max-width: 100%;
   justify-content: space-between;
   min-height: 48px;
@@ -986,6 +1003,9 @@
 }
 
 @media (max-width: 1100px) {
+  .heritage-website {
+    --heritage-content-gutter: 8%;
+  }
   .heritage-pad {
     padding-inline: 8%;
   }
@@ -1018,15 +1038,15 @@
   .heritage-details-copy li {
     font-size: 14px;
   }
-  .heritage-contact {
-    gap: 6%;
-  }
   .heritage-field-pair {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
   }
 }
 @media (max-width: 767px) {
+  .heritage-website {
+    --heritage-content-gutter: 6%;
+  }
   .heritage-pad {
     padding-inline: 6%;
   }
@@ -1213,7 +1233,7 @@
     gap: 32px;
   }
   .heritage-details.heritage-section {
-    padding-block: 28px;
+    padding-block: 12px 16px;
   }
   .heritage-details-media {
     display: block;
@@ -1264,9 +1284,7 @@
     padding-block: 0 55px;
   }
   .heritage-inquiry {
-    padding: 28px 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--heritage-line);
+    padding: 24px 20px;
   }
   .heritage-invitation {
     padding: 65px 6%;
