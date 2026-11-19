@@ -459,7 +459,7 @@ export function HeritageWebsite({
               <PropertyImage
                 src={detailPhoto}
                 alt={`${property.title} — detaliu al proprietății`}
-                sizes="(max-width: 767px) 100vw, 56vw"
+                sizes="100vw"
                 loading="lazy"
               />
             ) : null}

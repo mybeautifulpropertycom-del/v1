@@ -559,14 +559,20 @@
   color: #788369;
 }
 .heritage-details {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
-  min-height: 560px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  min-height: 680px;
+  padding: clamp(40px, 5.5vw, 90px);
   background: var(--heritage-ink);
   color: #f5f3e4;
 }
 .heritage-details-image {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   min-width: 0;
 }
 .heritage-details-image > img {
@@ -580,21 +586,23 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  width: min(100%, 600px);
   min-width: 0;
-  padding: clamp(32px, 4vw, 64px);
-  padding-inline-start: clamp(48px, 8vw, 128px);
+  padding: clamp(28px, 3.5vw, 52px);
+  background: #203b2eeb;
+  border: 1px solid #d7dfc91a;
 }
 .heritage-details-copy .heritage-kicker {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+  display: block;
   color: #c3ccb1;
-  margin-bottom: 36px;
+  margin-bottom: 26px;
 }
 .heritage-details-copy .heritage-kicker::after {
   content: "";
-  flex: 0 0 48px;
+  display: block;
+  width: 48px;
   height: 1px;
+  margin-top: 18px;
   background: #b5b18a;
 }
 .heritage-details-copy > .heritage-button {
@@ -604,7 +612,7 @@
 }
 .heritage-details-copy h2 {
   font-size: clamp(26px, 2.4vw, 38px);
-  margin-bottom: 44px;
+  margin-bottom: 26px;
 }
 .heritage-details-copy h2 em {
   color: #c7cfad;
@@ -612,6 +620,7 @@
 .heritage-details-copy ul {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  column-gap: 24px;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -622,15 +631,11 @@
 .heritage-details-copy li {
   display: flex;
   align-items: center;
-  padding: 18px 16px 18px 0;
-  border-top: 1px solid #d7dfc94d;
+  padding-block: 15px;
+  border-bottom: 1px solid #d7dfc930;
   color: #eeefdf;
   font: 400 15px/1.5 var(--sans);
   overflow-wrap: anywhere;
-}
-.heritage-features-columns li:nth-child(even) {
-  padding-inline: 16px 0;
-  border-left: 1px solid #d7dfc94d;
 }
 .heritage-film {
   padding-bottom: 65px;
@@ -1155,16 +1160,22 @@
   .heritage-details {
     grid-template-columns: minmax(0, 1fr);
     min-height: 0;
+    padding: 0;
   }
   .heritage-details-copy {
+    width: auto;
     padding: 40px 7%;
+    background: var(--heritage-ink);
+    border: 0;
   }
   .heritage-details-image {
+    position: relative;
+    inset: auto;
+    z-index: auto;
     order: -1;
     aspect-ratio: 4 / 3;
   }
   .heritage-details-copy .heritage-kicker {
-    gap: 12px;
     margin-bottom: 28px;
   }
   .heritage-details-copy h2 {

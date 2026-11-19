@@ -76,11 +76,12 @@ for (const count of [3, 4, 9, amenities.length]) {
                 item.right <= bounds.right &&
                 item.bottom <= bounds.bottom,
             ),
-          imageBesideOrAbove:
+          imageBehindOrAbove:
             innerWidth > 767
-              ? Math.abs(image.left - bounds.right) < 1 &&
-                Math.abs(image.top - bounds.top) < 1 &&
-                Math.abs(image.bottom - bounds.bottom) < 1
+              ? image.left < bounds.left &&
+                image.right > bounds.right &&
+                image.top < bounds.top &&
+                image.bottom > bounds.bottom
               : Math.abs(image.bottom - bounds.top) < 1 &&
                 Math.abs(image.left - bounds.left) < 1 &&
                 Math.abs(image.right - bounds.right) < 1,
@@ -90,13 +91,13 @@ for (const count of [3, 4, 9, amenities.length]) {
       });
       expect(layout).toEqual({
         fits: true,
-        imageBesideOrAbove: true,
+        imageBehindOrAbove: true,
         columns: 2,
         pageFits: true,
       });
-      if (count === 4 && width !== 320)
+      if ((count === 4 || count === 9) && width !== 320)
         await section.screenshot({
-          path: `/tmp/minimal-facilities-${width}.png`,
+          path: `/tmp/minimal-facilities-${count}-${width}.png`,
         });
       if (count === 4) {
         const action = section.getByRole("button", {
