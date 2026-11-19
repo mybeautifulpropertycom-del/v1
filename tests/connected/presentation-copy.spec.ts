@@ -10,7 +10,7 @@ import { TEMPLATE_LOCATION } from "../../src/lib/template-location";
 
 const designs = [
   ["editorial", "estate", ".estate-story > div:first-child h2"],
-  ["minimal", "heritage", ".heritage-story .heritage-section-heading h2"],
+  ["minimal", "heritage", ".heritage-story-copy h2"],
   ["panorama", "atelier", ".atelier-story-copy h2"],
 ] as const;
 
@@ -20,12 +20,19 @@ async function checkPresentation(
   introduction: string,
   address: string,
 ) {
-  await expect(page.locator(introduction)).toContainText(
-    "Proprietatea perfectă",
-  );
-  await expect(page.locator(`${introduction} em`)).toHaveText(
-    "pentru tine și familia ta",
-  );
+  if (prefix !== "heritage") {
+    await expect(page.locator(introduction)).toContainText(
+      "Proprietatea perfectă",
+    );
+    await expect(page.locator(`${introduction} em`)).toHaveText(
+      "pentru tine și familia ta",
+    );
+  } else {
+    await expect(page.locator(introduction)).toBeVisible();
+    await expect(
+      page.locator(".heritage-story > .heritage-section-heading"),
+    ).toHaveCount(0);
+  }
   const gallery = page.locator(`#gallery h2`);
   await expect(gallery).toContainText("Descoperă proprietatea.");
   await expect(gallery.locator("em")).toHaveText(
@@ -52,7 +59,7 @@ async function checkPresentation(
     );
     await expect(page.locator("#heritage-details-title em")).toHaveCSS(
       "color",
-      "rgb(199, 207, 173)",
+      "rgb(137, 149, 117)",
     );
   }
   const contact = page.locator("#contact");
@@ -102,15 +109,13 @@ async function checkPresentation(
   await expect(contact.locator(".presentation-agent-heading em")).toHaveCount(
     0,
   );
-  if (prefix !== "heritage") {
-    await expect(contact.locator("form h3")).toHaveText(
-      presentationCopy.inquiry.title,
-    );
-    await expect(contact.locator("form h3 em")).toHaveCount(0);
-    await expect(contact.locator("form > p").first()).toHaveText(
-      presentationCopy.inquiry.subtitle,
-    );
-  }
+  await expect(contact.locator("form h3")).toHaveText(
+    presentationCopy.inquiry.title,
+  );
+  await expect(contact.locator("form h3 em")).toHaveCount(0);
+  await expect(contact.locator("form > p").first()).toHaveText(
+    presentationCopy.inquiry.subtitle,
+  );
   const invitation = page.locator(`.${prefix}-invitation`);
   await expect(invitation.locator("h2")).toContainText(
     "Te așteptăm să înțelegi",
@@ -233,11 +238,13 @@ for (const [template, prefix, introduction] of designs) {
         prefix === "atelier"
           ? ".atelier-story-copy > p"
           : prefix === "heritage"
-            ? ".heritage-story .heritage-section-heading > p"
+            ? ".heritage-story-text > p"
             : ".estate-story-copy > p",
       ),
     ).toHaveText(
-      prefix === "atelier" ? draft.description : draft.content.introBody,
+      prefix === "atelier" || prefix === "heritage"
+        ? draft.description
+        : draft.content.introBody,
     );
   });
 }

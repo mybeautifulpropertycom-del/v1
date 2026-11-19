@@ -83,12 +83,12 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
     page.getByRole("button", { name: "Salvează modificările", exact: true }),
   ).toBeEnabled();
   await page.goto(`/previzualizare/${id}`);
-  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+  await expect(page.locator(".heritage-story-text > p")).toHaveText(
     draft.description,
   );
   await expect(
-    page.locator(".heritage-story .heritage-section-heading > p"),
-  ).toHaveText(draft.content.introBody);
+    page.locator(".heritage-story > .heritage-section-heading"),
+  ).toHaveCount(0);
   await expect(
     page.locator(".heritage-gallery .heritage-section-heading > p"),
   ).toHaveText(draft.content.galleryBody);
@@ -100,19 +100,17 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
   const custom =
     "Your personal introduction belongs right here. Visit to explore this home for yourself.";
   await page
-    .getByRole("textbox", { name: "Editează Textul introducerii", exact: true })
+    .getByRole("textbox", {
+      name: "Editează Descrierea secțiunii principale",
+      exact: true,
+    })
     .fill(custom);
   await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
     page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await expect(
-    page.locator(".heritage-story .heritage-section-heading > p"),
-  ).toHaveText(custom);
-  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
-    draft.description,
-  );
+  await expect(page.locator(".heritage-story-text > p")).toHaveText(custom);
   expect(requests).toBe(1);
   expect(state.property.description).toBe(notes);
   await page.getByRole("button", { name: "Editează pe pagină" }).click();
@@ -141,7 +139,7 @@ test("private preview prepares text in place but only saves it on request", asyn
     });
   });
   await page.goto(`/previzualizare/${id}`);
-  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+  await expect(page.locator(".heritage-story-text > p")).toHaveText(
     draft.description,
   );
   await expect(
@@ -250,7 +248,7 @@ test("private preview reports a platform timeout and lets the agent retry in pla
   await page
     .getByRole("button", { name: "Încearcă din nou", exact: true })
     .click();
-  await expect(page.locator(".heritage-story-copy > p")).toHaveText(
+  await expect(page.locator(".heritage-story-text > p")).toHaveText(
     storyFixture(state.property).description,
   );
   expect(requests).toBe(2);

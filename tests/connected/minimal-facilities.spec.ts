@@ -76,22 +76,17 @@ for (const count of [3, 4, 9, amenities.length]) {
                 item.right <= bounds.right &&
                 item.bottom <= bounds.bottom,
             ),
-          imageBehindOrAbove:
+          imageRightOrAbove:
             innerWidth > 767
-              ? image.left < bounds.left &&
-                image.right > bounds.right &&
-                image.top < bounds.top &&
-                image.bottom > bounds.bottom
-              : Math.abs(image.bottom - bounds.top) < 1 &&
-                Math.abs(image.left - bounds.left) < 1 &&
-                Math.abs(image.right - bounds.right) < 1,
+              ? image.left >= bounds.right
+              : image.bottom <= bounds.top,
           columns: items[1].left > items[0].left ? 2 : 1,
           pageFits: document.documentElement.scrollWidth <= innerWidth,
         };
       });
       expect(layout).toEqual({
         fits: true,
-        imageBehindOrAbove: true,
+        imageRightOrAbove: true,
         columns: 2,
         pageFits: true,
       });
@@ -135,7 +130,10 @@ test("Minimal keeps a readable facilities panel when photographs and amenities a
   await expect(section.getByRole("heading")).toContainText(
     "O locuință potrivită",
   );
-  await expect(section.locator("li")).toHaveCount(4);
+  await expect(section.locator("li")).toHaveCount(0);
+  await expect(section.locator(".heritage-property-details > div")).toHaveCount(
+    6,
+  );
   await expect(section.locator("img, li svg, p")).toHaveCount(0);
   expect(await section.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
     true,

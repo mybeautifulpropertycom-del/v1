@@ -14,8 +14,8 @@ import {
   ArrowUpRight,
   Asterisk,
   Film,
+  Expand,
   Mail,
-  MapPin,
   Phone,
   Plus,
 } from "lucide-react";
@@ -25,6 +25,7 @@ import type { PropertyWebsiteProps } from "./property-website";
 import { EditableText } from "./website-editable-text";
 import { PropertyPhotoDialog } from "./property-photo-dialog";
 import { ViewingDialog } from "./viewing-dialog";
+import { HeritageContactForm } from "./heritage-contact-form";
 
 export function HeritageWebsite({
   property,
@@ -191,24 +192,37 @@ export function HeritageWebsite({
           className="heritage-story heritage-section heritage-pad"
           id="story"
         >
-          <div className="heritage-section-label">
-            <span>O LOCUINȚĂ. O EMOȚIE. UN NOU ÎNCEPUT.</span>
-          </div>
-          <div className="heritage-section-heading">
-            <h2 className="presentation-section-heading">
-              {presentationCopy.introduction.title}
-              <br />
-              <em>{presentationCopy.introduction.accent}</em>
-            </h2>
-            <p>
-              <EditableText
-                field="copy.introBody"
-                value={copy.introBody}
-                onEdit={onEdit}
-              />
-            </p>
-          </div>
           <div className="heritage-story-layout">
+            <div className="heritage-story-copy">
+              <div className="heritage-story-text">
+                <span className="heritage-kicker">O perspectivă nouă</span>
+                <h2>
+                  <EditableText
+                    field="copy.storyTitle"
+                    value={copy.storyTitle}
+                    onEdit={onEdit}
+                  />
+                  <br />
+                  <em>
+                    <EditableText
+                      field="copy.storyAccent"
+                      value={copy.storyAccent}
+                      onEdit={onEdit}
+                    />
+                  </em>
+                </h2>
+                <p>
+                  <EditableText
+                    field="copy.storyBody"
+                    value={
+                      copy.storyBody ||
+                      "Povestea proprietății va apărea aici. Adaugă o descriere în editor pentru a spune ce o face deosebită."
+                    }
+                    onEdit={onEdit}
+                  />
+                </p>
+              </div>
+            </div>
             <figure className="heritage-album-photo">
               {secondaryPhoto ? (
                 <button
@@ -234,33 +248,7 @@ export function HeritageWebsite({
                 <em>capitol</em>
               </span>
             </figure>
-            <div className="heritage-story-copy">
-              <span className="heritage-kicker">O perspectivă nouă</span>
-              <h2>
-                <EditableText
-                  field="copy.storyTitle"
-                  value={copy.storyTitle}
-                  onEdit={onEdit}
-                />
-                <br />
-                <em>
-                  <EditableText
-                    field="copy.storyAccent"
-                    value={copy.storyAccent}
-                    onEdit={onEdit}
-                  />
-                </em>
-              </h2>
-              <p>
-                <EditableText
-                  field="copy.storyBody"
-                  value={
-                    copy.storyBody ||
-                    "Povestea proprietății va apărea aici. Adaugă o descriere în editor pentru a spune ce o face deosebită."
-                  }
-                  onEdit={onEdit}
-                />
-              </p>
+            <div className="heritage-story-action">
               {tourButton("heritage-link")}
             </div>
           </div>
@@ -347,13 +335,9 @@ export function HeritageWebsite({
               Fotografiile proprietății vor apărea aici.
             </div>
           )}
-          <div className="heritage-gallery-footer">
-            <p>Locația face diferența.</p>
-            {tourButton("heritage-button heritage-button-outline")}
-          </div>
         </section>
         <section
-          className="heritage-details"
+          className="heritage-details heritage-section heritage-pad"
           aria-labelledby="heritage-details-title"
         >
           <div className="heritage-details-copy">
@@ -365,26 +349,70 @@ export function HeritageWebsite({
               <br />
               <em>{presentationCopy.heritageDetails.accent}</em>
             </h2>
-            <ul
-              className={
-                features.length > 1 ? "heritage-features-columns" : undefined
-              }
-            >
-              {features.map((feature, index) => (
-                <li key={`${feature}-${index}`}>{feature}</li>
+            <dl className="heritage-property-details">
+              {[
+                ["Suprafață locuibilă", size],
+                ["Dormitoare", String(property.bedrooms)],
+                ["Băi", String(property.bathrooms)],
+                ["Tipul proprietății", propertyTypeLabel(property.type)],
+                ["Adresă", property.location || "—"],
+                [
+                  property.transaction === "rent"
+                    ? "Chirie lunară"
+                    : "Preț solicitat",
+                  formatPrice(property),
+                ],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
               ))}
-            </ul>
-            {tourButton("heritage-button heritage-button-paper")}
+            </dl>
+            {property.amenities.length > 0 && (
+              <ul
+                aria-label="Dotările proprietății"
+                className={
+                  property.amenities.length > 1
+                    ? "heritage-features-columns"
+                    : undefined
+                }
+              >
+                {property.amenities.map((feature, index) => (
+                  <li key={`${feature}-${index}`}>{feature}</li>
+                ))}
+              </ul>
+            )}
+            {tourButton()}
           </div>
-          <div className="heritage-details-image">
+          <div className="heritage-details-media">
             {detailPhoto ? (
-              <PropertyImage
-                src={detailPhoto}
-                alt={`${property.title} — detaliu al proprietății`}
-                sizes="100vw"
-                loading="lazy"
-              />
-            ) : null}
+              <button
+                type="button"
+                className="heritage-details-image"
+                aria-label="Deschide galeria foto a proprietății"
+                aria-haspopup="dialog"
+                onClick={() =>
+                  setLightbox(
+                    property.images[2] ? 2 : property.images[1] ? 1 : 0,
+                  )
+                }
+              >
+                <PropertyImage
+                  src={detailPhoto}
+                  alt={`${property.title} — detaliu al proprietății`}
+                  sizes="(max-width: 767px) 100vw, 40vw"
+                  loading="lazy"
+                />
+                <span>
+                  Vezi fotografiile <Expand size={15} />
+                </span>
+              </button>
+            ) : (
+              <div className="heritage-image-empty">
+                Fotografiile proprietății vor apărea aici.
+              </div>
+            )}
           </div>
         </section>
         {videoIncluded && (film?.src || isPreview) && (
@@ -490,84 +518,11 @@ export function HeritageWebsite({
               )}
             </div>
           </div>
-          <div className="heritage-contact-note">
-            <Asterisk size={32} strokeWidth={1} />
-            <h3>
-              Să alegem o zi
-              <br />
-              <em>pentru vizionare.</em>
-            </h3>
-            <p>
-              Alege ziua preferată și lasă datele de contact.
-              <br />
-              {profile.name || "Agentul tău"} va confirma ora și
-              disponibilitatea.
-            </p>
-            {tourButton()}
-          </div>
-        </section>
-        <section
-          className="heritage-setting heritage-section heritage-pad"
-          id="setting"
-        >
-          <div className="heritage-setting-layout">
-            <div>
-              <span className="heritage-kicker">FĂ LOC PENTRU CE URMEAZĂ</span>
-              <h2>
-                {presentationCopy.heritageSetting.title}
-                <br />
-                <em>{presentationCopy.heritageSetting.accent}</em>
-              </h2>
-              <p>
-                <EditableText
-                  field="copy.settingBody"
-                  value={copy.settingBody}
-                  onEdit={onEdit}
-                />
-              </p>
-              <dl>
-                <div>
-                  <dt>
-                    {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
-                  </dt>
-                  <dd>{formatPrice(property)}</dd>
-                </div>
-                <div>
-                  <dt>Suprafață locuibilă</dt>
-                  <dd>{size}</dd>
-                </div>
-                <div>
-                  <dt>Număr de dormitoare</dt>
-                  <dd>{property.bedrooms}</dd>
-                </div>
-                <div>
-                  <dt>Număr de băi</dt>
-                  <dd>{property.bathrooms}</dd>
-                </div>
-              </dl>
-              {tourButton("heritage-link")}
-            </div>
-            <figure>
-              {property.images[0] ? (
-                <PropertyImage
-                  src={property.images[0]}
-                  alt={`${property.title} — proprietatea`}
-                  loading="lazy"
-                />
-              ) : (
-                <div className="heritage-image-empty">
-                  Fotografia proprietății va apărea aici.
-                </div>
-              )}
-              <figcaption>
-                <MapPin size={18} />
-                <span>
-                  {property.location || "Adresa proprietății tale"}
-                  <small>UN LOC PENTRU URMĂTORUL TĂU CAPITOL</small>
-                </span>
-              </figcaption>
-            </figure>
-          </div>
+          <HeritageContactForm
+            slug={property.slug}
+            agentName={profile.name}
+            preview={isPreview}
+          />
         </section>
         <section className="heritage-invitation">
           {property.images[0] && (

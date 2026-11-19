@@ -59,10 +59,8 @@ test("Heritage highlights loop as text, pause on hover, and remain fully readabl
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
     page.getByText("O LOCUINȚĂ. O EMOȚIE. UN NOU ÎNCEPUT.", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.locator(".heritage-setting-layout figcaption small"),
-  ).toHaveCSS("font-size", "7px");
+  ).toHaveCount(0);
+  await expect(page.locator(".heritage-setting")).toHaveCount(0);
   expect(
     await strip.evaluate((node) => node.scrollWidth <= node.clientWidth),
   ).toBe(true);
@@ -101,25 +99,28 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
     });
   }, workspace);
   await page.goto("/previzualizare/demo-apartment");
-  await expect(
-    page.locator(".heritage-story .heritage-section-heading h2"),
-  ).toContainText("Proprietatea perfectă");
+  await expect(page.locator(".heritage-story-copy h2")).toContainText(
+    propertyStory(listing).storyTitle,
+  );
   await expect(page.locator(".heritage-photo-grid figcaption")).toHaveCount(0);
   await expect(
     page.getByLabel("Punctele forte ale proprietății").locator("ul").first(),
   ).not.toContainText("Grădină privată");
   await page.getByRole("button", { name: "Editează pe pagină" }).click();
   await page
-    .getByRole("textbox", { name: "Editează Textul introducerii", exact: true })
+    .getByRole("textbox", {
+      name: "Editează Descrierea secțiunii principale",
+      exact: true,
+    })
     .fill("Your Austin story.");
   await page.getByRole("button", { name: "Salvează site-ul" }).click();
   await expect(
     page.getByText("Modificările site-ului au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.goto("/previzualizare/demo-apartment");
-  await expect(
-    page.locator(".heritage-story .heritage-section-heading > p"),
-  ).toContainText("Your Austin story.");
+  await expect(page.locator(".heritage-story-text > p")).toContainText(
+    "Your Austin story.",
+  );
   await page.goto("/panou/proprietati/demo-apartment");
   await page.getByLabel(/^Adresă/).fill("Portland, OR");
   await page
@@ -129,12 +130,12 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
     page.getByText("Modificările au fost salvate.", { exact: true }),
   ).toBeVisible();
   await page.goto("/previzualizare/demo-apartment");
-  await expect(
-    page.locator(".heritage-setting-layout figcaption"),
-  ).toContainText("Portland, OR");
-  await expect(
-    page.locator(".heritage-story .heritage-section-heading > p"),
-  ).not.toContainText("Your Austin story.");
+  await expect(page.locator(".heritage-property-details")).toContainText(
+    "Portland, OR",
+  );
+  await expect(page.locator(".heritage-story-text > p")).not.toContainText(
+    "Your Austin story.",
+  );
 });
 
 test("every Schedule a tour CTA opens the calendar and sample requests never send", async ({
