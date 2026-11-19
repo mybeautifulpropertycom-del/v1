@@ -28,6 +28,7 @@ import { useWorkspace } from "./workspace-provider";
 import {
   formatPrice,
   profileErrors,
+  propertyTypeOptions,
   templates,
   type Property,
 } from "@/lib/model";
@@ -311,7 +312,7 @@ export function Dashboard() {
               Tipul proprietății
               <select value={type} onChange={(e) => setType(e.target.value)}>
                 <option value="all">Toate tipurile</option>
-                {["House", "Condo", "Penthouse"].map((t) => (
+                {propertyTypeOptions.map((t) => (
                   <option key={t} value={t}>
                     {propertyTypeLabel(t)}
                   </option>

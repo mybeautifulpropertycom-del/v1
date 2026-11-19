@@ -1,4 +1,8 @@
-import { isReservedPropertyAddress, type Property } from "./model";
+import {
+  isReservedPropertyAddress,
+  propertyTypeOptions,
+  type Property,
+} from "./model";
 
 export const propertyGuideFields = [
   {
@@ -104,9 +108,7 @@ export function propertyGuideIssues(
         : property.location.length > 200
           ? "Adresa poate avea maximum 200 de caractere."
           : null,
-    type: ["House", "Condo", "Penthouse", "Town House", "Land"].includes(
-      property.type,
-    )
+    type: [...propertyTypeOptions, "Town House", "Land"].includes(property.type)
       ? null
       : "Alege tipul proprietății.",
     transaction: ["sale", "rent"].includes(property.transaction)

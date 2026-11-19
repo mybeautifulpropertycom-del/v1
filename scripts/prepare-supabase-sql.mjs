@@ -103,6 +103,21 @@ await writeFile(
   new URL("../supabase/sql-editor-public-sitemap.sql", import.meta.url),
   `-- Existing installations: adds read-only public sitemap discovery. No records are modified.\nbegin;\n${publicSitemap.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_PUBLIC_SITEMAP_READY' as status;\n`,
 );
+const propertyOptions = await readFile(
+  new URL("202611190001_studio_property_type.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-property-options.sql", import.meta.url),
+  `-- Existing installations: run the ENTIRE file. Safe to rerun.
+-- Allows Garsonieră (Studio). Preserves properties, amenities, payments and publications.
+begin;
+${propertyOptions.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_PROPERTY_OPTIONS_READY' as status;
+`,
+);
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",

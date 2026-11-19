@@ -26,7 +26,7 @@ export type Property = {
   price: number;
   currency: "USD" | "EUR" | "RON";
   transaction: "sale" | "rent";
-  type: "Condo" | "House" | "Town House" | "Penthouse" | "Land";
+  type: "Condo" | "Studio" | "House" | "Town House" | "Penthouse" | "Land";
   area: number;
   area_unit: "sqft" | "sqm";
   bedrooms: number;
@@ -52,11 +52,19 @@ const platformPageSlugs = new Set(
 const reservedAddressError =
   "Introdu adresa completă a proprietății, inclusiv strada și numărul.";
 
+export const propertyTypeOptions = [
+  "Condo",
+  "Studio",
+  "House",
+  "Penthouse",
+] as const;
+
 export function propertyTypeLabel(type: string): string {
   return (
     (
       {
         Condo: "Apartament",
+        Studio: "Garsonieră",
         House: "Casă",
         "Town House": "Casă",
         Penthouse: "Penthouse",

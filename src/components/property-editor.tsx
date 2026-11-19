@@ -33,6 +33,7 @@ import { ro } from "@/i18n/ro";
 import {
   createProperty,
   profileErrors,
+  propertyTypeOptions,
   publicPath,
   templates,
   type Property,
@@ -59,9 +60,23 @@ export function PropertyEditor({
   const router = useRouter();
   const existing = properties.find((p) => p.id === id);
   const [property, setProperty] = useState<Property>(() => {
-    const initial = existing ?? {
+    const source = existing ?? {
       ...createProperty(profile.id),
       template: initialTemplate ?? "editorial",
+    };
+    const initial = {
+      ...source,
+      amenities: [
+        ...new Set(
+          source.amenities.map((value) =>
+            ["garaj pentru două mașini", "two-car garage"].includes(
+              value.trim().toLowerCase(),
+            )
+              ? "Loc de parcare"
+              : value,
+          ),
+        ),
+      ],
     };
     // Convert legacy dimensions before presenting the metric-only editor.
     return initial.area_unit === "sqft"
@@ -318,7 +333,11 @@ export function PropertyEditor({
       "Spa",
       "Terasă exterioară",
       "Bucătărie exterioară",
-      "Garaj pentru două mașini",
+      "Loc de parcare",
+      "WiFi",
+      "Supraveghere video",
+      "Alarmă",
+      "Balcon",
       "Încălzire centrală",
       "Panouri solare",
       "Bucătărie cu insulă",
@@ -479,7 +498,7 @@ export function PropertyEditor({
                         update("type", e.target.value as Property["type"])
                       }
                     >
-                      {["House", "Condo", "Penthouse"].map((v) => (
+                      {propertyTypeOptions.map((v) => (
                         <option key={v} value={v}>
                           {propertyTypeLabel(v)}
                         </option>

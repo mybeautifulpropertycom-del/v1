@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   createProperty,
+  propertyTypeLabel,
   formatPrice,
   profileErrors,
   propertyErrors,
@@ -153,4 +154,8 @@ test("platform page names cannot become property URLs, while full Romanian addre
     }),
     [],
   );
+});
+
+test("studios have their own Romanian property label", () => {
+  assert.equal(propertyTypeLabel("Studio"), "Garsonieră");
 });

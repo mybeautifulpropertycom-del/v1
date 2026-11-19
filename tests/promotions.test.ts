@@ -282,6 +282,15 @@ test("promotion defaults and keywords remove postal codes while preserving town 
     ["casă de închiriat Brașov", "închiriere casă Brașov"],
   );
 });
+test("studio advertising uses its precise property type", () => {
+  assert.deepEqual(
+    promotionKeywords({ type: "Studio", transaction: "rent" }, "Cluj-Napoca"),
+    [
+      "garsonieră de închiriat Cluj-Napoca",
+      "închiriere garsonieră Cluj-Napoca",
+    ],
+  );
+});
 test("the promotion default keeps both city and district without guessing a different municipality", () => {
   assert.equal(
     defaultPromotionTargetArea(

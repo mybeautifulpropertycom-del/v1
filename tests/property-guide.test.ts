@@ -92,3 +92,11 @@ test("field guidance reports invalid facts and accepts legacy units, currencies 
   assert.equal(legacy.bedrooms, null);
   assert.equal(legacy.bathrooms, null);
 });
+
+test("a studio is a valid type for the guided property details", () => {
+  assert.equal(
+    propertyGuideIssues({ ...demoWorkspace().properties[0], type: "Studio" })
+      .type,
+    null,
+  );
+});

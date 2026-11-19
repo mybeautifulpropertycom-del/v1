@@ -38,7 +38,7 @@ export function demoWorkspace(): Workspace {
     amenities: [
       "Grădină privată",
       "Terasă exterioară",
-      "Garaj pentru două mașini",
+      "Loc de parcare",
       "Încălzire în pardoseală",
       "Aer condiționat",
       "Bucătărie complet utilată",

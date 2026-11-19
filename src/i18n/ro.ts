@@ -18,7 +18,7 @@ export const ro = {
       "Prezintă-te o singură dată. Detaliile tale vor apărea pe toate paginile proprietăților.",
     saved:
       "Profilul tău a fost salvat. Toate site-urile proprietăților sunt actualizate.",
-    contactTitle: "Să ne cunoaștem.",
+    contactTitle: "Detalii de contact.",
     contactDescription:
       "Aceste detalii apar pe fiecare site de proprietate, pentru ca persoanele interesate să te poată contacta direct.",
     name: "Nume complet",

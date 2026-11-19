@@ -15,8 +15,9 @@ test("legacy dimensions convert once, house filters include old types, and selec
   const filter = page.getByLabel("Tipul proprietății");
   await expect(filter.locator("option")).toHaveText([
     "Toate tipurile",
-    "Casă",
     "Apartament",
+    "Garsonieră",
+    "Casă",
     "Penthouse",
   ]);
   await filter.selectOption("House");
@@ -27,8 +28,9 @@ test("legacy dimensions convert once, house filters include old types, and selec
   const area = page.getByLabel("Suprafață", { exact: true });
   const unit = page.getByLabel("Unitatea de suprafață");
   await expect(type.locator("option")).toHaveText([
-    "Casă",
     "Apartament",
+    "Garsonieră",
+    "Casă",
     "Penthouse",
   ]);
   await expect(type).toHaveValue("House");
@@ -63,4 +65,68 @@ test("legacy dimensions convert once, house filters include old types, and selec
   await page.reload();
   await expect(type).toHaveValue("Penthouse");
   await expect(area).toHaveValue("120.5");
+});
+
+test("studios and the new amenities persist, replace the old parking label and appear in filters and every presentation", async ({
+  page,
+}) => {
+  const state = await workspace(page, {
+    type: "Condo",
+    images: [],
+    amenities: ["Garaj pentru două mașini"],
+  });
+  await page.route("**/api/property-story", (route) => route.abort());
+  await page.goto(`/panou/proprietati/${id}`);
+  const type = page.getByLabel("Tipul proprietății");
+  await type.selectOption("Studio");
+  await expect(
+    page.getByRole("button", { name: "Loc de parcare", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("button", { name: "Garaj pentru două mașini", exact: true }),
+  ).toHaveCount(0);
+  for (const name of ["WiFi", "Supraveghere video", "Alarmă", "Balcon"])
+    await page.getByRole("button", { name, exact: true }).click();
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "Modificările au fost salvate",
+  );
+  expect(state.property.type).toBe("Studio");
+  expect(state.property.amenities).toEqual([
+    "Loc de parcare",
+    "WiFi",
+    "Supraveghere video",
+    "Alarmă",
+    "Balcon",
+  ]);
+  await page.reload();
+  await expect(type).toHaveValue("Studio");
+  for (const name of state.property.amenities)
+    await expect(
+      page.getByRole("button", { name, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+  for (const template of ["editorial", "minimal", "panorama"] as const) {
+    state.property.template = template;
+    await page.goto(`/previzualizare/${id}`);
+    const website = page.locator(".property-website, .atelier-website");
+    await expect(
+      website.getByText("Garsonieră", { exact: false }).first(),
+    ).toBeVisible();
+    for (const name of state.property.amenities)
+      await expect(
+        website.getByText(name, { exact: true }).first(),
+      ).toBeVisible();
+  }
+  await page.goto("/panou");
+  await page.getByRole("button", { name: "Filtrare și sortare" }).click();
+  await page.getByLabel("Tipul proprietății").selectOption("Studio");
+  await expect(page.locator(".property-card")).toHaveCount(1);
+  await page.getByLabel("Tipul proprietății").selectOption("Condo");
+  await expect(page.locator(".property-card")).toHaveCount(0);
+  await page.goto("/panou/profil");
+  await expect(
+    page.getByRole("heading", { name: "Detalii de contact.", exact: true }),
+  ).toBeVisible();
 });

@@ -131,8 +131,7 @@ export function propertyStory(
         ? "O altă perspectivă."
         : saved.galleryAccent,
       captions: saved.captions.map((caption, index) =>
-        caption ===
-        `${p.title || p.type} · Photograph ${index + 1}`
+        caption === `${p.title || p.type} · Photograph ${index + 1}`
           ? p.title || propertyTypeLabel(p.type)
           : caption,
       ),
@@ -205,7 +204,8 @@ export function propertyOpeningAccent(p: Listing, prepared: string): string {
     piscină: "Piscină pentru relaxare",
     "terasă exterioară": "Terasa ta exterioară",
     "bucătărie exterioară": "Bucătărie în aer liber",
-    "garaj pentru două mașini": "Garaj pentru două mașini",
+    "garaj pentru două mașini": "Loc de parcare",
+    "loc de parcare": "Loc de parcare",
     "bucătărie cu insulă": "Bucătărie cu insulă",
     dressing: "Dressing pentru garderobă",
     "vedere spre oraș": "Vedere spre oraș",
@@ -215,7 +215,7 @@ export function propertyOpeningAccent(p: Listing, prepared: string): string {
     "swimming pool": "Piscină pentru relaxare",
     "outdoor terrace": "Terasa ta exterioară",
     "outdoor kitchen": "Bucătărie în aer liber",
-    "two-car garage": "Garaj pentru două mașini",
+    "two-car garage": "Loc de parcare",
     "island kitchen": "Bucătărie cu insulă",
     "walk-in closet": "Dressing pentru garderobă",
     "city views": "Vedere spre oraș",
@@ -228,6 +228,7 @@ export function propertyOpeningAccent(p: Listing, prepared: string): string {
   }
   const homes: Record<Listing["type"], string> = {
     Condo: "Apartamentul tău viitor",
+    Studio: "Garsoniera ta viitoare",
     House: "Viitoarea ta casă",
     "Town House": "Casă în ansamblu",
     Penthouse: "Penthouse pentru tine",

@@ -139,6 +139,7 @@ export function promotionKeywords(
       {
         House: "casă",
         Condo: "apartament",
+        Studio: "garsonieră",
         Penthouse: "penthouse",
         "Town House": "casă",
         Land: "teren",
