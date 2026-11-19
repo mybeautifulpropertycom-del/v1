@@ -9,6 +9,7 @@
   --estate-muted: #65766d;
   --estate-line: #d9dfd3;
   --estate-wash: #e9eee5;
+  --estate-content-gutter: max(6%, calc((100% - 1440px) / 2));
   background: var(--estate-paper);
   color: var(--estate-ink);
   font-family: var(--sans);
@@ -27,7 +28,7 @@
   box-shadow: 0 0 0 3px #7f936f20;
 }
 .estate-pad {
-  padding-inline: max(6%, calc((100% - 1440px) / 2));
+  padding-inline: var(--estate-content-gutter);
 }
 .estate-space {
   padding-block: clamp(70px, 8.5vw, 140px);
@@ -124,8 +125,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 28px;
-  margin-inline: 3.6%;
-  border-bottom: 1px solid #ffffff59;
+  margin-inline: var(--estate-content-gutter);
 }
 .estate-wordmark {
   font: 400 clamp(20px, 2vw, 29px)/1.3 var(--sans);
@@ -173,10 +173,10 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 140px 3.6% 0;
+  padding: 140px var(--estate-content-gutter) 0;
 }
 .estate-hero h1 {
-  font: 600 clamp(36px, calc(4.6vw - 4px), 64px)/1.08 var(--sans);
+  font: 600 clamp(32px, calc(4.6vw - 8px), 60px)/1.08 var(--sans);
   letter-spacing: -0.035em;
   max-width: 1080px;
   overflow-wrap: anywhere;
@@ -186,14 +186,14 @@
 .estate-hero-content > .estate-location {
   margin-top: 12px;
   max-width: 1000px;
-  font-size: clamp(16px, calc(1.9vw - 2px), 24px);
+  font-size: clamp(15px, calc(1.9vw - 3px), 23px);
   line-height: 1.45;
   color: #f0f1e7;
   overflow-wrap: anywhere;
 }
 .estate-hero-actions {
   position: relative;
-  padding-inline: 3.6%;
+  padding-inline: var(--estate-content-gutter);
   margin-top: 28px;
   margin-bottom: 40px;
 }
@@ -216,7 +216,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  margin-inline: 3.6%;
+  margin-inline: var(--estate-content-gutter);
   padding-block: 23px;
   border-top: 1px solid #ffffff59;
 }
@@ -294,7 +294,7 @@
 }
 .estate-hero-price dd {
   display: block;
-  font-size: clamp(24px, calc(2.4vw - 2px), 34px);
+  font-size: clamp(22px, calc(2.4vw - 4px), 32px);
   font-weight: 700;
   letter-spacing: -0.025em;
 }
@@ -1359,12 +1359,12 @@
     padding: 230px 6% 0;
   }
   .estate-hero h1 {
-    font-size: clamp(30px, calc(8.6vw - 2px), 38px);
+    font-size: clamp(28px, calc(8.6vw - 4px), 36px);
     max-width: 100%;
   }
   .estate-hero-content > .estate-location {
     margin-top: 9px;
-    font-size: 16px;
+    font-size: 15px;
   }
   .estate-hero-actions {
     order: 2;
@@ -1420,7 +1420,7 @@
   }
   .estate-facts .estate-hero-price dd {
     display: inline;
-    font-size: 25px;
+    font-size: 24px;
     line-height: 1.3;
   }
   .estate-facts .estate-hero-price dt {
