@@ -98,14 +98,36 @@ export function promotionTargetArea(value: string) {
     .join(", ");
 }
 export function defaultPromotionTargetArea(location: string) {
-  return (
-    promotionTargetArea(location)
-      .split(",")
-      .map((part) => part.trim())
-      .filter((part) => part && !/^(?:rom[aâ]nia|ro)$/i.test(part))
-      .at(-1)
-      ?.slice(0, 160) || ""
-  );
+  const parts = promotionTargetArea(location)
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part && !/^(?:rom[aâ]nia|ro)$/i.test(part));
+  // The old last-part-only default lost the city when an area followed it.
+  // Drop the address line, then retain the supplied city, district and locality.
+  // A district such as Drumul Taberei remains intact after the street line.
+  if (
+    parts.length > 1 &&
+    /^(?:str(?:ada)?\.?|stradela|[șşs]os(?:eaua)?\.?|bulevardul|bd\.?|b-dul|calea|aleea|intrarea|drumul|splaiul|pia[țt]a)(?:\s|$)/iu.test(
+      parts[0],
+    )
+  )
+    parts.shift();
+  const normalize = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  const areas = new Map<string, string>();
+  for (const part of parts) {
+    const key = normalize(part);
+    if (/^(?:(?:municipiul|orasul) )?(?:bucuresti|bucharest)$/.test(key))
+      areas.set("bucuresti", "București");
+    else if (!areas.has(key)) areas.set(key, part);
+  }
+  // Only prioritise Bucharest when it is explicitly in the saved address.
+  const city = areas.get("bucuresti");
+  areas.delete("bucuresti");
+  return [city, ...areas.values()].filter(Boolean).join(", ").slice(0, 160);
 }
 
 export function promotionKeywords(

@@ -369,7 +369,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           label: "Promovarea",
           title: "Promovează proprietatea",
           body: here
-            ? "Alegi o proprietate publicată și un pachet Google Search. Bugetul merge integral în Google Ads. Promovarea este opțională; poți continua ghidul fără să cumperi."
+            ? "Alegi o proprietate publicată și un pachet Google Search. Bugetul merge integral în Google Ads. Promovarea este opțională."
             : "După publicare, poți promova proprietatea în Google Search. Este opțional. Vezi pachetele, apoi îți arătăm unde primești solicitările.",
           anchor,
           action: here ? "Continuă la Mesaje" : "Descoperă promovarea",

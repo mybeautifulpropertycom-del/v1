@@ -88,7 +88,9 @@ function Purchase({
           <span>{property.location}</span>
         </div>
         <div>
-          <strong>{pack.price.toLocaleString("ro-RO")} RON</strong>
+          <strong>
+            {pack.price.toLocaleString("ro-RO", { useGrouping: false })} RON
+          </strong>
           <span>Pachet {pack.name} · buget Google Ads</span>
         </div>
       </div>
@@ -517,7 +519,8 @@ export function PromotionDashboard() {
               {pack.id === "plus" && <small>Recomandat</small>}
             </div>
             <div className="promotion-price">
-              {pack.price.toLocaleString("ro-RO")} <span>RON</span>
+              {pack.price.toLocaleString("ro-RO", { useGrouping: false })}{" "}
+              <span>RON</span>
             </div>
             <p className="promotion-price-caption">
               buget publicitar · plată unică

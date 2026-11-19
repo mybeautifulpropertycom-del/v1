@@ -282,6 +282,42 @@ test("promotion defaults and keywords remove postal codes while preserving town 
     ["casă de închiriat Brașov", "închiriere casă Brașov"],
   );
 });
+test("the promotion default keeps both city and district without guessing a different municipality", () => {
+  assert.equal(
+    defaultPromotionTargetArea(
+      "Strada Test 9, București, Pantelimon 021621, România",
+    ),
+    "București, Pantelimon",
+  );
+  assert.equal(
+    defaultPromotionTargetArea(
+      "Șoseaua Test 9, Pantelimon, Bucuresti, România",
+    ),
+    "București, Pantelimon",
+  );
+  assert.equal(
+    defaultPromotionTargetArea(
+      "Strada Test 9, Drumul Taberei, București, România",
+    ),
+    "București, Drumul Taberei",
+  );
+  assert.equal(
+    defaultPromotionTargetArea("Strada Test 9, Cluj-Napoca, Mărăști, România"),
+    "Cluj-Napoca, Mărăști",
+  );
+  assert.equal(
+    defaultPromotionTargetArea(
+      "Strada Test 9, Pantelimon 077145, Ilfov, România",
+    ),
+    "Pantelimon, Ilfov",
+  );
+  assert.equal(defaultPromotionTargetArea("Pantelimon"), "Pantelimon");
+  assert.equal(
+    defaultPromotionTargetArea("Strada Test 9, București, Bucuresti, România"),
+    "București",
+  );
+});
+
 test("the saved campaign area and keyword examples exclude postal codes even in direct API requests", async () => {
   const response = await POST(
     request({

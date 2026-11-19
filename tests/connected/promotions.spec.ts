@@ -43,13 +43,18 @@ function order(overrides: Partial<PromotionOrder> = {}): PromotionOrder {
     ...overrides,
   };
 }
-async function fixture(page: Page, published = true, admin = false) {
+async function fixture(
+  page: Page,
+  published = true,
+  admin = false,
+  location = "Strada Test 9, Brașov 500001, România",
+) {
   const state = await workspace(
     page,
     {
       status: published ? "published" : "draft",
       title: "Vila cu grădină",
-      location: "Strada Test 9, Brașov 500001, România",
+      location,
     },
     [],
     admin,
@@ -166,7 +171,7 @@ test("Promotion replaces Studio, has three actual budgets and adapts to desktop 
     await expect(page.locator(".promotion-price")).toHaveText([
       "300 RON",
       "500 RON",
-      "1.000 RON",
+      "1000 RON",
     ]);
     await expect(
       page.getByText("Bugetul ales merge integral în Google Ads.", {
@@ -272,6 +277,51 @@ test("buying Plus uses the existing card form inside the dialog and only confirm
   await expect(page.getByText("Campanie activă", { exact: true })).toHaveCount(
     0,
   );
+});
+
+test("Extins shows 1000 RON and the promotion area retains both city and district", async ({
+  page,
+}, testInfo) => {
+  const state = await fixture(
+    page,
+    true,
+    false,
+    "Strada Test 9, București, Pantelimon 021621, România",
+  );
+  await page.goto("/panou/promovare");
+  const card = page
+    .locator(".promotion-package")
+    .filter({
+      has: page.getByRole("button", {
+        name: "Alege pachetul Extins",
+        exact: true,
+      }),
+    });
+  await expect(card.locator(".promotion-price")).toHaveText("1000 RON");
+  await card
+    .getByRole("button", { name: "Alege pachetul Extins", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Zona în care vrei să promovezi")).toHaveValue(
+    "București, Pantelimon",
+  );
+  await expect(dialog.locator(".promotion-keywords small")).toHaveText([
+    "apartament de vânzare București, Pantelimon",
+    "vânzare apartament București, Pantelimon",
+  ]);
+  await expect(dialog.locator(".promotion-summary")).toContainText("1000 RON");
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(
+      await dialog.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: testInfo.outputPath(`promotion-city-area-${width}.png`),
+    });
+  }
+  expect(state.posts).toHaveLength(0);
 });
 
 test("a return URL cannot mark an unpaid promotion as paid", async ({

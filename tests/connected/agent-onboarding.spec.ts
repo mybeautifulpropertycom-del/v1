@@ -366,7 +366,7 @@ test("after publication the optional Promotion step precedes Messages and never 
   await expect(page).toHaveURL(/\/panou\/promovare$/);
   tip = await openTip(page);
   await expect(tip).toContainText("Promovarea este opțională");
-  await expect(tip).toContainText("fără să cumperi");
+  await expect(tip).not.toContainText("fără să cumperi");
   await expect(page.locator(".promotion-package")).toHaveCount(3);
   expect(state.promotionSeen).toBe(false);
   await tip.getByRole("link", { name: "Continuă la Mesaje" }).click();
