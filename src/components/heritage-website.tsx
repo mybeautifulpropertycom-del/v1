@@ -507,13 +507,13 @@ export function HeritageWebsite({
               {profile.phone && (
                 <a href={`tel:${safePhone(profile.phone)}`}>
                   <Phone size={15} />
-                  {profile.phone}
+                  <span>{profile.phone}</span>
                 </a>
               )}
               {profile.email && (
                 <a href={`mailto:${profile.email}`}>
                   <Mail size={15} />
-                  {profile.email}
+                  <span>{profile.email}</span>
                 </a>
               )}
             </div>

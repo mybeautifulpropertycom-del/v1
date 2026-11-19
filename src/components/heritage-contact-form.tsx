@@ -84,33 +84,18 @@ export function HeritageContactForm({
         {presentationCopy.inquiry.title}
       </h3>
       <p>{presentationCopy.inquiry.subtitle}</p>
-      <label>
-        Numele tău
-        <input
-          required
-          name="name"
-          autoComplete="name"
-          minLength={2}
-          maxLength={100}
-          placeholder="Numele și prenumele tău"
-          value={form.name}
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-        />
-      </label>
       <div className="heritage-field-pair">
         <label>
-          Adresă de e-mail
+          Numele tău
           <input
             required
-            type="email"
-            name="email"
-            autoComplete="email"
-            maxLength={254}
-            placeholder="nume@email.ro"
-            value={form.email}
-            onChange={(event) =>
-              setForm({ ...form, email: event.target.value })
-            }
+            name="name"
+            autoComplete="name"
+            minLength={2}
+            maxLength={100}
+            placeholder="Numele și prenumele tău"
+            value={form.name}
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
           />
         </label>
         <label>
@@ -128,6 +113,19 @@ export function HeritageContactForm({
           />
         </label>
       </div>
+      <label>
+        Adresă de e-mail
+        <input
+          required
+          type="email"
+          name="email"
+          autoComplete="email"
+          maxLength={254}
+          placeholder="nume@email.ro"
+          value={form.email}
+          onChange={(event) => setForm({ ...form, email: event.target.value })}
+        />
+      </label>
       <label>
         Mesajul tău (opțional)
         <textarea
