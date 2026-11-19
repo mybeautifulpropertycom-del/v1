@@ -439,14 +439,10 @@ export function HeritageWebsite({
               <PropertyImage
                 src={detailPhoto}
                 alt={`${property.title} — detaliu al proprietății`}
+                sizes="100vw"
                 loading="lazy"
               />
-            ) : (
-              <div className="heritage-image-empty">
-                O privire mai atentă asupra proprietății.
-              </div>
-            )}
-            <span>Facilitățile proprietății</span>
+            ) : null}
           </div>
           <div className="heritage-details-copy">
             <span className="heritage-kicker">
@@ -457,16 +453,13 @@ export function HeritageWebsite({
               <br />
               <em>{presentationCopy.heritageDetails.accent}</em>
             </h2>
-            <p>
-              <EditableText
-                field="copy.detailsBody"
-                value={copy.detailsBody}
-                onEdit={onEdit}
-              />
-            </p>
-            <ul>
-              {features.slice(0, 6).map((feature) => (
-                <li key={feature}>{feature}</li>
+            <ul
+              className={
+                features.length > 4 ? "heritage-features-columns" : undefined
+              }
+            >
+              {features.map((feature, index) => (
+                <li key={`${feature}-${index}`}>{feature}</li>
               ))}
             </ul>
           </div>

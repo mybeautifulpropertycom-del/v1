@@ -43,7 +43,7 @@ async function checkPresentation(
     ).toHaveCount(0);
     await expect(
       page.locator(".heritage-details-copy > .heritage-kicker"),
-    ).toHaveText("Detaliile care contează");
+    ).toHaveText("Facilitățile proprietății");
     await expect(page.locator("#heritage-details-title")).toContainText(
       "O locuință potrivită",
     );

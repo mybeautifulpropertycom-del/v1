@@ -10,7 +10,7 @@ export const presentationCopy = {
     accent: "Fotografii care reflectă realitatea",
   },
   heritageDetails: {
-    label: "Detaliile care contează",
+    label: "Facilitățile proprietății",
     title: "O locuință potrivită",
     accent: "pe termen lung",
   },
