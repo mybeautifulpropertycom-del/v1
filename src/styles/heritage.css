@@ -582,6 +582,7 @@
   justify-content: center;
   min-width: 0;
   padding: clamp(32px, 4vw, 64px);
+  padding-inline-start: clamp(48px, 8vw, 128px);
 }
 .heritage-details-copy .heritage-kicker {
   display: flex;
