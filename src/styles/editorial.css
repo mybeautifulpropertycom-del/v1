@@ -176,7 +176,7 @@
   padding: 140px var(--estate-content-gutter) 0;
 }
 .estate-hero h1 {
-  font: 600 clamp(32px, calc(4.6vw - 8px), 60px)/1.08 var(--sans);
+  font: 600 clamp(28px, calc(4.6vw - 12px), 56px)/1.08 var(--sans);
   letter-spacing: -0.035em;
   max-width: 1080px;
   overflow-wrap: anywhere;
@@ -186,7 +186,7 @@
 .estate-hero-content > .estate-location {
   margin-top: 12px;
   max-width: 1000px;
-  font-size: clamp(15px, calc(1.9vw - 3px), 23px);
+  font-size: clamp(14px, calc(1.9vw - 4px), 22px);
   line-height: 1.45;
   color: #f0f1e7;
   overflow-wrap: anywhere;
@@ -202,10 +202,10 @@
   color: #17332d;
   border-color: #f6f1dc;
   border-radius: 5px;
-  padding: 16px 24px;
-  font-size: 15px;
+  padding: 14px 20px;
+  font-size: 14px;
   font-weight: 700;
-  gap: 24px;
+  gap: 20px;
 }
 .estate-hero .estate-button:hover:not(:disabled) {
   background: #e7ebd7;
