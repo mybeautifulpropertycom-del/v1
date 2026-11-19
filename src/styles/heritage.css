@@ -149,7 +149,7 @@
   background: var(--heritage-paper);
 }
 .heritage-hero {
-  min-height: clamp(460px, 66svh, 760px);
+  min-height: clamp(500px, 76svh, 860px);
   position: relative;
   color: #f7f6ea;
   overflow: hidden;
