@@ -4,7 +4,7 @@ import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
 
 const priceSelectors = {
-  editorial: ".estate-facts > div:last-child dd",
+  editorial: ".estate-hero-price dd",
   minimal: ".heritage-facts > div:first-child dd",
   panorama: ".atelier-price",
 };

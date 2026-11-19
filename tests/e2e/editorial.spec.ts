@@ -12,7 +12,7 @@ test("viewing calendar selects a day, blocks past days, keeps focus in the modal
       submissions++;
   });
   await page.goto("/modele/editorial");
-  const trigger = page.getByRole("button", {
+  const trigger = page.locator(".estate-nav").getByRole("button", {
     name: "Programează o vizionare",
     exact: true,
   });
@@ -76,6 +76,7 @@ test("calendar handles December to January and the maximum year of requests", as
   await page.clock.install({ time: new Date("2026-12-31T16:00:00Z") });
   await page.goto("/modele/editorial");
   await page
+    .locator(".estate-nav")
     .getByRole("button", { name: "Programează o vizionare", exact: true })
     .click();
   const dialog = page.getByRole("dialog");
@@ -214,6 +215,7 @@ test("mobile pins 20 photographs while reduced motion keeps normal scrolling", a
     (await page.locator(".estate-scroll-sticky").boundingBox())!.y,
   ).toBeLessThan(0);
   await page
+    .locator(".estate-nav")
     .getByRole("button", { name: "Programează o vizionare", exact: true })
     .click();
   const dialog = page.getByRole("dialog");

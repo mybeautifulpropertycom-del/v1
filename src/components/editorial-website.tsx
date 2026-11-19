@@ -10,19 +10,16 @@ import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowDown,
   ArrowLeft,
   ArrowUpRight,
-  Bath,
-  BedDouble,
   CalendarDays,
   Check,
   Expand,
   Film,
   Mail,
-  MapPin,
+  Menu,
+  X,
   Phone,
-  Square,
 } from "lucide-react";
 import { propertyStory } from "@/lib/property-story";
 import { formatPrice, safePhone } from "@/lib/model";
@@ -198,6 +195,26 @@ export function EditorialWebsite({
   previewBackLink,
 }: PropertyWebsiteProps) {
   const [viewing, setViewing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navigation = useRef<HTMLElement>(null);
+  const menuToggle = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const desktop = matchMedia("(min-width: 900px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+    const closeOutside = (event: PointerEvent) => {
+      if (!navigation.current?.contains(event.target as Node))
+        setMenuOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    document.addEventListener("pointerdown", closeOutside);
+    return () => {
+      desktop.removeEventListener("change", closeOnDesktop);
+      document.removeEventListener("pointerdown", closeOutside);
+    };
+  }, [menuOpen]);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "",
@@ -256,10 +273,23 @@ export function EditorialWebsite({
     <button
       type="button"
       className={className}
-      onClick={() => setViewing(true)}
+      aria-label={label}
+      onClick={() => {
+        setMenuOpen(false);
+        setViewing(true);
+      }}
       aria-haspopup="dialog"
     >
-      {label}
+      {className === "estate-nav-cta" ? (
+        <>
+          <span className="estate-nav-label">{label}</span>
+          <span className="estate-nav-short-label" aria-hidden="true">
+            Vizionare
+          </span>
+        </>
+      ) : (
+        label
+      )}
       <ArrowUpRight size={17} />
     </button>
   );
@@ -308,24 +338,48 @@ export function EditorialWebsite({
               </div>
             )}
           </div>
-          <header className="estate-nav estate-pad">
+          <header
+            className="estate-nav"
+            ref={navigation}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && menuOpen) {
+                setMenuOpen(false);
+                menuToggle.current?.focus();
+              }
+            }}
+          >
             <a href="#home" className="estate-wordmark">
               {profile.agency || profile.name}
-              <span>UN DRUM MAI PERSONAL SPRE ACASĂ</span>
             </a>
-            <nav aria-label="Navigarea proprietății">
-              <a href="#story">Locuința</a>
-              <a href="#gallery">Galerie</a>
-              <a href="#contact">Agentul tău</a>
+            <nav
+              id="estate-property-navigation"
+              className={menuOpen ? "is-open" : undefined}
+              aria-label="Navigarea proprietății"
+            >
+              <a href="#story" onClick={() => setMenuOpen(false)}>
+                Locuința
+              </a>
+              <a href="#gallery" onClick={() => setMenuOpen(false)}>
+                Galerie
+              </a>
+              <a href="#contact" onClick={() => setMenuOpen(false)}>
+                Agentul tău
+              </a>
             </nav>
+            <button
+              ref={menuToggle}
+              type="button"
+              className="estate-menu-toggle"
+              aria-label={menuOpen ? "Închide meniul" : "Deschide meniul"}
+              aria-expanded={menuOpen}
+              aria-controls="estate-property-navigation"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <X size={21} /> : <Menu size={21} />}
+            </button>
             {viewingButton("Programează o vizionare", "estate-nav-cta")}
           </header>
-          <div className="estate-hero-content estate-pad">
-            <span className="estate-eyebrow">
-              <span className="estate-dot" />
-              {propertyTypeLabel(property.type)} ·{" "}
-              {property.transaction === "sale" ? "De vânzare" : "De închiriat"}
-            </span>
+          <div className="estate-hero-content">
             <h1>
               <EditableText
                 field="title"
@@ -333,35 +387,52 @@ export function EditorialWebsite({
                 onEdit={onEdit}
               />
             </h1>
-            <p>
-              Unele locuri le vizitezi.
-              <br />
-              <em>Altora le spui acasă.</em>
-            </p>
-            <div className="estate-hero-actions">
-              {viewingButton("Descoperă următorul capitol")}
-              <a href="#gallery" className="estate-text-link">
-                Descoperă locuința <ArrowDown size={16} />
-              </a>
-            </div>
-          </div>
-          <div className="estate-hero-bottom estate-pad">
-            <span className="estate-location">
-              <MapPin size={14} />
+            <p className="estate-location">
               <EditableText
                 field="location"
                 value={property.location || "Adresa proprietății tale"}
                 onEdit={onEdit}
               />
-            </span>
+            </p>
+          </div>
+          <div className="estate-hero-actions">
+            {viewingButton("Programează o vizionare")}
+          </div>
+          <div className="estate-hero-bottom">
+            <dl className="estate-facts">
+              <div className="estate-hero-price">
+                <dd>{formatPrice(property)}</dd>
+                <dt>
+                  {sample
+                    ? "Date exemplificative"
+                    : property.transaction === "rent"
+                      ? "Chirie lunară"
+                      : "Preț de vânzare"}
+                </dt>
+              </div>
+              <div>
+                <dd>{property.bedrooms}</dd>
+                <dt>{property.bedrooms === 1 ? "dormitor" : "dormitoare"}</dt>
+              </div>
+              <div>
+                <dd>{property.bathrooms}</dd>
+                <dt>{property.bathrooms === 1 ? "baie" : "băi"}</dt>
+              </div>
+              <div className="estate-hero-area">
+                <dd>
+                  {property.area.toLocaleString("ro-RO")} {unit}
+                </dd>
+                <dt>Suprafață locuibilă</dt>
+              </div>
+            </dl>
             {property.images.length > 0 && (
               <button
                 type="button"
                 className="estate-photo-count"
+                aria-haspopup="dialog"
                 onClick={() => setLightbox(0)}
               >
-                <Expand size={16} />
-                Vezi toate cele {property.images.length} fotografii
+                Vezi fotografiile
               </button>
             )}
           </div>
@@ -386,37 +457,6 @@ export function EditorialWebsite({
               />
             </p>
           </div>
-          <dl className="estate-facts">
-            <div>
-              <dt>
-                <Square size={16} />
-                Suprafață locuibilă
-              </dt>
-              <dd>
-                {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
-              </dd>
-            </div>
-            <div>
-              <dt>
-                <BedDouble size={17} />
-                Dormitoare
-              </dt>
-              <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
-            </div>
-            <div>
-              <dt>
-                <Bath size={17} />
-                Băi
-              </dt>
-              <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
-            </div>
-            <div>
-              <dt>
-                {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
-              </dt>
-              <dd>{formatPrice(property)}</dd>
-            </div>
-          </dl>
         </section>
         <ScrollGallery
           images={property.images.slice(0, SCROLL_GALLERY_CAPTIONS.length)}
