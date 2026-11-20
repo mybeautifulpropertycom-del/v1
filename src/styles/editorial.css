@@ -607,16 +607,22 @@
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
   gap: 10%;
+  padding-block: clamp(56px, 6.8vw, 112px);
 }
 .property-mortgage + .estate-contact {
-  padding-top: clamp(42px, 5.1vw, 84px);
+  padding-top: clamp(34px, 4.1vw, 68px);
+}
+.estate-website .property-neighbourhood + .estate-contact {
+  padding-top: clamp(36px, 3.2vw, 48px);
 }
 @media (min-width: 1001px) {
   .estate-contact {
-    padding-block: clamp(49px, 5.95vw, 98px);
+    padding-block: clamp(42px, 5.1vw, 84px);
   }
   .property-mortgage + .estate-contact {
-    padding-top: clamp(29.4px, 3.57vw, 58.8px);
+    /* Match the worksheet above, whose content is capped at 1280px. */
+    padding-inline: max(6%, calc((100% - 1280px) / 2));
+    padding-top: clamp(24px, 3vw, 48px);
   }
 }
 .estate-contact .estate-agent h2 {
@@ -1468,9 +1474,10 @@
   .estate-contact {
     grid-template-columns: 1fr;
     gap: 40px;
+    padding-block: 48px;
   }
   .property-mortgage + .estate-contact {
-    padding-top: 36px;
+    padding-top: 30px;
   }
   .estate-agent-person strong {
     font-size: 25px;
