@@ -53,6 +53,7 @@ export function AtelierWebsite({
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const copy = propertyStory(property);
+  const invitationAccent = presentationCopy.invitation.accent.split(" ");
   const isPreview = preview || sample;
   const side = property.images.slice(1, 7);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
@@ -641,9 +642,14 @@ export function AtelierWebsite({
             {presentationCopy.invitation.eyebrow}
           </span>
           <h2 className="presentation-invitation-heading">
-            {presentationCopy.invitation.title}
+            <span className="atelier-invitation-title">
+              {presentationCopy.invitation.title}
+            </span>
             <br />
-            <em>{presentationCopy.invitation.accent}</em>
+            <em>
+              <span>{invitationAccent.slice(0, -1).join(" ")}</span>{" "}
+              <span>{invitationAccent.at(-1)}</span>
+            </em>
           </h2>
           <p>{propertyInvitation(property.location)}</p>
           {tour()}
