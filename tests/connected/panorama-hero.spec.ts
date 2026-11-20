@@ -33,6 +33,11 @@ for (const url of ["/modele/panorama", "/p/photos-test-panorama"]) {
         name: "Programează o vizionare",
         exact: true,
       });
+      // The taller mobile gallery can require scrolling on short screens.
+      if (viewport.width <= 640 && viewport.height < 700)
+        await hero.locator(".atelier-intro").evaluate((element) =>
+          element.scrollIntoView({ block: "end", behavior: "instant" }),
+        );
       await expect(button).toBeInViewport({ ratio: 1 });
       await expect(hero.locator(".atelier-price")).toBeInViewport({ ratio: 1 });
       for (const fact of await hero.locator(".atelier-facts dd").all())

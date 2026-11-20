@@ -946,7 +946,7 @@
     min-width: 0;
   }
   .atelier-mosaic {
-    height: clamp(180px, calc(100svh - 440px), 360px);
+    height: calc(clamp(180px, calc(100svh - 440px), 360px) + 60px);
     margin: 6px 6px 0;
     grid-template-columns: 1fr;
     grid-template-rows: minmax(0, 1fr) minmax(58px, 28%);
