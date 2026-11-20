@@ -64,9 +64,7 @@ async function checkPresentation(
   }
   const contact = page.locator("#contact");
   await expect(contact.locator(".presentation-agent-heading")).toHaveText(
-    prefix === "estate"
-      ? "Comunică eficient cu vânzătorul"
-      : "Comunică eficient cu agentul",
+    "Comunică eficient cu vânzătorul",
   );
   if (prefix === "estate") {
     const reference = await page

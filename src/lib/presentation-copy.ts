@@ -24,7 +24,7 @@ export const presentationCopy = {
       "Cunoaște ratele lunare, costul creditului și planul de rambursare pentru această locuință.",
   },
   agent: {
-    title: "Comunică eficient cu agentul",
+    title: "Comunică eficient cu vânzătorul",
     editorialTitle: "Comunică eficient cu vânzătorul",
     subtitle: "Obține răspuns rapid la toate întrebările.",
   },

@@ -246,7 +246,7 @@ test("a blocked Google script offers an in-page retry without external navigatio
     section.getByRole("button", { name: "Reîncarcă harta", exact: true }),
   ).toBeEnabled();
   await expect(
-    page.getByRole("heading", { name: /Comunică eficient cu agentul/ }),
+    page.getByRole("heading", { name: /Comunică eficient cu vânzătorul/ }),
   ).toBeVisible();
 });
 
