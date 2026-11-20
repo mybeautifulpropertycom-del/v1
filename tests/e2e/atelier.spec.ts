@@ -111,19 +111,20 @@ test("Atelier fits phones and keeps the tour action available without blocking i
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/modele/panorama");
-  await expect(page.locator(".atelier-mobile-tour")).toBeVisible();
+  await expect(page.locator(".atelier-mobile-tour")).toBeHidden();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
   await page
-    .locator(".atelier-mobile-tour")
+    .locator(".atelier-intro-action")
     .getByRole("button", { name: "Programează o vizionare" })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await page.locator(".atelier-footer").scrollIntoViewIfNeeded();
   await expect(page.locator(".atelier-footer")).toBeVisible();
+  await expect(page.locator(".atelier-mobile-tour")).toBeVisible();
   await expect(page.locator(".atelier-mobile-tour")).toBeInViewport();
 });

@@ -37,7 +37,9 @@ test("Tell the story notes are saved before generation and updated notes refresh
     await expect(page.locator(".atelier-website")).toContainText(
       `The roof was replaced in ${i === 0 ? "2024" : "2025"}.`,
     );
-    await expect(page.locator(".atelier-website")).toContainText(
+    // The compact hero contains property facts; the saved introduction remains
+    // available in the copy without duplicating the main story on the page.
+    expect(state.property.website_copy?.content.introBody).toBe(
       "Step from the kitchen into the courtyard.",
     );
     expect(requests).toBe(i + 1);
@@ -311,8 +313,8 @@ test("Atelier uses separate photo-based paragraphs and saves inline section edit
     }),
   );
   await page.goto(`/previzualizare/${id}`);
-  await expect(page.locator(".atelier-intro-copy > p")).toHaveText(
-    draft.content.introBody,
+  await expect(page.locator(".atelier-intro-address")).toHaveText(
+    state.property.location,
   );
   await expect(page.locator(".atelier-story-copy > p")).toHaveText(
     draft.description,

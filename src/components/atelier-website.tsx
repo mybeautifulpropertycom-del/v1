@@ -7,16 +7,14 @@ import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
-  ArrowRight,
   ArrowUpRight,
   Check,
   Expand,
   Film,
   Mail,
-  MapPin,
   Phone,
   Plus,
   X,
@@ -42,6 +40,8 @@ export function AtelierWebsite({
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [viewing, setViewing] = useState(false);
   const [menu, setMenu] = useState(false);
+  const hero = useRef<HTMLElement>(null);
+  const [heroVisible, setHeroVisible] = useState(true);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -75,6 +75,14 @@ export function AtelierWebsite({
       Programează o vizionare <ArrowUpRight size={17} />
     </button>
   );
+  useEffect(() => {
+    if (!("IntersectionObserver" in window) || !hero.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setHeroVisible(entry.isIntersecting);
+    });
+    observer.observe(hero.current);
+    return () => observer.disconnect();
+  }, []);
   const photo = (src: string, index: number, className = "") => (
     <button
       type="button"
@@ -205,76 +213,67 @@ export function AtelierWebsite({
       </header>
       <main>
         <section
-          className={`atelier-mosaic ${side.length ? "" : "atelier-mosaic-single"}`}
-          aria-label="Fotografiile proprietății"
+          className="atelier-hero-stage"
+          ref={hero}
+          aria-label="Prezentarea proprietății"
         >
-          {property.images[0] ? (
-            <button
-              className="atelier-cover"
-              onClick={() => setLightbox(0)}
-              aria-label="Mărește prima fotografie a proprietății"
-            >
-              <PropertyImage
-                src={property.images[0]}
-                alt={`${property.title} — fotografie de copertă`}
-                fetchPriority="high"
-                sizes="100vw"
-              />
-              <span className="atelier-cover-label">
-                {propertyTypeLabel(property.type)}
-                <span>
-                  {property.transaction === "rent"
-                    ? "DE ÎNCHIRIAT"
-                    : "DE VÂNZARE"}
-                </span>
-              </span>
-              <span className="atelier-cover-note">
-                O primă privire. <ArrowUpRight size={18} />
-              </span>
-            </button>
-          ) : (
-            <div className="atelier-no-photo">
-              Aici vor apărea fotografiile proprietății tale.
-            </div>
-          )}
-          {side.length > 0 && (
-            <div
-              className="atelier-mosaic-side"
-              style={{
-                gridTemplateColumns: `repeat(${Math.ceil(side.length / 2)}, minmax(0,1fr))`,
-              }}
-              data-odd={side.length % 2 === 1}
-              data-count={side.length}
-            >
-              {side.map((src, index) => photo(src, index + 1))}
-            </div>
-          )}
-          {property.images.length > 0 && (
-            <button
-              className="atelier-all-photos"
-              onClick={() => setLightbox(0)}
-            >
-              <Expand size={14} />
-              Vezi toate cele {property.images.length} fotografii
-            </button>
-          )}
-        </section>
-        <section className="atelier-intro atelier-pad" id="residence">
-          <div className="atelier-intro-top">
-            <a href="#details" className="atelier-text-link">
-              Descoperă detaliile <ArrowRight size={16} />
-            </a>
-          </div>
-          <div className="atelier-title-row">
-            <div className="atelier-intro-copy">
-              <span className="atelier-kicker atelier-intro-address">
-                <MapPin size={13} />
-                <EditableText
-                  field="location"
-                  value={property.location || "Adresa proprietății"}
-                  onEdit={onEdit}
+          <section
+            className={`atelier-mosaic ${side.length ? "" : "atelier-mosaic-single"}`}
+            aria-label="Fotografiile proprietății"
+          >
+            {property.images[0] ? (
+              <button
+                className="atelier-cover"
+                onClick={() => setLightbox(0)}
+                aria-label="Mărește prima fotografie a proprietății"
+              >
+                <PropertyImage
+                  src={property.images[0]}
+                  alt={`${property.title} — fotografie de copertă`}
+                  fetchPriority="high"
+                  sizes="100vw"
                 />
-              </span>
+                <span className="atelier-cover-label">
+                  {propertyTypeLabel(property.type)}
+                  <span>
+                    {property.transaction === "rent"
+                      ? "DE ÎNCHIRIAT"
+                      : "DE VÂNZARE"}
+                  </span>
+                </span>
+                <span className="atelier-cover-note">
+                  O primă privire. <ArrowUpRight size={18} />
+                </span>
+              </button>
+            ) : (
+              <div className="atelier-no-photo">
+                Aici vor apărea fotografiile proprietății tale.
+              </div>
+            )}
+            {side.length > 0 && (
+              <div
+                className="atelier-mosaic-side"
+                style={{
+                  gridTemplateColumns: `repeat(${Math.ceil(side.length / 2)}, minmax(0,1fr))`,
+                }}
+                data-odd={side.length % 2 === 1}
+                data-count={side.length}
+              >
+                {side.map((src, index) => photo(src, index + 1))}
+              </div>
+            )}
+            {property.images.length > 0 && (
+              <button
+                className="atelier-all-photos"
+                onClick={() => setLightbox(0)}
+              >
+                <Expand size={14} />
+                Vezi toate cele {property.images.length} fotografii
+              </button>
+            )}
+          </section>
+          <div className="atelier-intro" id="residence">
+            <div className="atelier-intro-copy">
               <h1>
                 <EditableText
                   field="title"
@@ -282,14 +281,31 @@ export function AtelierWebsite({
                   onEdit={onEdit}
                 />
               </h1>
-              <p>{text("introBody")}</p>
+              <p className="atelier-intro-address">
+                <EditableText
+                  field="location"
+                  value={property.location || "Adresa proprietății"}
+                  onEdit={onEdit}
+                />
+              </p>
             </div>
+            <dl className="atelier-facts">
+              <div>
+                <dt>{property.bedrooms === 1 ? "dormitor" : "dormitoare"}</dt>
+                <dd>{property.bedrooms}</dd>
+              </div>
+              <div>
+                <dt>{property.bathrooms === 1 ? "baie" : "băi"}</dt>
+                <dd>{property.bathrooms}</dd>
+              </div>
+              <div>
+                <dt className="atelier-area-label">Suprafață locuibilă</dt>
+                <dd>
+                  {property.area.toLocaleString("ro-RO")} {unit}
+                </dd>
+              </div>
+            </dl>
             <div className="atelier-intro-price">
-              <span className="atelier-kicker">
-                {property.transaction === "rent"
-                  ? "Chirie lunară"
-                  : "Preț de vânzare"}
-              </span>
               <p className="atelier-price" aria-label={formatPrice(property)}>
                 <span>
                   {property.price.toLocaleString("ro-RO", {
@@ -301,31 +317,18 @@ export function AtelierWebsite({
                   <small className="atelier-price-period">/ lună</small>
                 )}
               </p>
-              {tour()}
+              <small>
+                {sample
+                  ? "Date exemplificative"
+                  : property.transaction === "rent"
+                    ? "Chirie lunară"
+                    : "Preț de vânzare"}
+              </small>
+            </div>
+            <div className="atelier-intro-action">
+              {tour("atelier-button atelier-hero-tour")}
             </div>
           </div>
-          <dl className="atelier-facts">
-            <div>
-              <dt>Dormitoare</dt>
-              <dd>{property.bedrooms}</dd>
-            </div>
-            <div>
-              <dt>Băi</dt>
-              <dd>{property.bathrooms}</dd>
-            </div>
-            <div>
-              <dt>Suprafață locuibilă</dt>
-              <dd>
-                {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
-              </dd>
-            </div>
-            <div>
-              <dt>Tipul proprietății</dt>
-              <dd className="atelier-type">
-                {propertyTypeLabel(property.type)}
-              </dd>
-            </div>
-          </dl>
         </section>
         <section className="atelier-story atelier-pad">
           <figure>
@@ -660,7 +663,7 @@ export function AtelierWebsite({
         </a>
         <FooterBrand />
       </footer>
-      <div className="atelier-mobile-tour">
+      <div className="atelier-mobile-tour" data-hero-visible={heroVisible}>
         <span>
           {formatPrice(property)}
           <small>
