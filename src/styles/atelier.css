@@ -504,7 +504,7 @@
 }
 .atelier-spec-grid dd {
   margin: 0;
-  font: 25px/1.2 var(--serif);
+  font: 23px/1.2 var(--serif);
   color: #f2f1e8;
   overflow-wrap: anywhere;
 }
@@ -513,7 +513,7 @@
   color: #c1c4b8;
 }
 .atelier-spec-location dd {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.4;
 }
 .atelier-extras {
@@ -540,7 +540,7 @@
   padding: 12px;
   border: 1px solid #ffffff30;
   color: #e0e4d6;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.4;
   border-radius: 2px;
 }
@@ -586,20 +586,8 @@
   height: 100%;
   object-fit: cover;
 }
-.atelier-detail-image > span {
-  position: absolute;
-  bottom: 25px;
-  left: 25px;
-  right: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 18px;
-  background: #fafaf3ef;
-  color: #353c30;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  pointer-events: none;
+.atelier-detail-image .atelier-expand {
+  opacity: 1;
 }
 .atelier-gallery {
   padding-block: 100px;
@@ -817,7 +805,7 @@
 .atelier-invitation h2 {
   max-width: 850px;
   margin: 30px auto 25px;
-  font-size: clamp(32px, 4.4vw, 52px);
+  font-size: clamp(28px, 3.2vw, 45px);
 }
 .atelier-invitation h2 em {
   color: #7b735e;
@@ -1048,8 +1036,11 @@
     padding-block: 50px;
   }
   .atelier-spec-grid dd {
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1.4;
+  }
+  .atelier-extras li {
+    font-size: 12px;
   }
   .atelier-detail-image {
     min-height: 380px;
@@ -1102,7 +1093,7 @@
     padding-block: 55px;
   }
   .atelier-invitation h2 {
-    font-size: clamp(25px, 7.3vw, 32px);
+    font-size: calc(clamp(25px, 7.3vw, 32px) + 1px);
   }
   .atelier-invitation-title,
   .atelier-invitation h2 em > span {

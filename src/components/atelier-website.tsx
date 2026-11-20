@@ -417,9 +417,6 @@ export function AtelierWebsite({
             ) : (
               <div className="atelier-no-photo">Detaliile fac diferența.</div>
             )}
-            <span>
-              DETALIILE FAC DIFERENȚA <ArrowUpRight size={18} />
-            </span>
           </div>
         </section>
         <section className="atelier-gallery atelier-pad" id="gallery">
