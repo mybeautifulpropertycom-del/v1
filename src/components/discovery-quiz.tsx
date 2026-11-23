@@ -342,6 +342,31 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
                 </span>
                 {index === step ? (
                   <div className="discovery-editorial-step-content">
+                    <div
+                      className="discovery-editorial-mobile-progress"
+                      role="progressbar"
+                      aria-label="Progresul căutării"
+                      aria-valuemin={1}
+                      aria-valuemax={steps.length}
+                      aria-valuenow={step + 1}
+                      aria-valuetext={`Pasul ${step + 1} din ${steps.length}: ${label}`}
+                    >
+                      <span aria-hidden="true">
+                        {String(step + 1).padStart(2, "0")} /{" "}
+                        {String(steps.length).padStart(2, "0")}
+                      </span>
+                      <span
+                        className="discovery-editorial-progress-track"
+                        aria-hidden="true"
+                      >
+                        {steps.map((name, position) => (
+                          <span
+                            key={name}
+                            data-filled={position <= step || undefined}
+                          />
+                        ))}
+                      </span>
+                    </div>
                     {question}
                     {choices}
                     {actions}

@@ -20,7 +20,7 @@ export function DiscoveryHeader({
       <nav aria-label="Navigare">
         <Link href="/autentificare" className="discovery-account">
           {editorial && <UserRound size={14} aria-hidden="true" />}
-          Contul meu
+          <span className="discovery-account-label">Contul meu</span>
           {!editorial && <ArrowUpRight size={14} aria-hidden="true" />}
         </Link>
       </nav>

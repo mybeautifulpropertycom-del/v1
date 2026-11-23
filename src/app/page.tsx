@@ -26,7 +26,12 @@ export default function Home() {
       <main className="discovery-editorial-main">
         <div className="discovery-editorial-intro">
           <h1>
-            Următoarea <em>Proprietate</em>
+            <span className="discovery-desktop-title">
+              Găsește Proprietatea Perfectă Pentru Tine <em>și Familia Ta</em>
+            </span>
+            <span className="discovery-mobile-title">
+              Următoarea <em>Proprietate</em>
+            </span>
           </h1>
           <p>
             Descoperă proprietatea care ți se potrivește, prin câteva întrebări

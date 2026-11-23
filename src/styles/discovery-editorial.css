@@ -87,8 +87,13 @@
 }
 
 .discovery-editorial-intro h1 {
-  font: 490 clamp(59px, 7.35vw, 116px) / 0.91 var(--serif);
-  letter-spacing: -0.078em;
+  font: 490 clamp(33px, 4.05vw, 63px) / 1 var(--serif);
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.discovery-mobile-title {
+  display: none;
 }
 
 .discovery-editorial-intro h1 em {
@@ -208,6 +213,10 @@
 
 .discovery-editorial-step-content h2:focus {
   outline: none;
+}
+
+.discovery-editorial-mobile-progress {
+  display: none;
 }
 
 .discovery-editorial-quiz .discovery-choices button {
@@ -331,91 +340,266 @@
 
 @media (max-width: 780px) {
   .discovery-editorial-home {
-    --editorial-shell: min(580px, calc(100% - 42px));
-    --editorial-header-height: 55px;
+    --discovery-ink: #292a25;
+    --discovery-green: #294650;
+    --discovery-line: #dbcdbd;
+    --discovery-soft: #f4e7d9;
+    --editorial-paper: #f6eee6;
+    --editorial-gold: #a75d3e;
+    --editorial-shell: 100%;
+    --editorial-header-height: 62px;
     --editorial-column: 100%;
+    --editorial-photo-height: clamp(310px, 94vw, 510px);
+    --editorial-quiz-overlap: 26px;
+    --editorial-mobile-gutter: clamp(19px, 6vw, 40px);
   }
 
   .discovery-editorial-home .discovery-header {
-    padding-inline: 21px;
-    background: #f0e9dfc7;
+    padding-inline: var(--editorial-mobile-gutter);
+    background: var(--editorial-paper);
   }
 
   .discovery-editorial-home .discovery-brand {
-    gap: 6px;
+    gap: 9px;
+    font-size: 16px;
+    line-height: 0.98;
+  }
+
+  .discovery-editorial-home .discovery-brand span {
+    max-inline-size: 98px;
   }
 
   .discovery-editorial-home .discovery-brand svg {
-    width: 23px;
-    height: 23px;
+    color: #8d7250;
   }
 
   .discovery-editorial-home .discovery-account {
-    padding: 7px 10px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: transparent;
+    color: #795f44;
+  }
+
+  .discovery-editorial-home .discovery-account:hover {
+    background: #eaded0;
+  }
+
+  .discovery-editorial-home .discovery-account svg {
+    width: 24px;
+    height: 24px;
+    padding: 3px;
+    border: 1px solid #b9a183;
+    border-radius: 50%;
+  }
+
+  .discovery-editorial-home .discovery-account-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .discovery-editorial-scene {
-    height: clamp(390px, 89vw, 570px);
+    inset: var(--editorial-header-height) 0 auto;
+    height: var(--editorial-photo-height);
   }
 
   .discovery-editorial-scene img {
-    object-position: 67% 46%;
+    object-position: 40% center;
   }
 
   .discovery-editorial-scene::after {
-    background:
-      linear-gradient(
-        0deg,
-        var(--editorial-paper),
-        #f0e9df85 37%,
-        transparent 72%
-      ),
-      linear-gradient(90deg, #f0e9dfdf 0%, #f0e9df78 54%, transparent);
+    inset: 0 0 auto;
+    height: 59%;
+    background: linear-gradient(
+      100deg,
+      var(--editorial-paper) 3%,
+      #f6eee6eb 45%,
+      #f6eee665 73%,
+      transparent 96%
+    );
+    mask-image: linear-gradient(#000 57%, #0009 78%, transparent);
   }
 
   .discovery-editorial-main {
-    padding-top: clamp(70px, 21vw, 127px);
+    padding-block: 0;
+  }
+
+  .discovery-editorial-intro {
+    min-height: calc(
+      var(--editorial-photo-height) - var(--editorial-quiz-overlap)
+    );
+    padding: clamp(26px, 7.8vw, 53px) var(--editorial-mobile-gutter) 0;
   }
 
   .discovery-editorial-intro h1 {
-    font-size: clamp(45px, 11.6vw, 78px);
+    font-size: clamp(34px, 10.6vw, 63px);
+    line-height: 0.91;
+    letter-spacing: -0.078em;
+    text-wrap: wrap;
   }
 
-  .discovery-editorial-quiz {
-    margin-top: 22px;
-  }
-
-  .discovery-editorial-nav {
+  .discovery-desktop-title {
     display: none;
   }
 
-  .discovery-editorial-quiz
-    .discovery-choices
-    button:not([aria-pressed="true"]) {
-    border-color: #ccbea6;
-  }
-}
-
-@media (max-width: 480px) {
-  .discovery-editorial-home {
-    --editorial-shell: calc(100% - 32px);
+  .discovery-mobile-title {
+    display: inline;
   }
 
-  .discovery-editorial-home .discovery-header {
-    padding-inline: 16px;
+  .discovery-editorial-intro p {
+    max-width: 29ch;
+    margin-top: 13px;
+    font: 490 clamp(11px, 3vw, 16px) / 1.42 var(--sans);
   }
 
-  .discovery-editorial-steps {
-    --editorial-marker: 25px;
+  .discovery-editorial-quiz {
+    margin: 0;
+    min-height: max(
+      300px,
+      calc(
+        100svh - var(--editorial-header-height) -
+          var(--editorial-photo-height) + var(--editorial-quiz-overlap)
+      )
+    );
+    padding: 19px var(--editorial-mobile-gutter)
+      max(25px, env(safe-area-inset-bottom));
+    border-radius: 30px 30px 0 0;
+    background: linear-gradient(
+      152deg,
+      #fcf5ec,
+      #f4eade 58%,
+      var(--editorial-paper)
+    );
+    box-shadow: 0 -6px 25px #59412626;
+  }
+
+  .discovery-editorial-nav,
+  .discovery-editorial-steps::before,
+  .discovery-editorial-steps > li:not([aria-current="step"]),
+  .discovery-editorial-marker {
+    display: none;
+  }
+
+  .discovery-editorial-steps > li[aria-current="step"] {
+    display: block;
+  }
+
+  .discovery-editorial-step-content {
+    margin: 0;
+  }
+
+  .discovery-editorial-mobile-progress {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 8vw, 36px);
+    margin-bottom: 10px;
+    color: #655745;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .discovery-editorial-progress-track {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    width: 42%;
+    max-width: 172px;
+  }
+
+  .discovery-editorial-progress-track span {
+    height: 5px;
+    border-radius: 6px;
+    background: #e5d8c8;
+  }
+
+  .discovery-editorial-progress-track span[data-filled] {
+    background: #b86d48;
+  }
+
+  .discovery-editorial-step-content h2 {
+    margin-bottom: 14px;
+    font-size: clamp(27px, 8vw, 42px);
+  }
+
+  .discovery-editorial-quiz .discovery-choices button {
+    min-height: 45px;
+    background: #f7eee3;
+  }
+
+  .discovery-editorial-quiz .discovery-choices button[aria-pressed="true"] {
+    border-color: #ae6c4a;
+    background: #f0ddcc;
+  }
+
+  .discovery-editorial-quiz .discovery-offer-choices {
+    gap: 10px;
   }
 
   .discovery-editorial-quiz .discovery-offer-choices button {
-    grid-template-columns: minmax(0, 1fr) 16px;
+    grid-template-rows: auto minmax(59px, auto);
+    border-radius: 13px;
+    font-size: clamp(12px, 3.3vw, 15px);
+  }
+
+  .discovery-editorial-offer-photo {
+    aspect-ratio: 1.95;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .discovery-editorial-quiz .discovery-offer-icon {
+    inset: auto auto 41px 12px;
+    color: #344950;
+  }
+
+  .discovery-editorial-quiz .discovery-offer-label {
+    max-inline-size: 13ch;
+    padding: 15px 0 4px 13px;
+    line-height: 1.12;
+    text-wrap: balance;
   }
 
   .discovery-editorial-offer-check {
-    width: 15px;
-    height: 15px;
-    margin-left: -5px;
+    width: 17px;
+    height: 17px;
+    margin: 13px 0 0 -5px;
+    border-color: #cbb59d;
+  }
+
+  .discovery-editorial-quiz
+    button[aria-pressed="true"]
+    .discovery-editorial-offer-check {
+    border-color: #ae6c4a;
+    background: #ae6c4a;
+  }
+
+  .discovery-editorial-quiz .discovery-quiz-actions {
+    margin-top: 19px;
+  }
+
+  .discovery-editorial-quiz .discovery-quiz-actions .discovery-primary {
+    min-height: 46px;
+    padding-inline: 18px;
+    border-radius: 28px;
+    background: var(--discovery-green);
+  }
+
+  .discovery-editorial-quiz
+    .discovery-quiz-actions
+    .discovery-primary:hover:not(:disabled) {
+    background: #203b44;
+  }
+}
+
+@media (min-width: 560px) and (max-width: 780px) {
+  .discovery-editorial-steps {
+    width: min(100%, 600px);
+    margin-inline: auto;
   }
 }

@@ -5,6 +5,9 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Următoarea Proprietate", level: 1 }),
+  ).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);
@@ -13,7 +16,13 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   await expect(page.getByText("Vezi toate ofertele")).toHaveCount(0);
   await expect(page.locator('main a[href^="/cauta/"]')).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Continuă" })).toHaveCount(0);
+  const mobileProgress = page.getByRole("progressbar", {
+    name: "Progresul căutării",
+  });
+  await expect(mobileProgress).toBeVisible();
+  await expect(mobileProgress).toHaveAttribute("aria-valuenow", "1");
   await page.getByRole("button", { name: "Vreau să cumpăr" }).click();
+  await expect(mobileProgress).toHaveAttribute("aria-valuenow", "2");
   const kinds = page.getByRole("form").getByRole("button");
   await expect(kinds).toHaveText([
     "Apartament",
@@ -37,7 +46,9 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   await page.getByRole("button", { name: "2", exact: true }).click();
   await expect(page.getByRole("button", { name: "Cluj-Napoca" })).toBeVisible();
   await page.getByRole("button", { name: "București", exact: true }).click();
+  await expect(mobileProgress).toHaveAttribute("aria-valuenow", "5");
   await page.getByRole("button", { name: "Înapoi" }).click();
+  await expect(mobileProgress).toHaveAttribute("aria-valuenow", "4");
   await expect(page.getByRole("button", { name: "București" })).toHaveAttribute(
     "aria-pressed",
     "true",

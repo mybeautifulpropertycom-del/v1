@@ -15,7 +15,10 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
   expect(html).toContain('name="robots" content="index, follow"');
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Următoarea Proprietate", level: 1 }),
+    page.getByRole("heading", {
+      name: "Găsește Proprietatea Perfectă Pentru Tine și Familia Ta",
+      level: 1,
+    }),
   ).toBeVisible();
   await expect(page).toHaveTitle(HOME_TITLE);
   const structured = await page
@@ -63,7 +66,10 @@ test("signed-in visitors can use search and open their private dashboard from th
   await workspace(page);
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Următoarea Proprietate", level: 1 }),
+    page.getByRole("heading", {
+      name: "Găsește Proprietatea Perfectă Pentru Tine și Familia Ta",
+      level: 1,
+    }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Contul meu" }).click();
   await expect(page).toHaveURL(/\/panou$/);
