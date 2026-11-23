@@ -413,15 +413,44 @@ test("pending payments reopen in a dialog, handle a declined card and do not lea
   expect(state.posts.every((item) => item.action === "resume")).toBe(true);
 });
 
-test("an unpublished property cannot open checkout", async ({ page }) => {
+test("unpublished listings show every campaign step as a disabled preview", async ({
+  page,
+}) => {
   const state = await fixture(page, false);
   await page.goto("/panou/promovare");
   await expect(
     page.getByText("Promovarea începe cu o proprietate publicată."),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Activează campania" }),
+    page.getByRole("link", { name: "Mergi la proprietățile mele" }),
+  ).toHaveAttribute("href", "/panou");
+  await expect(page.locator(".promotion-step h2")).toHaveText([
+    "Proprietatea",
+    "Locația",
+    "Cuvinte cheie",
+    "Bugetul",
+  ]);
+  await expect(
+    page.getByLabel("Ce proprietate vrei să promovezi?"),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("option", { name: "Vila cu grădină" }),
   ).toHaveCount(0);
+  await expect(page.getByLabel("Orașul și cartierul vizat")).toBeDisabled();
+  await expect(page.getByLabel("Raza de targetare")).toBeDisabled();
+  await expect(
+    page.getByRole("checkbox", {
+      name: "apartament de vânzare București",
+      exact: true,
+    }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("radio", { name: "Plus 500 RON" }),
+  ).toBeDisabled();
+  await expect(page.locator(".promotion-notes")).toHaveAttribute("inert", "");
+  await expect(
+    page.getByRole("button", { name: "Activează campania" }),
+  ).toBeDisabled();
   expect(state.posts).toHaveLength(0);
 });
 

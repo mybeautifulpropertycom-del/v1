@@ -41,6 +41,7 @@ function CampaignSetup({
   canPay: boolean;
   onUpdated: () => void;
 }) {
+  const preview = properties.length === 0;
   const [selectedId, setSelectedId] = useState("");
   const property = properties.find((item) => item.id === selectedId);
   const [area, setArea] = useState("");
@@ -54,8 +55,14 @@ function CampaignSetup({
   const zone = promotionTargetArea(area);
   const hasZone = zone.length >= 2;
   const bucharest = isBucharestPromotionArea(zone);
-  const suggestions =
-    property && hasZone ? promotionKeywordSuggestions(property, zone) : [];
+  const suggestions = preview
+    ? promotionKeywordSuggestions(
+        { type: "Condo", transaction: "sale", bedrooms: 2 },
+        "București",
+      )
+    : property && hasZone
+      ? promotionKeywordSuggestions(property, zone)
+      : [];
   const keywords = suggestions.filter((keyword) =>
     selectedKeywords.includes(keyword),
   );
@@ -107,8 +114,12 @@ function CampaignSetup({
 
   return (
     <>
-      <form className="promotion-setup" onSubmit={submit}>
-        <fieldset disabled={busy || Boolean(payment)}>
+      <form
+        className="promotion-setup"
+        onSubmit={submit}
+        aria-describedby={preview ? "promotion-preview-requirement" : undefined}
+      >
+        <fieldset disabled={preview || busy || Boolean(payment)}>
           <section className="promotion-step">
             <h2>Proprietatea</h2>
             <div className="promotion-property-picker">
@@ -137,7 +148,7 @@ function CampaignSetup({
               )}
             </div>
           </section>
-          {property && (
+          {(property || preview) && (
             <>
               <section className="promotion-step">
                 <h2>Locația</h2>
@@ -153,7 +164,7 @@ function CampaignSetup({
                     placeholder="Ex: București, Pantelimon"
                   />
                 </label>
-                {bucharest && (
+                {(bucharest || preview) && (
                   <div className="promotion-radius-settings">
                     <label>
                       Raza de targetare
@@ -170,7 +181,9 @@ function CampaignSetup({
                         ))}
                       </select>
                     </label>
-                    <PromotionRadiusMap radius={radius} />
+                    {bucharest && !preview && (
+                      <PromotionRadiusMap radius={radius} />
+                    )}
                   </div>
                 )}
               </section>
@@ -179,7 +192,9 @@ function CampaignSetup({
                 {suggestions.length > 0 ? (
                   <fieldset className="promotion-keyword-options">
                     <legend>
-                      Alege cel puțin o căutare pe care vrei să o vizăm.
+                      {preview
+                        ? "Exemple de cuvinte cheie"
+                        : "Alege cel puțin o căutare pe care vrei să o vizăm."}
                     </legend>
                     {suggestions.map((keyword) => (
                       <label key={keyword}>
@@ -222,7 +237,11 @@ function CampaignSetup({
                     ))}
                   </div>
                 </fieldset>
-                <details className="promotion-notes">
+                <details
+                  className="promotion-notes"
+                  inert={preview}
+                  open={preview || undefined}
+                >
                   <summary>Adaugă observații (opțional)</summary>
                   <label>
                     Ce ar trebui să știm despre promovare?
@@ -587,20 +606,20 @@ export function PromotionDashboard() {
             : "Ai revenit fără să finalizezi plata. O poți continua sau anula din comenzile tale."}
         </p>
       )}
-      {published.length ? (
-        <CampaignSetup
-          properties={published}
-          canPay={!demo && enabled && !loading}
-          onUpdated={refresh}
-        />
-      ) : (
-        <div className="promotion-empty">
+      {!published.length && (
+        <div className="promotion-empty" id="promotion-preview-requirement">
           <strong>Promovarea începe cu o proprietate publicată.</strong>{" "}
           <Link href="/panou" className="text-button">
             Mergi la proprietățile mele <ArrowUpRight size={14} />
           </Link>
         </div>
       )}
+      <CampaignSetup
+        key={published.length ? "active" : "preview"}
+        properties={published}
+        canPay={!demo && enabled && !loading}
+        onUpdated={refresh}
+      />
       {!loading && !enabled && (
         <p className="promotion-muted">
           {demo
