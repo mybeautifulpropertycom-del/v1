@@ -149,6 +149,20 @@ commit;
 select 'MBP_PROFILE_BIO_READY' as status;
 `,
 );
+const profileRole = await readFile(
+  new URL("202611230003_profile_role.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-profile-role.sql", import.meta.url),
+  `-- Existing installations: run the entire file. Safe to rerun.
+begin;
+${profileRole.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_PROFILE_ROLE_READY' as status;
+`,
+);
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",

@@ -203,6 +203,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       throw new Error(
         `Scurtează prezentarea la maximum ${MAX_PROFILE_BIO_LENGTH} de caractere înainte de salvare.`,
       );
+    if (profile.profile_role === "owner") profile = { ...profile, agency: "" };
     const supabase = getSupabase();
     if (supabase) {
       const { error, data } = await supabase
@@ -213,6 +214,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           phone: profile.phone,
           agency: profile.agency,
           bio: profile.bio,
+          ...(profile.profile_role
+            ? { profile_role: profile.profile_role }
+            : {}),
           ...(profile.avatar_url !== undefined
             ? { avatar_url: profile.avatar_url }
             : {}),

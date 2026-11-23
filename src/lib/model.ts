@@ -2,6 +2,7 @@ import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
 import { platformRedirects } from "./platform-redirects";
 import { locale, defaultCurrency, defaultAreaUnit } from "@/i18n/config";
 import type { SavedPropertyStory } from "./property-story";
+import type { ProfileBioRole } from "./profile-bio";
 export type TemplateId = "editorial" | "minimal" | "panorama";
 export const MAX_PROFILE_BIO_LENGTH = 300;
 export type Profile = {
@@ -10,6 +11,7 @@ export type Profile = {
   email: string;
   phone: string;
   agency: string;
+  profile_role?: ProfileBioRole | null;
   bio: string;
   avatar_url?: string;
   profile_completed_at?: string | null;
@@ -45,7 +47,7 @@ export type PublicProperty = Omit<
   Property,
   "owner_id" | "created_at" | "updated_at"
 >;
-export type PublicProfile = Omit<Profile, "id">;
+export type PublicProfile = Omit<Profile, "id" | "profile_role">;
 
 const platformPageSlugs = new Set(
   platformRedirects.map(([, destination]) => destination.split("/")[1]),

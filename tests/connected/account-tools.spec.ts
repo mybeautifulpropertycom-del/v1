@@ -50,6 +50,7 @@ test("profile introductions can be generated three times and edited, with an emp
 }) => {
   const state = await workspace(page);
   const original = state.profile.bio;
+  state.profile.agency = "";
   let remaining = 3;
   const roles: string[] = [];
   await page.route("**/api/profile-bio", async (route) => {
@@ -75,20 +76,47 @@ test("profile introductions can be generated three times and edited, with an emp
     exact: true,
   });
   const role = page.getByRole("combobox", {
-    name: "Tipul prezentării",
+    name: "Tipul de profil",
+    exact: true,
+  });
+  const changeRole = page.getByRole("button", {
+    name: "Schimbă tipul de profil",
+  });
+  const save = page.getByRole("button", {
+    name: "Salvează modificările",
     exact: true,
   });
   const generate = page.getByRole("button", { name: "Generează descrierea" });
   const agency = page.getByLabel("Agenție imobiliară", { exact: true });
   await expect(bio).toHaveAttribute("maxlength", "300");
+  await expect(role).toHaveValue("");
+  await expect(generate).toBeDisabled();
+  await expect(agency).toHaveCount(0);
+  await role.selectOption("agent");
+  await expect(role).toHaveCount(0);
+  await expect(agency).toBeFocused();
   await expect(agency).not.toHaveAttribute("required", "");
-  await agency.clear();
+  await agency.fill("Agenția Test");
+  await changeRole.click();
   await role.selectOption("owner");
+  await expect(agency).toHaveCount(0);
+  await expect(role).toHaveCount(0);
+  await expect(
+    page.getByRole("combobox", { name: "Tipul prezentării" }),
+  ).toHaveCount(0);
   await generate.click();
   await expect(bio).toHaveValue(
     "Îți prezint proprietatea mea și răspund la întrebări.",
   );
   expect(state.profile.bio).toBe(original);
+  await save.click();
+  await expect(page.getByRole("status")).toContainText("salvat");
+  expect(state.profile.profile_role).toBe("owner");
+  expect(state.profile.agency).toBe("");
+  await page.reload();
+  await expect(agency).toHaveCount(0);
+  await expect(role).toHaveCount(0);
+  await changeRole.click();
   await role.selectOption("agent");
   await generate.click();
   await expect(bio).toHaveValue(
@@ -104,9 +132,7 @@ test("profile introductions can be generated three times and edited, with an emp
   await expect(generate).toBeDisabled();
   expect(roles).toEqual(["owner", "agent", "agent"]);
   await bio.fill("Îți răspund la întrebări și stabilim împreună o vizionare.");
-  await page
-    .getByRole("button", { name: "Salvează modificările", exact: true })
-    .click();
+  await save.click();
   await expect(page.getByRole("status")).toContainText("salvat");
   await page.reload();
   await expect(generate).toBeDisabled();
@@ -114,6 +140,7 @@ test("profile introductions can be generated three times and edited, with an emp
     "Îți răspund la întrebări și stabilim împreună o vizionare.",
   );
   await expect(agency).toHaveValue("");
+  expect(state.profile.profile_role).toBe("agent");
 });
 
 test("deleting a property removes its page entry and saved photos but keeps its lead", async ({

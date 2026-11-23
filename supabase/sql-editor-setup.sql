@@ -3349,6 +3349,12 @@ revoke all on function public.finish_profile_bio(uuid, uuid, boolean) from publi
 grant execute on function public.reserve_profile_bio(uuid, uuid) to service_role;
 grant execute on function public.finish_profile_bio(uuid, uuid, boolean) to service_role;
 
+
+alter table public.profiles
+  add column if not exists profile_role text
+    constraint profiles_profile_role_check
+    check (profile_role in ('agent', 'owner'));
+
 notify pgrst, 'reload schema';
 commit;
 

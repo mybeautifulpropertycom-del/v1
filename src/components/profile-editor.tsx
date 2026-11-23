@@ -1,6 +1,6 @@
 "use client";
 import { AgentAvatar } from "./agent-avatar";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,7 +14,11 @@ import {
   UserRound,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
-import { MAX_PROFILE_BIO_LENGTH, profileErrors } from "@/lib/model";
+import {
+  MAX_PROFILE_BIO_LENGTH,
+  profileErrors,
+  type Profile,
+} from "@/lib/model";
 import { requestProfileBio } from "@/lib/profile-bio-client";
 import {
   isProfileBioRole,
@@ -28,13 +32,19 @@ export function ProfileEditor() {
   const fileStatusId = useId();
   const [fileName, setFileName] = useState("");
   const { profile, saveProfile, uploadAvatar, notify, demo } = useWorkspace();
-  const [form, setForm] = useState(profile);
+  const [form, setForm] = useState<Profile>(() => ({
+    ...profile,
+    profile_role:
+      profile.profile_role ?? (profile.agency.trim() ? "agent" : null),
+  }));
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const [bioRole, setBioRole] = useState<ProfileBioRole>("agent");
+  const [editingRole, setEditingRole] = useState(false);
+  const focusRoleNext = useRef(false);
+  const role = form.profile_role;
   const [remaining, setRemaining] = useState<number | null>(null);
   const [generatingBio, setGeneratingBio] = useState(false);
   const [bioError, setBioError] = useState("");
@@ -62,6 +72,20 @@ export function ProfileEditor() {
     return () => clearTimeout(timer);
   }, [redirecting, router]);
   const t = ro.profile;
+  function focusRoleField(control: HTMLElement | null) {
+    if (control && focusRoleNext.current) {
+      focusRoleNext.current = false;
+      control.focus();
+    }
+  }
+
+  function chooseRole(value: ProfileBioRole) {
+    focusRoleNext.current = true;
+    setForm((current) => ({ ...current, profile_role: value }));
+    setEditingRole(false);
+    setSaved(false);
+    setBioError("");
+  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (uploading || busy || generatingBio || redirecting) return;
@@ -88,14 +112,21 @@ export function ProfileEditor() {
     }
   }
   async function generateBio() {
-    if (generatingBio || busy || uploading || redirecting || remaining === 0)
+    if (
+      !role ||
+      generatingBio ||
+      busy ||
+      uploading ||
+      redirecting ||
+      remaining === 0
+    )
       return;
     setGeneratingBio(true);
     setBioError("");
     try {
       const result = await requestProfileBio({
-        role: bioRole,
-        agency: form.agency,
+        role,
+        agency: role === "agent" ? form.agency : "",
         previousBio: form.bio.slice(0, 1000),
       });
       if (result.remaining !== undefined) setRemaining(result.remaining);
@@ -222,17 +253,71 @@ export function ProfileEditor() {
                 }}
               />
             </label>
-            <label>
-              {t.agency}
-              <input
-                data-profile-guide-field="agency"
-                autoComplete="organization"
-                maxLength={120}
-                placeholder="Agenția ta imobiliară"
-                value={form.agency}
-                onChange={(e) => setForm({ ...form, agency: e.target.value })}
-              />
-            </label>
+            <div className="profile-role-field">
+              {editingRole || !role ? (
+                <label>
+                  Tipul de profil
+                  <select
+                    ref={focusRoleField}
+                    data-profile-guide-field="agency"
+                    value=""
+                    disabled={generatingBio || busy}
+                    onChange={(event) => {
+                      if (isProfileBioRole(event.target.value))
+                        chooseRole(event.target.value);
+                    }}
+                  >
+                    <option value="" disabled>
+                      Alege tipul de profil
+                    </option>
+                    {Object.entries(profileBioRoles).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <>
+                  {role === "agent" ? (
+                    <label>
+                      {t.agency}
+                      <input
+                        ref={focusRoleField}
+                        data-profile-guide-field="agency"
+                        autoComplete="organization"
+                        maxLength={120}
+                        placeholder="Agenția ta imobiliară"
+                        value={form.agency}
+                        onChange={(e) => {
+                          setSaved(false);
+                          setForm({ ...form, agency: e.target.value });
+                        }}
+                      />
+                    </label>
+                  ) : (
+                    <p className="profile-role-value">
+                      {profileBioRoles.owner}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    className="text-button"
+                    ref={role === "owner" ? focusRoleField : undefined}
+                    data-profile-guide-field={
+                      role === "owner" ? "agency" : undefined
+                    }
+                    disabled={generatingBio || busy}
+                    onClick={() => {
+                      focusRoleNext.current = true;
+                      setEditingRole(true);
+                    }}
+                  >
+                    Schimbă tipul de profil
+                  </button>
+                </>
+              )}
+            </div>
             <label>
               {t.email}
               <input
@@ -296,23 +381,6 @@ export function ProfileEditor() {
                       : "Scrie simplu, personal și sincer."}
                 </small>
                 <div className="profile-bio-actions">
-                  <label>
-                    Tipul prezentării
-                    <select
-                      value={bioRole}
-                      disabled={generatingBio}
-                      onChange={(event) => {
-                        if (isProfileBioRole(event.target.value))
-                          setBioRole(event.target.value);
-                      }}
-                    >
-                      {Object.entries(profileBioRoles).map(([role, label]) => (
-                        <option key={role} value={role}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                   <button
                     type="button"
                     className="button secondary"
@@ -322,10 +390,13 @@ export function ProfileEditor() {
                         ? "Generarea este disponibilă după autentificare."
                         : remaining === 0
                           ? "Limita de generări AI a fost atinsă."
-                          : undefined
+                          : !role
+                            ? "Alege tipul de profil înainte de generare."
+                            : undefined
                     }
                     disabled={
                       demo ||
+                      !role ||
                       generatingBio ||
                       busy ||
                       uploading ||
@@ -386,7 +457,9 @@ export function ProfileEditor() {
               <AgentAvatar profile={form} />
             </div>
             <h2>{form.name || "Numele tău aici"}</h2>
-            {form.agency.trim() && <span>{form.agency}</span>}
+            {role === "agent" && form.agency.trim() && (
+              <span>{form.agency}</span>
+            )}
             <p>{form.bio || "Prezentarea ta va apărea aici."}</p>
             <div className="preview-contact">
               <span>

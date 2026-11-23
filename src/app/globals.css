@@ -1325,6 +1325,17 @@ label small,
 .full-width {
   grid-column: 1/-1;
 }
+.profile-role-field {
+  min-width: 0;
+}
+.profile-role-field > .text-button {
+  margin-top: 8px;
+  font-size: 11px;
+}
+.profile-role-value {
+  font-weight: 500;
+  font-size: 12px;
+}
 .profile-bio-footer {
   display: flex;
   flex-wrap: wrap;
@@ -1343,16 +1354,6 @@ label small,
   align-items: flex-end;
   gap: 6px;
   margin-inline-start: auto;
-}
-.profile-bio-actions label {
-  gap: 3px;
-  font-size: 10px;
-}
-.profile-bio-actions label select {
-  width: auto;
-  font-size: 11px;
-  min-height: 30px;
-  padding: 4px 6px;
 }
 .profile-bio-actions .button {
   max-width: 100%;
