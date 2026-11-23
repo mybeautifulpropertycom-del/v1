@@ -834,6 +834,11 @@ test("signup creates a private profile and agents see only their own data", asyn
   );
 });
 test("public access exposes published content, hides drafts and private profile fields", async () => {
+  await asAgent(agentA);
+  await db.query(
+    "update public.properties set construction_year=1987 where id=$1",
+    [propertyA],
+  );
   await asAnon();
   await assert.rejects(
     db.query("select * from public.profiles"),
@@ -850,6 +855,7 @@ test("public access exposes published content, hides drafts and private profile 
     };
   }>("select public.get_public_property('published-home') as data");
   assert.equal(published.rows[0].data.property.title, "A beautiful home");
+  assert.equal(published.rows[0].data.property.construction_year, 1987);
   assert.equal(published.rows[0].data.property.owner_id, undefined);
   assert.equal(published.rows[0].data.profile.id, undefined);
   const draft = await db.query<{ data: null }>(

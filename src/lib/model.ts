@@ -29,6 +29,7 @@ export type Property = {
   type: "Condo" | "Studio" | "House" | "Town House" | "Penthouse" | "Land";
   area: number;
   area_unit: "sqft" | "sqm";
+  construction_year?: number | null;
   bedrooms: number;
   bathrooms: number;
   amenities: string[];
@@ -189,6 +190,13 @@ export function propertyErrors(property: Property): string[] {
     property.area > 999999999
   )
     errors.push("Introdu o suprafață validă, mai mare sau egală cu zero.");
+  if (
+    property.construction_year != null &&
+    (!Number.isInteger(property.construction_year) ||
+      property.construction_year < 1000 ||
+      property.construction_year > 9999)
+  )
+    errors.push("Introdu un an de construcție din patru cifre.");
   if (
     !Number.isInteger(property.bedrooms) ||
     property.bedrooms < 0 ||

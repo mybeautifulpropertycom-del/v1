@@ -30,7 +30,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
   await page.getByLabel("Titlul proprietății").fill("A new chapter in Austin");
   await page.getByLabel("Adresă", { exact: false }).fill("Austin, TX");
   await page.getByLabel("Preț", { exact: true }).fill("695000");
-  await page.getByLabel("Suprafață", { exact: true }).fill("2100");
+  await page.getByLabel("Suprafață (m²)", { exact: true }).fill("2100");
   await page
     .getByLabel("Descriere", { exact: false })
     .fill(

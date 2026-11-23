@@ -507,6 +507,12 @@ export function EditorialWebsite({
                 <dt>Tipul proprietății</dt>
                 <dd>{propertyTypeLabel(property.type)}</dd>
               </div>
+              {property.construction_year != null && (
+                <div>
+                  <dt>Anul de construcție</dt>
+                  <dd>{property.construction_year}</dd>
+                </div>
+              )}
               <div>
                 <dt>Adresă</dt>
                 <dd>{property.location || "—"}</dd>

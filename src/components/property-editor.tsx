@@ -562,7 +562,7 @@ export function PropertyEditor({
                     </select>
                   </label>
                   <label>
-                    Suprafață
+                    Suprafață (m²)
                     <input
                       data-property-guide-field="area"
                       data-guide-issue={guideIssues.area || undefined}
@@ -575,19 +575,22 @@ export function PropertyEditor({
                     />
                   </label>
                   <label>
-                    Unitatea de suprafață
-                    <select
-                      disabled
-                      value={property.area_unit}
+                    Anul de construcție
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1000"
+                      max="9999"
+                      step="1"
+                      placeholder="2010"
+                      value={property.construction_year ?? ""}
                       onChange={(e) =>
                         update(
-                          "area_unit",
-                          e.target.value as Property["area_unit"],
+                          "construction_year",
+                          e.target.value === "" ? null : e.target.valueAsNumber,
                         )
                       }
-                    >
-                      <option value="sqm">m² - Metri pătrați</option>
-                    </select>
+                    />
                   </label>
                   <label>
                     Dormitoare

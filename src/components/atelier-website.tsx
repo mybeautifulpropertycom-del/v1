@@ -380,6 +380,12 @@ export function AtelierWebsite({
                 <dt>Tipul proprietății</dt>
                 <dd>{propertyTypeLabel(property.type)}</dd>
               </div>
+              {property.construction_year != null && (
+                <div>
+                  <dt>Anul de construcție</dt>
+                  <dd>{property.construction_year}</dd>
+                </div>
+              )}
               <div>
                 <dt>Dormitoare</dt>
                 <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>

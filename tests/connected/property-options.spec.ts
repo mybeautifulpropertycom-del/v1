@@ -25,8 +25,7 @@ test("legacy dimensions convert once, house filters include old types, and selec
 
   await page.goto(`/panou/proprietati/${id}`);
   const type = page.getByLabel("Tipul proprietății");
-  const area = page.getByLabel("Suprafață", { exact: true });
-  const unit = page.getByLabel("Unitatea de suprafață");
+  const area = page.getByLabel("Suprafață (m²)", { exact: true });
   await expect(type.locator("option")).toHaveText([
     "Apartament",
     "Garsonieră",
@@ -35,8 +34,7 @@ test("legacy dimensions convert once, house filters include old types, and selec
   ]);
   await expect(type).toHaveValue("House");
   await expect(area).toHaveValue("92.9");
-  await expect(unit.locator("option")).toHaveText(["m² - Metri pătrați"]);
-  await expect(unit).toHaveValue("sqm");
+  await expect(page.getByLabel("Unitatea de suprafață")).toHaveCount(0);
   expect(state.property.area_unit).toBe("sqft");
   expect(state.property.area).toBe(1000);
 
@@ -65,6 +63,64 @@ test("legacy dimensions convert once, house filters include old types, and selec
   await page.reload();
   await expect(type).toHaveValue("Penthouse");
   await expect(area).toHaveValue("120.5");
+});
+
+test("the optional construction year persists and appears only after the property type in each presentation", async ({
+  page,
+}) => {
+  const state = await workspace(page, { images: [] });
+  const year = page.getByLabel("Anul de construcție", { exact: true });
+  const save = page.getByRole("button", {
+    name: "Salvează modificările",
+    exact: true,
+  });
+  await page.goto(`/panou/proprietati/${id}`);
+  await expect(year).toHaveValue("");
+  await year.fill("2020.5");
+  await save.click();
+  const validation = "Introdu un an de construcție din patru cifre.";
+  await expect(
+    page.getByRole("alert").filter({ hasText: validation }),
+  ).toBeVisible();
+  expect(state.property.construction_year).toBeUndefined();
+
+  await year.fill("1987");
+  await save.click();
+  await expect(page.getByRole("status")).toContainText(
+    "Modificările au fost salvate",
+  );
+  expect(state.property.construction_year).toBe(1987);
+  await page.reload();
+  await expect(year).toHaveValue("1987");
+
+  for (const template of ["editorial", "minimal", "panorama"] as const) {
+    state.property.template = template;
+    await page.goto(`/previzualizare/${id}`);
+    const website = page.locator(".property-website, .atelier-website");
+    const yearDetail = website.locator("dl > div").filter({
+      has: page.getByText("Anul de construcție", { exact: true }),
+    });
+    await expect(yearDetail.locator("dd")).toHaveText("1987");
+    await expect(
+      yearDetail.locator("xpath=preceding-sibling::div[1]/dt"),
+    ).toHaveText("Tipul proprietății");
+    await expect(
+      website.getByText("Anul de construcție", { exact: true }),
+    ).toHaveCount(1);
+    await expect(website.getByText("1987", { exact: true })).toHaveCount(1);
+  }
+
+  await page.goto(`/panou/proprietati/${id}`);
+  await year.clear();
+  await save.click();
+  await expect(page.getByRole("status")).toContainText(
+    "Modificările au fost salvate",
+  );
+  expect(state.property.construction_year).toBeNull();
+  await page.goto(`/previzualizare/${id}`);
+  await expect(
+    page.getByText("Anul de construcție", { exact: true }),
+  ).toHaveCount(0);
 });
 
 test("studios and the new amenities persist, replace the old parking label and appear in filters and every presentation", async ({

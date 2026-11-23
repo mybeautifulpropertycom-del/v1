@@ -3298,6 +3298,12 @@ alter table public.properties
   add constraint properties_type_check
   check (type in ('House', 'Town House', 'Condo', 'Studio', 'Penthouse', 'Land'));
 
+
+alter table public.properties
+  add column if not exists construction_year smallint
+    constraint properties_construction_year_check
+    check (construction_year between 1000 and 9999);
+
 notify pgrst, 'reload schema';
 commit;
 

@@ -49,3 +49,47 @@ test("the Studio upgrade is repeatable and preserves every existing property and
     await db.close();
   }
 });
+
+test("the construction year upgrade accepts an optional year and preserves existing listings on rerun", async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(`
+      create table public.properties (id integer primary key, title text);
+      insert into public.properties values (1, 'Casă');
+    `);
+    const sql = await readFile(
+      new URL(
+        "../supabase/sql-editor-property-construction-year.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    await db.exec(sql);
+    const listing = async () =>
+      (await db.query("select * from public.properties")).rows[0];
+    assert.deepEqual(await listing(), {
+      id: 1,
+      title: "Casă",
+      construction_year: null,
+    });
+    await db.exec("update public.properties set construction_year=1987");
+    await db.exec(sql);
+    assert.deepEqual(await listing(), {
+      id: 1,
+      title: "Casă",
+      construction_year: 1987,
+    });
+    await assert.rejects(
+      db.exec("update public.properties set construction_year=999"),
+      /properties_construction_year_check/,
+    );
+    await db.exec("update public.properties set construction_year=null");
+    assert.deepEqual(await listing(), {
+      id: 1,
+      title: "Casă",
+      construction_year: null,
+    });
+  } finally {
+    await db.close();
+  }
+});

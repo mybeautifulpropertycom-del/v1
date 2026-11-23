@@ -118,6 +118,23 @@ commit;
 select 'MBP_PROPERTY_OPTIONS_READY' as status;
 `,
 );
+const constructionYear = await readFile(
+  new URL("202611230001_property_construction_year.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL(
+    "../supabase/sql-editor-property-construction-year.sql",
+    import.meta.url,
+  ),
+  `-- Existing installations: run the entire file. Safe to rerun.
+begin;
+${constructionYear.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_PROPERTY_CONSTRUCTION_YEAR_READY' as status;
+`,
+);
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",
