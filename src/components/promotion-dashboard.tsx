@@ -595,7 +595,7 @@ export function PromotionDashboard() {
         />
       ) : (
         <div className="promotion-empty">
-          <strong>Promovarea începe cu o proprietate publicată.</strong>
+          <strong>Promovarea începe cu o proprietate publicată.</strong>{" "}
           <Link href="/panou" className="text-button">
             Mergi la proprietățile mele <ArrowUpRight size={14} />
           </Link>
