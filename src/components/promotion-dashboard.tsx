@@ -650,9 +650,7 @@ export function PromotionDashboard() {
       </div>
       <p className="promotion-disclaimer">
         Costul clicurilor și rezultatele depind de cerere, concurență, zonă și
-        proprietate. Nu garantăm o anumită poziție în Google, un număr de
-        vizitatori sau de solicitări. Perioada campaniei se stabilește înainte
-        de lansare.
+        proprietate. Perioada campaniei se stabilește înainte de lansare.
       </p>
       <section
         className="promotion-history"
