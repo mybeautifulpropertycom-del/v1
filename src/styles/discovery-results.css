@@ -163,7 +163,7 @@
 }
 
 .discovery-listing-body {
-  padding: 6px 10px 7px 11px;
+  padding: 7px 10px 8px 11px;
   min-width: 0;
 }
 
@@ -196,7 +196,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  margin: 5px 0 0;
+  margin: 6px 0 0;
   color: #525447;
   font-size: 12px;
   line-height: 1.4;
@@ -218,8 +218,8 @@
 }
 
 .discovery-listing-facts {
-  margin: 10px 0 0;
-  gap: 5px 11px;
+  margin: 12px 0 0;
+  gap: 6px 11px;
   font-size: 12px;
   line-height: 1.25;
   font-weight: 740;
@@ -232,8 +232,8 @@
 }
 
 .discovery-listing-amenities {
-  margin: 9px 0 0;
-  gap: 5px;
+  margin: 11px 0 0;
+  gap: 6px 5px;
 }
 
 .discovery-listing-amenities li {
@@ -558,7 +558,7 @@
   }
 
   .discovery-listing-body {
-    padding: 4px 3px 4px 5px;
+    padding: 5px 3px 5px 5px;
   }
 
   .discovery-listing-heading h2 {
@@ -566,7 +566,7 @@
   }
 
   .discovery-listing-location {
-    margin-top: 2px;
+    margin-top: 3px;
     font-size: 10px;
   }
 
@@ -579,14 +579,14 @@
   .discovery-price {
     font-size: 15px;
     color: #83591f;
-    margin-top: 2px;
+    margin-top: 3px;
   }
 
   .discovery-listing-facts,
   .discovery-listing-amenities {
     padding-right: 28px;
-    margin-top: 5px;
-    gap: 3px 5px;
+    margin-top: 7px;
+    gap: 4px 5px;
   }
 
   .discovery-listing-facts {

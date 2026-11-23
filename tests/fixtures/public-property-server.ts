@@ -29,8 +29,13 @@ globalThis.fetch = async (input, init) => {
         ...template,
         price: 75000,
         slug: "print-test-home",
-        address_slug: "print-test-home",
+        address_slug: "print-test-address",
         title: "Apartament în buget",
+        amenities: [
+          ...template.amenities,
+          "Încălzire în pardoseală",
+          "Spațiu de depozitare pentru biciclete",
+        ],
         google_place_id: "ChIJ-search-bucharest-1",
       },
       {
@@ -158,7 +163,8 @@ globalThis.fetch = async (input, init) => {
       profile: sample.profile,
     });
   }
-  if (body.property_slug !== "print-test-home") return Response.json(null);
+  if (!["print-test-home", "print-test-address"].includes(body.property_slug))
+    return Response.json(null);
   const sample = demoWorkspace();
   return Response.json({
     property: {

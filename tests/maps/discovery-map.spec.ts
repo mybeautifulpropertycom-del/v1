@@ -35,7 +35,7 @@ test("search results show real listing details and map only the matches with sav
   });
   await expect(
     details.getByRole("link", { name: /Apartament în buget/ }),
-  ).toHaveAttribute("href", "/print-test-home");
+  ).toHaveAttribute("href", "/print-test-address");
   await map
     .getByRole("button", { name: "Închide detaliile de pe hartă" })
     .click();

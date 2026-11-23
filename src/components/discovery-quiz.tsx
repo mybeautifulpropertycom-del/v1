@@ -2,14 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  House,
-  KeyRound,
-  Search,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, House, KeyRound } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   discoveryCities,
@@ -128,24 +121,22 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
     setStep(next);
   }
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function selectBudget(option: Budget) {
     if (
-      !last ||
       !transaction ||
       !kind ||
       (!rooms && !isStudioSearch) ||
       !city ||
-      !budget ||
       isPending
     )
       return;
 
-    const [min, max] = budget;
+    const [min, max] = option;
     const target = discoveryPath(
       { transaction, kind, rooms: isStudioSearch ? undefined : rooms, city },
       { min, max, currency: "EUR", page: 1 },
     );
+    setBudget(option);
     startTransition(() => router.push(target));
   }
 
@@ -266,7 +257,8 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
               key={option[0]}
               type="button"
               aria-pressed={budget === option}
-              onClick={() => setBudget(option)}
+              disabled={isPending}
+              onClick={() => selectBudget(option)}
             >
               {budgetLabel(option)}
             </button>
@@ -280,19 +272,11 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
       <button
         className="discovery-back"
         type="button"
+        disabled={isPending}
         onClick={() => goTo(visibleSteps[stepNumber - 2].index)}
       >
         <ArrowLeft size={16} aria-hidden="true" /> Înapoi
       </button>
-      {last && (
-        <button
-          className="discovery-primary"
-          type="submit"
-          disabled={!budget || isPending}
-        >
-          <Search size={17} aria-hidden="true" /> Vezi proprietățile
-        </button>
-      )}
     </div>
   );
 
@@ -300,8 +284,8 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
     <form
       className={editorial ? "discovery-editorial-quiz" : "discovery-quiz"}
       id="cautare"
-      onSubmit={submit}
       aria-labelledby="discovery-question"
+      aria-busy={isPending}
     >
       {editorial ? (
         <>
@@ -314,7 +298,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
                 key={label}
                 type="button"
                 aria-current={index === step ? "step" : undefined}
-                disabled={index >= step}
+                disabled={index >= step || isPending}
                 onClick={() => goTo(index)}
               >
                 {label}

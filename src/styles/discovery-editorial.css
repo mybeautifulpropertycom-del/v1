@@ -312,16 +312,6 @@
   margin-top: 10px;
 }
 
-.discovery-editorial-quiz .discovery-quiz-actions .discovery-primary {
-  background: #514727;
-}
-
-.discovery-editorial-quiz
-  .discovery-quiz-actions
-  .discovery-primary:hover:not(:disabled) {
-  background: #39311d;
-}
-
 @media (hover: hover) {
   .discovery-editorial-quiz .discovery-choices button:hover {
     border-color: #9c8854;
@@ -569,19 +559,6 @@
 
   .discovery-editorial-quiz .discovery-quiz-actions {
     margin-top: 19px;
-  }
-
-  .discovery-editorial-quiz .discovery-quiz-actions .discovery-primary {
-    min-height: 46px;
-    padding-inline: 18px;
-    border-radius: 28px;
-    background: var(--discovery-green);
-  }
-
-  .discovery-editorial-quiz
-    .discovery-quiz-actions
-    .discovery-primary:hover:not(:disabled) {
-    background: #203b44;
   }
 }
 

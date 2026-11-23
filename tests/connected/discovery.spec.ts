@@ -60,13 +60,13 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
     "true",
   );
   await page.getByRole("button", { name: "București" }).click();
-  const submit = page.getByRole("button", { name: "Vezi proprietățile" });
-  await expect(submit).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Vezi proprietățile" }),
+  ).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
   await page
     .getByRole("button", { name: "€50.000 – €100.000", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/$/);
-  await submit.click();
   await expect(page).toHaveURL(
     /\/cauta\/de-vanzare\/apartamente\/2-camere\/bucuresti\?min=50000&max=100000&moneda=eur$/,
   );
@@ -88,15 +88,27 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
     "2 dormitoare",
   );
   await expect(page.locator(".discovery-listing-facts")).toContainText("2 băi");
-  await expect(page.locator(".discovery-listing-amenities")).toContainText(
+  await expect(
+    page
+      .getByRole("list", { name: "Dotări și facilități" })
+      .getByRole("listitem"),
+  ).toHaveText([
     "Terasă",
-  );
+    "Parcare",
+    "Lift",
+    "Aer condiționat",
+    "Încălzire în pardoseală",
+    "Spațiu de depozitare pentru biciclete",
+  ]);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     "noindex, follow",
   );
   await page.getByRole("link", { name: /Apartament în buget/ }).click();
-  await expect(page).toHaveURL(/\/print-test-home$/);
+  await expect(page).toHaveURL(/\/print-test-address$/);
+  await expect(
+    page.getByRole("heading", { name: "A home ready to share", level: 1 }),
+  ).toBeVisible();
 });
 
 test("canonical landing pages and the rent quiz show matching published listings", async ({
@@ -132,7 +144,6 @@ test("canonical landing pages and the rent quiz show matching published listings
     page.getByRole("heading", { name: "Care este bugetul tău lunar?" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "€500 – €800", exact: true }).click();
-  await page.getByRole("button", { name: "Vezi proprietățile" }).click();
   await expect(page).toHaveURL(
     /\/cauta\/de-inchiriat\/case\/3-camere\/bucuresti\?min=500&max=800&moneda=eur$/,
   );
@@ -165,7 +176,6 @@ test("the 8+ choice includes houses with at least eight bedrooms", async ({
   await page
     .getByRole("button", { name: "€300.000 – €500.000", exact: true })
     .click();
-  await page.getByRole("button", { name: "Vezi proprietățile" }).click();
 
   await expect(page).toHaveURL(/\/case\/8-plus-camere\/bucuresti\?/);
   await expect(page.locator(".discovery-listing h2")).toHaveText([
@@ -194,7 +204,6 @@ test("studio searches skip the bedroom step and show studios without a separate 
   await studio.click();
   await page.getByRole("button", { name: "București", exact: true }).click();
   await page.getByRole("button", { name: "€0 – €50.000", exact: true }).click();
-  await page.getByRole("button", { name: "Vezi proprietățile" }).click();
   await expect(page).toHaveURL(/\/garsoniere\/bucuresti\?/);
   await expect(page.locator(".discovery-listing h2")).toHaveText([
     "Garsonieră în București",
@@ -218,8 +227,7 @@ test("the editorial homepage lets visitors revisit completed steps and find matc
   await page.getByRole("button", { name: "Apartament", exact: true }).click();
   await page.getByRole("button", { name: "2", exact: true }).click();
   await page.getByRole("button", { name: "București", exact: true }).click();
-  await page.getByRole("button", { name: "€50.000 – €100.000" }).click();
-  await page.getByRole("button", { name: "Vezi proprietățile" }).click();
+  await page.getByRole("button", { name: "€50.000 – €100.000" }).press("Enter");
   await expect(page.locator(".discovery-listing h2")).toHaveText([
     "Apartament în buget",
   ]);

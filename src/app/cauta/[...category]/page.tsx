@@ -131,15 +131,13 @@ function ListingCard({ listing }: { listing: DiscoveryListing }) {
             )}
           </ul>
           {amenities.length > 0 && (
-            <ul className="discovery-listing-amenities" aria-label="Facilități">
-              {amenities.slice(0, 4).map((amenity) => (
+            <ul
+              className="discovery-listing-amenities"
+              aria-label="Dotări și facilități"
+            >
+              {amenities.map((amenity) => (
                 <li key={amenity}>{amenity}</li>
               ))}
-              {amenities.length > 4 && (
-                <li aria-label={`${amenities.length - 4} alte facilități`}>
-                  +{amenities.length - 4}
-                </li>
-              )}
             </ul>
           )}
           <span className="discovery-listing-link" aria-hidden="true">
