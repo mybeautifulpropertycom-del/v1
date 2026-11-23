@@ -220,8 +220,11 @@ test("the editorial homepage lets visitors revisit completed steps and find matc
   page,
 }) => {
   await page.goto("/");
-  const stages = page.getByRole("navigation", { name: "Etapele căutării" });
-  await expect(stages.getByRole("button", { name: "Buget" })).toBeDisabled();
+  await expect(
+    page.getByRole("navigation", { name: "Etapele căutării" }),
+  ).toHaveCount(0);
+  const stages = page.getByRole("list", { name: "Progresul căutării" });
+  await expect(stages.getByRole("button", { name: "Buget" })).toHaveCount(0);
   const buy = page.getByRole("button", { name: "Vreau să cumpăr" });
   await buy.click();
   await expect(

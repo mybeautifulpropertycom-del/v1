@@ -66,6 +66,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 4px 4px 4px 14px;
+  border-radius: 28px;
+  background: #302918;
+  color: #fff;
   font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
@@ -84,6 +88,15 @@
 
 .discovery-publish-link:hover {
   background: #534629;
+}
+
+.discovery-publish-desktop .discovery-publish-link {
+  background: #fff8eb;
+  color: #302918;
+}
+
+.discovery-publish-desktop .discovery-publish-link:hover {
+  background: #eadcca;
 }
 
 .discovery-editorial-home .discovery-account,
@@ -123,39 +136,6 @@
   margin-top: clamp(23px, 2.85vw, 38px);
   font-family: var(--workspace-font);
   scroll-margin-top: 12px;
-}
-
-.discovery-editorial-nav {
-  position: absolute;
-  inset: 0 auto auto 46.4%;
-  transform: translateX(-50%);
-  height: var(--editorial-header-height);
-  display: flex;
-  align-items: center;
-  gap: clamp(11px, 2.45vw, 37px);
-}
-
-.discovery-editorial-nav button {
-  padding: 4px 0;
-  background: transparent;
-  border-radius: 3px;
-  font-size: clamp(10px, 1vw, 13px);
-  font-weight: 620;
-  white-space: nowrap;
-}
-
-.discovery-editorial-nav button[aria-current="step"] {
-  color: var(--discovery-green);
-  font-weight: 790;
-}
-
-.discovery-editorial-nav button:disabled {
-  cursor: default;
-}
-
-.discovery-editorial-nav button:enabled:hover {
-  text-decoration: underline;
-  text-underline-offset: 5px;
 }
 
 .discovery-editorial-steps {
@@ -206,10 +186,20 @@
 }
 
 .discovery-editorial-step-label {
-  padding-top: 5px;
+  padding: 5px 0 0;
   color: #61594d;
   font-size: clamp(13px, 1.14vw, 16px);
   font-weight: 500;
+}
+
+button.discovery-editorial-step-label {
+  justify-self: start;
+  background: transparent;
+}
+
+button.discovery-editorial-step-label:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .discovery-editorial-step-content {
@@ -336,11 +326,6 @@
 }
 
 @media (min-width: 781px) and (max-width: 940px) {
-  .discovery-editorial-nav {
-    left: 47%;
-    gap: clamp(11px, 1.5vw, 20px);
-  }
-
   .discovery-editorial-quiz .discovery-type-choices {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -418,18 +403,6 @@
     font-weight: 700;
   }
 
-  .discovery-account-access {
-    justify-self: center;
-    color: #795f44;
-    font-size: 12px;
-    font-weight: 650;
-  }
-
-  .discovery-account-access:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
   .discovery-editorial-scene {
     inset: var(--editorial-header-height) 0 auto;
     height: var(--editorial-photo-height);
@@ -495,7 +468,6 @@
     box-shadow: 0 -6px 25px #59412626;
   }
 
-  .discovery-editorial-nav,
   .discovery-editorial-steps::before,
   .discovery-editorial-steps > li:not([aria-current="step"]),
   .discovery-editorial-marker {

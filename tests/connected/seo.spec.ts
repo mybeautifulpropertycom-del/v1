@@ -63,13 +63,11 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
   );
 });
 
-test("the mobile account icon opens a menu for publishing and dashboard access", async ({
-  page,
-}) => {
+test("the mobile header icon opens a menu for publishing", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await workspace(page);
   await page.goto("/");
-  const icon = page.getByRole("button", { name: "Contul meu" });
+  const icon = page.getByRole("button", { name: "Opțiuni de publicare" });
   const publish = page.getByRole("link", { name: "Publică anunțul" });
   await expect(publish).toHaveCount(0);
   await icon.click();
@@ -77,12 +75,9 @@ test("the mobile account icon opens a menu for publishing and dashboard access",
     page.getByText("Vinzi sau închiriezi?").filter({ visible: true }),
   ).toBeVisible();
   await expect(publish).toBeVisible();
+  await expect(page.getByRole("link", { name: "Contul meu" })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(publish).toHaveCount(0);
-  await icon.click();
-  await page.getByRole("link", { name: "Contul meu", exact: true }).click();
-  await expect(page).toHaveURL(/\/panou$/);
-  await page.goto("/");
   await icon.click();
   await publish.click();
   await expect(page).toHaveURL(/\/panou\/proprietati\/noua$/);

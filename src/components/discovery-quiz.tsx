@@ -288,75 +288,63 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
       aria-busy={isPending}
     >
       {editorial ? (
-        <>
-          <nav
-            className="discovery-editorial-nav"
-            aria-label="Etapele căutării"
-          >
-            {visibleSteps.map(({ label, index }) => (
-              <button
-                key={label}
-                type="button"
-                aria-current={index === step ? "step" : undefined}
-                disabled={index >= step || isPending}
-                onClick={() => goTo(index)}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-          <ol
-            className="discovery-editorial-steps"
-            aria-label="Progresul căutării"
-          >
-            {visibleSteps.map(({ index }, position) => (
-              <li
-                key={index}
-                aria-current={index === step ? "step" : undefined}
-              >
-                <span className="discovery-editorial-marker" aria-hidden="true">
-                  {String(position + 1).padStart(2, "0")}
-                </span>
-                {index === step ? (
-                  <div className="discovery-editorial-step-content">
-                    <div
-                      className="discovery-editorial-mobile-progress"
-                      role="progressbar"
-                      aria-label="Progresul căutării"
-                      aria-valuemin={1}
-                      aria-valuemax={visibleSteps.length}
-                      aria-valuenow={stepNumber}
-                      aria-valuetext={`Pasul ${stepNumber} din ${visibleSteps.length}: ${timelineSteps[index]}`}
+        <ol
+          className="discovery-editorial-steps"
+          aria-label="Progresul căutării"
+        >
+          {visibleSteps.map(({ index }, position) => (
+            <li key={index} aria-current={index === step ? "step" : undefined}>
+              <span className="discovery-editorial-marker" aria-hidden="true">
+                {String(position + 1).padStart(2, "0")}
+              </span>
+              {index === step ? (
+                <div className="discovery-editorial-step-content">
+                  <div
+                    className="discovery-editorial-mobile-progress"
+                    role="progressbar"
+                    aria-label="Progresul căutării"
+                    aria-valuemin={1}
+                    aria-valuemax={visibleSteps.length}
+                    aria-valuenow={stepNumber}
+                    aria-valuetext={`Pasul ${stepNumber} din ${visibleSteps.length}: ${timelineSteps[index]}`}
+                  >
+                    <span aria-hidden="true">
+                      {String(stepNumber).padStart(2, "0")} /{" "}
+                      {String(visibleSteps.length).padStart(2, "0")}
+                    </span>
+                    <span
+                      className="discovery-editorial-progress-track"
+                      aria-hidden="true"
                     >
-                      <span aria-hidden="true">
-                        {String(stepNumber).padStart(2, "0")} /{" "}
-                        {String(visibleSteps.length).padStart(2, "0")}
-                      </span>
-                      <span
-                        className="discovery-editorial-progress-track"
-                        aria-hidden="true"
-                      >
-                        {visibleSteps.map(({ label, index }) => (
-                          <span
-                            key={label}
-                            data-filled={index <= step || undefined}
-                          />
-                        ))}
-                      </span>
-                    </div>
-                    {question}
-                    {choices}
-                    {actions}
+                      {visibleSteps.map(({ label, index }) => (
+                        <span
+                          key={label}
+                          data-filled={index <= step || undefined}
+                        />
+                      ))}
+                    </span>
                   </div>
-                ) : (
-                  <span className="discovery-editorial-step-label">
-                    {timelineSteps[index]}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
-        </>
+                  {question}
+                  {choices}
+                  {actions}
+                </div>
+              ) : index < step ? (
+                <button
+                  className="discovery-editorial-step-label"
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => goTo(index)}
+                >
+                  {timelineSteps[index]}
+                </button>
+              ) : (
+                <span className="discovery-editorial-step-label">
+                  {timelineSteps[index]}
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
       ) : (
         <>
           {question}

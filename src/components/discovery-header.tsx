@@ -16,7 +16,7 @@ export function DiscoveryHeader({
     <header className="discovery-header">
       <Link className="discovery-brand" href="/">
         {variant === "homepage" ? (
-          <Brand />
+          <Brand uniformWordmark />
         ) : (
           <>
             <House
@@ -40,7 +40,7 @@ export function DiscoveryHeader({
             <button
               className="discovery-account"
               type="button"
-              aria-label="Contul meu"
+              aria-label="Opțiuni de publicare"
               popoverTarget="discovery-account-menu"
             >
               <UserRound size={14} aria-hidden="true" />
@@ -53,9 +53,6 @@ export function DiscoveryHeader({
               <p>{publishQuestion}</p>
               <Link href={publishHref} className="discovery-publish-link">
                 Publică anunțul
-              </Link>
-              <Link href="/autentificare" className="discovery-account-access">
-                Contul meu
               </Link>
             </div>
           </>
