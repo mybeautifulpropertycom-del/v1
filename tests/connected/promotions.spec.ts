@@ -448,6 +448,7 @@ test("unpublished listings show every campaign step as a disabled preview", asyn
     page.getByRole("radio", { name: "Plus 500 RON" }),
   ).toBeDisabled();
   await expect(page.locator(".promotion-notes")).toHaveAttribute("inert", "");
+  await expect(page.locator(".promotion-notes")).not.toHaveAttribute("open", "");
   await expect(
     page.getByRole("button", { name: "Activează campania" }),
   ).toBeDisabled();

@@ -237,11 +237,7 @@ function CampaignSetup({
                     ))}
                   </div>
                 </fieldset>
-                <details
-                  className="promotion-notes"
-                  inert={preview}
-                  open={preview || undefined}
-                >
+                <details className="promotion-notes" inert={preview}>
                   <summary>Adaugă observații (opțional)</summary>
                   <label>
                     Ce ar trebui să știm despre promovare?
