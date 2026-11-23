@@ -712,8 +712,8 @@ export function PropertyEditor({
                 <h2 data-guide-photos>{t.photography}</h2>
               </div>
               <p className="form-intro">
-                Trage de mânerul „Mută” și lasă fotografia pe poziția dorită.
-                Prima fotografie este coperta.
+                Fotografiile bune fac prima impresie. Prima fotografie devine
+                coperta.
               </p>
               {uploading ? (
                 <div

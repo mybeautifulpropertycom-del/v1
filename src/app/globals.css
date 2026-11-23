@@ -2144,10 +2144,19 @@ html:has(.image-editor-card[data-dragging]) {
   background: #ffffffde;
   color: #7f8973;
 }
-.make-cover {
+.image-editor-actions {
   position: absolute;
-  bottom: 6px;
-  left: 6px;
+  inset: auto 6px 6px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+.image-editor-actions button {
+  pointer-events: auto;
+  outline-offset: 2px;
+}
+.make-cover {
   background: #fffe;
   font-size: 11px;
   color: var(--ink);
@@ -2158,14 +2167,15 @@ html:has(.image-editor-card[data-dragging]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 44px;
-  margin-top: 5px;
+  gap: 4px;
+  flex: none;
+  margin-inline-start: auto;
+  min-height: 34px;
+  padding-inline: 6px;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: #fafbf7;
-  font-size: 12px;
+  background: #fffe;
+  font-size: 10px;
   cursor: grab;
   touch-action: none;
 }

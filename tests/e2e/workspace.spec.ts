@@ -184,11 +184,9 @@ for (const touch of [false, true]) {
         await expect.poll(gridTop).toBeGreaterThan(55);
         await input.send("Input.dispatchTouchEvent", {
           type: "touchMove",
-          touchPoints: [{ x: to.x, y: (await gridTop()) + 105 }],
+          touchPoints: [{ x: to.x, y: Math.max(151, (await gridTop()) + 72) }],
         });
-        await expect(
-          page.getByRole("status").filter({ hasText: /^Poziția 2\.$/ }),
-        ).toHaveCount(1);
+        await expect(cards.nth(1)).toHaveAttribute("data-drop-target", "true");
         await input.send("Input.dispatchTouchEvent", {
           type: "touchEnd",
           touchPoints: [],

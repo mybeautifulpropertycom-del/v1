@@ -47,6 +47,7 @@ function SortablePhoto({
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({ id, disabled: !sortable });
 
   return (
@@ -54,6 +55,7 @@ function SortablePhoto({
       className="image-editor-card"
       ref={setNodeRef}
       data-dragging={isDragging || undefined}
+      data-drop-target={isOver || undefined}
       style={{ transform: CSS.Transform.toString(transform), transition }}
     >
       <div className="image-editor-preview">
@@ -75,25 +77,33 @@ function SortablePhoto({
         >
           <X size={15} />
         </button>
-        {index > 0 && (
-          <button type="button" className="make-cover" onClick={onMakeCover}>
-            Setează drept copertă
-          </button>
+        {(index > 0 || sortable) && (
+          <div className="image-editor-actions">
+            {index > 0 && (
+              <button
+                type="button"
+                className="make-cover"
+                onClick={onMakeCover}
+              >
+                Setează drept copertă
+              </button>
+            )}
+            {sortable && (
+              <button
+                type="button"
+                className="image-drag-handle"
+                ref={setActivatorNodeRef}
+                {...attributes}
+                {...listeners}
+                aria-label={`Mută fotografia ${index + 1}`}
+              >
+                <Grip size={14} aria-hidden="true" />
+                Mută
+              </button>
+            )}
+          </div>
         )}
       </div>
-      {sortable && (
-        <button
-          type="button"
-          className="image-drag-handle"
-          ref={setActivatorNodeRef}
-          {...attributes}
-          {...listeners}
-          aria-label={`Mută fotografia ${index + 1}`}
-        >
-          <Grip size={18} aria-hidden="true" />
-          Mută
-        </button>
-      )}
     </div>
   );
 }
