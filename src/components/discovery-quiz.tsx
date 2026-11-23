@@ -1,15 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { slugify } from "@/lib/model";
+import { ArrowLeft, Search } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
+  discoveryCities,
   discoveryPath,
-  listingKinds,
-  parseDiscoveryFilters,
-  type CityOption,
   type DiscoveryCategory,
+  type DiscoveryRooms,
   type ListingKind,
 } from "@/lib/property-discovery";
 
@@ -17,72 +15,102 @@ const questions = [
   "Ce vrei să faci?",
   "Ce tip de proprietate cauți?",
   "De câte camere ai nevoie?",
-  "Unde cauți?",
+  "În ce oraș cauți?",
   "Care este bugetul tău?",
 ];
 
-const stepLabels = ["Ofertă", "Proprietate", "Camere", "Localitate", "Buget"];
+const steps = ["Ofertă", "Proprietate", "Camere", "Localitate", "Buget"];
+const transactions = [
+  ["sale", "Vreau să cumpăr"],
+  ["rent", "Vreau să închiriez"],
+] as const;
+const propertyTypes = [
+  ["apartamente", "Apartament"],
+  ["case", "Casă / Vilă"],
+  ["garsoniere", "Garsonieră"],
+  ["penthouse-uri", "Penthouse"],
+] as const satisfies readonly (readonly [ListingKind, string])[];
+const roomOptions = [1, 2, 3, 4, 5, 6, 7, "8+"] as const;
 
-export function DiscoveryQuiz({ cities }: { cities: CityOption[] }) {
+type Budget = readonly [min: number, max?: number];
+const budgets = {
+  sale: [
+    [0, 50_000],
+    [50_000, 100_000],
+    [100_000, 200_000],
+    [200_000, 300_000],
+    [300_000, 500_000],
+    [500_000, 800_000],
+    [800_000, 1_000_000],
+    [1_000_000, 1_500_000],
+    [1_500_000, 2_000_000],
+    [2_000_000],
+  ],
+  rent: [
+    [0, 300],
+    [300, 500],
+    [500, 800],
+    [800, 1_000],
+    [1_000, 1_500],
+    [1_500, 2_000],
+    [2_000, 3_000],
+    [3_000],
+  ],
+} as const satisfies Record<
+  DiscoveryCategory["transaction"],
+  readonly Budget[]
+>;
+
+const amount = new Intl.NumberFormat("ro-RO", { useGrouping: "always" });
+
+function budgetLabel([min, max]: Budget) {
+  return max === undefined
+    ? `€${amount.format(min)}+`
+    : `€${amount.format(min)} – €${amount.format(max)}`;
+}
+
+export function DiscoveryQuiz() {
   const router = useRouter();
   const heading = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
   const [step, setStep] = useState(0);
   const [transaction, setTransaction] =
-    useState<DiscoveryCategory["transaction"]>("sale");
-  const [kind, setKind] = useState<ListingKind>("toate");
-  const [rooms, setRooms] = useState("");
-  const [city, setCity] = useState("");
-  const [currency, setCurrency] = useState("EUR");
-  const [min, setMin] = useState("");
-  const [max, setMax] = useState("");
-  const [error, setError] = useState("");
-  const last = step === questions.length - 1;
+    useState<DiscoveryCategory["transaction"]>();
+  const [kind, setKind] = useState<(typeof propertyTypes)[number][0]>();
+  const [rooms, setRooms] = useState<DiscoveryRooms>();
+  const [city, setCity] = useState<string>();
+  const [budget, setBudget] = useState<Budget>();
+  const [isPending, startTransition] = useTransition();
+  const last = step === steps.length - 1;
+
   useEffect(() => {
-    if (moved.current) heading.current?.focus({ preventScroll: true });
+    if (moved.current) heading.current?.focus();
   }, [step]);
 
   function goTo(next: number) {
     moved.current = true;
     setStep(next);
-    setError("");
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!last) {
-      goTo(step + 1);
+    if (
+      !last ||
+      !transaction ||
+      !kind ||
+      !rooms ||
+      !city ||
+      !budget ||
+      isPending
+    )
       return;
-    }
-    const filters = parseDiscoveryFilters({
-      min: min || undefined,
-      max: max || undefined,
-      moneda: min || max ? currency : undefined,
-    });
-    if (!filters) {
-      setError(
-        "Verifică bugetul. Suma minimă trebuie să fie cel mult egală cu suma maximă.",
-      );
-      return;
-    }
-    const requestedCity = city.trim();
-    const knownCity = cities.find(
-      ({ name }) =>
-        name.toLocaleLowerCase("ro") === requestedCity.toLocaleLowerCase("ro"),
+
+    const [min, max] = budget;
+    const target = discoveryPath(
+      { transaction, kind, rooms, city },
+      { min, max, currency: "EUR", page: 1 },
     );
-    const citySlug =
-      knownCity?.slug ?? (requestedCity ? slugify(requestedCity) : undefined);
-    router.push(
-      discoveryPath(
-        {
-          transaction,
-          kind,
-          rooms: rooms ? Number(rooms) : undefined,
-          city: citySlug,
-        },
-        filters,
-      ),
-    );
+    startTransition(() => router.push(target));
   }
 
   return (
@@ -93,7 +121,7 @@ export function DiscoveryQuiz({ cities }: { cities: CityOption[] }) {
       aria-labelledby="discovery-question"
     >
       <ol className="discovery-progress" aria-label="Etapele căutării">
-        {stepLabels.map((label, index) => (
+        {steps.map((label, index) => (
           <li
             key={label}
             aria-current={index === step ? "step" : undefined}
@@ -105,36 +133,38 @@ export function DiscoveryQuiz({ cities }: { cities: CityOption[] }) {
       </ol>
       <div className="discovery-question">
         <h2 id="discovery-question" ref={heading} tabIndex={-1}>
-          {questions[step]}
+          {last && transaction === "rent"
+            ? "Care este bugetul tău lunar?"
+            : questions[step]}
         </h2>
         {step === 0 && (
           <div className="discovery-choices">
-            <button
-              type="button"
-              aria-pressed={transaction === "sale"}
-              onClick={() => setTransaction("sale")}
-            >
-              Vreau să cumpăr
-            </button>
-            <button
-              type="button"
-              aria-pressed={transaction === "rent"}
-              onClick={() => setTransaction("rent")}
-            >
-              Vreau să închiriez
-            </button>
+            {transactions.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={transaction === value}
+                onClick={() => {
+                  if (transaction !== value) setBudget(undefined);
+                  setTransaction(value);
+                  goTo(1);
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         )}
         {step === 1 && (
           <div className="discovery-choices">
-            {Object.entries(listingKinds).map(([value, label]) => (
+            {propertyTypes.map(([value, label]) => (
               <button
                 key={value}
                 type="button"
                 aria-pressed={kind === value}
                 onClick={() => {
-                  setKind(value as ListingKind);
-                  if (value === "terenuri") setRooms("");
+                  setKind(value);
+                  goTo(2);
                 }}
               >
                 {label}
@@ -143,96 +173,56 @@ export function DiscoveryQuiz({ cities }: { cities: CityOption[] }) {
           </div>
         )}
         {step === 2 && (
-          <label>
-            Număr total de camere
-            <select
-              disabled={kind === "terenuri"}
-              value={rooms}
-              onChange={(event) => setRooms(event.target.value)}
-            >
-              <option value="">Toate</option>
-              {Array.from({ length: 100 }, (_, index) => index + 1).map(
-                (value) => (
-                  <option key={value} value={value}>
-                    {value} {value === 1 ? "cameră" : "camere"}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
+          <div className="discovery-choices discovery-room-choices">
+            {roomOptions.map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={rooms === value}
+                onClick={() => {
+                  setRooms(value);
+                  goTo(3);
+                }}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
         )}
         {step === 3 && (
-          <label>
-            Oraș sau localitate
-            <input
-              list="discovery-cities"
-              maxLength={80}
-              placeholder="Toate localitățile"
-              value={city}
-              onChange={(event) => setCity(event.target.value)}
-            />
-            <datalist id="discovery-cities">
-              {cities.map((item) => (
-                <option key={item.slug} value={item.name} />
-              ))}
-            </datalist>
-            <small>Lasă câmpul gol pentru a căuta în toate localitățile.</small>
-          </label>
+          <div className="discovery-choices discovery-city-choices">
+            {[...discoveryCities].map(([slug, name]) => (
+              <button
+                key={slug}
+                type="button"
+                aria-pressed={city === slug}
+                onClick={() => {
+                  setCity(slug);
+                  goTo(4);
+                }}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
         )}
-        {last && (
-          <>
-            <div className="discovery-budget">
-              <label>
-                De la
-                <input
-                  type="number"
-                  min="0"
-                  max="999999999999"
-                  step="1"
-                  placeholder="Fără minim"
-                  value={min}
-                  onChange={(event) => setMin(event.target.value)}
-                />
-              </label>
-              <label>
-                Până la
-                <input
-                  type="number"
-                  min="0"
-                  max="999999999999"
-                  step="1"
-                  placeholder="Fără maxim"
-                  value={max}
-                  onChange={(event) => setMax(event.target.value)}
-                />
-              </label>
-              <label>
-                Monedă
-                <select
-                  value={currency}
-                  onChange={(event) => setCurrency(event.target.value)}
-                >
-                  <option value="EUR">EUR</option>
-                  <option value="RON">RON</option>
-                  <option value="USD">USD</option>
-                </select>
-              </label>
-            </div>
-            <p className="discovery-hint">
-              {transaction === "rent"
-                ? "Buget lunar. Lasă sumele goale pentru orice buget."
-                : "Lasă sumele goale pentru orice buget."}
-            </p>
-          </>
-        )}
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
+        {last && transaction && (
+          <div className="discovery-choices">
+            {budgets[transaction].map((option) => (
+              <button
+                key={option[0]}
+                type="button"
+                aria-pressed={budget === option}
+                onClick={() => setBudget(option)}
+              >
+                {budgetLabel(option)}
+              </button>
+            ))}
+          </div>
         )}
       </div>
-      <div className="discovery-quiz-actions">
-        {step > 0 && (
+      {step > 0 && (
+        <div className="discovery-quiz-actions">
           <button
             className="discovery-back"
             type="button"
@@ -240,13 +230,17 @@ export function DiscoveryQuiz({ cities }: { cities: CityOption[] }) {
           >
             <ArrowLeft size={16} aria-hidden="true" /> Înapoi
           </button>
-        )}
-        <button className="discovery-primary">
-          {last ? <Search size={17} aria-hidden="true" /> : null}
-          {last ? "Vezi proprietățile" : "Continuă"}
-          {last ? null : <ArrowRight size={17} aria-hidden="true" />}
-        </button>
-      </div>
+          {last && (
+            <button
+              className="discovery-primary"
+              type="submit"
+              disabled={!budget || isPending}
+            >
+              <Search size={17} aria-hidden="true" /> Vezi proprietățile
+            </button>
+          )}
+        </div>
+      )}
     </form>
   );
 }

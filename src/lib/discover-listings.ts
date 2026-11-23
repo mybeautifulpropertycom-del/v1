@@ -3,7 +3,6 @@ import { serverSupabase } from "./supabase";
 import {
   discoveryPath,
   parseDiscoveryCategory,
-  type CityOption,
   type DiscoveryCategory,
   type DiscoveryFilters,
   type ListingKind,
@@ -41,7 +40,7 @@ export const findPublicListings = cache(
   async (
     transaction: DiscoveryCategory["transaction"],
     kind: ListingKind,
-    rooms: number | undefined,
+    rooms: DiscoveryCategory["rooms"],
     city: string | undefined,
     min: number | undefined,
     max: number | undefined,
@@ -53,7 +52,8 @@ export const findPublicListings = cache(
     const { error, data } = await db.rpc("find_public_listings", {
       offer: transaction,
       kind_filter: kind === "toate" ? null : kind,
-      room_filter: rooms ?? null,
+      // The existing RPC reserves -8 for a minimum of eight rooms.
+      room_filter: rooms === "8+" ? -8 : (rooms ?? null),
       city_filter: city ?? null,
       budget_min: min ?? null,
       budget_max: max ?? null,
@@ -70,13 +70,6 @@ export const findPublicListings = cache(
     return data;
   },
 );
-
-export async function listingCities(): Promise<CityOption[]> {
-  const db = discoveryDatabase();
-  if (!db) return [];
-  const { data, error } = await db.rpc("get_public_listing_cities");
-  return !error && Array.isArray(data) ? data : [];
-}
 
 export async function listingCategoryPaths() {
   const db = discoveryDatabase();

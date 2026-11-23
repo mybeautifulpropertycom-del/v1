@@ -119,6 +119,11 @@
   color: var(--discovery-green);
   font-weight: 700;
 }
+.discovery-question {
+  flex: 1;
+  display: grid;
+  align-content: center;
+}
 .discovery-question h2 {
   margin-bottom: 16px;
   font: 600 clamp(24px, 3vw, 38px)/1.08 var(--serif);
@@ -127,22 +132,16 @@
 .discovery-question h2:focus {
   outline: none;
 }
-.discovery-question label {
-  color: var(--discovery-ink);
-  font-size: 12px;
-}
-.discovery-question input,
-.discovery-question select {
-  min-height: 44px;
-}
-.discovery-question input:focus,
-.discovery-question select:focus {
-  border-color: #4a6f56;
-}
 .discovery-choices {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
+}
+.discovery-room-choices {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.discovery-city-choices {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .discovery-choices button {
   border: 1px solid var(--discovery-line);
@@ -192,15 +191,10 @@
 .discovery-primary:hover {
   background: #1b4532;
 }
-.discovery-budget {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(68px, 0.55fr);
-  gap: 8px;
-}
-.discovery-hint {
-  color: #59665a;
-  font-size: 11px;
-  margin: 9px 0 0;
+.discovery-primary:disabled {
+  background: var(--discovery-green);
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 .discovery-results-refine {
   display: flex;
@@ -374,8 +368,8 @@
   .discovery-cover-copy {
     padding: 20px;
   }
-  .discovery-budget {
-    grid-template-columns: 1fr 1fr;
+  .discovery-city-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .discovery-listings {
     grid-template-columns: 1fr;

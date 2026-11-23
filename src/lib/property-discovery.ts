@@ -8,10 +8,11 @@ export const listingKinds = {
 } as const;
 
 export type ListingKind = keyof typeof listingKinds;
+export type DiscoveryRooms = number | "8+";
 export type DiscoveryCategory = {
   transaction: "sale" | "rent";
   kind: ListingKind;
-  rooms?: number;
+  rooms?: DiscoveryRooms;
   city?: string;
 };
 export type DiscoveryFilters = {
@@ -20,12 +21,29 @@ export type DiscoveryFilters = {
   currency?: "EUR" | "RON" | "USD";
   page: number;
 };
-export type CityOption = { slug: string; name: string; has_sales: boolean };
 export const DISCOVERY_PAGE_SIZE = 24;
+
+export const discoveryCities = new Map([
+  ["bucuresti", "București"],
+  ["cluj-napoca", "Cluj-Napoca"],
+  ["timisoara", "Timișoara"],
+  ["iasi", "Iași"],
+  ["constanta", "Constanța"],
+  ["brasov", "Brașov"],
+  ["craiova", "Craiova"],
+  ["oradea", "Oradea"],
+  ["sibiu", "Sibiu"],
+  ["ploiesti", "Ploiești"],
+  ["galati", "Galați"],
+  ["arad", "Arad"],
+  ["pitesti", "Pitești"],
+  ["bacau", "Bacău"],
+  ["targu-mures", "Târgu Mureș"],
+]);
 
 const offerPaths = { sale: "de-vanzare", rent: "de-inchiriat" } as const;
 export const discoveryCitySlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const roomSegment = /^([1-9][0-9]?|100)-camere$/;
+const roomSegment = /^([1-9][0-9]?|100|8-plus)-camere$/;
 
 export function parseDiscoveryCategory(
   path: string[],
@@ -48,7 +66,7 @@ export function parseDiscoveryCategory(
   return {
     transaction,
     kind: kind as ListingKind,
-    ...(room ? { rooms: Number(room[1]) } : {}),
+    ...(room ? { rooms: room[1] === "8-plus" ? "8+" : Number(room[1]) } : {}),
     ...(city ? { city } : {}),
   };
 }
@@ -61,7 +79,11 @@ export function discoveryPath(
     "/cauta",
     offerPaths[category.transaction],
     category.kind,
-    category.rooms ? `${category.rooms}-camere` : "",
+    category.rooms === "8+"
+      ? "8-plus-camere"
+      : category.rooms
+        ? `${category.rooms}-camere`
+        : "",
     category.city ?? "",
   ]
     .filter(Boolean)
@@ -115,13 +137,20 @@ export function discoveryTitle(
 ) {
   const label =
     category.kind === "toate" ? "Proprietăți" : listingKinds[category.kind];
+  const rooms = category.rooms === "8+" ? "8 sau mai multe" : category.rooms;
+  const cityLabel =
+    city ??
+    (category.city &&
+      (discoveryCities.get(category.city) ??
+        category.city
+          .split("-")
+          .map((word) => word[0].toUpperCase() + word.slice(1))
+          .join(" ")));
   return [
     label,
-    category.rooms
-      ? `cu ${category.rooms} ${category.rooms === 1 ? "cameră" : "camere"}`
-      : "",
+    rooms ? `cu ${rooms} ${rooms === 1 ? "cameră" : "camere"}` : "",
     category.transaction === "sale" ? "de vânzare" : "de închiriat",
-    city ? `în ${city}` : "",
+    cityLabel ? `în ${cityLabel}` : "",
   ]
     .filter(Boolean)
     .join(" ");

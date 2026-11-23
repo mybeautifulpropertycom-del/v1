@@ -1,15 +1,12 @@
 import Image from "next/image";
 import { DiscoveryHeader } from "@/components/discovery-header";
 import { DiscoveryQuiz } from "@/components/discovery-quiz";
-import { listingCities } from "@/lib/discover-listings";
 import { homeJsonLd, homeMetadata, serializeJsonLd } from "@/lib/seo";
 import "@/styles/discovery.css";
 
 export const metadata = homeMetadata();
-export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const cities = await listingCities();
+export default function Home() {
   return (
     <div className="discovery-site">
       <script
@@ -37,7 +34,7 @@ export default async function Home() {
               </p>
             </div>
           </div>
-          <DiscoveryQuiz cities={cities} />
+          <DiscoveryQuiz />
         </section>
       </main>
     </div>

@@ -11,10 +11,6 @@ globalThis.fetch = async (input, init) => {
     : input instanceof Request
       ? await input.clone().json()
       : {};
-  if (url.pathname === "/rest/v1/rpc/get_public_listing_cities")
-    return Response.json([
-      { slug: "bucuresti", name: "București", has_sales: true },
-    ]);
   if (url.pathname === "/rest/v1/rpc/find_public_listings") {
     const template = {
       ...demoWorkspace().properties[0],
@@ -49,6 +45,22 @@ globalThis.fetch = async (input, init) => {
       },
       {
         ...template,
+        price: 80000,
+        slug: "apartament-cluj",
+        title: "Apartament în Cluj",
+        city: "Cluj-Napoca",
+        city_slug: "cluj-napoca",
+      },
+      ...[7, 8, 9].map((rooms) => ({
+        ...template,
+        price: 450000,
+        slug: `casa-${rooms}-camere`,
+        title: `Casă cu ${rooms} camere`,
+        rooms,
+        kind: "case",
+      })),
+      {
+        ...template,
         price: 500,
         slug: "casa-inchiriere",
         title: "Casă de închiriat",
@@ -61,7 +73,9 @@ globalThis.fetch = async (input, init) => {
       (p) =>
         p.transaction === body.offer &&
         (!body.kind_filter || p.kind === body.kind_filter) &&
-        (!body.room_filter || p.rooms === body.room_filter) &&
+        (body.room_filter === -8
+          ? p.rooms >= 8
+          : !body.room_filter || p.rooms === body.room_filter) &&
         (!body.city_filter || p.city_slug === body.city_filter) &&
         (!body.budget_currency || p.currency === body.budget_currency) &&
         (body.budget_min == null || p.price >= body.budget_min) &&

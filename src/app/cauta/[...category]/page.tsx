@@ -56,13 +56,7 @@ async function search(props: PageProps) {
     Math.max(1, Math.ceil((result?.total ?? 0) / DISCOVERY_PAGE_SIZE)),
   );
   if (result && filters.page > resultPages) notFound();
-  const city =
-    result?.city ??
-    category.city
-      ?.split("-")
-      .map((word) => word[0].toUpperCase() + word.slice(1))
-      .join(" ");
-  const title = discoveryTitle(category, city);
+  const title = discoveryTitle(category, result?.city);
   return { category, filters, result, resultPages, title };
 }
 

@@ -2572,7 +2572,7 @@ test("Romania migration is repeatable, defaults to 249 RON and preserves histori
   }
 });
 
-test("public discovery only returns published matches and filters exact rooms, city, transaction, currency and inclusive price", async () => {
+test("public discovery filters published matches by exact or minimum rooms, city, transaction, currency and inclusive price", async () => {
   const discovery = await createTestDatabase();
   try {
     await discovery.exec(
@@ -2586,6 +2586,12 @@ test("public discovery only returns published matches and filters exact rooms, c
       [agentA],
     );
     await discovery.exec("update public.profiles set phone='+40 700 000 001'");
+    await discovery.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-discovery-room-range.sql", import.meta.url),
+        "utf8",
+      ),
+    );
     await discovery.query(
       `
       insert into public.properties(owner_id,slug,title,description,location,city,type,transaction,currency,price,area,rooms,bedrooms,images,status)
@@ -2597,6 +2603,9 @@ test("public discovery only returns published matches and filters exact rooms, c
         ('too-expensive','Aleea Primăverii 22, București, România','București','Condo','sale','EUR',100001,2,'published'),
         ('wrong-currency','Aleea Primăverii 25, București, România','București','Condo','sale','RON',75000,2,'published'),
         ('rent-house','Strada Florilor 11, București, România','București','House','rent','EUR',500,3,'published'),
+        ('seven-room-villa','Strada Florilor 71, București, România','București','House','sale','EUR',450000,7,'published'),
+        ('eight-room-villa','Strada Florilor 81, București, România','București','House','sale','EUR',450000,8,'published'),
+        ('ten-room-villa','Strada Florilor 101, București, România','București','House','sale','EUR',450000,10,'published'),
         ('legacy-rooms','Strada Visului 17, București, România',null,'Condo','sale','EUR',75000,null,'published'),
         ('different-city','Strada Test 12, Cluj-Napoca, România','Cluj-Napoca','Condo','sale','EUR',75000,2,'published'),
         ('numeric-town','1 Decembrie, Ilfov',null,'Condo','sale','EUR',75000,2,'published'),
@@ -2628,6 +2637,15 @@ test("public discovery only returns published matches and filters exact rooms, c
       "upper-bound",
     ]);
     assert.ok(filtered.items.every((row) => row.owner_id === undefined));
+    const villas = async (rooms: number) => (
+      await discovery.query<{ data: { total: number; items: { slug: string }[] } }>(
+        "select public.find_public_listings('sale','case',$1,'bucuresti',300000,500000,'EUR') as data",
+        [rooms],
+      )
+    ).rows[0].data.items.map(({ slug }) => slug).sort();
+    assert.deepEqual(await villas(-8), ["eight-room-villa", "ten-room-villa"]);
+    assert.deepEqual(await villas(8), ["eight-room-villa"]);
+    await assert.rejects(villas(-7), /Invalid listing filters/);
     const rent = (
       await discovery.query<{ data: { total: number } }>(
         "select public.find_public_listings('rent') as data",
