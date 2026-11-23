@@ -826,7 +826,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 30px;
-  padding-block: 35px;
+  padding-block: 14px;
 }
 .atelier-footer > a {
   font-size: 11px;
@@ -1106,7 +1106,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 20px;
-    padding-block: 30px;
   }
   .atelier-mobile-tour {
     display: flex;
