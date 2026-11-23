@@ -5,7 +5,6 @@
   --discovery-soft: #ede4d2;
   --editorial-paper: #f0e9df;
   --editorial-gold: #897945;
-  --editorial-header-height: clamp(53px, 5vw, 69px);
   --editorial-shell: min(1440px, calc(100% - 10.4vw));
   --editorial-column: min(100%, clamp(410px, 41vw, 580px));
   position: relative;
@@ -38,70 +37,6 @@
     #f0e9df3b 42%,
     transparent 51%
   );
-}
-
-.discovery-editorial-home .discovery-header {
-  width: 100%;
-  min-height: var(--editorial-header-height);
-  padding-inline: max(5.2vw, calc((100% - 1440px) / 2));
-  background: linear-gradient(
-    90deg,
-    var(--editorial-paper) 48%,
-    #f0e9dfd4 66%,
-    #f0e9df5e 85%,
-    #f0e9df26
-  );
-}
-
-.discovery-editorial-home .discovery-brand {
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-.discovery-editorial-home .discovery-brand .brand-property {
-  display: inline;
-}
-
-.discovery-publish-desktop {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 4px 4px 14px;
-  border-radius: 28px;
-  background: #302918;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-.discovery-publish-link {
-  background: #302918ef;
-  color: #fff8eb;
-  border-radius: 28px;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 8px 14px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.discovery-publish-link:hover {
-  background: #534629;
-}
-
-.discovery-publish-desktop .discovery-publish-link {
-  background: #fff8eb;
-  color: #302918;
-}
-
-.discovery-publish-desktop .discovery-publish-link:hover {
-  background: #eadcca;
-}
-
-.discovery-editorial-home .discovery-account,
-.discovery-account-menu {
-  display: none;
 }
 
 .discovery-editorial-main {
@@ -340,71 +275,13 @@ button.discovery-editorial-step-label:hover {
     --editorial-paper: #f6eee6;
     --editorial-gold: #a75d3e;
     --editorial-shell: 100%;
-    --editorial-header-height: 62px;
     --editorial-column: 100%;
     --editorial-photo-height: clamp(310px, 94vw, 510px);
     --editorial-quiz-overlap: 26px;
-    --editorial-mobile-gutter: clamp(19px, 6vw, 40px);
-  }
-
-  .discovery-editorial-home .discovery-header {
-    padding-inline: var(--editorial-mobile-gutter);
-    background: var(--editorial-paper);
-  }
-
-  .discovery-editorial-home .discovery-brand .brand-property {
-    display: block;
-  }
-
-  .discovery-publish-desktop {
-    display: none;
-  }
-
-  .discovery-editorial-home .discovery-account {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    background: transparent;
-    color: #795f44;
-  }
-
-  .discovery-editorial-home .discovery-account:hover {
-    background: #eaded0;
-  }
-
-  .discovery-editorial-home .discovery-account svg {
-    width: 24px;
-    height: 24px;
-    padding: 3px;
-    border: 1px solid #b9a183;
-    border-radius: 50%;
-  }
-
-  .discovery-account-menu:popover-open {
-    position: absolute;
-    inset: calc(var(--editorial-header-height) - 3px)
-      var(--editorial-mobile-gutter) auto auto;
-    display: grid;
-    gap: 10px;
-    min-width: 190px;
-    margin: 0;
-    padding: 14px;
-    border: 1px solid var(--discovery-line);
-    border-radius: 16px;
-    background: var(--editorial-paper);
-    color: var(--discovery-ink);
-    box-shadow: 0 6px 24px #59412626;
-  }
-
-  .discovery-account-menu p {
-    font-size: 13px;
-    font-weight: 700;
   }
 
   .discovery-editorial-scene {
-    inset: var(--editorial-header-height) 0 auto;
+    inset: var(--platform-header-height) 0 auto;
     height: var(--editorial-photo-height);
   }
 
@@ -433,7 +310,7 @@ button.discovery-editorial-step-label:hover {
     min-height: calc(
       var(--editorial-photo-height) - var(--editorial-quiz-overlap)
     );
-    padding: clamp(26px, 7.8vw, 53px) var(--editorial-mobile-gutter) 0;
+    padding: clamp(26px, 7.8vw, 53px) var(--platform-header-gutter) 0;
   }
 
   .discovery-editorial-intro h1 {
@@ -452,11 +329,11 @@ button.discovery-editorial-step-label:hover {
     min-height: max(
       300px,
       calc(
-        100svh - var(--editorial-header-height) -
-          var(--editorial-photo-height) + var(--editorial-quiz-overlap)
+        100svh - var(--platform-header-height) - var(--editorial-photo-height) +
+          var(--editorial-quiz-overlap)
       )
     );
-    padding: 19px var(--editorial-mobile-gutter)
+    padding: 19px var(--platform-header-gutter)
       max(25px, env(safe-area-inset-bottom));
     border-radius: 30px 30px 0 0;
     background: linear-gradient(

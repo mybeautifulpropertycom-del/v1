@@ -208,7 +208,7 @@ export default async function ResultsPage(props: PageProps) {
 
   return (
     <div className="discovery-site discovery-results-site">
-      <DiscoveryHeader variant="editorial" />
+      <DiscoveryHeader variant="platform" />
       <main
         className="discovery-shell discovery-results"
         data-has-listings={items.length > 0 || undefined}

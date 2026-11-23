@@ -70,6 +70,15 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   await expect(page).toHaveURL(
     /\/cauta\/de-vanzare\/apartamente\/2-camere\/bucuresti\?min=50000&max=100000&moneda=eur$/,
   );
+  const header = page.getByRole("banner");
+  await expect(
+    header.getByRole("link", { name: "Următoarea Proprietate" }).locator("img"),
+  ).toHaveAttribute("src", "/icon.svg");
+  await header.getByRole("button", { name: "Opțiuni de publicare" }).click();
+  await expect(
+    header.getByRole("link", { name: "Publică anunțul" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
   await expect(
     page.getByRole("heading", {
       name: "1 proprietate potrivită pentru tine",
@@ -126,6 +135,9 @@ test("canonical landing pages and the rent quiz show matching published listings
   expect(response.status()).toBe(200);
   expect(await response.text()).toContain("Apartament în buget");
   await page.goto(category);
+  await expect(
+    page.getByRole("banner").getByRole("link", { name: "Publică anunțul" }),
+  ).toBeVisible();
   await expect(page.locator(".discovery-listing")).toHaveCount(2);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",

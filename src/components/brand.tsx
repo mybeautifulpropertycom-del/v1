@@ -2,16 +2,16 @@ import { BrandSymbol } from "./brand-symbol";
 
 export function Brand({
   light = false,
-  uniformWordmark = false,
+  uniformDesktopWordmark = false,
 }: {
   light?: boolean;
-  uniformWordmark?: boolean;
+  uniformDesktopWordmark?: boolean;
 }) {
   return (
     <span className={light ? "brand brand-light" : "brand"}>
       <BrandSymbol />
       <span>
-        <span className={uniformWordmark ? "brand-property" : undefined}>
+        <span className={uniformDesktopWordmark ? "brand-property" : undefined}>
           Următoarea
         </span>{" "}
         <span className="brand-property">Proprietate</span>

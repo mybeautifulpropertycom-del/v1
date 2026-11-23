@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, House, UserRound } from "lucide-react";
 import { PLATFORM_NAME } from "@/lib/platform-brand";
 import { Brand } from "./brand";
+import "@/styles/discovery-header.css";
 
 const publishHref = "/autentificare?actiune=publica";
 const publishQuestion = "Vinzi sau închiriezi?";
@@ -9,27 +10,29 @@ const publishQuestion = "Vinzi sau închiriezi?";
 export function DiscoveryHeader({
   variant = "classic",
 }: {
-  variant?: "classic" | "editorial" | "homepage";
+  variant?: "classic" | "platform";
 }) {
-  const editorial = variant !== "classic";
+  const platform = variant === "platform";
   return (
-    <header className="discovery-header">
+    <header
+      className={
+        platform
+          ? "discovery-header discovery-platform-header"
+          : "discovery-header"
+      }
+    >
       <Link className="discovery-brand" href="/">
-        {variant === "homepage" ? (
-          <Brand uniformWordmark />
+        {platform ? (
+          <Brand uniformDesktopWordmark />
         ) : (
           <>
-            <House
-              size={editorial ? 27 : 21}
-              strokeWidth={editorial ? 1.3 : 2}
-              aria-hidden="true"
-            />
+            <House size={21} aria-hidden="true" />
             <span>{PLATFORM_NAME}</span>
           </>
         )}
       </Link>
       <nav aria-label="Navigare">
-        {variant === "homepage" ? (
+        {platform ? (
           <>
             <div className="discovery-publish-desktop">
               <span>{publishQuestion}</span>
@@ -58,9 +61,8 @@ export function DiscoveryHeader({
           </>
         ) : (
           <Link href="/autentificare" className="discovery-account">
-            {editorial && <UserRound size={14} aria-hidden="true" />}
             <span>Contul meu</span>
-            {!editorial && <ArrowUpRight size={14} aria-hidden="true" />}
+            <ArrowUpRight size={14} aria-hidden="true" />
           </Link>
         )}
       </nav>
