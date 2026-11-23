@@ -18,7 +18,7 @@ export function PropertyAddressInput({
   value: string;
   placeId?: string | null;
   disabled?: boolean;
-  onChange: (address: string, placeId: string | null) => void;
+  onChange: (address: string, placeId: string | null, city?: string) => void;
   guideField?: string;
   guideIssue?: string | null;
 }) {
@@ -131,7 +131,15 @@ export function PropertyAddressInput({
         // Keep manual entry available without displaying a regional warning.
         return;
       }
-      onChange(place.formattedAddress, place.id);
+      const city = place.addressComponents?.find((part) =>
+        part.types.includes("locality"),
+      );
+      const locality = (city?.longText || city?.shortText)?.trim();
+      onChange(
+        place.formattedAddress,
+        place.id,
+        locality && locality.length <= 80 ? locality : undefined,
+      );
       setFocused(false);
       input.current?.focus();
     } catch {

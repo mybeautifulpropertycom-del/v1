@@ -11,7 +11,7 @@ export async function GET() {
   if (!publicIndexing()) return new Response("Not found", { status: 404 });
   try {
     const { total } = await readSitemapPage(0);
-    return xmlResponse(sitemapIndex(total));
+    return xmlResponse(sitemapIndex(total, total > 0));
   } catch {
     // Never tell crawlers that all published URLs disappeared during an outage.
     return sitemapUnavailable();

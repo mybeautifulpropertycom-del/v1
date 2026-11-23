@@ -239,6 +239,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     const current = stateRef.current!;
     const nextProperty = {
       ...property,
+      ...(property.city === undefined
+        ? {}
+        : { city: property.city?.trim() || null }),
       owner_id: current.profile.id,
       updated_at: new Date().toISOString(),
     };

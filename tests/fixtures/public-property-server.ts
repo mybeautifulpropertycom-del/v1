@@ -6,13 +6,75 @@ globalThis.fetch = async (input, init) => {
   const url = new URL(input instanceof Request ? input.url : String(input));
   if (url.origin !== "https://browser-test.supabase.co")
     return originalFetch(input, init);
-  if (url.pathname !== "/rest/v1/rpc/get_public_property")
-    throw new Error(`Unexpected test-server Supabase request: ${url.pathname}`);
   const body = init?.body
     ? JSON.parse(String(init.body))
     : input instanceof Request
       ? await input.clone().json()
       : {};
+  if (url.pathname === "/rest/v1/rpc/get_public_listing_cities")
+    return Response.json([
+      { slug: "bucuresti", name: "București", has_sales: true },
+    ]);
+  if (url.pathname === "/rest/v1/rpc/find_public_listings") {
+    const template = {
+      ...demoWorkspace().properties[0],
+      transaction: "sale",
+      currency: "EUR",
+      city: "București",
+      city_slug: "bucuresti",
+      kind: "apartamente",
+      rooms: 2,
+      image: "/images/apartment.jpg",
+    };
+    const inventory = [
+      {
+        ...template,
+        price: 75000,
+        slug: "print-test-home",
+        address_slug: "print-test-home",
+        title: "Apartament în buget",
+      },
+      {
+        ...template,
+        price: 110000,
+        slug: "apartament-scump",
+        title: "Apartament peste buget",
+      },
+      {
+        ...template,
+        price: 80000,
+        slug: "apartament-trei-camere",
+        title: "Apartament cu trei camere",
+        rooms: 3,
+      },
+      {
+        ...template,
+        price: 500,
+        slug: "casa-inchiriere",
+        title: "Casă de închiriat",
+        rooms: 3,
+        kind: "case",
+        transaction: "rent",
+      },
+    ];
+    const items = inventory.filter(
+      (p) =>
+        p.transaction === body.offer &&
+        (!body.kind_filter || p.kind === body.kind_filter) &&
+        (!body.room_filter || p.rooms === body.room_filter) &&
+        (!body.city_filter || p.city_slug === body.city_filter) &&
+        (!body.budget_currency || p.currency === body.budget_currency) &&
+        (body.budget_min == null || p.price >= body.budget_min) &&
+        (body.budget_max == null || p.price <= body.budget_max),
+    );
+    return Response.json({
+      total: items.length,
+      city: body.city_filter === "bucuresti" ? "București" : null,
+      items,
+    });
+  }
+  if (url.pathname !== "/rest/v1/rpc/get_public_property")
+    throw new Error(`Unexpected test-server Supabase request: ${url.pathname}`);
   const priceCase =
     /^(rent|sale)-price-test-(editorial|minimal|panorama)-(apartment|house)$/.exec(
       body.property_slug || "",

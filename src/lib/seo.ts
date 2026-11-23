@@ -5,9 +5,9 @@ import { propertyStory } from "./property-story";
 
 export const SITE_NAME = PLATFORM_NAME;
 export const HOME_TITLE =
-  "Următoarea Proprietate - Prezintă Proprietatea Eficient";
+  "Proprietăți de vânzare și de închiriat | Următoarea Proprietate";
 export const HOME_DESCRIPTION =
-  "Vinzi sau închiriezi o proprietate? Îți oferim cea mai eficientă modalitate de a o prezenta, promova și vinde.";
+  "Caută apartamente, case și vile după localitate, numărul de camere și buget. Descoperă prezentările proprietăților publicate de agenți și proprietari.";
 
 export function siteOrigin(): string {
   const url = new URL(process.env.NEXT_PUBLIC_SITE_URL || PLATFORM_ORIGIN);

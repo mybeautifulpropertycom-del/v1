@@ -2571,3 +2571,104 @@ test("Romania migration is repeatable, defaults to 249 RON and preserves histori
     await db.exec("rollback");
   }
 });
+
+test("public discovery only returns published matches and filters exact rooms, city, transaction, currency and inclusive price", async () => {
+  const discovery = await createTestDatabase();
+  try {
+    await discovery.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-setup.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    await discovery.query(
+      "insert into auth.users(id,email,raw_user_meta_data) values ($1,'search@example.com','{\"name\":\"Agent Test\"}')",
+      [agentA],
+    );
+    await discovery.exec("update public.profiles set phone='+40 700 000 001'");
+    await discovery.query(
+      `
+      insert into public.properties(owner_id,slug,title,description,location,city,type,transaction,currency,price,area,rooms,bedrooms,images,status)
+      select $1, fixture.slug, 'Proprietate de test', 'O descriere suficient de completă pentru publicare.', fixture.address, fixture.city,
+        fixture.kind, fixture.offer, fixture.currency, fixture.price, 80, fixture.rooms, 2, array['https://example.com/home.jpg'], fixture.status
+      from (values
+        ('lower-bound','Strada Lalelelor 12, București, România',null,'Condo','sale','EUR',50000,2,'published'),
+        ('upper-bound','Aleea Primăverii 20, București, România','București','Condo','sale','EUR',100000,2,'published'),
+        ('too-expensive','Aleea Primăverii 22, București, România','București','Condo','sale','EUR',100001,2,'published'),
+        ('wrong-currency','Aleea Primăverii 25, București, România','București','Condo','sale','RON',75000,2,'published'),
+        ('rent-house','Strada Florilor 11, București, România','București','House','rent','EUR',500,3,'published'),
+        ('legacy-rooms','Strada Visului 17, București, România',null,'Condo','sale','EUR',75000,null,'published'),
+        ('different-city','Strada Test 12, Cluj-Napoca, România','Cluj-Napoca','Condo','sale','EUR',75000,2,'published'),
+        ('numeric-town','1 Decembrie, Ilfov',null,'Condo','sale','EUR',75000,2,'published'),
+        ('draft-house','Aleea Primăverii 30, Iași, România','Iași','Condo','sale','EUR',75000,2,'draft')
+      ) fixture(slug,address,city,kind,offer,currency,price,rooms,status)
+    `,
+      [agentA],
+    );
+    await discovery.exec("set role anon");
+    await assert.rejects(
+      discovery.query("select * from public.property_discovery"),
+      /permission denied/i,
+    );
+    const filtered = (
+      await discovery.query<{
+        data: {
+          total: number;
+          city: string;
+          items: { slug: string; owner_id?: string }[];
+        };
+      }>(
+        "select public.find_public_listings('sale','apartamente',2,'bucuresti',50000,100000,'EUR') as data",
+      )
+    ).rows[0].data;
+    assert.equal(filtered.total, 2);
+    assert.equal(filtered.city, "București");
+    assert.deepEqual(filtered.items.map(({ slug }) => slug).sort(), [
+      "lower-bound",
+      "upper-bound",
+    ]);
+    assert.ok(filtered.items.every((row) => row.owner_id === undefined));
+    const rent = (
+      await discovery.query<{ data: { total: number } }>(
+        "select public.find_public_listings('rent') as data",
+      )
+    ).rows[0].data;
+    assert.equal(rent.total, 1);
+    assert.deepEqual(
+      (
+        await discovery.query(
+          "select slug from public.get_public_listing_cities() order by slug",
+        )
+      ).rows,
+      [{ slug: "bucuresti" }, { slug: "cluj-napoca" }],
+    );
+    const categories = (
+      await discovery.query<{
+        transaction: string;
+        kind: string | null;
+        rooms: number | null;
+        city_slug: string | null;
+      }>("select * from public.get_public_listing_categories()")
+    ).rows;
+    assert.ok(
+      categories.some(
+        (row) =>
+          row.kind === "apartamente" &&
+          row.rooms === 2 &&
+          row.city_slug === "bucuresti",
+      ),
+    );
+    assert.ok(
+      categories.some(
+        (row) =>
+          row.transaction === "rent" &&
+          row.kind === null &&
+          row.rooms === null &&
+          row.city_slug === null,
+      ),
+    );
+    assert.ok(categories.every((row) => row.city_slug !== "iasi"));
+  } finally {
+    await discovery.close();
+  }
+});

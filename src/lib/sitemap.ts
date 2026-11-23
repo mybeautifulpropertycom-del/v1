@@ -60,11 +60,13 @@ export function xmlEscape(value: string): string {
 const header = '<?xml version="1.0" encoding="UTF-8"?>';
 const namespace = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';
 
-export function sitemapIndex(total: number): string {
+export function sitemapIndex(total: number, includesDiscovery = false): string {
   const pages = Math.ceil(total / SITEMAP_PAGE_SIZE);
-  if (pages > 49999) throw new Error("Sitemap index limit exceeded");
+  if (pages + (includesDiscovery ? 2 : 1) > 50000)
+    throw new Error("Sitemap index limit exceeded");
   const paths = [
     "/sitemap.xml/main.xml",
+    ...(includesDiscovery ? ["/sitemap.xml/cautari.xml"] : []),
     ...Array.from(
       { length: pages },
       (_, index) => `/sitemap.xml/properties-${index + 1}.xml`,
@@ -81,6 +83,12 @@ export function sitemapUrls(items?: SitemapItem[]): string {
       )
     : [`<url><loc>${xmlEscape(siteUrl("/"))}</loc></url>`];
   return `${header}<urlset ${namespace}>${urls.join("")}</urlset>`;
+}
+
+export function discoverySitemapUrls(paths: string[]): string {
+  return `${header}<urlset ${namespace}>${[...new Set(paths)]
+    .map((path) => `<url><loc>${xmlEscape(siteUrl(path))}</loc></url>`)
+    .join("")}</urlset>`;
 }
 
 export function xmlResponse(xml: string): Response {

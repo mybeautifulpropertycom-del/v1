@@ -12,8 +12,17 @@ test("sitemaps paginate canonical URLs, exclude private routes and fail safely o
   const { GET: page } = await import("../src/app/sitemap.xml/[page]/route");
   const { xmlEscape } = await import("../src/lib/sitemap");
   let fail = false;
-  globalThis.fetch = async (_url, init) => {
+  globalThis.fetch = async (url, init) => {
     if (fail) return Response.json({ message: "missing RPC" }, { status: 404 });
+    if (String(url).includes("get_public_listing_categories"))
+      return Response.json([
+        {
+          transaction: "sale",
+          kind: "apartamente",
+          rooms: 2,
+          city_slug: "bucuresti",
+        },
+      ]);
     const { sitemap_page } = JSON.parse(String(init?.body));
     return Response.json({
       total: 1001,
@@ -32,12 +41,17 @@ test("sitemaps paginate canonical URLs, exclude private routes and fail safely o
   const xml = await response.text();
   assert.match(xml, /properties-1.xml/);
   assert.match(xml, /properties-2.xml/);
+  assert.match(xml, /cautari.xml/);
   assert.doesNotMatch(xml, /properties-3.xml|dashboard|preview|login|register/);
   const getPage = (file: string) =>
     page(new Request("https://example.com"), {
       params: Promise.resolve({ page: file }),
     });
   const first = await (await getPage("properties-1.xml")).text();
+  assert.match(
+    await (await getPage("cautari.xml")).text(),
+    /\/cauta\/de-vanzare\/apartamente\/2-camere\/bucuresti<\/loc>/,
+  );
   assert.match(first, /\/palm-drive<\/loc>/);
   assert.doesNotMatch(first, /original-home/);
   assert.match(first, /2026-10-31T12:00:00.000Z/);
@@ -51,6 +65,7 @@ test("sitemaps paginate canonical URLs, exclude private routes and fail safely o
   assert.equal(xmlEscape("<&>\"'"), "&lt;&amp;&gt;&quot;&apos;");
   fail = true;
   assert.equal((await index()).status, 503);
+  assert.equal((await getPage("cautari.xml")).status, 503);
   assert.equal((await getPage("properties-1.xml")).status, 503);
   assert.equal((await getPage("main.xml")).status, 200);
 });

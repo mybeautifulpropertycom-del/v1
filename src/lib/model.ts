@@ -24,6 +24,7 @@ export type Property = {
   title: string;
   description: string;
   location: string;
+  city?: string | null;
   google_place_id?: string | null;
   price: number;
   currency: "USD" | "EUR" | "RON";
@@ -33,6 +34,7 @@ export type Property = {
   area_unit: "sqft" | "sqm";
   construction_year?: number | null;
   bedrooms: number;
+  rooms?: number | null;
   bathrooms: number;
   amenities: string[];
   images: string[];
@@ -180,6 +182,18 @@ export function propertyErrors(property: Property): string[] {
   const errors: string[] = [];
   if (platformPageSlugs.has(slugify(property.location)))
     errors.push(reservedAddressError);
+  if (
+    property.city != null &&
+    (!property.city.trim() || property.city.length > 80)
+  )
+    errors.push("Introdu o localitate validă.");
+  if (
+    property.rooms != null &&
+    (!Number.isInteger(property.rooms) ||
+      property.rooms < 1 ||
+      property.rooms > 100)
+  )
+    errors.push("Introdu un număr total de camere între 1 și 100.");
   if (
     !Number.isFinite(property.price) ||
     property.price < 0 ||

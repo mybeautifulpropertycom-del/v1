@@ -26,6 +26,8 @@ test("legacy dimensions convert once, house filters include old types, and selec
   await page.goto(`/panou/proprietati/${id}`);
   const type = page.getByLabel("Tipul proprietății");
   const area = page.getByLabel("Suprafață (m²)", { exact: true });
+  const city = page.getByLabel(/Oraș \/ localitate/);
+  const rooms = page.getByLabel(/Număr total de camere/);
   await expect(type.locator("option")).toHaveText([
     "Apartament",
     "Garsonieră",
@@ -39,6 +41,8 @@ test("legacy dimensions convert once, house filters include old types, and selec
   expect(state.property.area).toBe(1000);
 
   await type.selectOption("Condo");
+  await city.fill("București");
+  await rooms.fill("2");
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
     .click();
@@ -48,9 +52,13 @@ test("legacy dimensions convert once, house filters include old types, and selec
   expect(state.property.type).toBe("Condo");
   expect(state.property.area_unit).toBe("sqm");
   expect(state.property.area).toBe(92.9);
+  expect(state.property.city).toBe("București");
+  expect(state.property.rooms).toBe(2);
   await page.reload();
   await expect(type).toHaveValue("Condo");
   await expect(area).toHaveValue("92.9");
+  await expect(city).toHaveValue("București");
+  await expect(rooms).toHaveValue("2");
 
   await type.selectOption("Penthouse");
   await area.fill("120.5");

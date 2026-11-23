@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { workspace } from "./workspace-fixture";
 import { HOME_TITLE, HOME_DESCRIPTION } from "../../src/lib/seo";
 
-test("anonymous visitors see the existing login form at an indexable homepage", async ({
+test("anonymous visitors see the property quiz at an indexable homepage", async ({
   page,
   request,
 }) => {
@@ -15,10 +15,7 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
   expect(html).toContain('name="robots" content="index, follow"');
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Bine ai venit." }),
-  ).toBeVisible();
-  await expect(
-    page.getByLabel("Adresă de e-mail", { exact: true }),
+    page.getByRole("heading", { name: "Unde vrei să locuiești?" }),
   ).toBeVisible();
   await expect(page).toHaveTitle(HOME_TITLE);
   const structured = await page
@@ -37,13 +34,14 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
     "content",
     HOME_DESCRIPTION,
   );
-  const canonical = await page
-    .locator('link[rel="canonical"]')
-    .getAttribute("href");
-  await page.goto("/autentificare");
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
-    "href",
-    canonical!,
+  await page.getByRole("link", { name: "Contul meu" }).click();
+  await expect(page).toHaveURL(/\/autentificare$/);
+  await expect(
+    page.getByLabel("Adresă de e-mail", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex/,
   );
   await page.goto("/inregistrare");
   await expect(
@@ -55,11 +53,15 @@ test("anonymous visitors see the existing login form at an indexable homepage", 
   );
 });
 
-test("signed-in visitors still go to their private dashboard", async ({
+test("signed-in visitors can use search and open their private dashboard from the account link", async ({
   page,
 }) => {
   await workspace(page);
   await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Unde vrei să locuiești?" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Contul meu" }).click();
   await expect(page).toHaveURL(/\/panou$/);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",

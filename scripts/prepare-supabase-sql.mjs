@@ -163,6 +163,19 @@ commit;
 select 'MBP_PROFILE_ROLE_READY' as status;
 `,
 );
+const discovery = await readFile(
+  new URL("202611230004_property_discovery.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-property-discovery.sql", import.meta.url),
+  `-- Existing installations: run the entire file. Safe to rerun.
+begin;
+${discovery.trim()}
+commit;
+select 'MBP_PROPERTY_DISCOVERY_READY' as status;
+`,
+);
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",

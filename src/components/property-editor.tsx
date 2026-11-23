@@ -484,11 +484,12 @@ export function PropertyEditor({
                     value={property.location}
                     placeId={property.google_place_id}
                     disabled={busy}
-                    onChange={(location, placeId) => {
+                    onChange={(location, placeId, city) => {
                       if (saving.current) return;
                       setProperty((p) => ({
                         ...p,
                         location,
+                        ...(city ? { city } : {}),
                         // Keep old installations usable until Maps is activated.
                         ...(placeId || p.google_place_id !== undefined
                           ? { google_place_id: placeId }
@@ -498,6 +499,17 @@ export function PropertyEditor({
                       setPublished(false);
                     }}
                   />
+                  <label className="full-width">
+                    Oraș / localitate
+                    <input
+                      autoComplete="address-level2"
+                      maxLength={80}
+                      placeholder="Ex. București"
+                      value={property.city ?? ""}
+                      onChange={(e) => update("city", e.target.value || null)}
+                    />
+                    <small>Localitatea folosită în căutarea publică.</small>
+                  </label>
                   <label>
                     Tipul proprietății
                     <select
@@ -597,6 +609,24 @@ export function PropertyEditor({
                         )
                       }
                     />
+                  </label>
+                  <label>
+                    Număr total de camere
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      step="1"
+                      placeholder="Ex. 2"
+                      value={property.rooms ?? ""}
+                      onChange={(e) =>
+                        update(
+                          "rooms",
+                          e.target.value === "" ? null : e.target.valueAsNumber,
+                        )
+                      }
+                    />
+                    <small>Include camera de zi și dormitoarele.</small>
                   </label>
                   <label>
                     Dormitoare
