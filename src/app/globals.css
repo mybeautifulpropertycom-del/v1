@@ -2156,14 +2156,14 @@ html:has(.image-editor-card[data-dragging]) {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  flex: 0 1 96px;
+  flex: 0 1 62px;
   min-width: 0;
-  min-height: 30px;
-  padding: 1px 2px;
+  min-height: 22px;
+  padding: 1px;
   border: 1px solid var(--line);
   border-radius: 5px;
   background: #fffe;
-  font-size: 10px;
+  font-size: 8px;
   line-height: 1;
   text-align: center;
   color: var(--ink);
@@ -2174,6 +2174,10 @@ html:has(.image-editor-card[data-dragging]) {
   margin-inline-start: auto;
   cursor: grab;
   touch-action: none;
+}
+.image-drag-handle svg {
+  width: 11px;
+  height: 11px;
 }
 .image-editor-actions button:hover:not(:disabled) {
   background: #edf0e5;
