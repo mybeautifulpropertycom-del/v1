@@ -84,10 +84,16 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   await expect(
     page.getByRole("heading", { name: "Apartament în buget" }),
   ).toBeVisible();
-  await expect(page.locator(".discovery-listing-facts")).toContainText(
-    "2 dormitoare",
-  );
-  await expect(page.locator(".discovery-listing-facts")).toContainText("2 băi");
+  const facts = page.getByRole("list", { name: "Caracteristici" });
+  await expect(facts).toContainText("2 dormitoare");
+  await expect(facts).toContainText("2 băi");
+  await expect(facts).toContainText("m²");
+  expect(
+    await facts.locator("li").evaluateAll((items) => {
+      const tops = items.map((item) => item.getBoundingClientRect().top);
+      return Math.max(...tops) - Math.min(...tops);
+    }),
+  ).toBeLessThan(1);
   await expect(
     page
       .getByRole("list", { name: "Dotări și facilități" })

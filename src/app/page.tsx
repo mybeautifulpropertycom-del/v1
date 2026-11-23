@@ -22,7 +22,7 @@ export default function Home() {
       <div className="discovery-editorial-scene" aria-hidden="true">
         <Image src={HOME_IMAGE} alt="" fill sizes="100vw" preload />
       </div>
-      <DiscoveryHeader editorial />
+      <DiscoveryHeader variant="homepage" />
       <main className="discovery-editorial-main">
         <div className="discovery-editorial-intro">
           <h1>

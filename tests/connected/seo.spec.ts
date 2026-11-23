@@ -41,8 +41,11 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
     "content",
     new RegExp(`${HOME_IMAGE}$`),
   );
-  await page.getByRole("link", { name: "Contul meu" }).click();
-  await expect(page).toHaveURL(/\/autentificare$/);
+  await expect(
+    page.getByText("Vinzi sau închiriezi?").filter({ visible: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Publică anunțul" }).click();
+  await expect(page).toHaveURL(/\/autentificare\?actiune=publica$/);
   await expect(
     page.getByLabel("Adresă de e-mail", { exact: true }),
   ).toBeVisible();
@@ -60,19 +63,30 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
   );
 });
 
-test("signed-in visitors can use search and open their private dashboard from the account link", async ({
+test("the mobile account icon opens a menu for publishing and dashboard access", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await workspace(page);
   await page.goto("/");
+  const icon = page.getByRole("button", { name: "Contul meu" });
+  const publish = page.getByRole("link", { name: "Publică anunțul" });
+  await expect(publish).toHaveCount(0);
+  await icon.click();
   await expect(
-    page.getByRole("heading", {
-      name: "Găsește Locul Pe Care Îl Vei Numi Acasă",
-      level: 1,
-    }),
+    page.getByText("Vinzi sau închiriezi?").filter({ visible: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Contul meu" }).click();
+  await expect(publish).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(publish).toHaveCount(0);
+  await icon.click();
+  await page.getByRole("link", { name: "Contul meu", exact: true }).click();
   await expect(page).toHaveURL(/\/panou$/);
+  await page.goto("/");
+  await icon.click();
+  await publish.click();
+  await expect(page).toHaveURL(/\/panou\/proprietati\/noua$/);
+  await expect(page.getByLabel("Titlul proprietății")).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     /noindex/,

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { Brand } from "./shell";
+import { Brand } from "./brand";
 import { photos } from "@/lib/demo";
 import { getSupabase } from "@/lib/supabase";
 
@@ -11,10 +11,12 @@ export function Auth({
   resetPassword = false,
   initialMode = "login",
   redirectAuthenticated = false,
+  publishListing = false,
 }: {
   resetPassword?: boolean;
   initialMode?: "login" | "signup";
   redirectAuthenticated?: boolean;
+  publishListing?: boolean;
 }) {
   const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [name, setName] = useState("");
@@ -26,13 +28,14 @@ export function Auth({
   const [recoveryReady, setRecoveryReady] = useState(false);
   const router = useRouter();
   const supabase = getSupabase();
+  const destination = publishListing ? "/panou/proprietati/noua" : "/panou";
   useEffect(() => {
     if (!redirectAuthenticated || resetPassword || !supabase) return;
     let active = true;
     void supabase.auth
       .getUser()
       .then(({ data: { user } }) => {
-        if (active && user) router.replace("/panou");
+        if (active && user) router.replace(destination);
       })
       .catch(() => {
         /* Keep the login form available if the session cannot be checked. */
@@ -40,7 +43,7 @@ export function Auth({
     return () => {
       active = false;
     };
-  }, [redirectAuthenticated, resetPassword, router, supabase]);
+  }, [destination, redirectAuthenticated, resetPassword, router, supabase]);
   useEffect(() => {
     if (!resetPassword || !supabase) return;
     const {
@@ -96,7 +99,7 @@ export function Auth({
           password,
         });
         if (error) throw error;
-        router.replace("/panou");
+        router.replace(destination);
       }
     } catch (e) {
       const code =
@@ -184,7 +187,7 @@ export function Auth({
                 reale și distribuirea publică sunt disponibile după conectarea
                 serviciului Supabase.
               </p>
-              <Link href="/panou" className="button primary full-button">
+              <Link href={destination} className="button primary full-button">
                 Explorează versiunea demo <ArrowRight size={17} />
               </Link>
             </div>

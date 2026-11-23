@@ -561,6 +561,10 @@
     padding: 5px 3px 5px 5px;
   }
 
+  .discovery-listing-body:not(:has(.discovery-listing-amenities)) {
+    padding-bottom: 28px;
+  }
+
   .discovery-listing-heading h2 {
     font-size: clamp(14px, 3.7vw, 17px);
   }
@@ -584,17 +588,26 @@
 
   .discovery-listing-facts,
   .discovery-listing-amenities {
-    padding-right: 28px;
     margin-top: 7px;
-    gap: 4px 5px;
   }
 
   .discovery-listing-facts {
-    font-size: 10px;
+    flex-wrap: nowrap;
+    gap: 5px;
+    padding-right: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-size: clamp(9px, 2.6vw, 10px);
   }
 
   .discovery-listing-facts li {
+    flex: none;
     gap: 2px;
+  }
+
+  .discovery-listing-amenities {
+    padding-right: 28px;
+    gap: 4px 5px;
   }
 
   .discovery-listing-amenities li {

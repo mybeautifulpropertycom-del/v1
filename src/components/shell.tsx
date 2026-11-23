@@ -1,6 +1,6 @@
 "use client";
 import { PLATFORM_CONTACT_EMAIL } from "@/lib/platform-brand";
-import { BrandSymbol } from "./brand-symbol";
+import { Brand } from "./brand";
 import { AgentAvatar } from "./agent-avatar";
 import { AgentGuide } from "./agent-guide";
 
@@ -37,16 +37,6 @@ const nav = [
   { href: "/panou/mesaje", label: "Mesaje", icon: Inbox },
   { href: "/panou/profil", label: "Profilul meu", icon: UserRound },
 ];
-export function Brand({ light = false }: { light?: boolean }) {
-  return (
-    <span className={`brand ${light ? "brand-light" : ""}`}>
-      <BrandSymbol />
-      <span>
-        Următoarea <span className="brand-property">Proprietate</span>
-      </span>
-    </span>
-  );
-}
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const { profile, demo, isAdmin, signOut, unreadCount } = useWorkspace();
