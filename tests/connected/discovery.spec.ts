@@ -31,6 +31,9 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
     "Penthouse",
     "Înapoi",
   ]);
+  const propertyCards = page.locator(".discovery-type-choices");
+  await expect(propertyCards.locator("img")).toHaveCount(4);
+  await expect(propertyCards.locator("svg")).toHaveCount(0);
   await page.getByRole("button", { name: "Apartament", exact: true }).click();
   await expect(page.getByRole("form").getByRole("button")).toHaveText([
     "1",

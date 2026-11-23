@@ -5,13 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
-  Building2,
   Check,
   House,
   KeyRound,
-  PanelsTopLeft,
   Search,
-  Sofa,
 } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -51,21 +48,18 @@ const propertyTypes = [
     kind: "apartamente",
     label: "Apartament",
     image: "apartament",
-    icon: Building2,
   },
-  { kind: "case", label: "Casă / Vilă", image: "casa", icon: House },
-  { kind: "garsoniere", label: "Garsonieră", image: "garsoniera", icon: Sofa },
+  { kind: "case", label: "Casă / Vilă", image: "casa" },
+  { kind: "garsoniere", label: "Garsonieră", image: "garsoniera" },
   {
     kind: "penthouse-uri",
     label: "Penthouse",
     image: "penthouse",
-    icon: PanelsTopLeft,
   },
 ] as const satisfies readonly {
   kind: ListingKind;
   label: string;
   image: string;
-  icon: typeof House;
 }[];
 const roomOptions = [1, 2, 3, 4, 5, 6, 7, "8+"] as const;
 
@@ -203,7 +197,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
       )}
       {step === 1 && (
         <div className="discovery-choices discovery-type-choices">
-          {propertyTypes.map(({ kind: value, label, image, icon: Icon }) => (
+          {propertyTypes.map(({ kind: value, label, image }) => (
             <button
               key={value}
               type="button"
@@ -221,13 +215,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
                   sizes="(max-width: 480px) 40vw, (max-width: 800px) 22vw, 150px"
                 />
               </span>
-              <Icon size={20} strokeWidth={1.5} aria-hidden="true" />
               {label}
-              {kind === value && (
-                <span className="discovery-type-selected" aria-hidden="true">
-                  <Check size={13} />
-                </span>
-              )}
             </button>
           ))}
         </div>

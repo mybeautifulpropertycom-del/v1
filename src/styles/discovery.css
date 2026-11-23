@@ -301,16 +301,12 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .discovery-type-choices button {
-  position: relative;
   display: grid;
   justify-items: center;
   align-content: start;
   gap: 7px;
   padding: 7px 7px 12px;
   font-size: clamp(11px, 1vw, 14px);
-}
-.discovery-type-choices button > svg {
-  color: var(--discovery-green);
 }
 .discovery-type-photo {
   position: relative;
@@ -323,19 +319,6 @@
 }
 .discovery-type-photo img {
   object-fit: cover;
-}
-.discovery-type-selected {
-  position: absolute;
-  top: -7px;
-  right: -5px;
-  display: grid;
-  place-items: center;
-  width: 25px;
-  height: 25px;
-  border: 2px solid #fffaf0;
-  border-radius: 50%;
-  background: var(--discovery-green);
-  color: #fffaf0;
 }
 .discovery-quiz-actions {
   display: flex;
