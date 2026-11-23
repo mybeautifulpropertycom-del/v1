@@ -95,12 +95,18 @@ test("profile introductions can be generated three times and edited, with an emp
   await role.selectOption("agent");
   await expect(role).toHaveCount(0);
   await expect(agency).toBeFocused();
+  await expect(agency).toHaveAttribute("placeholder", "Numele agenției");
   await expect(agency).not.toHaveAttribute("required", "");
   await agency.fill("Agenția Test");
   await changeRole.click();
   await role.selectOption("owner");
   await expect(agency).toHaveCount(0);
   await expect(role).toHaveCount(0);
+  await expect(page.locator(".profile-role-value")).toBeFocused();
+  await expect(changeRole).toHaveCSS("outline-style", "none");
+  await page.keyboard.press("Tab");
+  await expect(changeRole).toBeFocused();
+  await expect(changeRole).toHaveCSS("outline-style", "solid");
   await expect(
     page.getByRole("combobox", { name: "Tipul prezentării" }),
   ).toHaveCount(0);
@@ -128,6 +134,15 @@ test("profile introductions can be generated three times and edited, with an emp
     ),
   ).toHaveCount(0);
   await expect(generate).toHaveCSS("min-height", "30px");
+  const hintBox = (await page.locator("#profile-bio-hint").boundingBox())!;
+  const generateBox = (await generate.boundingBox())!;
+  const bioBox = (await bio.boundingBox())!;
+  expect(
+    Math.abs(
+      hintBox.y + hintBox.height / 2 - generateBox.y - generateBox.height / 2,
+    ),
+  ).toBeLessThan(2);
+  expect(hintBox.y - (bioBox.y + bioBox.height)).toBeLessThan(12);
   await generate.click();
   await expect(generate).toBeDisabled();
   expect(roles).toEqual(["owner", "agent", "agent"]);

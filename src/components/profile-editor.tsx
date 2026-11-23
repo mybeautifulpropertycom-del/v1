@@ -287,7 +287,7 @@ export function ProfileEditor() {
                         data-profile-guide-field="agency"
                         autoComplete="organization"
                         maxLength={120}
-                        placeholder="Agenția ta imobiliară"
+                        placeholder="Numele agenției"
                         value={form.agency}
                         onChange={(e) => {
                           setSaved(false);
@@ -296,17 +296,18 @@ export function ProfileEditor() {
                       />
                     </label>
                   ) : (
-                    <p className="profile-role-value">
+                    <p
+                      className="profile-role-value"
+                      data-profile-guide-field="agency"
+                      ref={focusRoleField}
+                      tabIndex={-1}
+                    >
                       {profileBioRoles.owner}
                     </p>
                   )}
                   <button
                     type="button"
                     className="text-button"
-                    ref={role === "owner" ? focusRoleField : undefined}
-                    data-profile-guide-field={
-                      role === "owner" ? "agency" : undefined
-                    }
                     disabled={generatingBio || busy}
                     onClick={() => {
                       focusRoleNext.current = true;
@@ -380,36 +381,34 @@ export function ProfileEditor() {
                       ? "Poți păstra textul actual. Un text nou poate avea cel mult 300 de caractere."
                       : "Scrie simplu, personal și sincer."}
                 </small>
-                <div className="profile-bio-actions">
-                  <button
-                    type="button"
-                    className="button secondary"
-                    onClick={() => void generateBio()}
-                    title={
-                      demo
-                        ? "Generarea este disponibilă după autentificare."
-                        : remaining === 0
-                          ? "Limita de generări AI a fost atinsă."
-                          : !role
-                            ? "Alege tipul de profil înainte de generare."
-                            : undefined
-                    }
-                    disabled={
-                      demo ||
-                      !role ||
-                      generatingBio ||
-                      busy ||
-                      uploading ||
-                      redirecting ||
-                      remaining === 0
-                    }
-                  >
-                    <Sparkles size={13} aria-hidden="true" />
-                    {generatingBio
-                      ? "Generăm descrierea…"
-                      : "Generează descrierea"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => void generateBio()}
+                  title={
+                    demo
+                      ? "Generarea este disponibilă după autentificare."
+                      : remaining === 0
+                        ? "Limita de generări AI a fost atinsă."
+                        : !role
+                          ? "Alege tipul de profil înainte de generare."
+                          : undefined
+                  }
+                  disabled={
+                    demo ||
+                    !role ||
+                    generatingBio ||
+                    busy ||
+                    uploading ||
+                    redirecting ||
+                    remaining === 0
+                  }
+                >
+                  <Sparkles size={13} aria-hidden="true" />
+                  {generatingBio
+                    ? "Generăm descrierea…"
+                    : "Generează descrierea"}
+                </button>
               </div>
               {bioError && (
                 <p className="form-error" role="alert">
