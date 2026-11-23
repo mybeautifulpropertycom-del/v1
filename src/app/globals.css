@@ -2148,6 +2148,7 @@ html:has(.image-editor-card[data-dragging]) {
   position: absolute;
   inset: auto 6px 6px;
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   pointer-events: none;
 }
@@ -2156,7 +2157,7 @@ html:has(.image-editor-card[data-dragging]) {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  flex: 0 1 62px;
+  flex: 0 1 88px;
   min-width: 0;
   min-height: 22px;
   padding: 1px;
@@ -2165,6 +2166,7 @@ html:has(.image-editor-card[data-dragging]) {
   background: #fffe;
   font-size: 8px;
   line-height: 1;
+  white-space: nowrap;
   text-align: center;
   color: var(--ink);
   pointer-events: auto;
