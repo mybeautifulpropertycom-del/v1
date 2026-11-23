@@ -2148,38 +2148,34 @@ html:has(.image-editor-card[data-dragging]) {
   position: absolute;
   inset: auto 6px 6px;
   display: flex;
-  align-items: flex-end;
   gap: 4px;
   pointer-events: none;
 }
 .image-editor-actions button {
-  pointer-events: auto;
-  outline-offset: 2px;
-}
-.make-cover {
-  background: #fffe;
-  font-size: 11px;
-  color: var(--ink);
-  padding: 7px;
-  border-radius: 4px;
-}
-.image-drag-handle {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  flex: none;
-  margin-inline-start: auto;
-  min-height: 34px;
-  padding-inline: 6px;
+  flex: 0 1 96px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 1px 2px;
   border: 1px solid var(--line);
   border-radius: 5px;
   background: #fffe;
   font-size: 10px;
+  line-height: 1;
+  text-align: center;
+  color: var(--ink);
+  pointer-events: auto;
+  outline-offset: 2px;
+}
+.image-drag-handle {
+  margin-inline-start: auto;
   cursor: grab;
   touch-action: none;
 }
-.image-drag-handle:hover:not(:disabled) {
+.image-editor-actions button:hover:not(:disabled) {
   background: #edf0e5;
 }
 .image-drag-handle:active {
