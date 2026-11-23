@@ -413,7 +413,7 @@ test("pending payments reopen in a dialog, handle a declined card and do not lea
   expect(state.posts.every((item) => item.action === "resume")).toBe(true);
 });
 
-test("unpublished listings show every campaign step as a disabled preview", async ({
+test("unpublished listings show a locked campaign preview with a shortcut to properties", async ({
   page,
 }) => {
   const state = await fixture(page, false);
@@ -430,9 +430,11 @@ test("unpublished listings show every campaign step as a disabled preview", asyn
     "Cuvinte cheie",
     "Bugetul",
   ]);
-  await expect(
-    page.getByLabel("Ce proprietate vrei să promovezi?"),
-  ).toBeDisabled();
+  const picker = page.getByLabel("Ce proprietate vrei să promovezi?");
+  await expect(picker).toBeEnabled();
+  await expect(picker.locator("option:enabled")).toHaveText([
+    "Adaugă o proprietate",
+  ]);
   await expect(
     page.getByRole("option", { name: "Vila cu grădină" }),
   ).toHaveCount(0);
@@ -448,10 +450,15 @@ test("unpublished listings show every campaign step as a disabled preview", asyn
     page.getByRole("radio", { name: "Plus 500 RON" }),
   ).toBeDisabled();
   await expect(page.locator(".promotion-notes")).toHaveAttribute("inert", "");
-  await expect(page.locator(".promotion-notes")).not.toHaveAttribute("open", "");
+  await expect(page.locator(".promotion-notes")).not.toHaveAttribute(
+    "open",
+    "",
+  );
   await expect(
     page.getByRole("button", { name: "Activează campania" }),
   ).toBeDisabled();
+  await picker.selectOption({ label: "Adaugă o proprietate" });
+  await expect(page).toHaveURL(/\/panou$/);
   expect(state.posts).toHaveLength(0);
 });
 

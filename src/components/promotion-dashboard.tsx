@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -41,6 +42,7 @@ function CampaignSetup({
   canPay: boolean;
   onUpdated: () => void;
 }) {
+  const router = useRouter();
   const preview = properties.length === 0;
   const [selectedId, setSelectedId] = useState("");
   const property = properties.find((item) => item.id === selectedId);
@@ -71,6 +73,10 @@ function CampaignSetup({
   const pack = offer ? promotionPackages[offer] : null;
 
   function chooseProperty(id: string) {
+    if (preview) {
+      router.push("/panou");
+      return;
+    }
     setSelectedId(id);
     const listing = properties.find((item) => item.id === id);
     setArea(listing ? defaultPromotionTargetArea(listing.location) : "");
@@ -119,35 +125,41 @@ function CampaignSetup({
         onSubmit={submit}
         aria-describedby={preview ? "promotion-preview-requirement" : undefined}
       >
+        <section className="promotion-step">
+          <h2>Proprietatea</h2>
+          <div className="promotion-property-picker">
+            <label>
+              Ce proprietate vrei să promovezi?
+              <select
+                value={selectedId}
+                disabled={busy || Boolean(payment)}
+                onChange={(event) => chooseProperty(event.target.value)}
+              >
+                <option value="" disabled={preview}>
+                  {preview
+                    ? "Alege o opțiune"
+                    : "Alege o proprietate publicată"}
+                </option>
+                {preview && <option value="add">Adaugă o proprietate</option>}
+                {properties.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {property && (
+              <Link
+                href={publicPath(property)}
+                target="_blank"
+                className="text-button"
+              >
+                Vezi pagina publicată <ArrowUpRight size={14} />
+              </Link>
+            )}
+          </div>
+        </section>
         <fieldset disabled={preview || busy || Boolean(payment)}>
-          <section className="promotion-step">
-            <h2>Proprietatea</h2>
-            <div className="promotion-property-picker">
-              <label>
-                Ce proprietate vrei să promovezi?
-                <select
-                  value={selectedId}
-                  onChange={(event) => chooseProperty(event.target.value)}
-                >
-                  <option value="">Alege o proprietate publicată</option>
-                  {properties.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {property && (
-                <Link
-                  href={publicPath(property)}
-                  target="_blank"
-                  className="text-button"
-                >
-                  Vezi pagina publicată <ArrowUpRight size={14} />
-                </Link>
-              )}
-            </div>
-          </section>
           {(property || preview) && (
             <>
               <section className="promotion-step">
