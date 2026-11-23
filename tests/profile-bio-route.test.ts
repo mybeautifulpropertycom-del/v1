@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-test("profile bio route uses the verified account, checks the output length and preserves quota on failure", async (t) => {
+test("profile bio route scopes the quota to the verified account, handles plain text and caps three attempts", async (t) => {
   process.env.NEXT_PUBLIC_SUPABASE_URL =
     "https://profile-bio-tests.supabase.co";
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
@@ -11,7 +11,7 @@ test("profile bio route uses the verified account, checks the output length and 
   const owner = "11111111-1111-4111-8111-111111111111";
   const output =
     "Îți prezint locuința și răspund la întrebări. Putem stabili împreună o vizionare.";
-  let successful = 0,
+  let attempts = 0,
     providerCalls = 0;
   let reservation: string | undefined;
   const versions: unknown[] = [];
@@ -29,32 +29,46 @@ test("profile bio route uses the verified account, checks the output length and 
         assert.equal(headers.get("authorization"), "Bearer test-service-key");
         if (url.pathname.endsWith("/profile_bio_usage")) {
           assert.equal(url.searchParams.get("owner_id"), `eq.${owner}`);
-          return Response.json([{ generations: successful }]);
+          return Response.json([{ generations: attempts }]);
         }
         const data = JSON.parse(String(init?.body));
         assert.equal(data.agent_id, owner);
         if (url.pathname.endsWith("/reserve_profile_bio")) {
-          if (successful === 3) return Response.json(0);
+          if (attempts === 3) return Response.json(0);
           reservation = data.attempt_id;
-          return Response.json(3 - successful);
+          return Response.json(3 - attempts);
         }
         assert.ok(url.pathname.endsWith("/finish_profile_bio"));
         assert.equal(data.attempt_id, reservation);
-        if (data.succeeded) successful++;
+        assert.equal(data.succeeded, true);
+        attempts++;
         reservation = undefined;
-        return Response.json(3 - successful);
+        return Response.json(3 - attempts);
       }
       assert.equal(url.href, "https://api.openai.com/v1/responses");
       const data = JSON.parse(String(init?.body));
       assert.equal(data.store, false);
       versions.push(JSON.parse(data.input));
-      const bio = ++providerCalls === 1 ? "x".repeat(301) : output;
+      assert.equal(data.model, "gpt-4.1-mini");
+      assert.equal(data.text, undefined);
+      if (++providerCalls === 1)
+        return Response.json(
+          {
+            error: {
+              code: "insufficient_quota",
+              message: "Private provider details",
+            },
+          },
+          { status: 429 },
+        );
+      const bio =
+        providerCalls === 2 ? `${output} ${"proprietate ".repeat(30)}` : output;
       return Response.json({
         status: "completed",
         output: [
           {
             type: "message",
-            content: [{ type: "output_text", text: JSON.stringify({ bio }) }],
+            content: [{ type: "output_text", text: bio }],
           },
         ],
       });
@@ -78,11 +92,17 @@ test("profile bio route uses the verified account, checks the output length and 
     });
   assert.equal((await POST(request("agent", "bad-token"))).status, 401);
   assert.equal((await POST(request("unknown"))).status, 400);
-  assert.equal((await POST(request("owner"))).status, 502);
+  const providerFailure = await POST(request("owner"));
+  assert.equal(providerFailure.status, 503);
+  assert.deepEqual(await providerFailure.json(), {
+    code: "AI_CREDITS",
+    error: "Contul OpenAI nu are credite API disponibile momentan.",
+    remaining: 2,
+  });
   assert.equal(reservation, undefined);
-  assert.deepEqual(await (await GET(request())).json(), { remaining: 3 });
+  assert.deepEqual(await (await GET(request())).json(), { remaining: 2 });
   assert.deepEqual(versions[0], { role: "owner", agency: "", previousBio: "" });
-  for (const remaining of [2, 1, 0])
+  for (const remaining of [1, 0])
     assert.deepEqual(await (await POST(request("agent"))).json(), {
       bio: output,
       remaining,
@@ -93,5 +113,5 @@ test("profile bio route uses the verified account, checks the output length and 
     previousBio: "",
   });
   assert.equal((await POST(request("agent"))).status, 429);
-  assert.equal(providerCalls, 4);
+  assert.equal(providerCalls, 3);
 });

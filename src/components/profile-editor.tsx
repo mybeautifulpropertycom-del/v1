@@ -286,62 +286,60 @@ export function ProfileEditor() {
                   }}
                 />
               </label>
-              <small id="profile-bio-hint">
-                {form.bio.length} / {MAX_PROFILE_BIO_LENGTH} caractere.{" "}
-                {bioTooLong
-                  ? "Scurtează prezentarea înainte de salvare."
-                  : form.bio.length > MAX_PROFILE_BIO_LENGTH
-                    ? "Poți păstra textul actual. Un text nou poate avea cel mult 300 de caractere."
-                    : "Scrie simplu, personal și sincer."}
-              </small>
-              <div className="profile-bio-actions">
-                <label>
-                  Tipul prezentării
-                  <select
-                    value={bioRole}
-                    disabled={generatingBio}
-                    onChange={(event) => {
-                      if (isProfileBioRole(event.target.value))
-                        setBioRole(event.target.value);
-                    }}
+              <div className="profile-bio-footer">
+                <small id="profile-bio-hint">
+                  {form.bio.length} / {MAX_PROFILE_BIO_LENGTH} caractere.{" "}
+                  {bioTooLong
+                    ? "Scurtează prezentarea înainte de salvare."
+                    : form.bio.length > MAX_PROFILE_BIO_LENGTH
+                      ? "Poți păstra textul actual. Un text nou poate avea cel mult 300 de caractere."
+                      : "Scrie simplu, personal și sincer."}
+                </small>
+                <div className="profile-bio-actions">
+                  <label>
+                    Tipul prezentării
+                    <select
+                      value={bioRole}
+                      disabled={generatingBio}
+                      onChange={(event) => {
+                        if (isProfileBioRole(event.target.value))
+                          setBioRole(event.target.value);
+                      }}
+                    >
+                      {Object.entries(profileBioRoles).map(([role, label]) => (
+                        <option key={role} value={role}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => void generateBio()}
+                    title={
+                      demo
+                        ? "Generarea este disponibilă după autentificare."
+                        : remaining === 0
+                          ? "Limita de generări AI a fost atinsă."
+                          : undefined
+                    }
+                    disabled={
+                      demo ||
+                      generatingBio ||
+                      busy ||
+                      uploading ||
+                      redirecting ||
+                      remaining === 0
+                    }
                   >
-                    {Object.entries(profileBioRoles).map(([role, label]) => (
-                      <option key={role} value={role}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={() => void generateBio()}
-                  disabled={
-                    demo ||
-                    generatingBio ||
-                    busy ||
-                    uploading ||
-                    redirecting ||
-                    remaining === 0
-                  }
-                >
-                  <Sparkles size={16} />
-                  {generatingBio
-                    ? "Generăm descrierea…"
-                    : "Generează descrierea"}
-                </button>
+                    <Sparkles size={13} aria-hidden="true" />
+                    {generatingBio
+                      ? "Generăm descrierea…"
+                      : "Generează descrierea"}
+                  </button>
+                </div>
               </div>
-              <p className="profile-bio-status" aria-live="polite">
-                {demo
-                  ? "Generarea AI este disponibilă după autentificare."
-                  : remaining === 0
-                    ? "Ai folosit toate cele trei generări AI. Poți edita textul."
-                    : remaining === 1
-                      ? "Mai ai o generare AI."
-                      : remaining !== null
-                        ? `Mai ai ${remaining} generări AI.`
-                        : "Până la trei generări AI."}
-              </p>
               {bioError && (
                 <p className="form-error" role="alert">
                   {bioError}

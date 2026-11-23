@@ -94,7 +94,12 @@ test("profile introductions can be generated three times and edited, with an emp
   await expect(bio).toHaveValue(
     "Prezint proprietățile prin informații clare și organizez vizionări.",
   );
-  await expect(page.getByText("Mai ai o generare AI.")).toBeVisible();
+  await expect(
+    page.getByText(
+      /Mai ai .* generăr|Mai ai o generare|Până la trei generări AI/,
+    ),
+  ).toHaveCount(0);
+  await expect(generate).toHaveCSS("min-height", "30px");
   await generate.click();
   await expect(generate).toBeDisabled();
   expect(roles).toEqual(["owner", "agent", "agent"]);

@@ -1325,22 +1325,41 @@ label small,
 .full-width {
   grid-column: 1/-1;
 }
+.profile-bio-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8px 10px;
+  margin-top: 8px;
+}
+#profile-bio-hint {
+  flex: 1 1 150px;
+}
 .profile-bio-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: flex-end;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+.profile-bio-actions label {
+  gap: 3px;
+  font-size: 10px;
+}
+.profile-bio-actions label select {
+  width: auto;
+  font-size: 11px;
+  min-height: 30px;
+  padding: 4px 6px;
 }
 .profile-bio-actions .button {
   max-width: 100%;
-}
-.profile-bio-status {
-  margin-top: 8px;
-  text-align: right;
+  min-height: 30px;
+  padding: 4px 8px;
+  gap: 5px;
   font-size: 11px;
-  color: var(--muted);
 }
 .form-actions {
   display: flex;
