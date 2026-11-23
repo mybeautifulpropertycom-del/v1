@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { stripeElementsFixture } from "./stripe-elements-fixture";
 import { workspace, id, owner } from "./workspace-fixture";
+import { mockGoogleMaps } from "../fixtures/google-maps-browser";
+import { mapsEnabled } from "../../src/lib/property-location";
 import {
   promotionPackages,
   type PromotionOrder,
@@ -165,10 +167,16 @@ test("Promotion replaces Studio, has three actual budgets and adapts to desktop 
     "content",
     /noindex/,
   );
+  await page.getByLabel("Ce proprietate vrei să promovezi?").selectOption(id);
+  await expect(page.locator(".promotion-step h2")).toHaveText([
+    "Proprietatea",
+    "Locația",
+    "Cuvinte cheie",
+    "Bugetul",
+  ]);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1100 });
-    await expect(page.locator(".promotion-package")).toHaveCount(3);
-    await expect(page.locator(".promotion-price")).toHaveText([
+    await expect(page.locator(".promotion-budget-choices strong")).toHaveText([
       "300 RON",
       "500 RON",
       "1000 RON",
@@ -186,6 +194,7 @@ test("Promotion replaces Studio, has three actual budgets and adapts to desktop 
     await page.screenshot({
       path: testInfo.outputPath(`promovare-${width}.png`),
       fullPage: true,
+      animations: "disabled",
     });
   }
   await page.goto("/panou/video");
@@ -197,35 +206,33 @@ test("buying Plus uses the existing card form inside the dialog and only confirm
 }, testInfo) => {
   const state = await fixture(page);
   await page.goto("/panou/promovare");
-  await page
-    .getByRole("button", { name: "Alege pachetul Plus", exact: true })
-    .click();
-  const dialog = page.getByRole("dialog", {
-    name: "Pregătim promovarea proprietății tale.",
-  });
-  await expect(dialog).toContainText("Vila cu grădină");
-  await expect(dialog).toContainText("500 RON");
-  const area = dialog.getByLabel("Zona în care vrei să promovezi");
+  await page.getByLabel("Ce proprietate vrei să promovezi?").selectOption(id);
+  const area = page.getByLabel("Orașul și cartierul vizat");
   await expect(area).toHaveValue("Brașov");
-  await expect(dialog.locator(".promotion-keywords")).not.toContainText(
-    "500001",
-  );
-  await expect(dialog.locator(".promotion-purchase-note")).toHaveCount(1);
   await area.fill("Brașov 500001");
-  await expect(dialog.locator(".promotion-keywords")).not.toContainText(
-    "500001",
-  );
   await area.press("Tab");
   await expect(area).toHaveValue("Brașov");
-  await dialog
+  const activate = page.getByRole("button", { name: "Activează campania" });
+  await expect(activate).toBeDisabled();
+  await page
+    .getByRole("checkbox", {
+      name: "apartament de vânzare Brașov",
+      exact: true,
+    })
+    .check();
+  await page.getByRole("radio", { name: "Plus 500 RON" }).check();
+  await page.getByText("Adaugă observații (opțional)").click();
+  await page
     .getByLabel(/Ce ar trebui să știm/)
     .fill("Promovați zona centrală și curtea proprietății.");
   await page.screenshot({
     path: testInfo.outputPath("promotion-checkout-review.png"),
   });
-  await dialog
-    .getByRole("button", { name: "Continuă la plată", exact: true })
-    .click();
+  await activate.click();
+  const dialog = page.getByRole("dialog", {
+    name: "Pregătim promovarea proprietății tale.",
+  });
+  await expect(dialog).toContainText("500 RON");
   await expect(page).toHaveURL(/\/panou\/promovare$/);
   await expect(dialog.getByLabel("Numărul cardului")).toBeVisible();
   await expect(dialog).toContainText("Saved Agent");
@@ -249,6 +256,7 @@ test("buying Plus uses the existing card form inside the dialog and only confirm
       propertyId: id,
       package: "plus",
       targetArea: "Brașov",
+      keywords: ["apartament de vânzare Brașov"],
       notes: "Promovați zona centrală și curtea proprietății.",
     },
   ]);
@@ -279,49 +287,61 @@ test("buying Plus uses the existing card form inside the dialog and only confirm
   );
 });
 
-test("Extins shows 1000 RON and the promotion area retains both city and district", async ({
+test("Bucharest targeting retains the district, lets the agent choose keywords, and sends the radius to checkout", async ({
   page,
-}, testInfo) => {
+}) => {
+  await mockGoogleMaps(page);
   const state = await fixture(
     page,
     true,
     false,
     "Strada Test 9, București, Pantelimon 021621, România",
   );
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/panou/promovare");
-  const card = page
-    .locator(".promotion-package")
-    .filter({
-      has: page.getByRole("button", {
-        name: "Alege pachetul Extins",
-        exact: true,
-      }),
-    });
-  await expect(card.locator(".promotion-price")).toHaveText("1000 RON");
-  await card
-    .getByRole("button", { name: "Alege pachetul Extins", exact: true })
-    .click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByLabel("Zona în care vrei să promovezi")).toHaveValue(
+  await page.getByLabel("Ce proprietate vrei să promovezi?").selectOption(id);
+  await expect(page.getByLabel("Orașul și cartierul vizat")).toHaveValue(
     "București, Pantelimon",
   );
-  await expect(dialog.locator(".promotion-keywords small")).toHaveText([
-    "apartament de vânzare București, Pantelimon",
-    "vânzare apartament București, Pantelimon",
-  ]);
-  await expect(dialog.locator(".promotion-summary")).toContainText("1000 RON");
-  for (const width of [1440, 390]) {
-    await page.setViewportSize({ width, height: 1000 });
-    expect(
-      await dialog.evaluate(
-        (element) => element.scrollWidth <= element.clientWidth,
-      ),
-    ).toBe(true);
-    await page.screenshot({
-      path: testInfo.outputPath(`promotion-city-area-${width}.png`),
-    });
+  await page.getByLabel("Raza de targetare").selectOption("15");
+  await expect(
+    page.getByText("Centru București · rază de 15 km"),
+  ).toBeVisible();
+  if (mapsEnabled()) {
+    await expect(
+      page.getByRole("region", { name: /Hartă cu raza de 15 km/ }),
+    ).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => window.__mapsTest.radii.at(-1)))
+      .toBe(15000);
+  } else {
+    await expect(
+      page.getByText(/Harta nu este disponibilă momentan/),
+    ).toBeVisible();
   }
+  await page.getByLabel("Număr de camere (opțional)").fill("3");
+  const keyword = "apartament 3 camere de vânzare București";
+  const district = "apartament de vânzare Pantelimon București";
+  await expect(
+    page.locator(".promotion-keyword-options").getByRole("checkbox"),
+  ).toHaveCount(5);
+  await page.getByRole("checkbox", { name: keyword, exact: true }).check();
+  await page.getByRole("checkbox", { name: district, exact: true }).check();
+  await page.getByRole("radio", { name: "Extins 1000 RON" }).check();
   expect(state.posts).toHaveLength(0);
+  await page.getByRole("button", { name: "Activează campania" }).click();
+  await expect(page.getByRole("dialog")).toContainText("1000 RON");
+  expect(state.posts).toEqual([
+    {
+      propertyId: id,
+      package: "extended",
+      targetArea: "București, Pantelimon",
+      rooms: 3,
+      keywords: [keyword, district],
+      radiusKm: 15,
+      notes: "",
+    },
+  ]);
 });
 
 test("a return URL cannot mark an unpaid promotion as paid", async ({
@@ -384,10 +404,9 @@ test("an unpublished property cannot open checkout", async ({ page }) => {
   await expect(
     page.getByText("Promovarea începe cu o proprietate publicată."),
   ).toBeVisible();
-  for (const name of ["Start", "Plus", "Extins"])
-    await expect(
-      page.getByRole("button", { name: `Alege pachetul ${name}`, exact: true }),
-    ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Activează campania" }),
+  ).toHaveCount(0);
   expect(state.posts).toHaveLength(0);
 });
 
@@ -400,8 +419,16 @@ test("unavailable payments keep packages visible without accepting a purchase", 
   await expect(
     page.getByText("Plata promovării nu este disponibilă momentan."),
   ).toBeVisible();
+  await page.getByLabel("Ce proprietate vrei să promovezi?").selectOption(id);
+  await page
+    .getByRole("checkbox", {
+      name: "apartament de vânzare Brașov",
+      exact: true,
+    })
+    .check();
+  await page.getByRole("radio", { name: "Plus 500 RON" }).check();
   await expect(
-    page.getByRole("button", { name: "Alege pachetul Plus", exact: true }),
+    page.getByRole("button", { name: "Activează campania" }),
   ).toBeDisabled();
   expect(state.posts).toHaveLength(0);
 });

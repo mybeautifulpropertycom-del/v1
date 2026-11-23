@@ -12,7 +12,10 @@ import {
 } from "@/lib/stripe-server";
 import {
   isPromotionPackage,
+  isBucharestPromotionArea,
+  promotionKeywordSuggestions,
   promotionKeywords,
+  promotionRadii,
   promotionTargetArea,
 } from "@/lib/promotion-packages";
 import {
@@ -62,7 +65,7 @@ export async function POST(request: Request) {
     const { user, db } = await billingUser(request);
     let body;
     try {
-      body = JSON.parse(await readLimitedBody(request, 4000));
+      body = JSON.parse(await readLimitedBody(request, 8192));
     } catch {
       throw new BillingError("Verifică proprietatea și pachetul ales.", 400);
     }
@@ -153,6 +156,36 @@ export async function POST(request: Request) {
       notes = body.notes.trim();
     if (area.length < 2)
       throw new BillingError("Completează orașul sau zona de promovare.", 400);
+    const rooms = body.rooms;
+    const radius = body.radiusKm;
+    if (
+      rooms !== undefined &&
+      (!Number.isInteger(rooms) || rooms < 1 || rooms > 100)
+    )
+      throw new BillingError("Introdu un număr de camere între 1 și 100.", 400);
+    if (
+      radius !== undefined &&
+      (!isBucharestPromotionArea(area) ||
+        !promotionRadii.some((value) => value === radius))
+    )
+      throw new BillingError("Alege o rază validă pentru București.", 400);
+    let keywords = promotionKeywords(p, area);
+    if (body.keywords !== undefined) {
+      const suggestions = promotionKeywordSuggestions(p, area, rooms);
+      const selected = body.keywords;
+      if (
+        !Array.isArray(selected) ||
+        !selected.length ||
+        selected.length > suggestions.length ||
+        new Set(selected).size !== selected.length ||
+        selected.some((keyword) => !suggestions.includes(keyword))
+      )
+        throw new BillingError(
+          "Alege cuvintele cheie sugerate pentru această proprietate și zonă.",
+          400,
+        );
+      keywords = suggestions.filter((keyword) => selected.includes(keyword));
+    }
     const { data: reserved, error: reserveError } = await billingDatabase(
       config,
     ).rpc("reserve_promotion_order", {
@@ -169,7 +202,8 @@ export async function POST(request: Request) {
         name: contact.name,
         email: user.email || contact.email,
         phone: contact.phone,
-        keywords: promotionKeywords(p, area),
+        keywords,
+        ...(radius === undefined ? {} : { radius_km: radius }),
       },
     });
     if (reserveError || !reserved)
@@ -179,10 +213,14 @@ export async function POST(request: Request) {
     if (
       reserved.package !== body.package ||
       reserved.target_area !== area ||
-      reserved.notes !== notes
+      reserved.notes !== notes ||
+      ((body.keywords !== undefined || radius !== undefined) &&
+        (JSON.stringify(reserved.snapshot.keywords) !==
+          JSON.stringify(keywords) ||
+          reserved.snapshot.radius_km !== radius))
     )
       throw new BillingError(
-        "Ai deja o plată în așteptare pentru această proprietate. Continuă sau anulează acea plată din comenzile tale înainte de a alege alt pachet.",
+        "Ai deja o plată în așteptare pentru această proprietate. Continuă sau anulează acea plată înainte de a modifica setările campaniei.",
         409,
       );
     return await promotionCheckout(config, reserved, {

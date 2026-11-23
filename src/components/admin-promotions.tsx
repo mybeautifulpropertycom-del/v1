@@ -102,6 +102,14 @@ function Campaign({
           <dt>Zona cerută</dt>
           <dd>{order.target_area}</dd>
         </div>
+        {order.snapshot.radius_km && (
+          <div>
+            <dt>Raza de targetare</dt>
+            <dd>
+              {order.snapshot.radius_km} km în jurul centrului Bucureștiului
+            </dd>
+          </div>
+        )}
         <div>
           <dt>Comandă</dt>
           <dd>{order.id}</dd>
@@ -131,7 +139,7 @@ function Campaign({
         />
       </p>
       <div className="promotion-keywords">
-        <span>Exemple de căutări de verificat în Google Ads</span>
+        <span>Cuvinte cheie din comandă</span>
         {order.snapshot.keywords.map((keyword) => (
           <small key={keyword}>{keyword}</small>
         ))}

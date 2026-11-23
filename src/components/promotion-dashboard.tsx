@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
-  Check,
   ChevronRight,
   Crosshair,
   Megaphone,
@@ -11,13 +10,16 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
+import { PromotionRadiusMap } from "./promotion-radius-map";
 import { promotionRequest } from "@/lib/promotion-client";
 import {
   campaignLabels,
   defaultPromotionTargetArea,
   promotionTargetArea,
   paymentLabels,
-  promotionKeywords,
+  isBucharestPromotionArea,
+  promotionKeywordSuggestions,
+  promotionRadii,
   promotionPackages,
   promotionStopLabels,
   type PromotionOrder,
@@ -30,137 +32,282 @@ import {
   type PromotionPayment,
 } from "./promotion-payment";
 
-function Purchase({
-  property,
-  offer,
-  onClose,
+function CampaignSetup({
+  properties,
+  canPay,
   onUpdated,
 }: {
-  property: Property;
-  offer: PromotionPackage;
-  onClose: () => void;
+  properties: Property[];
+  canPay: boolean;
   onUpdated: () => void;
 }) {
-  const [payment, setPayment] = useState<PromotionPayment | null>(null);
-  const [area, setArea] = useState(
-    defaultPromotionTargetArea(property.location),
-  );
+  const [selectedId, setSelectedId] = useState("");
+  const property = properties.find((item) => item.id === selectedId);
+  const [area, setArea] = useState("");
+  const [roomInput, setRoomInput] = useState("");
+  const [radius, setRadius] = useState<number>(10);
+  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [offer, setOffer] = useState<PromotionPackage | null>(null);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [payment, setPayment] = useState<PromotionPayment | null>(null);
   const [error, setError] = useState("");
-  const pack = promotionPackages[offer];
-  async function submit(event: React.FormEvent) {
+  const zone = promotionTargetArea(area);
+  const hasZone = zone.length >= 2;
+  const rooms = roomInput ? Number(roomInput) : undefined;
+  const validRooms =
+    rooms === undefined ||
+    (Number.isInteger(rooms) && rooms >= 1 && rooms <= 100);
+  const bucharest = isBucharestPromotionArea(zone);
+  const suggestions =
+    property && hasZone
+      ? promotionKeywordSuggestions(
+          property,
+          zone,
+          validRooms ? rooms : undefined,
+        )
+      : [];
+  const keywords = suggestions.filter((keyword) =>
+    selectedKeywords.includes(keyword),
+  );
+  const canActivate =
+    canPay && property && hasZone && validRooms && keywords.length > 0 && offer;
+  const pack = offer ? promotionPackages[offer] : null;
+
+  function chooseProperty(id: string) {
+    setSelectedId(id);
+    const listing = properties.find((item) => item.id === id);
+    setArea(listing ? defaultPromotionTargetArea(listing.location) : "");
+    setRoomInput("");
+    setRadius(10);
+    setSelectedKeywords([]);
+    setOffer(null);
+    setNotes("");
+    setError("");
+  }
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || !canActivate || !property) return;
     setBusy(true);
     setError("");
     try {
       const data = await promotionRequest({
         propertyId: property.id,
         package: offer,
-        targetArea: promotionTargetArea(area),
+        targetArea: zone,
+        keywords,
+        ...(rooms === undefined ? {} : { rooms }),
+        ...(bucharest ? { radiusKm: radius } : {}),
         notes: notes.trim(),
       });
-      onUpdated();
       if (data.clientSecret || data.processing) setPayment(data);
       else
         setError(
           "Formularul securizat de plată nu este disponibil. Încearcă din nou.",
         );
-    } catch (e) {
+    } catch (error) {
       setError(
-        e instanceof Error ? e.message : "Plata nu a putut fi pregătită.",
+        error instanceof Error
+          ? error.message
+          : "Plata nu a putut fi pregătită.",
       );
-      onUpdated();
     } finally {
       setBusy(false);
+      onUpdated();
     }
   }
+
   return (
-    <PromotionDialog busy={busy} onClose={onClose}>
-      <span className="eyebrow">PROMOVARE GOOGLE SEARCH</span>
-      <h2 id="promotion-purchase-title">
-        Pregătim promovarea proprietății tale.
-      </h2>
-      <div className="promotion-summary">
-        <div>
-          <strong>{property.title}</strong>
-          <span>{property.location}</span>
-        </div>
-        <div>
-          <strong>
-            {pack.price.toLocaleString("ro-RO", { useGrouping: false })} RON
-          </strong>
-          <span>Pachet {pack.name} · buget Google Ads</span>
-        </div>
-      </div>
-      {payment ? (
-        <PromotionPaymentPanel
-          payment={payment}
-          onUpdated={onUpdated}
-          onBusyChange={setBusy}
-        />
-      ) : (
-        <form onSubmit={submit}>
-          <fieldset disabled={busy}>
-            <label>
-              Zona în care vrei să promovezi
-              <input
-                required
-                minLength={2}
-                maxLength={160}
-                value={area}
-                onChange={(event) => setArea(event.target.value)}
-                onBlur={() => setArea(promotionTargetArea(area))}
-                placeholder="Ex: Brașov și împrejurimi"
-              />
-              <small>
-                Alegem direcționarea împreună, înainte de lansarea campaniei.
-              </small>
-            </label>
-            <div className="promotion-keywords">
-              <span>Căutări de la care putem porni</span>
-              {promotionKeywords(
-                property,
-                promotionTargetArea(area) || "zona aleasă",
-              ).map((keyword) => (
-                <small key={keyword}>{keyword}</small>
-              ))}
+    <>
+      <form className="promotion-setup" onSubmit={submit}>
+        <fieldset disabled={busy || Boolean(payment)}>
+          <section className="promotion-step">
+            <h2>Proprietatea</h2>
+            <div className="promotion-property-picker">
+              <label>
+                Ce proprietate vrei să promovezi?
+                <select
+                  value={selectedId}
+                  onChange={(event) => chooseProperty(event.target.value)}
+                >
+                  <option value="">Alege o proprietate publicată</option>
+                  {properties.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {property && (
+                <Link
+                  href={publicPath(property)}
+                  target="_blank"
+                  className="text-button"
+                >
+                  Vezi pagina publicată <ArrowUpRight size={14} />
+                </Link>
+              )}
             </div>
-            <label>
-              Ce ar trebui să știm despre promovare?{" "}
-              <span className="promotion-optional">Opțional</span>
-              <textarea
-                rows={3}
-                maxLength={1000}
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                placeholder="Zone prioritare, ce vrei să evidențiem sau alte detalii utile."
-              />
-            </label>
-            <p className="promotion-purchase-note">
-              Întreaga sumă este buget publicitar. Configurarea și administrarea
-              sunt incluse. După confirmarea plății, te contactăm pentru
-              detaliile campaniei și o lansăm manual din contul nostru Google
-              Ads. Este o plată unică. Perioada campaniei se stabilește înainte
-              de lansare, în funcție de buget și costurile căutărilor.
-            </p>
-            {error && (
-              <p role="alert" className="form-error">
-                {error}
-              </p>
-            )}
-            <button
-              className="button primary full-button"
-              disabled={busy || promotionTargetArea(area).length < 2}
-            >
-              {busy ? "Pregătim plata securizată…" : "Continuă la plată"}
-              <ChevronRight size={17} />
-            </button>
-          </fieldset>
-        </form>
+          </section>
+          {property && (
+            <>
+              <section className="promotion-step">
+                <h2>Locația</h2>
+                <label>
+                  Orașul și cartierul vizat
+                  <input
+                    required
+                    minLength={2}
+                    maxLength={160}
+                    value={area}
+                    onChange={(event) => setArea(event.target.value)}
+                    onBlur={() => setArea(zone)}
+                    placeholder="Ex: București, Pantelimon"
+                  />
+                </label>
+                {bucharest && (
+                  <div className="promotion-radius-settings">
+                    <label>
+                      Raza de targetare
+                      <select
+                        value={radius}
+                        onChange={(event) =>
+                          setRadius(Number(event.target.value))
+                        }
+                      >
+                        {promotionRadii.map((value) => (
+                          <option key={value} value={value}>
+                            {value} km
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <PromotionRadiusMap radius={radius} />
+                  </div>
+                )}
+              </section>
+              <section className="promotion-step">
+                <h2>Cuvinte cheie</h2>
+                {["Condo", "Penthouse", "House", "Town House"].includes(
+                  property.type,
+                ) && (
+                  <label className="promotion-rooms">
+                    Număr de camere (opțional)
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      step={1}
+                      value={roomInput}
+                      onChange={(event) => setRoomInput(event.target.value)}
+                    />
+                  </label>
+                )}
+                {suggestions.length > 0 ? (
+                  <fieldset className="promotion-keyword-options">
+                    <legend>
+                      Alege cel puțin o căutare pe care vrei să o vizăm.
+                    </legend>
+                    {suggestions.map((keyword) => (
+                      <label key={keyword}>
+                        <input
+                          type="checkbox"
+                          checked={keywords.includes(keyword)}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            setSelectedKeywords(
+                              checked
+                                ? [...keywords, keyword]
+                                : keywords.filter((value) => value !== keyword),
+                            );
+                          }}
+                        />
+                        {keyword}
+                      </label>
+                    ))}
+                  </fieldset>
+                ) : (
+                  <p>Adaugă zona pentru a vedea sugestiile.</p>
+                )}
+              </section>
+              <section className="promotion-step">
+                <h2>Bugetul</h2>
+                <fieldset className="promotion-budget-options">
+                  <legend>Buget publicitar total, plătit o singură dată</legend>
+                  <div className="promotion-budget-choices">
+                    {Object.values(promotionPackages).map((item) => (
+                      <label key={item.id}>
+                        <input
+                          type="radio"
+                          name="promotion-budget"
+                          checked={offer === item.id}
+                          onChange={() => setOffer(item.id)}
+                        />
+                        <span>{item.name}</span>
+                        <strong>{item.price} RON</strong>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <details className="promotion-notes">
+                  <summary>Adaugă observații (opțional)</summary>
+                  <label>
+                    Ce ar trebui să știm despre promovare?
+                    <textarea
+                      rows={3}
+                      maxLength={1000}
+                      value={notes}
+                      onChange={(event) => setNotes(event.target.value)}
+                    />
+                  </label>
+                </details>
+                <p className="promotion-purchase-note">
+                  Butonul deschide plata securizată. După confirmarea plății,
+                  echipa pregătește campania și o lansează din contul Google Ads
+                  al platformei.
+                </p>
+                {error && (
+                  <p role="alert" className="form-error">
+                    {error}
+                  </p>
+                )}
+                <button
+                  className="button primary"
+                  disabled={!canActivate || busy}
+                >
+                  {busy ? "Pregătim plata securizată…" : "Activează campania"}
+                  <ChevronRight size={17} />
+                </button>
+              </section>
+            </>
+          )}
+        </fieldset>
+      </form>
+      {payment && property && pack && (
+        <PromotionDialog busy={busy} onClose={() => setPayment(null)}>
+          <span className="eyebrow">PROMOVARE GOOGLE SEARCH</span>
+          <h2 id="promotion-purchase-title">
+            Pregătim promovarea proprietății tale.
+          </h2>
+          <div className="promotion-summary">
+            <div>
+              <strong>{property.title}</strong>
+              <span>{zone}</span>
+            </div>
+            <div>
+              <strong>{pack.price} RON</strong>
+              <span>Buget publicitar · plată unică</span>
+            </div>
+          </div>
+          <PromotionPaymentPanel
+            payment={payment}
+            onUpdated={onUpdated}
+            onBusyChange={setBusy}
+          />
+        </PromotionDialog>
       )}
-    </PromotionDialog>
+    </>
   );
 }
 
@@ -393,10 +540,6 @@ export function PromotionDashboard() {
   const published = properties.filter(
     (property) => property.status === "published",
   );
-  const [selectedId, setSelectedId] = useState(published[0]?.id || "");
-  const selected =
-    published.find((property) => property.id === selectedId) ?? published[0];
-  const [offer, setOffer] = useState<PromotionPackage | null>(null);
   const [orders, setOrders] = useState<PromotionOrder[]>([]);
   const [mode, setMode] = useState("off"),
     [enabled, setEnabled] = useState(false),
@@ -473,86 +616,20 @@ export function PromotionDashboard() {
             : "Ai revenit fără să finalizezi plata. O poți continua sau anula din comenzile tale."}
         </p>
       )}
-      {selected ? (
-        <div className="promotion-property-picker">
-          <label>
-            Ce proprietate vrei să promovezi?
-            <select
-              value={selected.id}
-              onChange={(event) => setSelectedId(event.target.value)}
-            >
-              {published.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Link
-            href={publicPath(selected)}
-            target="_blank"
-            className="text-button"
-          >
-            Vezi pagina publicată <ArrowUpRight size={14} />
-          </Link>
-        </div>
+      {published.length ? (
+        <CampaignSetup
+          properties={published}
+          canPay={!demo && enabled && !loading}
+          onUpdated={refresh}
+        />
       ) : (
         <div className="promotion-empty">
           <strong>Promovarea începe cu o proprietate publicată.</strong>
-          <p>
-            Compară bugetele mai jos, apoi publică site-ul proprietății pentru a
-            putea pregăti campania.
-          </p>
           <Link href="/panou" className="text-button">
             Mergi la proprietățile mele <ArrowUpRight size={14} />
           </Link>
         </div>
       )}
-      <div className="promotion-packages">
-        {Object.values(promotionPackages).map((pack) => (
-          <article
-            className={`promotion-package ${pack.id === "plus" ? "featured" : ""}`}
-            key={pack.id}
-          >
-            <div className="promotion-package-top">
-              <span>Pachet {pack.name}</span>
-              {pack.id === "plus" && <small>Recomandat</small>}
-            </div>
-            <div className="promotion-price">
-              {pack.price.toLocaleString("ro-RO", { useGrouping: false })}{" "}
-              <span>RON</span>
-            </div>
-            <p className="promotion-price-caption">
-              buget publicitar · plată unică
-            </p>
-            <p className="promotion-package-description">{pack.description}</p>
-            <ul>
-              {[
-                "Campanie în Google Search",
-                "Cuvinte cheie adaptate proprietății",
-                "Anunțuri pentru vânzare sau închiriere",
-                "Direcționare în zona aleasă",
-                "Monitorizare și ajustări",
-                "Raport cu afișări, clicuri și buget folosit",
-              ].map((feature) => (
-                <li key={feature}>
-                  <Check size={15} />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className={`button ${pack.id === "plus" ? "primary" : "secondary"}`}
-              disabled={!selected || demo || !enabled || loading}
-              onClick={() => setOffer(pack.id)}
-            >
-              Alege pachetul {pack.name}
-              <ChevronRight size={16} />
-            </button>
-          </article>
-        ))}
-      </div>
       {!loading && !enabled && (
         <p className="promotion-muted">
           {demo
@@ -634,14 +711,6 @@ export function PromotionDashboard() {
           </p>
         )}
       </section>
-      {offer && selected && (
-        <Purchase
-          property={selected}
-          offer={offer}
-          onClose={() => setOffer(null)}
-          onUpdated={refresh}
-        />
-      )}
     </div>
   );
 }

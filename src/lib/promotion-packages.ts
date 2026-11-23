@@ -60,6 +60,7 @@ export type PromotionOrder = {
     email: string;
     phone: string;
     keywords: string[];
+    radius_km?: number;
   };
   created_at: string;
   paid_at: string | null;
@@ -152,4 +153,39 @@ export function promotionKeywords(
     `${type} ${transaction} ${place}`.trim(),
     `${property.transaction === "rent" ? "închiriere" : "vânzare"} ${type} ${place}`.trim(),
   ];
+}
+
+export const promotionRadii = [5, 10, 15, 25] as const;
+export const bucharestPromotionCenter = { lat: 44.4268, lng: 26.1025 };
+
+export function isBucharestPromotionArea(area: string) {
+  const [city] = defaultPromotionTargetArea(area).split(",");
+  return city === "București";
+}
+
+export function promotionKeywordSuggestions(
+  property: { type: string; transaction: string },
+  area: string,
+  rooms?: number,
+) {
+  const [city, ...districts] = defaultPromotionTargetArea(area).split(/,\s*/);
+  if (!city) return [];
+  const [base] = promotionKeywords(property, "");
+  const [inCity, alternative] = promotionKeywords(property, city);
+  const withRooms =
+    rooms &&
+    ["Condo", "Penthouse", "House", "Town House"].includes(property.type)
+      ? `${base.replace(/ de (vânzare|închiriat)$/, ` ${rooms} ${rooms === 1 ? "cameră" : "camere"} de $1`)} ${city}`
+      : null;
+  const district = districts[0];
+  return [
+    base,
+    inCity,
+    withRooms,
+    district ? `${base} ${district} ${city}` : null,
+    alternative,
+    `${base} în ${city}`,
+  ]
+    .filter((keyword): keyword is string => Boolean(keyword))
+    .slice(0, 5);
 }

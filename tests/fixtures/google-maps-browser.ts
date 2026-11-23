@@ -27,6 +27,7 @@ type MapsTestState = {
   }>;
   photos: number;
   maps: number;
+  radii: number[];
   delay: number;
   failSearch: boolean;
   emptyTransport: boolean;
@@ -56,6 +57,7 @@ export async function mockGoogleMaps(page: Page) {
       searches: [],
       photos: 0,
       maps: 0,
+      radii: [],
       delay: 0,
       failSearch: false,
       emptyTransport: false,
@@ -263,7 +265,18 @@ export async function mockGoogleMaps(page: Page) {
       id = ++sessionCounter;
     }
     const libraries = {
-      maps: { Map: MockMap },
+      maps: {
+        Map: MockMap,
+        Circle: class {
+          setRadius(radius: number) {
+            state.radii.push(radius);
+          }
+          setMap() {}
+          getBounds() {
+            return {};
+          }
+        },
+      },
       marker: { AdvancedMarkerElement: Marker },
       places: {
         Place,

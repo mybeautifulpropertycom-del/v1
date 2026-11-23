@@ -6,7 +6,7 @@
 
 Pachetele Start, Plus și Extins costă 300, 500 și 1.000 RON. Întreaga sumă este buget publicitar Google Ads; configurarea și administrarea sunt incluse fără cost suplimentar, conform deciziei proprietarului platformei. Diferența dintre pachete este bugetul disponibil, nu un număr promis de clicuri, clienți sau poziții în Google. Sunt campanii în Google Search, pregătite pentru tipul proprietății, tranzacție și zona solicitată. Perioada și detaliile finale se stabilesc înainte de lansare.
 
-Agentul selectează o proprietate publicată, alege pachetul, verifică zona și poate adăuga observații. „Continuă la plată” afișează formularul securizat Stripe în același pop-up, folosind componenta de card de la publicarea proprietăților. Numele, e-mailul de autentificare și telefonul sunt citite de server din contul agentului și precompletate; agentul introduce datele cardului, fără Link sau salvarea cardului. Proprietatea și bugetul rămân vizibile. Plata este unică, în RON. Autentificarea cerută de bancă poate necesita o redirecționare 3-D Secure; revenirea duce la promovările agentului. Plata nu transferă automat bugetul în Google Ads și nu lansează anunțuri. Campaniile sunt pregătite și lansate manual din contul Google Ads al platformei, după confirmarea plății și contactarea agentului.
+Agentul selectează proprietatea publicată, confirmă orașul și cartierul, alege una sau mai multe expresii sugerate și apoi bugetul. Numărul de camere se poate completa în configurarea campaniei pentru a adăuga o expresie mai precisă. Pentru București, agentul alege o rază de 5, 10, 15 sau 25 km în jurul centrului. Previzualizarea folosește configurația Google Maps existentă. Raza și expresiile selectate se păstrează în comanda de promovare. Agentul poate adăuga observații. „Activează campania” afișează formularul securizat Stripe în același pop-up, folosind componenta de card de la publicarea proprietăților. Numele, e-mailul de autentificare și telefonul sunt citite de server din contul agentului și precompletate; agentul introduce datele cardului, fără Link sau salvarea cardului. Proprietatea și bugetul rămân vizibile. Plata este unică, în RON. Autentificarea cerută de bancă poate necesita o redirecționare 3-D Secure; revenirea duce la promovările agentului. Plata nu transferă automat bugetul în Google Ads și nu lansează anunțuri. Campaniile sunt pregătite și lansate manual din contul Google Ads al platformei, după confirmarea plății și contactarea agentului.
 
 Secțiunea „Promovările tale” arată starea comenzii și, după actualizarea de către echipă, starea campaniei, afișările, clicurile, bugetul folosit și raportul. Parametrii de revenire din Stripe nu confirmă plata; starea vine din registrul verificat de server.
 
@@ -20,7 +20,7 @@ Webhookul existent `/api/stripe/webhook` trebuie să primească evenimentele `ch
 
 ## Administrare și livrare
 
-Din Administrare → „Comenzi de promovare Google Ads” se deschide `/panou/administrare/promovare`. Implicit sunt afișate numai comenzile reale. Lista conține contactul agentului, pagina proprietății, bugetul, zona, observațiile și exemplele de cuvinte cheie de verificat. Linkul pregătit pentru anunț include parametri UTM pentru campanie.
+Din Administrare → „Comenzi de promovare Google Ads” se deschide `/panou/administrare/promovare`. Implicit sunt afișate numai comenzile reale. Lista conține contactul agentului, pagina proprietății, bugetul, zona, raza pentru București, observațiile și cuvintele cheie de verificat. Linkul pregătit pentru anunț include parametri UTM pentru campanie.
 
 Administratorul:
 
@@ -37,4 +37,4 @@ Registrul `promotion_orders` este separat de plățile de publicare. Agentul poa
 
 Serverul verifică semnătura webhookului și citește starea curentă a plății și a încasării din Stripe. Verifică suma, moneda, modul, proprietarul și comanda. O notificare întârziată de plată nu poate reactiva un buget rambursat. Rambursările și contestațiile de promovare nu retrag site-ul proprietății de la publicare.
 
-Testele folosesc răspunsuri simulate pentru Stripe și Supabase. Nu execută plăți reale, campanii Google sau cheltuieli publicitare. O integrare Google Ads API poate fi adăugată separat ulterior, cu acces autorizat la contul platformei; nu este inclusă în această implementare.
+Testele folosesc răspunsuri simulate pentru Stripe și Supabase. Nu execută plăți reale, campanii Google sau cheltuieli publicitare. Echipa configurează campaniile în contul Google Ads al platformei folosind aceste setări. Această versiune folosește registrul existent de comenzi și nu necesită o migrare suplimentară.

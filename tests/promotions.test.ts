@@ -343,6 +343,53 @@ test("the saved campaign area and keyword examples exclude postal codes even in 
     "vânzare casă Brașov",
   ]);
 });
+
+test("checkout saves only the requested keywords and radius and refuses changes to an existing pending brief", async () => {
+  const keywords = [
+    "casă 3 camere de vânzare București",
+    "casă de vânzare Pantelimon București",
+  ];
+  const brief = {
+    propertyId,
+    package: "start",
+    targetArea: "București, Pantelimon 021621",
+    notes: "",
+    rooms: 3,
+    keywords,
+    radiusKm: 15,
+  };
+  order.target_area = "București, Pantelimon";
+  order.snapshot = { ...order.snapshot, keywords, radius_km: 15 };
+  const response = await POST(request(brief));
+  assert.equal(response.status, 200);
+  assert.equal(reserve[0].area, "București, Pantelimon");
+  assert.deepEqual((reserve[0].listing_snapshot as any).keywords, keywords);
+  assert.equal((reserve[0].listing_snapshot as any).radius_km, 15);
+  assert.equal((await POST(request({ ...brief, radiusKm: 25 }))).status, 409);
+  assert.equal(
+    (await POST(request({ ...brief, keywords: [keywords[0]] }))).status,
+    409,
+  );
+});
+
+test("invalid radius and unsuggested keyword never reserve an order", async () => {
+  const brief = {
+    propertyId,
+    package: "start",
+    targetArea: "Brașov",
+    notes: "",
+  };
+  assert.equal((await POST(request({ ...brief, radiusKm: 10 }))).status, 400);
+  assert.equal(
+    (
+      await POST(
+        request({ ...brief, keywords: ["penthouse de închiriat Brașov"] }),
+      )
+    ).status,
+    400,
+  );
+  assert.equal(reserve.length, 0);
+});
 test("a postal code alone cannot be used as a promotion area", async () => {
   const response = await POST(
     request({ propertyId, package: "start", targetArea: "500001", notes: "" }),
