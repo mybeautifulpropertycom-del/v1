@@ -274,8 +274,13 @@ test("each template has working gallery controls and honest preview contact beha
   for (const template of ["editorial", "minimal", "panorama"]) {
     await page.goto(`/modele/${template}`);
     await expect(page.locator(`.website-${template}`)).toBeVisible();
-    await page
-      .getByRole("button", { name: "Vezi toate cele 40 fotografii" })
+    const gallery = page.locator("#gallery");
+    await expect(gallery.locator("img")).toHaveCount(40);
+    await gallery
+      .getByRole("button", {
+        name: "Mărește fotografia proprietății 1",
+        exact: true,
+      })
       .click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.keyboard.press("ArrowRight");
@@ -309,9 +314,13 @@ test("each template has working gallery controls and honest preview contact beha
 test("incomplete properties cannot publish", async ({ page }) => {
   await page.goto("/panou/proprietati/noua");
   await page.getByRole("button", { name: "Designul site-ului" }).click();
-  await page
-    .getByRole("button", { name: "Deschide editorul site-ului" })
-    .click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Adaugă un titlu" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Salvează modificările" }).click();
+  await expect(page).toHaveURL(/\/panou\/proprietati\/[a-f0-9-]+$/);
+  const id = new URL(page.url()).pathname.split("/").at(-1);
+  await page.goto(`/previzualizare/${id}`);
   await page
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
