@@ -3,7 +3,7 @@ import { platformRedirects } from "./platform-redirects";
 import { locale, defaultCurrency, defaultAreaUnit } from "@/i18n/config";
 import type { SavedPropertyStory } from "./property-story";
 export type TemplateId = "editorial" | "minimal" | "panorama";
-export const MAX_PROFILE_BIO_LENGTH = 400;
+export const MAX_PROFILE_BIO_LENGTH = 300;
 export type Profile = {
   id: string;
   name: string;

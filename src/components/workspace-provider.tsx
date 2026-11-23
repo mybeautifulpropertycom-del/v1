@@ -195,11 +195,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     [commit],
   );
   async function saveProfile(profile: Profile) {
-    if (profile.bio.length > MAX_PROFILE_BIO_LENGTH)
-      throw new Error(
-        `Shorten your introduction to ${MAX_PROFILE_BIO_LENGTH} characters or fewer before saving.`,
-      );
     const current = stateRef.current!;
+    if (
+      profile.bio !== current.profile.bio &&
+      profile.bio.length > MAX_PROFILE_BIO_LENGTH
+    )
+      throw new Error(
+        `Scurtează prezentarea la maximum ${MAX_PROFILE_BIO_LENGTH} de caractere înainte de salvare.`,
+      );
     const supabase = getSupabase();
     if (supabase) {
       const { error, data } = await supabase

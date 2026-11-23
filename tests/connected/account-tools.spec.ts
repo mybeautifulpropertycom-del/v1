@@ -45,6 +45,72 @@ test("profile uploads use owned storage and the saved portrait survives a reload
   await expect(page.locator(".profile-preview-avatar img")).toHaveCount(0);
 });
 
+test("profile introductions can be generated three times and edited, with an empty agency", async ({
+  page,
+}) => {
+  const state = await workspace(page);
+  const original = state.profile.bio;
+  let remaining = 3;
+  const roles: string[] = [];
+  await page.route("**/api/profile-bio", async (route) => {
+    expect(route.request().headers().authorization).toBe(
+      `Bearer ${state.token}`,
+    );
+    if (route.request().method() === "GET")
+      return route.fulfill({ json: { remaining } });
+    const { role, agency } = route.request().postDataJSON();
+    expect(agency).toBe("");
+    roles.push(role);
+    const bio =
+      role === "owner"
+        ? "Îți prezint proprietatea mea și răspund la întrebări."
+        : "Prezint proprietățile prin informații clare și organizez vizionări.";
+    return route.fulfill({ json: { bio, remaining: --remaining } });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/panou/profil");
+  const bio = page.getByRole("textbox", {
+    name: "O scurtă prezentare",
+    exact: true,
+  });
+  const role = page.getByRole("combobox", {
+    name: "Tipul prezentării",
+    exact: true,
+  });
+  const generate = page.getByRole("button", { name: "Generează descrierea" });
+  const agency = page.getByLabel("Agenție imobiliară", { exact: true });
+  await expect(bio).toHaveAttribute("maxlength", "300");
+  await expect(agency).not.toHaveAttribute("required", "");
+  await agency.clear();
+  await role.selectOption("owner");
+  await generate.click();
+  await expect(bio).toHaveValue(
+    "Îți prezint proprietatea mea și răspund la întrebări.",
+  );
+  expect(state.profile.bio).toBe(original);
+  await role.selectOption("agent");
+  await generate.click();
+  await expect(bio).toHaveValue(
+    "Prezint proprietățile prin informații clare și organizez vizionări.",
+  );
+  await expect(page.getByText("Mai ai o generare AI.")).toBeVisible();
+  await generate.click();
+  await expect(generate).toBeDisabled();
+  expect(roles).toEqual(["owner", "agent", "agent"]);
+  await bio.fill("Îți răspund la întrebări și stabilim împreună o vizionare.");
+  await page
+    .getByRole("button", { name: "Salvează modificările", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("salvat");
+  await page.reload();
+  await expect(generate).toBeDisabled();
+  await expect(bio).toHaveValue(
+    "Îți răspund la întrebări și stabilim împreună o vizionare.",
+  );
+  await expect(agency).toHaveValue("");
+});
+
 test("deleting a property removes its page entry and saved photos but keeps its lead", async ({
   page,
 }) => {

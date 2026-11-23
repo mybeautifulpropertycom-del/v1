@@ -135,6 +135,20 @@ commit;
 select 'MBP_PROPERTY_CONSTRUCTION_YEAR_READY' as status;
 `,
 );
+const profileBio = await readFile(
+  new URL("202611230002_profile_bio_generation.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-profile-bio.sql", import.meta.url),
+  `-- Existing installations: run the entire file. Safe to rerun.
+begin;
+${profileBio.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_PROFILE_BIO_READY' as status;
+`,
+);
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",

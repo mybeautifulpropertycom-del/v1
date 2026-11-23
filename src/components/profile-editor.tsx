@@ -10,23 +10,52 @@ import {
   Phone,
   Save,
   ShieldCheck,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
 import { MAX_PROFILE_BIO_LENGTH, profileErrors } from "@/lib/model";
+import { requestProfileBio } from "@/lib/profile-bio-client";
+import {
+  isProfileBioRole,
+  profileBioRoles,
+  type ProfileBioRole,
+} from "@/lib/profile-bio";
 import { ro } from "@/i18n/ro";
 
 export function ProfileEditor() {
   const router = useRouter();
   const fileStatusId = useId();
   const [fileName, setFileName] = useState("");
-  const { profile, saveProfile, uploadAvatar, notify } = useWorkspace();
+  const { profile, saveProfile, uploadAvatar, notify, demo } = useWorkspace();
   const [form, setForm] = useState(profile);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [bioRole, setBioRole] = useState<ProfileBioRole>("agent");
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [generatingBio, setGeneratingBio] = useState(false);
+  const [bioError, setBioError] = useState("");
+  const bioTooLong =
+    form.bio !== profile.bio && form.bio.length > MAX_PROFILE_BIO_LENGTH;
+  useEffect(() => {
+    if (demo) return;
+    const controller = new AbortController();
+    void requestProfileBio(
+      undefined,
+      AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]),
+    )
+      .then(({ remaining: count }) => {
+        if (!controller.signal.aborted && count !== undefined)
+          setRemaining((current) => Math.min(current ?? count, count));
+      })
+      .catch(() => {
+        // A failed quota check leaves manual editing and generation available.
+      });
+    return () => controller.abort();
+  }, [demo, profile.id]);
   useEffect(() => {
     if (!redirecting) return;
     const timer = setTimeout(() => router.push("/panou"), 3000);
@@ -35,7 +64,7 @@ export function ProfileEditor() {
   const t = ro.profile;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (uploading || busy || redirecting) return;
+    if (uploading || busy || generatingBio || redirecting) return;
     setError("");
     const errors = profileErrors(form);
     if (errors.length) {
@@ -56,6 +85,34 @@ export function ProfileEditor() {
       );
     } finally {
       setBusy(false);
+    }
+  }
+  async function generateBio() {
+    if (generatingBio || busy || uploading || redirecting || remaining === 0)
+      return;
+    setGeneratingBio(true);
+    setBioError("");
+    try {
+      const result = await requestProfileBio({
+        role: bioRole,
+        agency: form.agency,
+        previousBio: form.bio.slice(0, 1000),
+      });
+      if (result.remaining !== undefined) setRemaining(result.remaining);
+      if (result.error) throw new Error(result.error);
+      const bio = result.bio;
+      if (!bio || bio.length > MAX_PROFILE_BIO_LENGTH)
+        throw new Error("Prezentarea generată nu a putut fi citită.");
+      setForm((current) => ({ ...current, bio }));
+      setSaved(false);
+    } catch (error) {
+      setBioError(
+        error instanceof Error && error.name === "Error"
+          ? error.message
+          : "Prezentarea nu a putut fi generată. Încearcă din nou.",
+      );
+    } finally {
+      setGeneratingBio(false);
     }
   }
   return (
@@ -206,33 +263,91 @@ export function ProfileEditor() {
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </label>
-            <label className="full-width">
-              {t.bio}
-              <textarea
-                data-profile-guide-field="bio"
-                data-guide-issue={
-                  form.bio.length > MAX_PROFILE_BIO_LENGTH
-                    ? "Scurtează prezentarea înainte de salvare."
-                    : undefined
-                }
-                rows={4}
-                maxLength={MAX_PROFILE_BIO_LENGTH}
-                aria-describedby="profile-bio-hint"
-                aria-invalid={form.bio.length > MAX_PROFILE_BIO_LENGTH}
-                placeholder="Câteva cuvinte despre tine și felul în care lucrezi..."
-                value={form.bio}
-                onChange={(e) => {
-                  setSaved(false);
-                  setForm({ ...form, bio: e.target.value });
-                }}
-              />
+            <div className="full-width">
+              <label>
+                {t.bio}
+                <textarea
+                  data-profile-guide-field="bio"
+                  data-guide-issue={
+                    bioTooLong
+                      ? "Scurtează prezentarea înainte de salvare."
+                      : undefined
+                  }
+                  rows={4}
+                  maxLength={MAX_PROFILE_BIO_LENGTH}
+                  aria-describedby="profile-bio-hint"
+                  aria-invalid={bioTooLong}
+                  readOnly={generatingBio}
+                  placeholder="Câteva cuvinte despre tine și felul în care lucrezi..."
+                  value={form.bio}
+                  onChange={(e) => {
+                    setSaved(false);
+                    setForm({ ...form, bio: e.target.value });
+                  }}
+                />
+              </label>
               <small id="profile-bio-hint">
                 {form.bio.length} / {MAX_PROFILE_BIO_LENGTH} caractere.{" "}
-                {form.bio.length > MAX_PROFILE_BIO_LENGTH
+                {bioTooLong
                   ? "Scurtează prezentarea înainte de salvare."
-                  : "Scrie simplu, personal și sincer."}
+                  : form.bio.length > MAX_PROFILE_BIO_LENGTH
+                    ? "Poți păstra textul actual. Un text nou poate avea cel mult 300 de caractere."
+                    : "Scrie simplu, personal și sincer."}
               </small>
-            </label>
+              <div className="profile-bio-actions">
+                <label>
+                  Tipul prezentării
+                  <select
+                    value={bioRole}
+                    disabled={generatingBio}
+                    onChange={(event) => {
+                      if (isProfileBioRole(event.target.value))
+                        setBioRole(event.target.value);
+                    }}
+                  >
+                    {Object.entries(profileBioRoles).map(([role, label]) => (
+                      <option key={role} value={role}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => void generateBio()}
+                  disabled={
+                    demo ||
+                    generatingBio ||
+                    busy ||
+                    uploading ||
+                    redirecting ||
+                    remaining === 0
+                  }
+                >
+                  <Sparkles size={16} />
+                  {generatingBio
+                    ? "Generăm descrierea…"
+                    : "Generează descrierea"}
+                </button>
+              </div>
+              <p className="profile-bio-status" aria-live="polite">
+                {demo
+                  ? "Generarea AI este disponibilă după autentificare."
+                  : remaining === 0
+                    ? "Ai folosit toate cele trei generări AI. Poți edita textul."
+                    : remaining === 1
+                      ? "Mai ai o generare AI."
+                      : remaining !== null
+                        ? `Mai ai ${remaining} generări AI.`
+                        : "Până la trei generări AI."}
+              </p>
+              {bioError && (
+                <p className="form-error" role="alert">
+                  {bioError}
+                </p>
+              )}
+            </div>
           </div>
           {error && (
             <p className="form-error" role="alert">
@@ -247,7 +362,7 @@ export function ProfileEditor() {
             <button
               data-guide-profile-save
               className="button primary"
-              disabled={busy || uploading || redirecting}
+              disabled={busy || uploading || generatingBio || redirecting}
             >
               <Save size={16} />
               {busy ? ro.common.saving : ro.common.save}
@@ -273,7 +388,7 @@ export function ProfileEditor() {
               <AgentAvatar profile={form} />
             </div>
             <h2>{form.name || "Numele tău aici"}</h2>
-            <span>{form.agency || "Agenția ta imobiliară"}</span>
+            {form.agency.trim() && <span>{form.agency}</span>}
             <p>{form.bio || "Prezentarea ta va apărea aici."}</p>
             <div className="preview-contact">
               <span>

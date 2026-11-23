@@ -89,7 +89,10 @@ export function stripeClient(key: string) {
   });
 }
 export function billingDatabase(
-  config: ReturnType<typeof stripeConfiguration>,
+  config: Pick<
+    ReturnType<typeof stripeConfiguration>,
+    "supabaseUrl" | "serviceKey"
+  >,
 ) {
   return createClient(config.supabaseUrl, config.serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
