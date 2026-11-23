@@ -144,3 +144,27 @@ test("the 8+ choice includes houses with at least eight rooms", async ({
     "Casă cu 9 camere",
   ]);
 });
+
+test("the editorial homepage lets visitors revisit completed steps and find matching properties", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const stages = page.getByRole("navigation", { name: "Etapele căutării" });
+  await expect(stages.getByRole("button", { name: "Buget" })).toBeDisabled();
+  const buy = page.getByRole("button", { name: "Vreau să cumpăr" });
+  await buy.click();
+  await expect(
+    page.getByRole("heading", { name: "Ce tip de proprietate cauți?" }),
+  ).toBeFocused();
+  await stages.getByRole("button", { name: "Ofertă" }).click();
+  await expect(buy).toHaveAttribute("aria-pressed", "true");
+  await buy.click();
+  await page.getByRole("button", { name: "Apartament", exact: true }).click();
+  await page.getByRole("button", { name: "2", exact: true }).click();
+  await page.getByRole("button", { name: "București", exact: true }).click();
+  await page.getByRole("button", { name: "€50.000 – €100.000" }).click();
+  await page.getByRole("button", { name: "Vezi proprietățile" }).click();
+  await expect(page.locator(".discovery-listing h2")).toHaveText([
+    "Apartament în buget",
+  ]);
+});

@@ -1,7 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  Check,
+  House,
+  KeyRound,
+  PanelsTopLeft,
+  Search,
+  Sofa,
+} from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   discoveryCities,
@@ -20,16 +31,42 @@ const questions = [
 ];
 
 const steps = ["Ofertă", "Proprietate", "Camere", "Localitate", "Buget"];
+const timelineSteps = [
+  "Ofertă",
+  "Tipul proprietății",
+  "Număr de camere",
+  "Localitate",
+  "Buget",
+];
 const transactions = [
-  ["sale", "Vreau să cumpăr"],
-  ["rent", "Vreau să închiriez"],
+  ["sale", "Vreau să cumpăr", House],
+  ["rent", "Vreau să închiriez", KeyRound],
 ] as const;
+const editorialOfferPhotos = {
+  sale: "/images/discovery/quiz-cumparare.webp",
+  rent: "/images/discovery/quiz-inchiriere.webp",
+} as const;
 const propertyTypes = [
-  ["apartamente", "Apartament"],
-  ["case", "Casă / Vilă"],
-  ["garsoniere", "Garsonieră"],
-  ["penthouse-uri", "Penthouse"],
-] as const satisfies readonly (readonly [ListingKind, string])[];
+  {
+    kind: "apartamente",
+    label: "Apartament",
+    image: "apartament",
+    icon: Building2,
+  },
+  { kind: "case", label: "Casă / Vilă", image: "casa", icon: House },
+  { kind: "garsoniere", label: "Garsonieră", image: "garsoniera", icon: Sofa },
+  {
+    kind: "penthouse-uri",
+    label: "Penthouse",
+    image: "penthouse",
+    icon: PanelsTopLeft,
+  },
+] as const satisfies readonly {
+  kind: ListingKind;
+  label: string;
+  image: string;
+  icon: typeof House;
+}[];
 const roomOptions = [1, 2, 3, 4, 5, 6, 7, "8+"] as const;
 
 type Budget = readonly [min: number, max?: number];
@@ -69,14 +106,14 @@ function budgetLabel([min, max]: Budget) {
     : `€${amount.format(min)} – €${amount.format(max)}`;
 }
 
-export function DiscoveryQuiz() {
+export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
   const router = useRouter();
   const heading = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
   const [step, setStep] = useState(0);
   const [transaction, setTransaction] =
     useState<DiscoveryCategory["transaction"]>();
-  const [kind, setKind] = useState<(typeof propertyTypes)[number][0]>();
+  const [kind, setKind] = useState<(typeof propertyTypes)[number]["kind"]>();
   const [rooms, setRooms] = useState<DiscoveryRooms>();
   const [city, setCity] = useState<string>();
   const [budget, setBudget] = useState<Budget>();
@@ -113,133 +150,231 @@ export function DiscoveryQuiz() {
     startTransition(() => router.push(target));
   }
 
+  const question = (
+    <h2 id="discovery-question" ref={heading} tabIndex={-1}>
+      {last && transaction === "rent"
+        ? "Care este bugetul tău lunar?"
+        : questions[step]}
+    </h2>
+  );
+  const choices = (
+    <div className="discovery-question">
+      {step === 0 && (
+        <div className="discovery-choices discovery-offer-choices">
+          {transactions.map(([value, label, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={transaction === value}
+              onClick={() => {
+                if (transaction !== value) setBudget(undefined);
+                setTransaction(value);
+                goTo(1);
+              }}
+            >
+              {editorial && (
+                <span className="discovery-editorial-offer-photo">
+                  <Image
+                    src={editorialOfferPhotos[value]}
+                    alt=""
+                    fill
+                    sizes="(max-width: 720px) 44vw, 20vw"
+                    loading="eager"
+                  />
+                </span>
+              )}
+              <span className="discovery-offer-icon">
+                <Icon size={24} strokeWidth={1.5} aria-hidden="true" />
+              </span>
+              <span className="discovery-offer-label">{label}</span>
+              {editorial ? (
+                <span
+                  className="discovery-editorial-offer-check"
+                  aria-hidden="true"
+                >
+                  {transaction === value && <Check size={12} />}
+                </span>
+              ) : (
+                <ArrowRight size={16} aria-hidden="true" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      {step === 1 && (
+        <div className="discovery-choices discovery-type-choices">
+          {propertyTypes.map(({ kind: value, label, image, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={kind === value}
+              onClick={() => {
+                setKind(value);
+                goTo(2);
+              }}
+            >
+              <span className="discovery-type-photo">
+                <Image
+                  src={`/images/discovery/${image}.webp`}
+                  alt=""
+                  fill
+                  sizes="(max-width: 480px) 40vw, (max-width: 800px) 22vw, 150px"
+                />
+              </span>
+              <Icon size={20} strokeWidth={1.5} aria-hidden="true" />
+              {label}
+              {kind === value && (
+                <span className="discovery-type-selected" aria-hidden="true">
+                  <Check size={13} />
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      {step === 2 && (
+        <div className="discovery-choices discovery-room-choices">
+          {roomOptions.map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={rooms === value}
+              onClick={() => {
+                setRooms(value);
+                goTo(3);
+              }}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      )}
+      {step === 3 && (
+        <div className="discovery-choices discovery-city-choices">
+          {[...discoveryCities].map(([slug, name]) => (
+            <button
+              key={slug}
+              type="button"
+              aria-pressed={city === slug}
+              onClick={() => {
+                setCity(slug);
+                goTo(4);
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+      {last && transaction && (
+        <div className="discovery-choices">
+          {budgets[transaction].map((option) => (
+            <button
+              key={option[0]}
+              type="button"
+              aria-pressed={budget === option}
+              onClick={() => setBudget(option)}
+            >
+              {budgetLabel(option)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+  const actions = step > 0 && (
+    <div className="discovery-quiz-actions">
+      <button
+        className="discovery-back"
+        type="button"
+        onClick={() => goTo(step - 1)}
+      >
+        <ArrowLeft size={16} aria-hidden="true" /> Înapoi
+      </button>
+      {last && (
+        <button
+          className="discovery-primary"
+          type="submit"
+          disabled={!budget || isPending}
+        >
+          <Search size={17} aria-hidden="true" /> Vezi proprietățile
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <form
-      className="discovery-quiz"
+      className={editorial ? "discovery-editorial-quiz" : "discovery-quiz"}
       id="cautare"
       onSubmit={submit}
       aria-labelledby="discovery-question"
     >
-      <ol className="discovery-progress" aria-label="Etapele căutării">
-        {steps.map((label, index) => (
-          <li
-            key={label}
-            aria-current={index === step ? "step" : undefined}
-            data-completed={index < step || undefined}
+      {editorial ? (
+        <>
+          <nav
+            className="discovery-editorial-nav"
+            aria-label="Etapele căutării"
           >
-            <span>{label}</span>
-          </li>
-        ))}
-      </ol>
-      <div className="discovery-question">
-        <h2 id="discovery-question" ref={heading} tabIndex={-1}>
-          {last && transaction === "rent"
-            ? "Care este bugetul tău lunar?"
-            : questions[step]}
-        </h2>
-        {step === 0 && (
-          <div className="discovery-choices">
-            {transactions.map(([value, label]) => (
+            {steps.map((label, index) => (
               <button
-                key={value}
+                key={label}
                 type="button"
-                aria-pressed={transaction === value}
-                onClick={() => {
-                  if (transaction !== value) setBudget(undefined);
-                  setTransaction(value);
-                  goTo(1);
-                }}
+                aria-current={index === step ? "step" : undefined}
+                disabled={index >= step}
+                onClick={() => goTo(index)}
               >
                 {label}
               </button>
             ))}
-          </div>
-        )}
-        {step === 1 && (
-          <div className="discovery-choices">
-            {propertyTypes.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={kind === value}
-                onClick={() => {
-                  setKind(value);
-                  goTo(2);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
-        {step === 2 && (
-          <div className="discovery-choices discovery-room-choices">
-            {roomOptions.map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={rooms === value}
-                onClick={() => {
-                  setRooms(value);
-                  goTo(3);
-                }}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-        )}
-        {step === 3 && (
-          <div className="discovery-choices discovery-city-choices">
-            {[...discoveryCities].map(([slug, name]) => (
-              <button
-                key={slug}
-                type="button"
-                aria-pressed={city === slug}
-                onClick={() => {
-                  setCity(slug);
-                  goTo(4);
-                }}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-        )}
-        {last && transaction && (
-          <div className="discovery-choices">
-            {budgets[transaction].map((option) => (
-              <button
-                key={option[0]}
-                type="button"
-                aria-pressed={budget === option}
-                onClick={() => setBudget(option)}
-              >
-                {budgetLabel(option)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      {step > 0 && (
-        <div className="discovery-quiz-actions">
-          <button
-            className="discovery-back"
-            type="button"
-            onClick={() => goTo(step - 1)}
+          </nav>
+          <ol
+            className="discovery-editorial-steps"
+            aria-label="Progresul căutării"
           >
-            <ArrowLeft size={16} aria-hidden="true" /> Înapoi
-          </button>
-          {last && (
-            <button
-              className="discovery-primary"
-              type="submit"
-              disabled={!budget || isPending}
-            >
-              <Search size={17} aria-hidden="true" /> Vezi proprietățile
-            </button>
-          )}
-        </div>
+            {timelineSteps.map((label, index) => (
+              <li
+                key={label}
+                aria-current={index === step ? "step" : undefined}
+              >
+                <span className="discovery-editorial-marker" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                {index === step ? (
+                  <div className="discovery-editorial-step-content">
+                    {question}
+                    {choices}
+                    {actions}
+                  </div>
+                ) : (
+                  <span className="discovery-editorial-step-label">
+                    {label}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </>
+      ) : (
+        <>
+          {question}
+          <ol className="discovery-progress" aria-label="Etapele căutării">
+            {steps.map((label, index) => (
+              <li
+                key={label}
+                aria-current={index === step ? "step" : undefined}
+                data-completed={index < step || undefined}
+              >
+                <span className="discovery-step-marker" aria-hidden="true">
+                  {index < step ? <Check size={13} /> : index + 1}
+                </span>
+                <span>{label}</span>
+              </li>
+            ))}
+          </ol>
+          {choices}
+          {actions}
+        </>
       )}
     </form>
   );

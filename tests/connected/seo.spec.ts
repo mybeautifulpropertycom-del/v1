@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { workspace } from "./workspace-fixture";
-import { HOME_TITLE, HOME_DESCRIPTION } from "../../src/lib/seo";
+import { HOME_TITLE, HOME_DESCRIPTION, HOME_IMAGE } from "../../src/lib/seo";
 
 test("anonymous visitors see the property quiz at an indexable homepage", async ({
   page,
@@ -15,7 +15,7 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
   expect(html).toContain('name="robots" content="index, follow"');
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Unde vrei să locuiești?" }),
+    page.getByRole("heading", { name: "Următoarea Proprietate", level: 1 }),
   ).toBeVisible();
   await expect(page).toHaveTitle(HOME_TITLE);
   const structured = await page
@@ -33,6 +33,10 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
     HOME_DESCRIPTION,
+  );
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    "content",
+    new RegExp(`${HOME_IMAGE}$`),
   );
   await page.getByRole("link", { name: "Contul meu" }).click();
   await expect(page).toHaveURL(/\/autentificare$/);
@@ -59,7 +63,7 @@ test("signed-in visitors can use search and open their private dashboard from th
   await workspace(page);
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Unde vrei să locuiești?" }),
+    page.getByRole("heading", { name: "Următoarea Proprietate", level: 1 }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Contul meu" }).click();
   await expect(page).toHaveURL(/\/panou$/);
@@ -67,6 +71,25 @@ test("signed-in visitors can use search and open their private dashboard from th
     "content",
     /noindex/,
   );
+});
+
+test("the original design stays a preview and the selected design opens at the homepage", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/previzualizare/quiz-v1");
+  await expect(
+    page.getByRole("heading", { name: "Unde vrei să locuiești?" }),
+  ).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex, nofollow",
+  );
+  const redirect = await request.get("/previzualizare/quiz-v2", {
+    maxRedirects: 0,
+  });
+  expect(redirect.status()).toBe(307);
+  expect(redirect.headers().location).toBe("/");
 });
 
 test("administration pages send noindex even to anonymous crawlers and their APIs require authentication", async ({

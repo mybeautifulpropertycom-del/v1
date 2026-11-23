@@ -4,6 +4,7 @@ import { publicPath, type PublicProperty } from "./model";
 import { propertyStory } from "./property-story";
 
 export const SITE_NAME = PLATFORM_NAME;
+export const HOME_IMAGE = "/images/discovery/quiz-terasa-apus.webp";
 export const HOME_TITLE =
   "Proprietăți de vânzare și de închiriat | Următoarea Proprietate";
 export const HOME_DESCRIPTION =
@@ -63,7 +64,7 @@ export function descriptionSnippet(value: string): string {
 export function homeMetadata(): Metadata {
   const images = [
     {
-      url: siteUrl("/images/template-property/01-exterior.webp"),
+      url: siteUrl(HOME_IMAGE),
       alt: SITE_NAME,
     },
   ];

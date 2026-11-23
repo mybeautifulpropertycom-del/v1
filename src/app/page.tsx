@@ -1,41 +1,39 @@
 import Image from "next/image";
 import { DiscoveryHeader } from "@/components/discovery-header";
 import { DiscoveryQuiz } from "@/components/discovery-quiz";
-import { homeJsonLd, homeMetadata, serializeJsonLd } from "@/lib/seo";
+import {
+  HOME_IMAGE,
+  homeJsonLd,
+  homeMetadata,
+  serializeJsonLd,
+} from "@/lib/seo";
 import "@/styles/discovery.css";
+import "@/styles/discovery-editorial.css";
 
 export const metadata = homeMetadata();
 
 export default function Home() {
   return (
-    <div className="discovery-site">
+    <div className="discovery-site discovery-editorial-home">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(homeJsonLd()) }}
       />
-      <DiscoveryHeader />
-      <main className="discovery-shell">
-        <section className="discovery-hero">
-          <div className="discovery-cover">
-            <Image
-              src="/images/template-property/01-exterior.webp"
-              alt=""
-              fill
-              sizes="(max-width: 800px) 100vw, 56vw"
-              preload
-            />
-            <div className="discovery-cover-copy">
-              <h1>
-                Unde vrei să <em>locuiești?</em>
-              </h1>
-              <p>
-                Alege ce contează pentru tine și vezi proprietățile care se
-                încadrează.
-              </p>
-            </div>
-          </div>
-          <DiscoveryQuiz />
-        </section>
+      <div className="discovery-editorial-scene" aria-hidden="true">
+        <Image src={HOME_IMAGE} alt="" fill sizes="100vw" preload />
+      </div>
+      <DiscoveryHeader editorial />
+      <main className="discovery-editorial-main">
+        <div className="discovery-editorial-intro">
+          <h1>
+            Următoarea <em>Proprietate</em>
+          </h1>
+          <p>
+            Descoperă proprietatea care ți se potrivește, prin câteva întrebări
+            simple.
+          </p>
+        </div>
+        <DiscoveryQuiz editorial />
       </main>
     </div>
   );
