@@ -92,17 +92,9 @@
   text-wrap: balance;
 }
 
-.discovery-mobile-title {
-  display: none;
-}
-
-.discovery-editorial-intro h1 em {
+.discovery-editorial-intro h1 span {
   display: block;
   color: var(--editorial-gold);
-}
-
-.discovery-desktop-title em {
-  font-style: normal;
 }
 
 .discovery-editorial-intro p {
@@ -443,16 +435,8 @@
   }
 
   .discovery-editorial-intro h1 {
-    font-size: clamp(32px, 10.1vw, 60px);
+    font-size: clamp(26px, 8.2vw, 53px);
     text-wrap: wrap;
-  }
-
-  .discovery-desktop-title {
-    display: none;
-  }
-
-  .discovery-mobile-title {
-    display: inline;
   }
 
   .discovery-editorial-intro p {
@@ -510,7 +494,8 @@
 
   .discovery-editorial-progress-track {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     gap: 4px;
     width: 42%;
     max-width: 172px;

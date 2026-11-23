@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Bath,
-  DoorOpen,
+  BedDouble,
   House,
   MapPin,
   Ruler,
@@ -109,10 +109,11 @@ function ListingCard({ listing }: { listing: DiscoveryListing }) {
             <p className="discovery-price">{formatPrice(listing)}</p>
           </div>
           <ul className="discovery-listing-facts" aria-label="Caracteristici">
-            {listing.rooms != null && (
+            {listing.bedrooms != null && listing.kind !== "terenuri" && (
               <li>
-                <DoorOpen size={14} aria-hidden="true" />
-                {listing.rooms} {listing.rooms === 1 ? "cameră" : "camere"}
+                <BedDouble size={14} aria-hidden="true" />
+                {listing.bedrooms}{" "}
+                {listing.bedrooms === 1 ? "dormitor" : "dormitoare"}
               </li>
             )}
             {listing.bathrooms != null && listing.bathrooms > 0 && (

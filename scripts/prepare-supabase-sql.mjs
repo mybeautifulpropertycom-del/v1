@@ -202,6 +202,19 @@ commit;
 select 'MBP_DISCOVERY_CARD_DETAILS_READY' as status;
 `,
 );
+const discoveryBedrooms = await readFile(
+  new URL("202611230007_property_discovery_bedrooms.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-discovery-bedrooms.sql", import.meta.url),
+  `-- Existing installations with property discovery enabled. Safe to rerun.
+begin;
+${discoveryBedrooms.trim()}
+commit;
+select 'MBP_DISCOVERY_BEDROOMS_READY' as status;
+`,
+);
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",

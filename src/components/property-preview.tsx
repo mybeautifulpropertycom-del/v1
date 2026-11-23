@@ -94,10 +94,13 @@ export function PropertyPreview({ id }: { id: string }) {
           : {
               ...property,
               [field]: value,
-              ...(field === "location" &&
-              value !== property.location &&
-              property.google_place_id
-                ? { google_place_id: null }
+              ...(field === "location" && value !== property.location
+                ? {
+                    ...(property.google_place_id
+                      ? { google_place_id: null }
+                      : {}),
+                    ...(property.city !== undefined ? { city: null } : {}),
+                  }
                 : {}),
             },
       );

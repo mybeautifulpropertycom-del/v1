@@ -16,7 +16,7 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Găsește Proprietatea Perfectă Pentru Tine și Familia Ta",
+      name: "Găsește Locul Pe Care Îl Vei Numi Acasă",
       level: 1,
     }),
   ).toBeVisible();
@@ -67,7 +67,7 @@ test("signed-in visitors can use search and open their private dashboard from th
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Găsește Proprietatea Perfectă Pentru Tine și Familia Ta",
+      name: "Găsește Locul Pe Care Îl Vei Numi Acasă",
       level: 1,
     }),
   ).toBeVisible();

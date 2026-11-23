@@ -19,7 +19,7 @@ globalThis.fetch = async (input, init) => {
       city: "București",
       city_slug: "bucuresti",
       kind: "apartamente",
-      rooms: 2,
+      bedrooms: 2,
       bathrooms: 2,
       amenities: ["Terasă", "Parcare", "Lift", "Aer condiționat"],
       image: "/images/discovery/apartament.webp",
@@ -44,7 +44,7 @@ globalThis.fetch = async (input, init) => {
         price: 80000,
         slug: "apartament-trei-camere",
         title: "Apartament cu trei camere",
-        rooms: 3,
+        bedrooms: 3,
         google_place_id: "ChIJ-search-bucharest-2",
         image: "/images/discovery/penthouse.webp",
       },
@@ -56,23 +56,32 @@ globalThis.fetch = async (input, init) => {
         city: "Cluj-Napoca",
         city_slug: "cluj-napoca",
       },
-      ...[7, 8, 9].map((rooms) => ({
+      {
+        ...template,
+        price: 45000,
+        slug: "garsoniera-bucuresti",
+        title: "Garsonieră în București",
+        kind: "garsoniere",
+        bedrooms: 0,
+        image: "/images/discovery/garsoniera.webp",
+      },
+      ...[7, 8, 9].map((bedrooms) => ({
         ...template,
         price: 450000,
-        slug: `casa-${rooms}-camere`,
-        title: `Casă cu ${rooms} camere`,
-        rooms,
+        slug: `casa-${bedrooms}-camere`,
+        title: `Casă cu ${bedrooms} camere`,
+        bedrooms,
         kind: "case",
         image: "/images/discovery/casa.webp",
         amenities: ["Grădină", "Terasă", "Garaj"],
-        google_place_id: `ChIJ-search-house-${rooms}`,
+        google_place_id: `ChIJ-search-house-${bedrooms}`,
       })),
       {
         ...template,
         price: 500,
         slug: "casa-inchiriere",
         title: "Casă de închiriat",
-        rooms: 3,
+        bedrooms: 3,
         kind: "case",
         transaction: "rent",
       },
@@ -82,8 +91,8 @@ globalThis.fetch = async (input, init) => {
         p.transaction === body.offer &&
         (!body.kind_filter || p.kind === body.kind_filter) &&
         (body.room_filter === -8
-          ? p.rooms >= 8
-          : !body.room_filter || p.rooms === body.room_filter) &&
+          ? p.bedrooms >= 8
+          : !body.room_filter || p.bedrooms === body.room_filter) &&
         (!body.city_filter || p.city_slug === body.city_filter) &&
         (!body.budget_currency || p.currency === body.budget_currency) &&
         (body.budget_min == null || p.price >= body.budget_min) &&

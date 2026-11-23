@@ -20,9 +20,10 @@ export type DiscoveryListing = Pick<
   | "transaction"
   | "area"
   | "area_unit"
-  | "rooms"
 > &
-  Partial<Pick<Property, "bathrooms" | "amenities" | "google_place_id">> & {
+  Partial<
+    Pick<Property, "bedrooms" | "bathrooms" | "amenities" | "google_place_id">
+  > & {
     city: string | null;
     image: string | null;
     kind: Exclude<ListingKind, "toate"> | null;
@@ -53,7 +54,7 @@ export const findPublicListings = cache(
     const { error, data } = await db.rpc("find_public_listings", {
       offer: transaction,
       kind_filter: kind === "toate" ? null : kind,
-      // The existing RPC reserves -8 for a minimum of eight rooms.
+      // The existing RPC reserves -8 for a minimum of eight bedrooms.
       room_filter: rooms === "8+" ? -8 : (rooms ?? null),
       city_filter: city ?? null,
       budget_min: min ?? null,

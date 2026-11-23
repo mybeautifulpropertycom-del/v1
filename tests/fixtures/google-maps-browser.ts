@@ -75,6 +75,7 @@ export async function mockGoogleMaps(page: Page) {
       addressComponents = [
         { types: ["country"], shortText: "RO" },
         { types: ["street_number"], shortText: "123" },
+        { types: ["locality"], shortText: "București" },
       ];
       types = ["street_address"];
       constructor({ id }: { id: string }) {

@@ -112,6 +112,11 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
   const [city, setCity] = useState<string>();
   const [budget, setBudget] = useState<Budget>();
   const [isPending, startTransition] = useTransition();
+  const isStudioSearch = kind === "garsoniere";
+  const visibleSteps = steps
+    .map((label, index) => ({ label, index }))
+    .filter(({ index }) => !isStudioSearch || index !== 2);
+  const stepNumber = visibleSteps.findIndex(({ index }) => index === step) + 1;
   const last = step === steps.length - 1;
 
   useEffect(() => {
@@ -129,7 +134,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
       !last ||
       !transaction ||
       !kind ||
-      !rooms ||
+      (!rooms && !isStudioSearch) ||
       !city ||
       !budget ||
       isPending
@@ -138,7 +143,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
 
     const [min, max] = budget;
     const target = discoveryPath(
-      { transaction, kind, rooms, city },
+      { transaction, kind, rooms: isStudioSearch ? undefined : rooms, city },
       { min, max, currency: "EUR", page: 1 },
     );
     startTransition(() => router.push(target));
@@ -204,7 +209,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
               aria-pressed={kind === value}
               onClick={() => {
                 setKind(value);
-                goTo(2);
+                goTo(value === "garsoniere" ? 3 : 2);
               }}
             >
               <span className="discovery-type-photo">
@@ -275,7 +280,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
       <button
         className="discovery-back"
         type="button"
-        onClick={() => goTo(step - 1)}
+        onClick={() => goTo(visibleSteps[stepNumber - 2].index)}
       >
         <ArrowLeft size={16} aria-hidden="true" /> Înapoi
       </button>
@@ -304,7 +309,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
             className="discovery-editorial-nav"
             aria-label="Etapele căutării"
           >
-            {steps.map((label, index) => (
+            {visibleSteps.map(({ label, index }) => (
               <button
                 key={label}
                 type="button"
@@ -320,13 +325,13 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
             className="discovery-editorial-steps"
             aria-label="Progresul căutării"
           >
-            {timelineSteps.map((label, index) => (
+            {visibleSteps.map(({ index }, position) => (
               <li
-                key={label}
+                key={index}
                 aria-current={index === step ? "step" : undefined}
               >
                 <span className="discovery-editorial-marker" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
+                  {String(position + 1).padStart(2, "0")}
                 </span>
                 {index === step ? (
                   <div className="discovery-editorial-step-content">
@@ -335,22 +340,22 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
                       role="progressbar"
                       aria-label="Progresul căutării"
                       aria-valuemin={1}
-                      aria-valuemax={steps.length}
-                      aria-valuenow={step + 1}
-                      aria-valuetext={`Pasul ${step + 1} din ${steps.length}: ${label}`}
+                      aria-valuemax={visibleSteps.length}
+                      aria-valuenow={stepNumber}
+                      aria-valuetext={`Pasul ${stepNumber} din ${visibleSteps.length}: ${timelineSteps[index]}`}
                     >
                       <span aria-hidden="true">
-                        {String(step + 1).padStart(2, "0")} /{" "}
-                        {String(steps.length).padStart(2, "0")}
+                        {String(stepNumber).padStart(2, "0")} /{" "}
+                        {String(visibleSteps.length).padStart(2, "0")}
                       </span>
                       <span
                         className="discovery-editorial-progress-track"
                         aria-hidden="true"
                       >
-                        {steps.map((name, position) => (
+                        {visibleSteps.map(({ label, index }) => (
                           <span
-                            key={name}
-                            data-filled={position <= step || undefined}
+                            key={label}
+                            data-filled={index <= step || undefined}
                           />
                         ))}
                       </span>
@@ -361,7 +366,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
                   </div>
                 ) : (
                   <span className="discovery-editorial-step-label">
-                    {label}
+                    {timelineSteps[index]}
                   </span>
                 )}
               </li>
@@ -372,14 +377,14 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
         <>
           {question}
           <ol className="discovery-progress" aria-label="Etapele căutării">
-            {steps.map((label, index) => (
+            {visibleSteps.map(({ label, index }, position) => (
               <li
                 key={label}
                 aria-current={index === step ? "step" : undefined}
                 data-completed={index < step || undefined}
               >
                 <span className="discovery-step-marker" aria-hidden="true">
-                  {index < step ? <Check size={13} /> : index + 1}
+                  {index < step ? <Check size={13} /> : position + 1}
                 </span>
                 <span>{label}</span>
               </li>

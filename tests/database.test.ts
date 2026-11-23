@@ -2572,7 +2572,7 @@ test("Romania migration is repeatable, defaults to 249 RON and preserves histori
   }
 });
 
-test("public discovery filters published matches by exact or minimum rooms, city, transaction, currency and inclusive price", async () => {
+test("public discovery filters published matches by exact or minimum bedrooms, city, transaction, currency and inclusive price", async () => {
   const discovery = await createTestDatabase();
   try {
     await discovery.exec(
@@ -2586,37 +2586,31 @@ test("public discovery filters published matches by exact or minimum rooms, city
       [agentA],
     );
     await discovery.exec("update public.profiles set phone='+40 700 000 001'");
-    await discovery.exec(
-      await readFile(
-        new URL("../supabase/sql-editor-discovery-room-range.sql", import.meta.url),
-        "utf8",
-      ),
+    const bedroomsMigration = await readFile(
+      new URL("../supabase/sql-editor-discovery-bedrooms.sql", import.meta.url),
+      "utf8",
     );
-    await discovery.exec(
-      await readFile(
-        new URL("../supabase/sql-editor-discovery-card-details.sql", import.meta.url),
-        "utf8",
-      ),
-    );
+    await discovery.exec(bedroomsMigration);
     await discovery.query(
       `
       insert into public.properties(owner_id,slug,title,description,location,city,type,transaction,currency,price,area,rooms,bedrooms,images,status)
       select $1, fixture.slug, 'Proprietate de test', 'O descriere suficient de completă pentru publicare.', fixture.address, fixture.city,
-        fixture.kind, fixture.offer, fixture.currency, fixture.price, 80, fixture.rooms, 2, array['https://example.com/home.jpg'], fixture.status
+        fixture.kind, fixture.offer, fixture.currency, fixture.price, 80, fixture.rooms, fixture.bedrooms, array['https://example.com/home.jpg'], fixture.status
       from (values
-        ('lower-bound','Strada Lalelelor 12, București, România',null,'Condo','sale','EUR',50000,2,'published'),
-        ('upper-bound','Aleea Primăverii 20, București, România','București','Condo','sale','EUR',100000,2,'published'),
-        ('too-expensive','Aleea Primăverii 22, București, România','București','Condo','sale','EUR',100001,2,'published'),
-        ('wrong-currency','Aleea Primăverii 25, București, România','București','Condo','sale','RON',75000,2,'published'),
-        ('rent-house','Strada Florilor 11, București, România','București','House','rent','EUR',500,3,'published'),
-        ('seven-room-villa','Strada Florilor 71, București, România','București','House','sale','EUR',450000,7,'published'),
-        ('eight-room-villa','Strada Florilor 81, București, România','București','House','sale','EUR',450000,8,'published'),
-        ('ten-room-villa','Strada Florilor 101, București, România','București','House','sale','EUR',450000,10,'published'),
-        ('legacy-rooms','Strada Visului 17, București, România',null,'Condo','sale','EUR',75000,null,'published'),
-        ('different-city','Strada Test 12, Cluj-Napoca, România','Cluj-Napoca','Condo','sale','EUR',75000,2,'published'),
-        ('numeric-town','1 Decembrie, Ilfov',null,'Condo','sale','EUR',75000,2,'published'),
-        ('draft-house','Aleea Primăverii 30, Iași, România','Iași','Condo','sale','EUR',75000,2,'draft')
-      ) fixture(slug,address,city,kind,offer,currency,price,rooms,status)
+        ('lower-bound','Strada Lalelelor 12, București, România',null,'Condo','sale','EUR',50000,null,2,'published'),
+        ('upper-bound','Aleea Primăverii 20, București, România','București','Condo','sale','EUR',100000,3,2,'published'),
+        ('too-expensive','Aleea Primăverii 22, București, România','București','Condo','sale','EUR',100001,2,2,'published'),
+        ('wrong-currency','Aleea Primăverii 25, București, România','București','Condo','sale','RON',75000,2,2,'published'),
+        ('rent-house','Strada Florilor 11, București, România','București','House','rent','EUR',500,3,3,'published'),
+        ('seven-bedroom-villa','Strada Florilor 71, București, România','București','House','sale','EUR',450000,8,7,'published'),
+        ('eight-bedroom-villa','Strada Florilor 81, București, România','București','House','sale','EUR',450000,7,8,'published'),
+        ('ten-bedroom-villa','Strada Florilor 101, București, România','București','House','sale','EUR',450000,null,10,'published'),
+        ('legacy-rooms','Strada Visului 17, București, România',null,'Condo','sale','EUR',75000,2,3,'published'),
+        ('studio-without-bedroom','Strada Visului 19, București, România',null,'Studio','sale','EUR',45000,1,0,'published'),
+        ('different-city','Strada Test 12, Cluj-Napoca, România',null,'Condo','sale','EUR',75000,2,2,'published'),
+        ('numeric-town','1 Decembrie, Ilfov',null,'Condo','sale','EUR',75000,2,2,'published'),
+        ('draft-house','Aleea Primăverii 30, Iași, România','Iași','Condo','sale','EUR',75000,2,2,'draft')
+      ) fixture(slug,address,city,kind,offer,currency,price,rooms,bedrooms,status)
     `,
       [agentA],
     );
@@ -2635,7 +2629,14 @@ test("public discovery filters published matches by exact or minimum rooms, city
         data: {
           total: number;
           city: string;
-          items: { slug: string; owner_id?: string; bathrooms: number; amenities: string[]; google_place_id: string | null }[];
+          items: {
+            slug: string;
+            owner_id?: string;
+            bedrooms: number;
+            bathrooms: number;
+            amenities: string[];
+            google_place_id: string | null;
+          }[];
         };
       }>(
         "select public.find_public_listings('sale','apartamente',2,'bucuresti',50000,100000,'EUR') as data",
@@ -2648,18 +2649,27 @@ test("public discovery filters published matches by exact or minimum rooms, city
       "upper-bound",
     ]);
     assert.ok(filtered.items.every((row) => row.owner_id === undefined));
+    assert.ok(filtered.items.every((row) => row.bedrooms === 2));
     const card = filtered.items.find((row) => row.slug === "lower-bound");
     assert.equal(card?.bathrooms, 2);
     assert.deepEqual(card?.amenities, ["Terasă", "Parcare"]);
     assert.equal(card?.google_place_id, "ChIJ-test-discovery");
-    const villas = async (rooms: number) => (
-      await discovery.query<{ data: { total: number; items: { slug: string }[] } }>(
-        "select public.find_public_listings('sale','case',$1,'bucuresti',300000,500000,'EUR') as data",
-        [rooms],
-      )
-    ).rows[0].data.items.map(({ slug }) => slug).sort();
-    assert.deepEqual(await villas(-8), ["eight-room-villa", "ten-room-villa"]);
-    assert.deepEqual(await villas(8), ["eight-room-villa"]);
+    const villas = async (rooms: number) =>
+      (
+        await discovery.query<{
+          data: { total: number; items: { slug: string }[] };
+        }>(
+          "select public.find_public_listings('sale','case',$1,'bucuresti',300000,500000,'EUR') as data",
+          [rooms],
+        )
+      ).rows[0].data.items
+        .map(({ slug }) => slug)
+        .sort();
+    assert.deepEqual(await villas(-8), [
+      "eight-bedroom-villa",
+      "ten-bedroom-villa",
+    ]);
+    assert.deepEqual(await villas(8), ["eight-bedroom-villa"]);
     await assert.rejects(villas(-7), /Invalid listing filters/);
     const rent = (
       await discovery.query<{ data: { total: number } }>(
@@ -2701,6 +2711,11 @@ test("public discovery filters published matches by exact or minimum rooms, city
       ),
     );
     assert.ok(categories.every((row) => row.city_slug !== "iasi"));
+    assert.ok(
+      categories.every(
+        (row) => row.kind !== "garsoniere" || row.rooms === null,
+      ),
+    );
   } finally {
     await discovery.close();
   }

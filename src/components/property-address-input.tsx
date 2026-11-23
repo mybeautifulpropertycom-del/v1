@@ -240,7 +240,7 @@ export function PropertyAddressInput({
           ? placeId
             ? "Adresa a fost selectată."
             : "Caută adresa și alege o sugestie pentru a adăuga harta. Adresa devine și linkul public al proprietății."
-          : "Introdu adresa proprietății. Apare pe site și devine linkul public la publicare."}
+          : "Introdu adresa completă, cu localitatea după o virgulă. Adresa devine linkul public al proprietății."}
       </small>
       {enabled && (
         <small role="status">

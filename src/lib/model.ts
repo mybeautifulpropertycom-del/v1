@@ -34,7 +34,6 @@ export type Property = {
   area_unit: "sqft" | "sqm";
   construction_year?: number | null;
   bedrooms: number;
-  rooms?: number | null;
   bathrooms: number;
   amenities: string[];
   images: string[];
@@ -187,13 +186,6 @@ export function propertyErrors(property: Property): string[] {
     (!property.city.trim() || property.city.length > 80)
   )
     errors.push("Introdu o localitate validă.");
-  if (
-    property.rooms != null &&
-    (!Number.isInteger(property.rooms) ||
-      property.rooms < 1 ||
-      property.rooms > 100)
-  )
-    errors.push("Introdu un număr total de camere între 1 și 100.");
   if (
     !Number.isFinite(property.price) ||
     property.price < 0 ||

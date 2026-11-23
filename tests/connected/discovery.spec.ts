@@ -6,7 +6,10 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Următoarea Proprietate", level: 1 }),
+    page.getByRole("heading", {
+      name: "Găsește Locul Pe Care Îl Vei Numi Acasă",
+      level: 1,
+    }),
   ).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
@@ -81,6 +84,9 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   await expect(
     page.getByRole("heading", { name: "Apartament în buget" }),
   ).toBeVisible();
+  await expect(page.locator(".discovery-listing-facts")).toContainText(
+    "2 dormitoare",
+  );
   await expect(page.locator(".discovery-listing-facts")).toContainText("2 băi");
   await expect(page.locator(".discovery-listing-amenities")).toContainText(
     "Terasă",
@@ -148,7 +154,7 @@ test("canonical landing pages and the rent quiz show matching published listings
   );
 });
 
-test("the 8+ choice includes houses with at least eight rooms", async ({
+test("the 8+ choice includes houses with at least eight bedrooms", async ({
   page,
 }) => {
   await page.goto("/");
@@ -165,6 +171,33 @@ test("the 8+ choice includes houses with at least eight rooms", async ({
   await expect(page.locator(".discovery-listing h2")).toHaveText([
     "Casă cu 8 camere",
     "Casă cu 9 camere",
+  ]);
+});
+
+test("studio searches skip the bedroom step and show studios without a separate bedroom", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Vreau să cumpăr" }).click();
+  const studio = page.getByRole("button", { name: "Garsonieră", exact: true });
+  await studio.click();
+  const progress = page.getByRole("progressbar", {
+    name: "Progresul căutării",
+  });
+  await expect(progress).toHaveAttribute(
+    "aria-valuetext",
+    "Pasul 3 din 4: Localitate",
+  );
+  await page.getByRole("button", { name: "Înapoi" }).click();
+  await expect(studio).toHaveAttribute("aria-pressed", "true");
+  await studio.click();
+  await page.getByRole("button", { name: "București", exact: true }).click();
+  await page.getByRole("button", { name: "€0 – €50.000", exact: true }).click();
+  await page.getByRole("button", { name: "Vezi proprietățile" }).click();
+  await expect(page).toHaveURL(/\/garsoniere\/bucuresti\?/);
+  await expect(page.locator(".discovery-listing h2")).toHaveText([
+    "Garsonieră în București",
   ]);
 });
 

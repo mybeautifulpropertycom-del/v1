@@ -8,6 +8,7 @@ test("legacy dimensions convert once, house filters include old types, and selec
     type: "Town House",
     area: 1000,
     area_unit: "sqft",
+    city: "București",
     images: [],
   });
   await page.goto("/panou");
@@ -26,8 +27,8 @@ test("legacy dimensions convert once, house filters include old types, and selec
   await page.goto(`/panou/proprietati/${id}`);
   const type = page.getByLabel("Tipul proprietății");
   const area = page.getByLabel("Suprafață (m²)", { exact: true });
-  const city = page.getByLabel(/Oraș \/ localitate/);
-  const rooms = page.getByLabel(/Număr total de camere/);
+  const address = page.getByLabel("Adresă", { exact: true });
+  const bedrooms = page.getByLabel("Dormitoare", { exact: true });
   await expect(type.locator("option")).toHaveText([
     "Apartament",
     "Garsonieră",
@@ -37,12 +38,14 @@ test("legacy dimensions convert once, house filters include old types, and selec
   await expect(type).toHaveValue("House");
   await expect(area).toHaveValue("92.9");
   await expect(page.getByLabel("Unitatea de suprafață")).toHaveCount(0);
+  await expect(page.getByLabel(/Oraș \/ localitate/)).toHaveCount(0);
+  await expect(page.getByLabel(/Număr total de camere/)).toHaveCount(0);
   expect(state.property.area_unit).toBe("sqft");
   expect(state.property.area).toBe(1000);
 
   await type.selectOption("Condo");
-  await city.fill("București");
-  await rooms.fill("2");
+  await address.fill("Strada Florilor 12, Cluj-Napoca");
+  await bedrooms.fill("2");
   await page
     .getByRole("button", { name: "Salvează modificările", exact: true })
     .click();
@@ -52,13 +55,14 @@ test("legacy dimensions convert once, house filters include old types, and selec
   expect(state.property.type).toBe("Condo");
   expect(state.property.area_unit).toBe("sqm");
   expect(state.property.area).toBe(92.9);
-  expect(state.property.city).toBe("București");
-  expect(state.property.rooms).toBe(2);
+  expect(state.property.location).toBe("Strada Florilor 12, Cluj-Napoca");
+  expect(state.property.city).toBeNull();
+  expect(state.property.bedrooms).toBe(2);
   await page.reload();
   await expect(type).toHaveValue("Condo");
   await expect(area).toHaveValue("92.9");
-  await expect(city).toHaveValue("București");
-  await expect(rooms).toHaveValue("2");
+  await expect(address).toHaveValue("Strada Florilor 12, Cluj-Napoca");
+  await expect(bedrooms).toHaveValue("2");
 
   await type.selectOption("Penthouse");
   await area.fill("120.5");

@@ -26,16 +26,11 @@ export default function Home() {
       <main className="discovery-editorial-main">
         <div className="discovery-editorial-intro">
           <h1>
-            <span className="discovery-desktop-title">
-              Găsește Proprietatea Perfectă Pentru Tine <em>și Familia Ta</em>
-            </span>
-            <span className="discovery-mobile-title">
-              Următoarea <em>Proprietate</em>
-            </span>
+            Găsește Locul Pe Care <span>Îl Vei Numi Acasă</span>
           </h1>
           <p>
-            Descoperă proprietatea care ți se potrivește, prin câteva întrebări
-            simple.
+            O modalitate mai simplă și mai personală de a descoperi următoarea
+            ta locuință.
           </p>
         </div>
         <DiscoveryQuiz editorial />
