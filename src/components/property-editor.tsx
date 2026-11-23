@@ -1,7 +1,7 @@
 "use client";
 import { PLATFORM_DOMAIN } from "@/lib/platform-brand";
 import { propertyTypeLabel } from "@/lib/model";
-import { PropertyImage } from "./property-image";
+import { PropertyPhotoGrid } from "./property-photo-grid";
 import { propertyGuideIssues } from "@/lib/property-guide";
 import { PriceInput } from "./price-input";
 import { PropertySharing } from "./property-sharing";
@@ -303,6 +303,12 @@ export function PropertyEditor({
         ? property.amenities.filter((v) => v !== value)
         : [...property.amenities, value],
     );
+  }
+  function movePhoto(from: number, to: number) {
+    const images = [...property.images];
+    const [image] = images.splice(from, 1);
+    images.splice(to, 0, image);
+    update("images", images);
   }
   if (id && !existing)
     return (
@@ -706,8 +712,8 @@ export function PropertyEditor({
                 <h2 data-guide-photos>{t.photography}</h2>
               </div>
               <p className="form-intro">
-                Fotografiile bune fac prima impresie. Prima fotografie devine
-                coperta.
+                Trage de mânerul „Mută” și lasă fotografia pe poziția dorită.
+                Prima fotografie este coperta.
               </p>
               {uploading ? (
                 <div
@@ -782,49 +788,16 @@ export function PropertyEditor({
                 hidden
                 onChange={(e) => void addFiles(e.target.files)}
               />
-              <div className="image-editor-grid">
-                {property.images.map((image, i) => (
-                  <div className="image-editor-card" key={image}>
-                    <PropertyImage
-                      src={image}
-                      alt={`Fotografia proprietății ${i + 1}`}
-                      sizes="(max-width: 640px) 45vw, 240px"
-                    />
-                    <span className="image-order">
-                      {i === 0
-                        ? "Fotografie de copertă"
-                        : String(i + 1).padStart(2, "0")}
-                    </span>
-                    <button
-                      className="image-remove"
-                      disabled={uploading}
-                      aria-label={`Elimină fotografia ${i + 1}`}
-                      onClick={() =>
-                        update(
-                          "images",
-                          property.images.filter((_, j) => j !== i),
-                        )
-                      }
-                    >
-                      <X size={15} />
-                    </button>
-                    {i > 0 && (
-                      <button
-                        className="make-cover"
-                        disabled={uploading}
-                        onClick={() =>
-                          update("images", [
-                            image,
-                            ...property.images.filter((_, j) => j !== i),
-                          ])
-                        }
-                      >
-                        Setează drept copertă
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <PropertyPhotoGrid
+                images={property.images}
+                onMove={movePhoto}
+                onRemove={(index) =>
+                  update(
+                    "images",
+                    property.images.filter((_, i) => i !== index),
+                  )
+                }
+              />
               {property.images.length === 0 && (
                 <p className="photo-tip">
                   <Sparkles size={16} />
