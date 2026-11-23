@@ -99,6 +99,8 @@ test("studios and the new amenities persist, replace the old parking label and a
     "Video Interfon",
     "Aer Condiționat",
     "Smart TV",
+    "Încălzire în pardoseală",
+    "Pod / Mansardă",
   ])
     await page.getByRole("button", { name, exact: true }).click();
   await page
@@ -118,6 +120,8 @@ test("studios and the new amenities persist, replace the old parking label and a
     "Video Interfon",
     "Aer Condiționat",
     "Smart TV",
+    "Încălzire în pardoseală",
+    "Pod / Mansardă",
   ]);
   await page.reload();
   await expect(type).toHaveValue("Studio");
