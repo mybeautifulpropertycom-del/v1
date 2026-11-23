@@ -44,7 +44,6 @@ function CampaignSetup({
   const [selectedId, setSelectedId] = useState("");
   const property = properties.find((item) => item.id === selectedId);
   const [area, setArea] = useState("");
-  const [roomInput, setRoomInput] = useState("");
   const [radius, setRadius] = useState<number>(10);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [offer, setOffer] = useState<PromotionPackage | null>(null);
@@ -54,31 +53,20 @@ function CampaignSetup({
   const [error, setError] = useState("");
   const zone = promotionTargetArea(area);
   const hasZone = zone.length >= 2;
-  const rooms = roomInput ? Number(roomInput) : undefined;
-  const validRooms =
-    rooms === undefined ||
-    (Number.isInteger(rooms) && rooms >= 1 && rooms <= 100);
   const bucharest = isBucharestPromotionArea(zone);
   const suggestions =
-    property && hasZone
-      ? promotionKeywordSuggestions(
-          property,
-          zone,
-          validRooms ? rooms : undefined,
-        )
-      : [];
+    property && hasZone ? promotionKeywordSuggestions(property, zone) : [];
   const keywords = suggestions.filter((keyword) =>
     selectedKeywords.includes(keyword),
   );
   const canActivate =
-    canPay && property && hasZone && validRooms && keywords.length > 0 && offer;
+    canPay && property && hasZone && keywords.length > 0 && offer;
   const pack = offer ? promotionPackages[offer] : null;
 
   function chooseProperty(id: string) {
     setSelectedId(id);
     const listing = properties.find((item) => item.id === id);
     setArea(listing ? defaultPromotionTargetArea(listing.location) : "");
-    setRoomInput("");
     setRadius(10);
     setSelectedKeywords([]);
     setOffer(null);
@@ -97,7 +85,6 @@ function CampaignSetup({
         package: offer,
         targetArea: zone,
         keywords,
-        ...(rooms === undefined ? {} : { rooms }),
         ...(bucharest ? { radiusKm: radius } : {}),
         notes: notes.trim(),
       });
@@ -189,21 +176,6 @@ function CampaignSetup({
               </section>
               <section className="promotion-step">
                 <h2>Cuvinte cheie</h2>
-                {["Condo", "Penthouse", "House", "Town House"].includes(
-                  property.type,
-                ) && (
-                  <label className="promotion-rooms">
-                    Număr de camere (opțional)
-                    <input
-                      type="number"
-                      min={1}
-                      max={100}
-                      step={1}
-                      value={roomInput}
-                      onChange={(event) => setRoomInput(event.target.value)}
-                    />
-                  </label>
-                )}
                 {suggestions.length > 0 ? (
                   <fieldset className="promotion-keyword-options">
                     <legend>
@@ -263,9 +235,8 @@ function CampaignSetup({
                   </label>
                 </details>
                 <p className="promotion-purchase-note">
-                  Butonul deschide plata securizată. După confirmarea plății,
-                  echipa pregătește campania și o lansează din contul Google Ads
-                  al platformei.
+                  După confirmarea plății, echipa pregătește campania și o
+                  lansează din contul Google Ads al platformei.
                 </p>
                 {error && (
                   <p role="alert" className="form-error">

@@ -156,13 +156,7 @@ export async function POST(request: Request) {
       notes = body.notes.trim();
     if (area.length < 2)
       throw new BillingError("Completează orașul sau zona de promovare.", 400);
-    const rooms = body.rooms;
     const radius = body.radiusKm;
-    if (
-      rooms !== undefined &&
-      (!Number.isInteger(rooms) || rooms < 1 || rooms > 100)
-    )
-      throw new BillingError("Introdu un număr de camere între 1 și 100.", 400);
     if (
       radius !== undefined &&
       (!isBucharestPromotionArea(area) ||
@@ -171,7 +165,7 @@ export async function POST(request: Request) {
       throw new BillingError("Alege o rază validă pentru București.", 400);
     let keywords = promotionKeywords(p, area);
     if (body.keywords !== undefined) {
-      const suggestions = promotionKeywordSuggestions(p, area, rooms);
+      const suggestions = promotionKeywordSuggestions(p, area);
       const selected = body.keywords;
       if (
         !Array.isArray(selected) ||
@@ -210,13 +204,15 @@ export async function POST(request: Request) {
       throw new BillingError(
         "Comanda nu a putut fi pregătită. Încearcă din nou.",
       );
+    const savedKeywords = reserved.snapshot.keywords;
     if (
       reserved.package !== body.package ||
       reserved.target_area !== area ||
       reserved.notes !== notes ||
       ((body.keywords !== undefined || radius !== undefined) &&
-        (JSON.stringify(reserved.snapshot.keywords) !==
-          JSON.stringify(keywords) ||
+        (!Array.isArray(savedKeywords) ||
+          savedKeywords.length !== keywords.length ||
+          !keywords.every((keyword) => savedKeywords.includes(keyword)) ||
           reserved.snapshot.radius_km !== radius))
     )
       throw new BillingError(

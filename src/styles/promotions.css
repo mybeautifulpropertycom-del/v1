@@ -89,8 +89,7 @@
   gap: 12px;
   margin-top: 16px;
 }
-.promotion-radius-settings select,
-.promotion-rooms input {
+.promotion-radius-settings select {
   max-width: 180px;
 }
 .promotion-radius-canvas {
@@ -114,12 +113,12 @@
   margin-top: 6px;
   color: #596757;
 }
-.promotion-step fieldset legend {
-  margin-bottom: 10px;
+.promotion-step fieldset legend,
+.promotion-notes summary {
   font-size: 13px;
 }
-.promotion-rooms {
-  margin-bottom: 14px;
+.promotion-step fieldset legend {
+  margin-bottom: 10px;
 }
 .promotion-keyword-options label,
 .promotion-budget-choices label {
@@ -161,7 +160,11 @@
   margin-block: 16px;
 }
 .promotion-notes summary {
+  list-style: none;
   cursor: pointer;
+}
+.promotion-notes summary::-webkit-details-marker {
+  display: none;
 }
 .promotion-notes label {
   margin-top: 8px;

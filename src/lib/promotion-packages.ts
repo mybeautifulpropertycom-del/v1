@@ -164,28 +164,28 @@ export function isBucharestPromotionArea(area: string) {
 }
 
 export function promotionKeywordSuggestions(
-  property: { type: string; transaction: string },
+  property: { type: string; transaction: string; bedrooms: number },
   area: string,
-  rooms?: number,
 ) {
   const [city, ...districts] = defaultPromotionTargetArea(area).split(/,\s*/);
   if (!city) return [];
   const [base] = promotionKeywords(property, "");
   const [inCity, alternative] = promotionKeywords(property, city);
+  const rooms = property.bedrooms;
   const withRooms =
-    rooms &&
+    Number.isInteger(rooms) &&
+    rooms > 0 &&
+    rooms <= 100 &&
     ["Condo", "Penthouse", "House", "Town House"].includes(property.type)
-      ? `${base.replace(/ de (vânzare|închiriat)$/, ` ${rooms} ${rooms === 1 ? "cameră" : "camere"} de $1`)} ${city}`
+      ? `${base} ${rooms} ${rooms === 1 ? "cameră" : "camere"} ${city}`
       : null;
   const district = districts[0];
   return [
     base,
     inCity,
-    withRooms,
-    district ? `${base} ${district} ${city}` : null,
     alternative,
     `${base} în ${city}`,
-  ]
-    .filter((keyword): keyword is string => Boolean(keyword))
-    .slice(0, 5);
+    withRooms,
+    district ? `${base} ${district} ${city}` : null,
+  ].filter((keyword): keyword is string => Boolean(keyword));
 }

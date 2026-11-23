@@ -50,6 +50,7 @@ async function fixture(
   published = true,
   admin = false,
   location = "Strada Test 9, Brașov 500001, România",
+  bedrooms = 2,
 ) {
   const state = await workspace(
     page,
@@ -57,6 +58,7 @@ async function fixture(
       status: published ? "published" : "draft",
       title: "Vila cu grădină",
       location,
+      bedrooms,
     },
     [],
     admin,
@@ -221,6 +223,11 @@ test("buying Plus uses the existing card form inside the dialog and only confirm
     })
     .check();
   await page.getByRole("radio", { name: "Plus 500 RON" }).check();
+  await expect(
+    page.locator(".promotion-setup .promotion-purchase-note"),
+  ).toHaveText(
+    "După confirmarea plății, echipa pregătește campania și o lansează din contul Google Ads al platformei.",
+  );
   await page.getByText("Adaugă observații (opțional)").click();
   await page
     .getByLabel(/Ce ar trebui să știm/)
@@ -233,6 +240,9 @@ test("buying Plus uses the existing card form inside the dialog and only confirm
     name: "Pregătim promovarea proprietății tale.",
   });
   await expect(dialog).toContainText("500 RON");
+  await expect(dialog.locator(".promotion-purchase-note")).toHaveText(
+    "Întreaga sumă este buget Google Ads. Configurarea și administrarea sunt incluse.",
+  );
   await expect(page).toHaveURL(/\/panou\/promovare$/);
   await expect(dialog.getByLabel("Numărul cardului")).toBeVisible();
   await expect(dialog).toContainText("Saved Agent");
@@ -296,6 +306,7 @@ test("Bucharest targeting retains the district, lets the agent choose keywords, 
     true,
     false,
     "Strada Test 9, București, Pantelimon 021621, România",
+    1,
   );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/panou/promovare");
@@ -319,12 +330,17 @@ test("Bucharest targeting retains the district, lets the agent choose keywords, 
       page.getByText(/Harta nu este disponibilă momentan/),
     ).toBeVisible();
   }
-  await page.getByLabel("Număr de camere (opțional)").fill("3");
-  const keyword = "apartament 3 camere de vânzare București";
+  await expect(page.getByLabel("Număr de camere (opțional)")).toHaveCount(0);
+  const keyword = "apartament de vânzare 1 cameră București";
   const district = "apartament de vânzare Pantelimon București";
-  await expect(
-    page.locator(".promotion-keyword-options").getByRole("checkbox"),
-  ).toHaveCount(5);
+  await expect(page.locator(".promotion-keyword-options label")).toHaveText([
+    "apartament de vânzare",
+    "apartament de vânzare București",
+    "vânzare apartament București",
+    "apartament de vânzare în București",
+    keyword,
+    district,
+  ]);
   await page.getByRole("checkbox", { name: keyword, exact: true }).check();
   await page.getByRole("checkbox", { name: district, exact: true }).check();
   await page.getByRole("radio", { name: "Extins 1000 RON" }).check();
@@ -336,7 +352,6 @@ test("Bucharest targeting retains the district, lets the agent choose keywords, 
       propertyId: id,
       package: "extended",
       targetArea: "București, Pantelimon",
-      rooms: 3,
       keywords: [keyword, district],
       radiusKm: 15,
       notes: "",

@@ -177,7 +177,7 @@ export function PromotionPaymentPanel({
             )}
           <p className="promotion-purchase-note">
             Întreaga sumă este buget Google Ads. Configurarea și administrarea
-            sunt incluse. Lansăm campania manual, după confirmarea detaliilor.
+            sunt incluse.
           </p>
         </>
       )}
