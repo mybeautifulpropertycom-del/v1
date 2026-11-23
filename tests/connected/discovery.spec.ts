@@ -69,13 +69,22 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   );
   await expect(
     page.getByRole("heading", {
-      name: "Apartamente cu 2 camere de vânzare în București",
+      name: "1 proprietate potrivită pentru tine",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Apartamente cu 2 camere de vânzare în București", {
+      exact: true,
     }),
   ).toBeVisible();
   await expect(page.locator(".discovery-listing")).toHaveCount(1);
   await expect(
     page.getByRole("heading", { name: "Apartament în buget" }),
   ).toBeVisible();
+  await expect(page.locator(".discovery-listing-facts")).toContainText("2 băi");
+  await expect(page.locator(".discovery-listing-amenities")).toContainText(
+    "Terasă",
+  );
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     "noindex, follow",

@@ -20,7 +20,9 @@ globalThis.fetch = async (input, init) => {
       city_slug: "bucuresti",
       kind: "apartamente",
       rooms: 2,
-      image: "/images/apartment.jpg",
+      bathrooms: 2,
+      amenities: ["Terasă", "Parcare", "Lift", "Aer condiționat"],
+      image: "/images/discovery/apartament.webp",
     };
     const inventory = [
       {
@@ -29,6 +31,7 @@ globalThis.fetch = async (input, init) => {
         slug: "print-test-home",
         address_slug: "print-test-home",
         title: "Apartament în buget",
+        google_place_id: "ChIJ-search-bucharest-1",
       },
       {
         ...template,
@@ -42,6 +45,8 @@ globalThis.fetch = async (input, init) => {
         slug: "apartament-trei-camere",
         title: "Apartament cu trei camere",
         rooms: 3,
+        google_place_id: "ChIJ-search-bucharest-2",
+        image: "/images/discovery/penthouse.webp",
       },
       {
         ...template,
@@ -58,6 +63,9 @@ globalThis.fetch = async (input, init) => {
         title: `Casă cu ${rooms} camere`,
         rooms,
         kind: "case",
+        image: "/images/discovery/casa.webp",
+        amenities: ["Grădină", "Terasă", "Garaj"],
+        google_place_id: `ChIJ-search-house-${rooms}`,
       })),
       {
         ...template,

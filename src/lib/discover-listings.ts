@@ -21,11 +21,12 @@ export type DiscoveryListing = Pick<
   | "area"
   | "area_unit"
   | "rooms"
-> & {
-  city: string | null;
-  image: string | null;
-  kind: Exclude<ListingKind, "toate"> | null;
-};
+> &
+  Partial<Pick<Property, "bathrooms" | "amenities" | "google_place_id">> & {
+    city: string | null;
+    image: string | null;
+    kind: Exclude<ListingKind, "toate"> | null;
+  };
 export type DiscoveryResult = {
   total: number;
   city: string | null;

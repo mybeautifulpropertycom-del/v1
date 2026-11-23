@@ -79,6 +79,13 @@ export async function mockGoogleMaps(page: Page) {
       types = ["street_address"];
       constructor({ id }: { id: string }) {
         this.id = id;
+        if (id.startsWith("ChIJ-search-")) {
+          const position = Number(id.split("-").at(-1));
+          this.location = point(
+            44.38 + position * 0.01,
+            26.05 + position * 0.017,
+          );
+        }
       }
       async fetchFields({ fields }: { fields: string[] }) {
         state.details.push({ id: this.id, fields });
@@ -221,10 +228,11 @@ export async function mockGoogleMaps(page: Page) {
     }
     class MockMap {
       node: HTMLElement;
-      constructor(node: HTMLElement) {
+      constructor(node: HTMLElement, options?: { styles?: unknown }) {
         state.maps++;
         this.node = node;
         node.textContent = "Google Maps · test map";
+        if (options?.styles) node.dataset.styledMap = "true";
       }
       panTo() {}
       setZoom() {}
@@ -261,12 +269,46 @@ export async function mockGoogleMaps(page: Page) {
         return this;
       }
     }
+    class LatLng {
+      constructor(public position: { lat: number; lng: number }) {}
+    }
+    class Overlay {
+      private map: MockMap | null = null;
+      onAdd = () => {};
+      draw = () => {};
+      onRemove = () => {};
+      static preventMapHitsAndGesturesFrom() {}
+      setMap(map: MockMap | null) {
+        if (this.map) this.onRemove();
+        this.map = map;
+        if (this.map) {
+          this.onAdd();
+          this.draw();
+        }
+      }
+      getPanes() {
+        return { overlayMouseTarget: this.map?.node };
+      }
+      getProjection() {
+        const width = this.map?.node.clientWidth ?? 0;
+        const height = this.map?.node.clientHeight ?? 0;
+        return {
+          fromLatLngToDivPixel: ({ position }: LatLng) => ({
+            x: width * (0.23 + ((position.lng * 10) % 0.54)),
+            y: height * (0.24 + ((position.lat * 20) % 0.52)),
+          }),
+        };
+      }
+    }
     class Session {
       id = ++sessionCounter;
     }
     const libraries = {
+      core: { LatLng, LatLngBounds: Bounds },
       maps: {
         Map: MockMap,
+        OverlayView: Overlay,
+        RenderingType: { RASTER: "RASTER" },
         Circle: class {
           setRadius(radius: number) {
             state.radii.push(radius);

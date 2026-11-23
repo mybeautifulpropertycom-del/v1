@@ -2592,6 +2592,12 @@ test("public discovery filters published matches by exact or minimum rooms, city
         "utf8",
       ),
     );
+    await discovery.exec(
+      await readFile(
+        new URL("../supabase/sql-editor-discovery-card-details.sql", import.meta.url),
+        "utf8",
+      ),
+    );
     await discovery.query(
       `
       insert into public.properties(owner_id,slug,title,description,location,city,type,transaction,currency,price,area,rooms,bedrooms,images,status)
@@ -2614,7 +2620,12 @@ test("public discovery filters published matches by exact or minimum rooms, city
     `,
       [agentA],
     );
-    await discovery.exec("set role anon");
+    await discovery.exec(`
+      update public.properties
+      set bathrooms = 2, amenities = array['Terasă', 'Parcare'], google_place_id = 'ChIJ-test-discovery'
+      where slug = 'lower-bound';
+      set role anon;
+    `);
     await assert.rejects(
       discovery.query("select * from public.property_discovery"),
       /permission denied/i,
@@ -2624,7 +2635,7 @@ test("public discovery filters published matches by exact or minimum rooms, city
         data: {
           total: number;
           city: string;
-          items: { slug: string; owner_id?: string }[];
+          items: { slug: string; owner_id?: string; bathrooms: number; amenities: string[]; google_place_id: string | null }[];
         };
       }>(
         "select public.find_public_listings('sale','apartamente',2,'bucuresti',50000,100000,'EUR') as data",
@@ -2637,6 +2648,10 @@ test("public discovery filters published matches by exact or minimum rooms, city
       "upper-bound",
     ]);
     assert.ok(filtered.items.every((row) => row.owner_id === undefined));
+    const card = filtered.items.find((row) => row.slug === "lower-bound");
+    assert.equal(card?.bathrooms, 2);
+    assert.deepEqual(card?.amenities, ["Terasă", "Parcare"]);
+    assert.equal(card?.google_place_id, "ChIJ-test-discovery");
     const villas = async (rooms: number) => (
       await discovery.query<{ data: { total: number; items: { slug: string }[] } }>(
         "select public.find_public_listings('sale','case',$1,'bucuresti',300000,500000,'EUR') as data",

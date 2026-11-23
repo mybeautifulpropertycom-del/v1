@@ -103,6 +103,12 @@ Search Console verification does not enable these services.
 
 ## Cost control and data handling
 
+- Search results reuse this configuration after running
+  `supabase/sql-editor-discovery-card-details.sql` in Supabase. The result map
+  loads near the viewport and requests only the location of each distinct saved
+  place ID on the current page. It keeps those coordinates in memory and shows
+  listings without a saved place in the results list.
+
 - Billable operations depend on Google's current SKU rules: autocomplete and its
   terminating Place Details request, place details when the map section is
   approached, dynamic map loads and Nearby Search. No dollar cost or free allowance is

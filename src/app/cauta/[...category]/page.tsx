@@ -4,11 +4,14 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
+  Bath,
+  DoorOpen,
   House,
   MapPin,
+  Ruler,
 } from "lucide-react";
 import { DiscoveryHeader } from "@/components/discovery-header";
+import { DiscoveryResultsMap } from "@/components/discovery-results-map";
 import { PropertyImage } from "@/components/property-image";
 import {
   findPublicListings,
@@ -24,7 +27,9 @@ import {
   parseDiscoveryFilters,
 } from "@/lib/property-discovery";
 import { publicIndexing, serializeJsonLd, siteUrl } from "@/lib/seo";
+import { PLACE_ID } from "@/lib/property-location";
 import "@/styles/discovery.css";
+import "@/styles/discovery-results.css";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +84,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 function ListingCard({ listing }: { listing: DiscoveryListing }) {
   const area =
     listing.area_unit === "sqft" ? listing.area * 0.09290304 : listing.area;
+  const amenities = [...new Set(listing.amenities ?? [])];
   return (
     <article className="discovery-listing">
       <Link href={publicPath(listing)}>
@@ -87,33 +93,56 @@ function ListingCard({ listing }: { listing: DiscoveryListing }) {
             <PropertyImage
               src={listing.image}
               alt=""
-              sizes="(max-width: 650px) 100vw, (max-width: 960px) 50vw, 33vw"
+              sizes="(max-width: 780px) 42vw, (max-width: 981px) 28vw, 23vw"
             />
           ) : (
             <House size={32} aria-hidden="true" />
           )}
         </div>
         <div className="discovery-listing-body">
-          <p className="discovery-price">{formatPrice(listing)}</p>
-          <h2>{listing.title}</h2>
-          <p className="discovery-listing-location">
-            <MapPin size={15} aria-hidden="true" />{" "}
-            {listing.location || listing.city}
-          </p>
-          <div className="discovery-listing-facts">
+          <div className="discovery-listing-heading">
+            <h2>{listing.title}</h2>
+            <p className="discovery-listing-location">
+              <MapPin size={15} aria-hidden="true" />
+              {listing.location || listing.city}
+            </p>
+            <p className="discovery-price">{formatPrice(listing)}</p>
+          </div>
+          <ul className="discovery-listing-facts" aria-label="Caracteristici">
             {listing.rooms != null && (
-              <span>
+              <li>
+                <DoorOpen size={14} aria-hidden="true" />
                 {listing.rooms} {listing.rooms === 1 ? "cameră" : "camere"}
-              </span>
+              </li>
+            )}
+            {listing.bathrooms != null && listing.bathrooms > 0 && (
+              <li>
+                <Bath size={14} aria-hidden="true" />
+                {listing.bathrooms.toLocaleString("ro-RO")}{" "}
+                {listing.bathrooms === 1 ? "baie" : "băi"}
+              </li>
             )}
             {area > 0 && (
-              <span>
+              <li>
+                <Ruler size={14} aria-hidden="true" />
                 {area.toLocaleString("ro-RO", { maximumFractionDigits: 2 })} m²
-              </span>
+              </li>
             )}
-          </div>
-          <span className="discovery-listing-link">
-            Vezi prezentarea <ArrowUpRight size={15} aria-hidden="true" />
+          </ul>
+          {amenities.length > 0 && (
+            <ul className="discovery-listing-amenities" aria-label="Facilități">
+              {amenities.slice(0, 4).map((amenity) => (
+                <li key={amenity}>{amenity}</li>
+              ))}
+              {amenities.length > 4 && (
+                <li aria-label={`${amenities.length - 4} alte facilități`}>
+                  +{amenities.length - 4}
+                </li>
+              )}
+            </ul>
+          )}
+          <span className="discovery-listing-link" aria-hidden="true">
+            <ArrowRight size={19} />
           </span>
         </div>
       </Link>
@@ -123,6 +152,25 @@ function ListingCard({ listing }: { listing: DiscoveryListing }) {
 
 export default async function ResultsPage(props: PageProps) {
   const { category, filters, result, resultPages, title } = await search(props);
+  const items = result?.items ?? [];
+  const total = result?.total ?? 0;
+  const count =
+    total === 1
+      ? "1 proprietate"
+      : `${total.toLocaleString("ro-RO")}${total >= 20 ? " de" : ""} proprietăți`;
+  const personalized = total > 0 && Boolean(filters.currency);
+  const mapListings = items.flatMap((item) =>
+    item.google_place_id && PLACE_ID.test(item.google_place_id)
+      ? [
+          {
+            placeId: item.google_place_id,
+            href: publicPath(item),
+            title: item.title,
+            price: formatPrice(item),
+          },
+        ]
+      : [],
+  );
   const budget = [
     filters.min !== undefined
       ? `de la ${filters.min.toLocaleString("ro-RO")}`
@@ -160,109 +208,138 @@ export default async function ResultsPage(props: PageProps) {
   ];
 
   return (
-    <div className="discovery-site">
-      <DiscoveryHeader />
-      <main className="discovery-shell discovery-results">
-        <Link href="/#cautare" className="discovery-back">
-          <ArrowLeft size={16} aria-hidden="true" /> Schimbă căutarea
-        </Link>
-        <h1>{title}</h1>
-        {result && (
-          <p className="discovery-result-count">
-            {result.total === 1
-              ? "1 proprietate"
-              : `${result.total.toLocaleString("ro-RO")} proprietăți`}
-          </p>
+    <div className="discovery-site discovery-results-site">
+      <DiscoveryHeader editorial />
+      <main
+        className="discovery-shell discovery-results"
+        data-has-listings={items.length > 0 || undefined}
+      >
+        <header className="discovery-results-intro">
+          <Link href="/#cautare" className="discovery-back">
+            <ArrowLeft size={16} aria-hidden="true" /> Schimbă căutarea
+          </Link>
+          <h1>
+            {personalized
+              ? `${count} ${total === 1 ? "potrivită" : "potrivite"} pentru tine`
+              : title}
+          </h1>
+          {result && (
+            <p className="discovery-result-count">
+              {personalized ? title : count}
+            </p>
+          )}
+        </header>
+        {items.length > 0 && (
+          <DiscoveryResultsMap
+            key={discoveryPath(category, filters)}
+            listings={mapListings}
+            resultCount={items.length}
+          />
         )}
-        {(budget || related.length > 0) && (
-          <nav
-            className="discovery-results-refine"
-            aria-label="Ajustează căutarea"
-          >
-            {budget && (
-              <Link href={discoveryPath(category)}>
-                Elimină bugetul: {budget}
-              </Link>
-            )}
-            {related.map(({ label, category: next }) => (
-              <Link
-                key={label}
-                href={discoveryPath(next, { ...filters, page: 1 })}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-        )}
-        {result?.items.length ? (
-          <>
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: serializeJsonLd({
-                  "@context": "https://schema.org",
-                  "@type": "ItemList",
-                  name: title,
-                  itemListElement: result.items.map((item, index) => ({
-                    "@type": "ListItem",
-                    position:
-                      (filters.page - 1) * DISCOVERY_PAGE_SIZE + index + 1,
-                    name: item.title,
-                    url: siteUrl(publicPath(item)),
-                  })),
-                }),
-              }}
-            />
-            <div className="discovery-listings">
-              {result.items.map((item) => (
-                <ListingCard key={item.slug} listing={item} />
+        <div className="discovery-results-controls">
+          {(items.length > 0 || budget || related.length > 0) && (
+            <nav
+              className="discovery-results-refine"
+              aria-label="Ajustează căutarea"
+            >
+              {items.length > 0 && (
+                <span className="discovery-refine-active">
+                  {listingKinds[category.kind]} ({total.toLocaleString("ro-RO")}
+                  )
+                </span>
+              )}
+              {budget && (
+                <Link href={discoveryPath(category)}>
+                  Elimină bugetul: {budget}
+                </Link>
+              )}
+              {related.map(({ label, category: next }) => (
+                <Link
+                  key={label}
+                  href={discoveryPath(next, { ...filters, page: 1 })}
+                >
+                  {label}
+                </Link>
               ))}
+            </nav>
+          )}
+        </div>
+        <section
+          className="discovery-results-list"
+          id="rezultate"
+          aria-label="Lista proprietăților"
+          tabIndex={-1}
+        >
+          {items.length > 0 ? (
+            <>
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                  __html: serializeJsonLd({
+                    "@context": "https://schema.org",
+                    "@type": "ItemList",
+                    name: title,
+                    itemListElement: items.map((item, index) => ({
+                      "@type": "ListItem",
+                      position:
+                        (filters.page - 1) * DISCOVERY_PAGE_SIZE + index + 1,
+                      name: item.title,
+                      url: siteUrl(publicPath(item)),
+                    })),
+                  }),
+                }}
+              />
+              <div className="discovery-listings">
+                {items.map((item) => (
+                  <ListingCard key={item.slug} listing={item} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="discovery-empty">
+              <h2>
+                {result
+                  ? "Nu am găsit proprietăți pentru această căutare."
+                  : "Listările sunt temporar indisponibile."}
+              </h2>
+              {!result && (
+                <Link
+                  className="discovery-primary"
+                  href={discoveryPath(category, filters)}
+                >
+                  Încearcă din nou <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+              )}
             </div>
-          </>
-        ) : (
-          <div className="discovery-empty">
-            <h2>
-              {result
-                ? "Nu am găsit proprietăți pentru această căutare."
-                : "Listările sunt temporar indisponibile."}
-            </h2>
-            {!result && (
-              <Link
-                className="discovery-primary"
-                href={discoveryPath(category, filters)}
-              >
-                Încearcă din nou <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            )}
-          </div>
-        )}
-        {resultPages > 1 && (
-          <nav className="discovery-pagination" aria-label="Paginare">
-            {filters.page > 1 && (
-              <Link
-                href={discoveryPath(category, {
-                  ...filters,
-                  page: filters.page - 1,
-                })}
-              >
-                <ArrowLeft size={16} aria-hidden="true" /> Pagina anterioară
-              </Link>
-            )}
-            <span>
-              Pagina {filters.page} din {resultPages}
-            </span>
-            {filters.page < resultPages && (
-              <Link
-                href={discoveryPath(category, {
-                  ...filters,
-                  page: filters.page + 1,
-                })}
-              >
-                Pagina următoare <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            )}
-          </nav>
-        )}
+          )}
+          {resultPages > 1 && (
+            <nav className="discovery-pagination" aria-label="Paginare">
+              {filters.page > 1 && (
+                <Link
+                  href={discoveryPath(category, {
+                    ...filters,
+                    page: filters.page - 1,
+                  })}
+                >
+                  <ArrowLeft size={16} aria-hidden="true" /> Pagina anterioară
+                </Link>
+              )}
+              <span>
+                Pagina {filters.page} din {resultPages}
+              </span>
+              {filters.page < resultPages && (
+                <Link
+                  href={discoveryPath(category, {
+                    ...filters,
+                    page: filters.page + 1,
+                  })}
+                >
+                  Pagina următoare <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+              )}
+            </nav>
+          )}
+        </section>
       </main>
     </div>
   );
