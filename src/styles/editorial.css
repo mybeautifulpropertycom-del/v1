@@ -31,7 +31,8 @@
   padding-inline: var(--estate-content-gutter);
 }
 .estate-space {
-  padding-block: clamp(70px, 8.5vw, 140px);
+  --estate-section-padding: clamp(70px, 8.5vw, 140px);
+  padding-block: var(--estate-section-padding);
 }
 .estate-eyebrow {
   display: block;
@@ -633,6 +634,12 @@
   padding-top: clamp(36px, 3.2vw, 48px);
 }
 @media (min-width: 1001px) {
+  .estate-gallery:has(+ .estate-film) {
+    padding-block-end: calc(var(--estate-section-padding) - 8px);
+  }
+  .estate-gallery + .estate-film {
+    padding-block-start: 77px;
+  }
   .estate-contact {
     padding-block: clamp(42px, 5.1vw, 84px);
   }
