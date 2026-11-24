@@ -156,50 +156,44 @@ test("the pinned photographs change on scroll and remain separate from the compl
   expect(sections.indexOf("contact")).toBe(sections.indexOf("film") + 1);
 });
 
-test("mobile pins 20 photographs while reduced motion keeps normal scrolling", async ({
+test("mobile keeps the scroll gallery in reduced motion without animating photo changes", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/modele/editorial");
-  await expect(page.locator(".estate-scroll-stage")).not.toHaveAttribute(
-    "data-pinned",
+  const stage = page.locator(".estate-scroll-stage");
+  await expect(stage).toHaveAttribute("data-pinned", "true");
+  await expect(stage.locator(".estate-scene")).toHaveCount(20);
+  await expect(stage.locator(".estate-scene.is-active")).toHaveCSS(
+    "transition-duration",
+    "0s",
   );
-  await expect(page.locator(".estate-scene")).toHaveCount(20);
-  for (const scene of await page.locator(".estate-scene").all()) {
-    await scene.scrollIntoViewIfNeeded();
-    await expect(scene).not.toHaveAttribute("aria-hidden", "true");
-    await expect(scene).toHaveCSS("opacity", "1");
-    await expect(scene.locator("img")).toBeInViewport();
+  for (const preference of ["reduce", "no-preference"] as const) {
+    await page.emulateMedia({ reducedMotion: preference });
+    for (const index of [1, 19]) {
+      await stage.evaluate((root, index) => {
+        const viewport = root.querySelector(".estate-scroll-sticky")!;
+        const bounds = root.getBoundingClientRect();
+        const travel = bounds.height - viewport.getBoundingClientRect().height;
+        window.scrollTo({
+          top: bounds.top + scrollY + (travel * index) / 19,
+          behavior: "instant",
+        });
+      }, index);
+      await expect(
+        stage.locator(".estate-scene.is-active img"),
+      ).toHaveAttribute("alt", new RegExp(`fotografia ${index + 1}$`));
+      await expect(stage.locator(".estate-scroll-sticky")).toHaveCSS(
+        "position",
+        "sticky",
+      );
+      const bounds = await stage.locator(".estate-scenes").boundingBox();
+      expect(bounds?.y).toBeCloseTo(0, 0);
+      expect(bounds?.height).toBe(844);
+    }
   }
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator(".estate-scroll-stage")).toHaveAttribute(
-    "data-pinned",
-    "true",
-  );
-  for (const index of [1, 19]) {
-    await page.locator(".estate-scroll-stage").evaluate((root, index) => {
-      window.scrollTo({
-        top:
-          root.getBoundingClientRect().top +
-          scrollY +
-          innerHeight * 0.85 * index,
-        behavior: "instant",
-      });
-    }, index);
-    await expect(page.locator(".estate-scene.is-active img")).toHaveAttribute(
-      "alt",
-      new RegExp(`fotografia ${index + 1}$`),
-    );
-    await expect(page.locator(".estate-scroll-sticky")).toHaveCSS(
-      "position",
-      "sticky",
-    );
-    const bounds = await page.locator(".estate-scenes").boundingBox();
-    expect(bounds?.y).toBeCloseTo(0, 0);
-    expect(bounds?.height).toBe(844);
-  }
-  await expect(page.locator(".estate-scroll-stage img")).toHaveCount(2);
+  await expect(stage.locator("img")).toHaveCount(2);
   await expect(page.locator(".estate-gallery-grid > button")).toHaveCount(40);
   await page.locator(".estate-scroll-stage").evaluate((root) => {
     window.scrollTo({

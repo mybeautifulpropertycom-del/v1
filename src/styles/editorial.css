@@ -321,12 +321,26 @@
 .estate-scroll-sticky {
   position: relative;
 }
+.estate-scroll-stage[data-pinned] {
+  --estate-scroll-viewport: 100vh;
+  --estate-scroll-step: 85vh;
+  height: calc(
+    var(--estate-scroll-viewport) + var(--estate-scroll-step) *
+      var(--estate-scroll-steps)
+  );
+}
+@supports (height: 100dvh) and (height: 100svh) {
+  .estate-scroll-stage[data-pinned] {
+    --estate-scroll-viewport: 100dvh;
+    /* Keep each step stable while the mobile browser toolbar moves. */
+    --estate-scroll-step: 85svh;
+  }
+}
 .estate-scroll-stage[data-pinned] .estate-scroll-sticky {
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
-  /* Follow the visible viewport as the mobile browser toolbar retracts. */
-  height: 100vh;
-  height: 100dvh;
+  height: var(--estate-scroll-viewport);
   display: flex;
   flex-direction: column;
 }
@@ -341,6 +355,9 @@
   min-height: 480px;
   height: min(68vw, 640px);
   overflow: hidden;
+}
+.estate-scroll-stage:not([data-pinned]) .estate-scene:not(.is-active) {
+  display: none;
 }
 .estate-scroll-stage[data-pinned] .estate-scene {
   position: absolute;

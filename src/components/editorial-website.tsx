@@ -8,7 +8,7 @@ import { AgentAvatar } from "./agent-avatar";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -56,52 +56,46 @@ const SCROLL_GALLERY_CAPTIONS = [
 
 function ScrollGallery({ images, title }: { images: string[]; title: string }) {
   const stage = useRef<HTMLDivElement>(null);
-  const [scrollState, setScrollState] = useState<{
-    pinned: boolean | null;
-    active: number;
-  }>({ pinned: null, active: 0 });
+  const sticky = useRef<HTMLDivElement>(null);
+  const [supportsSticky, setSupportsSticky] = useState(false);
+  const [active, setActive] = useState(0);
+  const steps = images.length - 1;
+  const pinned = supportsSticky && steps > 0;
+
+  useEffect(() => {
+    setSupportsSticky(
+      window.CSS?.supports?.("position", "sticky") ||
+        window.CSS?.supports?.("position", "-webkit-sticky") ||
+        false,
+    );
+  }, []);
 
   useEffect(() => {
     const root = stage.current;
-    if (!root) return;
-    const media = matchMedia("(prefers-reduced-motion: no-preference)");
+    const viewport = sticky.current;
+    if (!pinned || !root || !viewport) return;
     let frame = 0;
-    function update() {
+    const visualViewport = window.visualViewport;
+    const update = () => {
       frame = 0;
-      if (!root) return;
-      const pinned = media.matches && images.length > 1;
-      let active = 0;
-      if (pinned) {
-        const step = window.innerHeight * 0.85;
-        const distance = step * (images.length - 1);
-        root.style.height = `${window.innerHeight + distance}px`;
-        const offset = Math.max(
-          0,
-          Math.min(distance, -root.getBoundingClientRect().top),
-        );
-        active = Math.min(images.length - 1, Math.round(offset / step));
-      } else root.style.removeProperty("height");
-      setScrollState((current) =>
-        current.pinned === pinned && current.active === active
-          ? current
-          : { pinned, active },
-      );
-    }
+      const distance = Math.max(1, root.offsetHeight - viewport.offsetHeight);
+      const progress = -root.getBoundingClientRect().top / distance;
+      setActive(Math.max(0, Math.min(steps, Math.round(progress * steps))));
+    };
     function schedule() {
       if (!frame) frame = requestAnimationFrame(update);
     }
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
-    media.addEventListener("change", schedule);
+    visualViewport?.addEventListener("resize", schedule);
     update();
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
-      media.removeEventListener("change", schedule);
-      root.style.removeProperty("height");
+      visualViewport?.removeEventListener("resize", schedule);
     };
-  }, [images.length]);
+  }, [pinned, steps]);
 
   if (!images.length) return null;
   return (
@@ -112,9 +106,10 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
       <div
         className="estate-scroll-stage"
         ref={stage}
-        data-pinned={scrollState.pinned ? "true" : undefined}
+        data-pinned={pinned ? "true" : undefined}
+        style={{ "--estate-scroll-steps": steps } as CSSProperties}
       >
-        <div className="estate-scroll-sticky">
+        <div className="estate-scroll-sticky" ref={sticky}>
           <div
             className="estate-scenes"
             role="group"
@@ -125,15 +120,12 @@ function ScrollGallery({ images, title }: { images: string[]; title: string }) {
               return (
                 <div
                   key={`${image}-${index}`}
-                  className={`estate-scene ${scrollState.active === index ? "is-active" : ""}`}
-                  aria-hidden={
-                    scrollState.pinned && scrollState.active !== index
-                      ? true
-                      : undefined
-                  }
+                  className={`estate-scene ${active === index ? "is-active" : ""}`}
+                  aria-hidden={active !== index || undefined}
                 >
-                  {(scrollState.pinned === false ||
-                    Math.abs(index - scrollState.active) <= 1) && (
+                  {(pinned
+                    ? Math.abs(index - active) <= 1
+                    : active === index) && (
                     <PropertyImage
                       src={image}
                       alt={`${title} — fotografia ${index + 1}`}
