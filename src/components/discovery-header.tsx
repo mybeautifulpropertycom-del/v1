@@ -4,7 +4,7 @@ import { PLATFORM_NAME } from "@/lib/platform-brand";
 import { Brand } from "./brand";
 import "@/styles/discovery-header.css";
 
-const publishHref = "/autentificare?actiune=publica";
+const publishHref = "/inregistrare";
 const publishQuestion = "Vinzi sau închiriezi?";
 
 export function DiscoveryHeader({

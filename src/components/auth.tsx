@@ -146,7 +146,7 @@ export function Auth({
           </p>
         </div>
         <span className="eyebrow">
-          PENTRU AGENȚI IMOBILIARI. PENTRU LOCUINȚE DEOSEBITE.
+          PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI.
         </span>
       </div>
       <main className="login-panel">

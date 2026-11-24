@@ -45,17 +45,23 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
     page.getByText("Vinzi sau închiriezi?").filter({ visible: true }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Publică anunțul" }).click();
-  await expect(page).toHaveURL(/\/autentificare\?actiune=publica$/);
+  await expect(page).toHaveURL(/\/inregistrare$/);
   await expect(
-    page.getByLabel("Adresă de e-mail", { exact: true }),
+    page.getByRole("heading", { name: "Pune proprietatea în valoare" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI.", { exact: true }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     /noindex/,
   );
-  await page.goto("/inregistrare");
+  await page.goto("/autentificare");
   await expect(
-    page.getByRole("heading", { name: "Pune proprietatea în valoare" }),
+    page.getByLabel("Adresă de e-mail", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI.", { exact: true }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
@@ -80,8 +86,8 @@ test("the mobile header icon opens a menu for publishing", async ({ page }) => {
   await expect(publish).toHaveCount(0);
   await icon.click();
   await publish.click();
-  await expect(page).toHaveURL(/\/panou\/proprietati\/noua$/);
-  await expect(page.getByLabel("Titlul proprietății")).toBeVisible();
+  await expect(page).toHaveURL(/\/inregistrare$/);
+  await expect(page.getByLabel("Nume complet")).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     /noindex/,
