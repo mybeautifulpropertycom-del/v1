@@ -276,7 +276,8 @@ button.discovery-editorial-step-label:hover {
     --editorial-gold: #a75d3e;
     --editorial-shell: 100%;
     --editorial-column: 100%;
-    --editorial-photo-height: clamp(310px, 94vw, 510px);
+    /* Let the photo fill the extra space when the browser bars retract. */
+    --editorial-photo-height: calc(clamp(310px, 94vw, 510px) + 100dvh - 100svh);
     --editorial-quiz-overlap: 26px;
   }
 

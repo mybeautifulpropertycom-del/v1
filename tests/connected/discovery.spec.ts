@@ -38,6 +38,39 @@ test.describe("homepage on a phone", () => {
     });
     expect(bottomGap).toBeLessThanOrEqual(1);
   });
+
+  test("returning to the first step restores the original spacing below the choices", async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 744 });
+    await page.goto("/");
+    const spacing = () =>
+      page.locator("#cautare").evaluate((quiz) => {
+        const bottom = quiz.getBoundingClientRect().bottom;
+        const choices = quiz.querySelector(".discovery-offer-choices")!;
+        return {
+          belowChoices: bottom - choices.getBoundingClientRect().bottom,
+          belowQuiz: window.innerHeight - bottom,
+        };
+      });
+    const initial = await spacing();
+
+    await page.getByRole("button", { name: "Vreau să cumpăr" }).tap();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Emulation.setSmallViewportHeightDifferenceOverride", {
+      difference: 100,
+    });
+    await page.getByRole("button", { name: "Înapoi", exact: true }).tap();
+    await expect(
+      page.getByRole("heading", { name: "Ce vrei să faci?" }),
+    ).toBeFocused();
+
+    const returned = await spacing();
+    expect(returned.belowChoices).toBeCloseTo(initial.belowChoices, 0);
+    expect(returned.belowQuiz).toBeLessThanOrEqual(1);
+  });
 });
 
 test("the mobile quiz filters by rooms, city and inclusive budget, then opens the listing", async ({
