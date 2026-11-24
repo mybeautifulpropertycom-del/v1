@@ -50,7 +50,15 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
     page.getByRole("heading", { name: "Pune proprietatea în valoare" }),
   ).toBeVisible();
   await expect(
-    page.getByText("PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI.", { exact: true }),
+    page.getByText("Creează un cont și publică anunțul.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("O PREZENTARE FRUMOASĂ PENTRU FIECARE PROPRIETATE", {
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
@@ -61,7 +69,7 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
     page.getByLabel("Adresă de e-mail", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI.", { exact: true }),
+    page.getByText("PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI", { exact: true }),
   ).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",

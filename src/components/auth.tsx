@@ -145,9 +145,7 @@ export function Auth({
             modalitate de a o prezenta, promova și vinde.
           </p>
         </div>
-        <span className="eyebrow">
-          PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI.
-        </span>
+        <span className="eyebrow">PENTRU AGENȚI IMOBILIARI ȘI PROPRIETARI</span>
       </div>
       <main className="login-panel">
         <div className="auth-card">
@@ -174,7 +172,7 @@ export function Auth({
               : resetPassword
                 ? "Alege o parolă nouă pentru contul tău."
                 : mode === "signup"
-                  ? "Creează-ți contul și alege designul."
+                  ? "Creează un cont și publică anunțul."
                   : mode === "forgot"
                     ? "Introdu adresa de e-mail și îți trimitem un link de resetare a parolei."
                     : "Autentifică-te în contul tău."}
@@ -302,7 +300,7 @@ export function Auth({
           )}
         </div>
         <span className="login-panel-footer">
-          O PREZENTARE FRUMOASĂ PENTRU FIECARE PROPRIETATE.
+          O PREZENTARE FRUMOASĂ PENTRU FIECARE PROPRIETATE
         </span>
       </main>
     </div>
