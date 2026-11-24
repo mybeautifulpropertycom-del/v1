@@ -276,9 +276,23 @@ button.discovery-editorial-step-label:hover {
     --editorial-gold: #a75d3e;
     --editorial-shell: 100%;
     --editorial-column: 100%;
-    /* Let the photo fill the extra space when the browser bars retract. */
-    --editorial-photo-height: calc(clamp(310px, 94vw, 510px) + 100dvh - 100svh);
+    --editorial-photo-base-height: clamp(310px, 94vw, 510px);
     --editorial-quiz-overlap: 26px;
+    /* Both viewport sizes stay fixed while the browser bars move. */
+    --editorial-quiz-min-height: max(
+      300px,
+      calc(
+        100svh - var(--platform-header-height) -
+          var(--editorial-photo-base-height) + var(--editorial-quiz-overlap)
+      )
+    );
+    --editorial-photo-height: max(
+      var(--editorial-photo-base-height),
+      calc(
+        100lvh - var(--platform-header-height) -
+          var(--editorial-quiz-min-height) + var(--editorial-quiz-overlap)
+      )
+    );
   }
 
   .discovery-editorial-scene {
@@ -327,13 +341,7 @@ button.discovery-editorial-step-label:hover {
 
   .discovery-editorial-quiz {
     margin: 0;
-    min-height: max(
-      300px,
-      calc(
-        100dvh - var(--platform-header-height) - var(--editorial-photo-height) +
-          var(--editorial-quiz-overlap)
-      )
-    );
+    min-height: var(--editorial-quiz-min-height);
     padding: 19px var(--platform-header-gutter)
       max(25px, env(safe-area-inset-bottom));
     border-radius: 30px 30px 0 0;
