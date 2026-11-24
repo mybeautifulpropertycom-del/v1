@@ -44,7 +44,7 @@ export async function GET(request: Request) {
           .maybeSingle(),
         admin
           .from("property_orders")
-          .select("status,includes_video")
+          .select("status,includes_video,amount")
           .eq("property_id", id)
           .maybeSingle(),
       ]);
@@ -103,7 +103,9 @@ export async function GET(request: Request) {
         profile,
         grant,
         videoIncluded: order?.includes_video ?? true,
-        packageLocked: Boolean(grant || job || order?.status === "paid"),
+        packageLocked: Boolean(
+          grant || job || order?.status === "paid" || order?.amount === 0,
+        ),
         video: job
           ? {
               status: job.status,

@@ -24,9 +24,15 @@ test("package tariffs, administrator grants and paid fulfilment cannot create vi
       create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;`);
     const directory = new URL("../supabase/migrations/", import.meta.url);
     const upgradeName = "202611170001_publication_packages.sql";
+    const freeUpgradeName = "202611240003_free_photo_publication.sql";
     for (const name of (await readdir(directory))
       .sort()
-      .filter((name) => name.endsWith(".sql") && name !== upgradeName))
+      .filter(
+        (name) =>
+          name.endsWith(".sql") &&
+          name !== upgradeName &&
+          name !== freeUpgradeName,
+      ))
       await db.exec(await readFile(new URL(name, directory), "utf8"));
     await db.query(
       "insert into auth.users(id,email) values($1,'agent@example.com'),($2,'admin@example.com')",
@@ -220,6 +226,93 @@ test("package tariffs, administrator grants and paid fulfilment cannot create vi
       ).rows[0].amount,
       14900,
     );
+
+    const freeUpgrade = await readFile(
+      new URL(freeUpgradeName, directory),
+      "utf8",
+    );
+    await db.exec(freeUpgrade);
+    const publishPhotos = (
+      id: string,
+      agent: string,
+      attempt: number | null,
+      session: string | null,
+    ) =>
+      db.query<{
+        result: { paid: boolean; published: boolean; videoIncluded: boolean };
+      }>("select publish_property_photos($1,$2,$3,$4) as result", [
+        id,
+        agent,
+        attempt,
+        session,
+      ]);
+    await db.exec("set role authenticated");
+    await assert.rejects(
+      publishPhotos(ids[6], owner, null, null),
+      /permission denied/,
+    );
+    await db.exec("reset role");
+    await assert.rejects(
+      publishPhotos(ids[6], actor, null, null),
+      /Property not available/,
+    );
+    await assert.rejects(
+      publishPhotos(ids[0], owner, 99, "cs_existing"),
+      /Review the existing payment/,
+    );
+    await assert.rejects(
+      publishPhotos(ids[0], owner, existing.attempt, null),
+      /Review the existing payment/,
+    );
+
+    for (const [id, attempt, session] of [
+      [ids[0], existing.attempt as number, "cs_existing"],
+      [ids[6], null, null],
+    ] as const) {
+      const result = (await publishPhotos(id, owner, attempt, session)).rows[0]
+        .result;
+      assert.equal(result.published, true);
+      assert.equal(result.paid, false);
+      assert.equal(result.videoIncluded, false);
+      assert.deepEqual(
+        (await publishPhotos(id, owner, attempt, session)).rows[0].result,
+        result,
+      );
+      const {
+        rows: [order],
+      } = await db.query<any>(
+        "select id,amount,checkout_session_id,payment_intent_id,video_status,attempt from property_orders where property_id=$1",
+        [id],
+      );
+      assert.equal(order.amount, 0);
+      assert.equal(order.checkout_session_id, null);
+      assert.equal(order.payment_intent_id, null);
+      assert.equal(order.video_status, "not_ordered");
+      if (attempt !== null) assert.equal(order.attempt, attempt + 1);
+      assert.equal(
+        (
+          await db.query<{ has_access: boolean }>(
+            "select property_has_live_access($1,$2) as has_access",
+            [id, owner],
+          )
+        ).rows[0].has_access,
+        true,
+      );
+      assert.equal(
+        (
+          await db.query<{ n: number }>(
+            "select count(*)::int as n from property_video_jobs where order_id=$1",
+            [order.id],
+          )
+        ).rows[0].n,
+        0,
+      );
+    }
+    const paidVideo = (await publishPhotos(ids[3], owner, null, null)).rows[0]
+      .result;
+    assert.equal(paidVideo.paid, true);
+    assert.equal(paidVideo.videoIncluded, true);
+    await db.exec(freeUpgrade);
   } finally {
     await db.close();
   }

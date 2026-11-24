@@ -40,7 +40,7 @@ export function PublicationPackagePicker({
               <span className="publication-package-content">
                 <span className="publication-package-name">{offer.name}</span>
                 <strong>
-                  {administrator ? (
+                  {administrator || offer.price === 0 ? (
                     "Gratuit"
                   ) : (
                     <>
@@ -54,7 +54,9 @@ export function PublicationPackagePicker({
                     ? offer.includesVideo
                       ? "Generarea videoclipului folosește credite API."
                       : "Fără generare video și fără consum de credite video."
-                    : "Plată unică · Fără abonament"}
+                    : offer.price === 0
+                      ? "Publicare gratuită · Fără card"
+                      : "Plată unică · Fără abonament"}
                 </small>
               </span>
             </label>

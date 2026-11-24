@@ -33,6 +33,7 @@ test("address upgrade preserves URLs, allocates unique routes, protects drafts a
           f.endsWith(".sql") &&
           !f.includes("address_urls") &&
           !f.includes("publication_packages") &&
+          !f.includes("free_photo_publication") &&
           !f.includes("property_discovery"),
       )) {
       await db.exec(await readFile(new URL(file, directory), "utf8"));

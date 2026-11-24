@@ -1,5 +1,13 @@
 # Publication packages
 
+## Free photo publication
+
+The publication chooser offers **free publication with photographs** and **249 RON for the presentation with a video**. The free option publishes directly after the usual property and profile checks. The database records a zero-cost entitlement and leaves previous payments and video orders intact.
+
+For the existing production project, run [sql-editor-free-photo-publication.sql](../supabase/sql-editor-free-photo-publication.sql) in Supabase SQL Editor. Expect `MBP_FREE_PHOTO_PUBLICATION_READY` before deploying the application to Vercel. The migration requires the original publication packages to be installed and can be run again safely.
+
+## Original paid packages and installation history
+
 Clients choose before Stripe opens: **149 RON** for the presentation with photos, or **249 RON** including the existing presentation film. The card form continues using saved profile contact details, without Link or saving payment details. The choice can be changed before payment; the previous Stripe session is expired before its durable attempt is rotated. Completing/paid sessions are reconciled instead of offering another charge.
 
 Administrators can choose in an agent's review page and in their own editor. Both publications are complimentary. Photos are selected initially to avoid accidental video credit use; selecting the film explicitly explains that provider credits are consumed. Existing paid or granted packages are retained. This version does not sell upgrades to an already confirmed package or retroactively cancel accepted film generations.

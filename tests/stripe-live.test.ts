@@ -187,6 +187,31 @@ globalThis.fetch = async (input, init) => {
     return Response.json(allowed);
   if (url.pathname.endsWith("/property_billing_settings"))
     return Response.json({ enabled: active });
+  if (url.pathname.endsWith("/rpc/publish_property_photos")) {
+    const body = JSON.parse(String(init?.body));
+    assert.deepEqual(body, {
+      listing_id: id,
+      agent_id: owner,
+      expected_attempt: order.attempt,
+      expected_session: order.checkout_session_id,
+    });
+    if (order.checkout_session_id) assert.equal(expiredSessions, 1);
+    order = {
+      ...order,
+      amount: 0,
+      includes_video: false,
+      checkout_session_id: null,
+      attempt: Number(order.attempt) + 1,
+    };
+    allowed = true;
+    return Response.json({
+      published: true,
+      allowed: true,
+      package: "photos",
+      videoIncluded: false,
+      paid: false,
+    });
+  }
   if (
     url.pathname.endsWith("/rpc/request_property_publication") ||
     url.pathname.endsWith("/rpc/reserve_property_order")
@@ -574,7 +599,7 @@ test("a completed old embedded session waits for reconciliation instead of offer
   assert.equal(customerPosts.length, 0);
 });
 
-const photoRequest = () =>
+const photoRequest = (publishFree = true) =>
   new Request("https://app.example/api/billing/checkout", {
     method: "POST",
     headers: { authorization: "Bearer user-token" },
@@ -582,43 +607,73 @@ const photoRequest = () =>
       propertyId: id,
       embedded: true,
       package: "photos",
+      publishFree,
       amount: 1,
       includes_video: true,
     }),
   });
 
-test("photo-only checkout fixes 149 RON on the server and returns the confirmed package to the card form", async () => {
+test("photos publish for free without requiring Stripe configuration or creating a charge", async () => {
+  delete process.env.STRIPE_SECRET_KEY;
+  process.env.STRIPE_CHECKOUT_MODE = "off";
   const response = await POST(photoRequest());
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.package, "photos");
-  assert.equal(body.amount, 14900);
+  assert.equal(body.published, true);
+  assert.equal(body.paid, false);
+  assert.equal(order.amount, 0);
   assert.equal(order.includes_video, false);
-  assert.equal(
-    stripePosts[0].get("line_items[0][price_data][unit_amount]"),
-    "14900",
+  assert.equal(stripePosts.length, 0);
+  assert.equal(customerPosts.length, 0);
+  const refreshed = await GET(
+    new Request(
+      `https://app.example/api/billing/checkout?propertyId=${id}&workflow=publish`,
+      {
+        headers: { authorization: "Bearer user-token" },
+      },
+    ),
   );
-  assert.equal(
-    stripePosts[0].get("line_items[0][price_data][product_data][name]"),
-    "Prezentare cu fotografii",
-  );
-  assert.equal(
-    stripePosts[0].get("payment_intent_data[metadata][publication_package]"),
-    "photos",
-  );
+  assert.equal(refreshed.status, 200);
+  assert.deepEqual(await refreshed.json(), {
+    enabled: false,
+    mode: "off",
+    allowed: true,
+    paid: false,
+    published: true,
+    package: "photos",
+    videoIncluded: false,
+    publicPath: `/p/${demo.properties[0].slug}`,
+  });
 });
 
-test("changing from video to photos expires the old session and rotates its durable attempt before creating a 149 RON checkout", async () => {
+test("switching to free photos expires the existing video checkout before publication", async () => {
   order.checkout_session_id = "cs_live_one";
   const response = await POST(photoRequest());
   assert.equal(response.status, 200);
   assert.equal(expiredSessions, 1);
   assert.equal(order.attempt, 2);
-  assert.equal(stripePosts.length, 1);
-  assert.equal(
-    stripePosts[0].get("line_items[0][price_data][unit_amount]"),
-    "14900",
-  );
+  assert.equal(order.checkout_session_id, null);
+  assert.equal((await response.json()).published, true);
+  assert.equal(stripePosts.length, 0);
+});
+
+test("a request from an old photo checkout screen requires an explicit free publish action", async () => {
+  const response = await POST(photoRequest(false));
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /Reîncarcă pagina/);
+  assert.equal(order.amount, 24900);
+  assert.equal(stripePosts.length, 0);
+});
+
+test("free publication status remains available when live Stripe is not configured", async () => {
+  delete process.env.STRIPE_SECRET_KEY;
+  const response = await GET(statusReq());
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).canPurchase, false);
+  assert.equal(activationCalls, 0);
+  assert.equal((await POST(photoRequest())).status, 200);
+  assert.equal(stripePosts.length, 0);
 });
 
 test("a completing old payment prevents package switching and never offers a second charge", async () => {

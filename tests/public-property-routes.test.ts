@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { registerHooks } from "node:module";
 import { test, after } from "node:test";
 import { demoWorkspace } from "../src/lib/demo";
 
@@ -6,8 +7,17 @@ process.env.NEXT_PUBLIC_SUPABASE_URL = "https://public-routes.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-test-key";
 process.env.NEXT_PUBLIC_SITE_URL = "https://urmatoarea-proprietate.ro";
 const originalFetch = globalThis.fetch;
+// Next.js bundles styles when it loads a page. This test imports the pages in Node.
+const styles = registerHooks({
+  load(url, context, nextLoad) {
+    if (url.endsWith(".css"))
+      return { format: "commonjs", source: "", shortCircuit: true };
+    return nextLoad(url, context);
+  },
+});
 after(() => {
   globalThis.fetch = originalFetch;
+  styles.deregister();
 });
 const sample = demoWorkspace();
 const listing = {

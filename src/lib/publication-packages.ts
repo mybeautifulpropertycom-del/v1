@@ -3,8 +3,8 @@ export const publicationPackages = {
   photos: {
     id: "photos",
     name: "Prezentare cu fotografii",
-    amount: 14900,
-    price: 149,
+    amount: 0,
+    price: 0,
     includesVideo: false,
     description:
       "Prezentarea proprietății, cu fotografii, detalii, hartă și calculator de credit.",

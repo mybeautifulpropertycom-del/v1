@@ -4,13 +4,12 @@ import { createClient } from "@supabase/supabase-js";
 import { serverSupabase } from "./supabase";
 import {
   isPublicationPackage,
-  orderPackage,
-  publicationPackages,
   type PublicationPackage,
 } from "./publication-packages";
 
 export const PROPERTY_PACKAGE_CENTS = 24900;
 export const PROPERTY_PACKAGE_CURRENCY = "ron";
+const HISTORICAL_PHOTO_PACKAGE_CENTS = 14900;
 export function selectedPublicationPackage(value: unknown): PublicationPackage {
   if (value === undefined) return "video"; // Existing clients keep their package.
   if (!isPublicationPackage(value))
@@ -89,12 +88,18 @@ export function stripeClient(key: string) {
   });
 }
 export function billingDatabase(
-  config: Pick<
+  config?: Pick<
     ReturnType<typeof stripeConfiguration>,
     "supabaseUrl" | "serviceKey"
   >,
 ) {
-  return createClient(config.supabaseUrl, config.serviceKey, {
+  const supabaseUrl =
+    config?.supabaseUrl ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    config?.serviceKey ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey)
+    throw new BillingError("Serviciul de publicare nu este configurat.");
+  return createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       fetch: (input, init) =>
@@ -165,7 +170,7 @@ export function supportedPackage(
       currency === PROPERTY_PACKAGE_CURRENCY) ||
     (amount === 9700 && currency === "usd");
   const photos =
-    amount === publicationPackages.photos.amount &&
+    amount === HISTORICAL_PHOTO_PACKAGE_CENTS &&
     currency === PROPERTY_PACKAGE_CURRENCY;
   return includesVideo === undefined
     ? video || photos
@@ -179,7 +184,8 @@ export function requireRomanianOrder(order: {
   includes_video?: boolean;
 }) {
   if (
-    order.amount !== publicationPackages[orderPackage(order)].amount ||
+    order.includes_video === false ||
+    order.amount !== PROPERTY_PACKAGE_CENTS ||
     order.currency !== PROPERTY_PACKAGE_CURRENCY
   )
     throw new BillingError(

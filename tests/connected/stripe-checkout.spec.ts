@@ -15,6 +15,7 @@ async function fixture(page: Page) {
     }),
   );
   let paid = false,
+    published = false,
     postCount = 0;
   let selected: "photos" | "video" = "video";
   await page.route("**/api/billing/checkout**", (route) => {
@@ -26,14 +27,29 @@ async function fixture(page: Page) {
         propertyId: id,
         embedded: true,
         package: selected,
+        ...(selected === "photos" && { publishFree: true }),
       });
+      if (selected === "photos") {
+        published = true;
+        state.property.status = "published";
+        return route.fulfill({
+          json: {
+            published: true,
+            allowed: true,
+            paid: false,
+            package: "photos",
+            videoIncluded: false,
+            publicPath: "/123-palm-drive",
+          },
+        });
+      }
       return route.fulfill({
         json: {
           clientSecret: "cs_live_browser_secret_fake",
           publishableKey: "pk_live_browser",
           mode: "live",
           package: selected,
-          amount: selected === "photos" ? 14900 : 24900,
+          amount: 24900,
           billingDetails: {
             name: "Saved Agent",
             email: "saved@example.com",
@@ -50,8 +66,8 @@ async function fixture(page: Page) {
         canPurchase: true,
         requiresPayment: true,
         paid,
-        allowed: paid,
-        published: paid,
+        allowed: published || paid,
+        published: published || paid,
         publicPath: "/123-palm-drive",
         package: postCount ? selected : null,
         videoIncluded: selected === "video",
@@ -87,7 +103,7 @@ async function chooseVideo(page: Page) {
 }
 
 for (const template of ["editorial", "minimal", "panorama"] as const) {
-  test(`${template}: the 149 RON package publishes without a film section and remains film-free after reload`, async ({
+  test(`${template}: free photos publish without card payment and stay film-free after reload`, async ({
     page,
   }) => {
     const setup = await fixture(page);
@@ -101,12 +117,11 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     await expect(page.getByRole("radio").first()).toBeChecked();
     expect(setup.posts).toBe(0);
     await page
-      .getByRole("button", { name: "Continuă la plată · 149 RON" })
+      .getByRole("button", { name: "Publică proprietatea · Gratuit" })
       .click();
-    await expect(
-      page.getByRole("button", { name: "Plătește 149 RON" }),
-    ).toBeEnabled();
-    await page.getByRole("button", { name: "Plătește 149 RON" }).click();
+    await expect(page.getByRole("button", { name: /^Plătește/ })).toHaveCount(
+      0,
+    );
     await expect(page.getByRole("dialog")).toContainText(
       "Site-ul proprietății a fost publicat.",
     );
@@ -125,7 +140,7 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
   });
 }
 
-test("customers can review both packages before checkout and change a 249 RON selection to 149 RON", async ({
+test("customers can switch from the 249 RON video selection to free photo publication", async ({
   page,
 }, testInfo) => {
   const setup = await fixture(page);
@@ -135,7 +150,7 @@ test("customers can review both packages before checkout and change a 249 RON se
     .locator(".inline-edit-toolbar")
     .getByRole("button", { name: "Publică proprietatea" })
     .click();
-  await expect(page.getByRole("dialog")).toContainText("149");
+  await expect(page.getByRole("dialog")).toContainText("Gratuit");
   await expect(page.getByRole("dialog")).toContainText("249");
   expect(setup.posts).toBe(0);
   await page
@@ -159,11 +174,12 @@ test("customers can review both packages before checkout and change a 249 RON se
     .click();
   await page.getByRole("radio").first().check();
   await page
-    .getByRole("button", { name: "Continuă la plată · 149 RON" })
+    .getByRole("button", { name: "Publică proprietatea · Gratuit" })
     .click();
-  await expect(
-    page.getByRole("button", { name: "Plătește 149 RON" }),
-  ).toBeVisible();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Site-ul proprietății a fost publicat.",
+  );
+  await expect(page.getByRole("button", { name: /^Plătește/ })).toHaveCount(0);
   expect(setup.posts).toBe(2);
 });
 test("the private website can be edited before payment; both Publish buttons open the same modal", async ({

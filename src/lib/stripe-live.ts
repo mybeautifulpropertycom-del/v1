@@ -31,12 +31,20 @@ async function activate(admin: Admin) {
     throw new BillingError("The live billing database setup is incomplete.");
 }
 export async function liveBillingStatus(
-  config: Config,
+  admin: Admin,
   propertyId: string,
   ownerId: string,
 ) {
-  const admin = billingDatabase(config);
-  await activate(admin);
+  let canPurchase = livePaymentsEnabled();
+  if (canPurchase) {
+    try {
+      stripeConfiguration();
+    } catch (error) {
+      if (!(error instanceof BillingError)) throw error;
+      canPurchase = false;
+    }
+  }
+  if (canPurchase) await activate(admin);
   const [
     { data: settings, error: settingsError },
     { data: allowed, error: accessError },
@@ -63,7 +71,7 @@ export async function liveBillingStatus(
   return billingJson({
     enabled: true,
     mode: "live",
-    canPurchase: livePaymentsEnabled(),
+    canPurchase,
     requiresPayment: settings.enabled,
     paid: order?.status === "paid",
     allowed: Boolean(allowed),
@@ -93,7 +101,7 @@ export async function createLiveCheckout(
   );
   if (accessError)
     throw new BillingError("The live billing database setup is incomplete.");
-  if (allowed) return liveBillingStatus(config, propertyId, ownerId);
+  if (allowed) return liveBillingStatus(admin, propertyId, ownerId);
   const { data: reserved, error } = await admin.rpc("reserve_property_order", {
     listing_id: propertyId,
     agent_id: ownerId,
@@ -113,7 +121,7 @@ export async function createLiveCheckout(
   );
   if (recheckError)
     throw new BillingError("Publication access could not be checked.");
-  if (nowAllowed) return liveBillingStatus(config, propertyId, ownerId);
+  if (nowAllowed) return liveBillingStatus(admin, propertyId, ownerId);
   if (reserved.status === "refunded" || reserved.status === "disputed")
     throw new BillingError(
       "Contactează asistența despre plata acestei proprietăți înainte de a plăti din nou.",

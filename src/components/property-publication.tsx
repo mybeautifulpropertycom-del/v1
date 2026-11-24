@@ -70,6 +70,7 @@ async function request(
               propertyId: id,
               embedded: true,
               package: selected,
+              ...(selected === "photos" && { publishFree: true }),
             }),
           }
         : {}),
@@ -325,18 +326,15 @@ export function usePropertyPublication(options: {
         setStatus((s) => ({
           ...s,
           published: true,
+          allowed: true,
+          paid: result.paid ?? s.paid,
+          package: result.package ?? selected,
           videoIncluded: result.videoIncluded ?? offer.includesVideo,
-          publicPath: publicPath(property),
-          ...(administrator.current
-            ? {
-                allowed: true,
-                paid: result.paid === true,
-                videoStatus:
-                  (result.videoIncluded ?? offer.includesVideo)
-                    ? s.videoStatus || "queued"
-                    : null,
-              }
-            : {}),
+          publicPath: result.publicPath || publicPath(property),
+          videoStatus:
+            (result.videoIncluded ?? offer.includesVideo)
+              ? s.videoStatus || (administrator.current ? "queued" : null)
+              : null,
         }));
         setPhase("success");
       } else if (result.processing) {
@@ -432,7 +430,7 @@ export function usePropertyPublication(options: {
         <p>
           {options.property?.status === "published"
             ? "Filmul va apărea automat aici când este gata."
-            : "Publică proprietatea pentru a genera un film de prezentare din fotografiile tale. Filmul va apărea automat aici când este gata."}
+            : "Alege pachetul cu videoclip pentru a genera un film de prezentare din fotografiile tale."}
         </p>
         {options.property?.status !== "published" && (
           <button
@@ -447,11 +445,13 @@ export function usePropertyPublication(options: {
         )}
       </div>
     );
+  const freePublication =
+    isAdmin || status.allowed || selectedPackage === "photos";
   const dialog = open ? (
     <Modal onClose={close}>
       <div className="publish-dialog-heading">
         <span className="eyebrow">
-          {status.mode === "test"
+          {status.mode === "test" && !freePublication
             ? "MOD DE TEST STRIPE"
             : "O PRIMĂ IMPRESIE MEMORABILĂ"}
         </span>
@@ -484,7 +484,7 @@ export function usePropertyPublication(options: {
             className="button primary publish-choice-continue"
             onClick={() => void publish(selectedPackage)}
           >
-            {isAdmin || status.allowed
+            {freePublication
               ? "Publică proprietatea · Gratuit"
               : `Continuă la plată · ${publicationPackages[selectedPackage].price} RON`}
           </button>
@@ -494,8 +494,8 @@ export function usePropertyPublication(options: {
         <div className="publish-offer">
           <div>
             <strong>
-              {isAdmin || status.allowed ? (
-                "Inclus"
+              {freePublication ? (
+                "Gratuit"
               ) : (
                 <>
                   {publicationPackages[selectedPackage].price}{" "}
@@ -508,7 +508,9 @@ export function usePropertyPublication(options: {
                 ? "Publicare de către administrator · Gratuit"
                 : status.allowed
                   ? "Fără o plată suplimentară pentru publicare"
-                  : "Plată unică · Fără abonament"}
+                  : selectedPackage === "photos"
+                    ? "Publicare cu fotografii · Fără card"
+                    : "Plată unică · Fără abonament"}
             </span>
           </div>
           <ul>
@@ -529,8 +531,8 @@ export function usePropertyPublication(options: {
           </ul>
           <p>
             {!publicationPackages[selectedPackage].includesVideo
-              ? "Se publică prezentarea fără generare video."
-              : isAdmin || status.allowed
+              ? "Prezentarea cu fotografii se publică gratuit."
+              : freePublication
                 ? "Site-ul va fi publicat gratuit. Filmul inclus va fi adăugat când este gata."
                 : "Site-ul se publică după confirmarea plății. Filmul va fi adăugat când este gata."}
           </p>
@@ -584,16 +586,18 @@ export function usePropertyPublication(options: {
       {phase === "error" && (
         <div className="publish-error">
           <p role="alert">{error}</p>
-          <button
-            type="button"
-            className="button secondary"
-            onClick={() => {
-              setError("");
-              setPhase("confirming");
-            }}
-          >
-            Verifică starea plății
-          </button>
+          {selectedPackage === "video" && (
+            <button
+              type="button"
+              className="button secondary"
+              onClick={() => {
+                setError("");
+                setPhase("confirming");
+              }}
+            >
+              Verifică starea plății
+            </button>
+          )}
           <button
             type="button"
             className="text-button"

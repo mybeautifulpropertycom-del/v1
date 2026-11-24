@@ -265,7 +265,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (error)
         throw new Error(
           error.code === "P0402"
-            ? "Alege varianta de publicare și finalizează plata în editorul prezentării înainte de publicarea proprietății."
+            ? "Alege o variantă de publicare în editorul prezentării."
             : "Proprietatea nu a fost salvată. Verifică detaliile și conexiunea, apoi încearcă din nou.",
         );
       Object.assign(nextProperty, data);

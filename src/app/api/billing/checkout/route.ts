@@ -7,6 +7,7 @@ import {
   type Property,
 } from "@/lib/model";
 import { embeddedCheckout } from "@/lib/embedded-checkout";
+import { publishPropertyPhotos } from "@/lib/free-photo-publication";
 import { checkoutPackage } from "@/lib/checkout-package";
 import {
   orderPackage,
@@ -45,10 +46,12 @@ type VideoBillingState = {
 
 export async function GET(request: Request) {
   try {
-    if (checkoutMode() === "off") return billingJson({ enabled: false });
+    const params = new URL(request.url).searchParams;
+    const workflow = params.get("workflow") === "publish";
+    const mode = checkoutMode();
+    if (mode === "off" && !workflow) return billingJson({ enabled: false });
     const { user, db } = await billingUser(request);
-    const config = stripeConfiguration();
-    const id = new URL(request.url).searchParams.get("propertyId");
+    const id = params.get("propertyId");
     if (!id || !UUID.test(id))
       throw new BillingError("Alege o proprietate.", 400);
     const { data: property, error } = await db
@@ -58,11 +61,32 @@ export async function GET(request: Request) {
       .eq("owner_id", user.id)
       .maybeSingle();
     if (error) throw error;
-    if (config.live) {
-      const response = await liveBillingStatus(config, id, user.id);
-      if (new URL(request.url).searchParams.get("workflow") !== "publish")
-        return response;
-      const admin = billingDatabase(config);
+    if (workflow && mode !== "live" && property) {
+      const { data: order, error: orderError } = await billingDatabase()
+        .from("property_orders")
+        .select("amount,includes_video")
+        .eq("property_id", id)
+        .eq("owner_id", user.id)
+        .maybeSingle();
+      if (orderError)
+        throw new BillingError("Starea publicării nu a putut fi verificată.");
+      if (order?.amount === 0 && order.includes_video === false)
+        return billingJson({
+          enabled: mode !== "off",
+          mode,
+          allowed: true,
+          paid: false,
+          published: property.status === "published",
+          package: "photos",
+          videoIncluded: false,
+          publicPath: publicPath(property),
+        });
+    }
+    if (mode === "off") return billingJson({ enabled: false });
+    if (mode === "live") {
+      const admin = billingDatabase();
+      const response = await liveBillingStatus(admin, id, user.id);
+      if (!workflow) return response;
       const [
         { data: job, error: jobError },
         { data: order, error: orderError },
@@ -129,7 +153,7 @@ export async function GET(request: Request) {
       });
     }
     if (!property) return billingJson({ enabled: true, paid: false });
-    const { data: order, error: orderError } = await billingDatabase(config)
+    const { data: order, error: orderError } = await billingDatabase()
       .from("stripe_test_orders")
       .select("status")
       .eq("property_id", id)
@@ -146,15 +170,16 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { user, db } = await billingUser(request);
-    const config = stripeConfiguration();
     let id: unknown;
     let embedded = false;
+    let publishFree = false;
     let selected: PublicationPackage = "video";
     const body = await readLimitedBody(request, 1024);
     try {
       const parsed = JSON.parse(body);
       id = parsed?.propertyId;
       embedded = parsed?.embedded === true;
+      publishFree = parsed?.publishFree === true;
       selected = selectedPublicationPackage(parsed?.package);
     } catch {
       throw new BillingError("Alege o proprietate salvată.", 400);
@@ -180,6 +205,15 @@ export async function POST(request: Request) {
       throw new BillingError("Completează mai întâi profilul de agent.", 400);
     const errors = publicationErrors(property as Property, profile as Profile);
     if (errors.length) throw new BillingError(errors.join(" "), 400);
+    if (selected === "photos") {
+      if (!publishFree)
+        throw new BillingError(
+          "Prezentarea cu fotografii este acum gratuită. Reîncarcă pagina și alege «Publică proprietatea».",
+          409,
+        );
+      return billingJson(await publishPropertyPhotos(id, user.id));
+    }
+    const config = stripeConfiguration();
     if (embedded)
       return await embeddedCheckout(
         config,

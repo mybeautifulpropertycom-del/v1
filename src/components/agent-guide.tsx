@@ -402,7 +402,7 @@ export function AgentGuide({ preview = false }: { preview?: boolean }) {
           key: "publish",
           label: "Publicarea",
           title: "Publică atunci când ești pregătit",
-          body: `De aici alegi prezentarea cu fotografii (${publicationPackages.photos.price} lei) sau cu videoclip (${publicationPackages.video.price} lei). Proprietatea se publică după confirmarea plății.`,
+          body: `Publică gratuit prezentarea cu fotografii sau alege pachetul cu videoclip, la ${publicationPackages.video.price} lei. Pentru pachetul cu videoclip, proprietatea se publică după confirmarea plății.`,
           anchor,
           action: "Am înțeles",
           focus: anchor,

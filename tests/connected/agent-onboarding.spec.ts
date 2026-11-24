@@ -274,7 +274,7 @@ test("contextual hints follow details, photographs and design through the existi
   await tip.getByRole("button", { name: "Continuă", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/previzualizare/${id}$`));
   tip = await openTip(page);
-  await expect(tip).toContainText("149 lei");
+  await expect(tip).toContainText("Publică gratuit prezentarea cu fotografii");
   await expect(tip).toContainText("249 lei");
   await page.screenshot({ path: testInfo.outputPath("publish-context.png") });
   await tip.getByRole("button", { name: "Am înțeles" }).click();
@@ -494,6 +494,11 @@ test("one section card stays beside its heading while red borders walk through e
       await page.locator('[data-property-guide-field="area"]').focus();
     else await input.press("Tab");
     if (field === "area") {
+      const constructionYear = page.getByRole("spinbutton", {
+        name: "Anul de construcție",
+      });
+      await expect(constructionYear).toBeFocused();
+      await constructionYear.press("Tab");
       await expect(
         page.locator('[data-property-guide-field="bedrooms"]'),
       ).toBeFocused();

@@ -30,6 +30,20 @@ select 'MBP_SETUP_OK' as status;
 `,
 );
 console.log("Prepared supabase/sql-editor-setup.sql. No remote changes made.");
+const freePhotoPublication = await readFile(
+  new URL("202611240003_free_photo_publication.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-free-photo-publication.sql", import.meta.url),
+  `-- Existing installations with MBP_PUBLICATION_PACKAGES_READY. Safe to rerun.
+begin;
+${freePhotoPublication.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_FREE_PHOTO_PUBLICATION_READY' as status;
+`,
+);
 const promotions = await readFile(
   new URL("202611180001_property_promotions.sql", directory),
   "utf8",

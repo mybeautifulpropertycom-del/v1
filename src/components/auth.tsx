@@ -172,7 +172,7 @@ export function Auth({
               : resetPassword
                 ? "Alege o parolă nouă pentru contul tău."
                 : mode === "signup"
-                  ? "Creează un cont și publică anunțul."
+                  ? "Creează un cont și publică gratuit anunțuri cu fotografii."
                   : mode === "forgot"
                     ? "Introdu adresa de e-mail și îți trimitem un link de resetare a parolei."
                     : "Autentifică-te în contul tău."}
