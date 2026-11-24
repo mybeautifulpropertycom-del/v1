@@ -147,7 +147,7 @@ test("the pinned photographs change on scroll and remain separate from the compl
   await expect(
     page.getByRole("dialog", { name: "Galeria foto a proprietății" }),
   ).toBeVisible();
-  await expect(page.locator(".lightbox > span")).toHaveText("3 / 40");
+  await expect(page.locator(".property-photo-count")).toHaveText("3 / 40");
   await page.keyboard.press("Escape");
   await expect(photo).toBeFocused();
   const sections = await page

@@ -485,58 +485,6 @@
   font-weight: 500;
   color: var(--site-ink);
 }
-.lightbox {
-  position: fixed;
-  inset: 0;
-  background: #11180cf5;
-  z-index: 120;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 70px 90px;
-}
-.lightbox > img {
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 85vh;
-  object-fit: contain;
-}
-.lightbox > button {
-  background: #ffffff12;
-  color: #fff;
-  border: 1px solid #ffffff25;
-  display: grid;
-  place-items: center;
-  height: 45px;
-  width: 45px;
-  border-radius: 50%;
-  position: absolute;
-}
-.lightbox-close {
-  top: 22px;
-  right: 25px;
-}
-.lightbox-prev {
-  left: 20px;
-  top: 50%;
-}
-.lightbox-next {
-  right: 20px;
-  top: 50%;
-}
-.lightbox > span {
-  /* Keep navigation announcements available without a visible photo counter. */
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
 .landing-image-empty {
   width: 100%;
   height: 100%;
@@ -1191,30 +1139,6 @@
   .landing-footer > a {
     font-size: 8px;
     max-width: 180px;
-  }
-  .lightbox {
-    padding: 70px 15px;
-  }
-  .lightbox > img {
-    max-height: 70vh;
-  }
-  .lightbox > button {
-    height: 35px;
-    width: 35px;
-  }
-  .lightbox-prev {
-    left: 12px;
-    top: auto;
-    bottom: 35px;
-  }
-  .lightbox-next {
-    right: 12px;
-    top: auto;
-    bottom: 35px;
-  }
-  .lightbox-close {
-    top: 20px;
-    right: 18px;
   }
   .website-minimal .landing-hero {
     padding: 18px 5% 27px;

@@ -6,9 +6,14 @@ test.use({
   isMobile: true,
 });
 
-async function swipe(client: CDPSession, dx: number, dy = 0, cancel = false) {
+async function swipe(
+  client: CDPSession,
+  dx: number,
+  dy = 0,
+  cancel = false,
+  y = 420,
+) {
   const x = dx > 0 ? 85 : 305;
-  const y = 420;
   await client.send("Input.dispatchTouchEvent", {
     type: "touchStart",
     touchPoints: [{ x, y }],
@@ -45,10 +50,30 @@ for (const theme of ["editorial", "minimal", "panorama"]) {
       name: "Galeria foto a proprietății",
     });
     const photo = gallery.locator("[data-current-photo]");
+    const thumbnails = gallery.getByRole("group", {
+      name: "Miniaturi fotografii",
+    });
+    const firstThumb = thumbnails.getByRole("button", {
+      name: "Fotografia 1",
+      exact: true,
+    });
+    const lastThumb = thumbnails.getByRole("button", {
+      name: "Fotografia 40",
+      exact: true,
+    });
     const client = await context.newCDPSession(page);
     await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
+    await expect(thumbnails.locator('[aria-current="true"]')).toHaveAttribute(
+      "aria-label",
+      "Fotografia 3",
+    );
+    await expect(lastThumb).not.toBeInViewport();
     await swipe(client, -180);
     await expect(photo).toHaveAttribute("alt", /fotografia 4$/);
+    await expect(thumbnails.locator('[aria-current="true"]')).toHaveAttribute(
+      "aria-label",
+      "Fotografia 4",
+    );
     await swipe(client, 180);
     await expect(photo).toHaveAttribute("alt", /fotografia 3$/);
     await swipe(client, -20);
@@ -65,8 +90,26 @@ for (const theme of ["editorial", "minimal", "panorama"]) {
     await expect(photo).toHaveAttribute("alt", /fotografia 1$/);
     await swipe(client, 180);
     await expect(photo).toHaveAttribute("alt", /fotografia 40$/);
+    await expect(lastThumb).toBeInViewport({ ratio: 0.9 });
     await swipe(client, -180);
     await expect(photo).toHaveAttribute("alt", /fotografia 1$/);
+    await expect(firstThumb).toBeInViewport({ ratio: 0.9 });
+    const rail = await thumbnails.boundingBox();
+    if (!rail) throw new Error("Thumbnail strip is not visible");
+    expect(rail.x).toBeGreaterThanOrEqual(0);
+    expect(rail.x + rail.width).toBeLessThanOrEqual(390);
+    await swipe(client, -180, 0, false, rail.y + rail.height / 2);
+    await expect
+      .poll(() => thumbnails.evaluate((element) => element.scrollLeft))
+      .toBeGreaterThan(0);
+    await expect(photo).toHaveAttribute("alt", /fotografia 1$/);
+    const eighthThumb = thumbnails.getByRole("button", {
+      name: "Fotografia 8",
+      exact: true,
+    });
+    await eighthThumb.tap();
+    await expect(photo).toHaveAttribute("alt", /fotografia 8$/);
+    await expect(eighthThumb).toHaveAttribute("aria-current", "true");
     await gallery.getByRole("button", { name: "Închide galeria" }).tap();
     await expect(gallery).toHaveCount(0);
     await client.detach();

@@ -15,9 +15,9 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
       exact: true,
     })
     .click();
-  await expect(page.locator(".lightbox>span")).toHaveText("3 / 40");
+  await expect(page.locator(".property-photo-count")).toHaveText("3 / 40");
   await page.keyboard.press("ArrowRight");
-  await expect(page.locator(".lightbox>span")).toHaveText("4 / 40");
+  await expect(page.locator(".property-photo-count")).toHaveText("4 / 40");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
@@ -35,7 +35,7 @@ test("Atelier opens with a real photo mosaic, and each tile opens the matching p
       exact: true,
     })
     .click();
-  await expect(page.locator(".lightbox>span")).toHaveText("4 / 40");
+  await expect(page.locator(".property-photo-count")).toHaveText("4 / 40");
   await page.keyboard.press("Escape");
 });
 

@@ -284,7 +284,7 @@ test("each template has working gallery controls and honest preview contact beha
       .click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.keyboard.press("ArrowRight");
-    await expect(page.locator(".lightbox>span")).toHaveText("2 / 40");
+    await expect(page.locator(".property-photo-count")).toHaveText("2 / 40");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
     // Offscreen photographs load lazily. Check them after bringing each
