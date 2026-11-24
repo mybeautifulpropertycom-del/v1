@@ -540,7 +540,7 @@ function Neighbourhood({
           </div>
           {ready && (
             <p className="neighbourhood-note neighbourhood-source">
-              Locuri din Google Maps. Rezultatele pot fi incomplete.
+              Locuri din Google Maps.
             </p>
           )}
         </div>

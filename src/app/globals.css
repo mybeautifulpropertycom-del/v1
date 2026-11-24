@@ -4880,7 +4880,8 @@ fieldset.editor-content {
 .mortgage-control-note strong { font-weight:500; color:var(--mortgage-ink); }
 .mortgage-plan-button { width:100%; padding:12px; margin-top:26px; border:0; border-radius:6px; background:var(--mortgage-ink); color:#fff; font:600 13px var(--sans); cursor:pointer; }
 .mortgage-plan-button:disabled { opacity:.5; cursor:default; }
-.mortgage-auto-note { font-size:10px; color:var(--mortgage-muted); text-align:center; margin:9px 0 0; }
+.mortgage-auto-note { color:var(--mortgage-muted); text-align:center; margin:9px 0 0; }
+.mortgage-controls .mortgage-auto-note { font-size:9px; }
 .mortgage-output { min-width:0; }
 .mortgage-result { background:var(--mortgage-ink); color:#fff; padding:24px; border-radius:12px; box-shadow:0 8px 28px #15281e12; }
 .mortgage-result-top { display:grid; grid-template-columns:1.15fr 1fr; gap:20px; align-items:center; }
@@ -4967,7 +4968,6 @@ fieldset.editor-content {
  .mortgage-result .mortgage-eyebrow { font-size:10px; }
  .mortgage-schedule-heading { flex-wrap:wrap; }
  .mortgage-balance text { font-size:14px; }
- .mortgage-auto-note { font-size:10px; }
 }
 @media (max-width:380px) {
  .mortgage-result-top { grid-template-columns:1fr; }
