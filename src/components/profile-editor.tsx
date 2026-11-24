@@ -10,7 +10,6 @@ import {
   Phone,
   Save,
   ShieldCheck,
-  Sparkles,
   UserRound,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
@@ -404,7 +403,6 @@ export function ProfileEditor() {
                     remaining === 0
                   }
                 >
-                  <Sparkles size={13} aria-hidden="true" />
                   {generatingBio
                     ? "Generăm descrierea…"
                     : "Generează descrierea"}
