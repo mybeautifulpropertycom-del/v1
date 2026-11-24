@@ -1,5 +1,45 @@
 import { expect, test } from "@playwright/test";
 
+test.describe("homepage on a phone", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test("the quiz fills the viewport when going back to a shorter step", async ({
+    page,
+    context,
+  }) => {
+    await page.goto("/");
+    for (const name of [
+      "Vreau să cumpăr",
+      "Apartament",
+      "2",
+      "București / Ilfov",
+    ]) {
+      await page.getByRole("button", { name, exact: true }).tap();
+    }
+    // Simulate the browser bars retracting while the longer budget step is open.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Emulation.setSmallViewportHeightDifferenceOverride", {
+      difference: 100,
+    });
+    await page.getByRole("button", { name: "Înapoi", exact: true }).tap();
+    await expect(
+      page.getByRole("heading", { name: "În ce oraș cauți?" }),
+    ).toBeFocused();
+    const bottomGap = await page.locator("#cautare").evaluate((quiz) => {
+      const viewport = window.visualViewport;
+      const visibleBottom = viewport
+        ? viewport.offsetTop + viewport.height
+        : window.innerHeight;
+      return visibleBottom - quiz.getBoundingClientRect().bottom;
+    });
+    expect(bottomGap).toBeLessThanOrEqual(1);
+  });
+});
+
 test("the mobile quiz filters by rooms, city and inclusive budget, then opens the listing", async ({
   page,
 }) => {

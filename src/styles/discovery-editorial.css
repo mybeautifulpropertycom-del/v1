@@ -329,7 +329,7 @@ button.discovery-editorial-step-label:hover {
     min-height: max(
       300px,
       calc(
-        100svh - var(--platform-header-height) - var(--editorial-photo-height) +
+        100dvh - var(--platform-header-height) - var(--editorial-photo-height) +
           var(--editorial-quiz-overlap)
       )
     );
