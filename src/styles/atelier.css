@@ -1054,7 +1054,7 @@
     margin-bottom: 28px;
   }
   .atelier-gallery {
-    padding-block: 48px;
+    padding-block: 42px 48px;
   }
   .atelier-photo-grid {
     grid-template-columns: 1fr;
@@ -1085,7 +1085,7 @@
   }
   .atelier-contact {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 26px;
     padding-block: 55px;
     padding-top: 28.6px;
   }
