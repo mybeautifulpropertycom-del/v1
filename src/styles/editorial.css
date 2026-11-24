@@ -460,7 +460,7 @@
   font-size: clamp(29px, 2.88vw, 43px);
 }
 .estate-details-copy > p {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.9;
   margin-top: 25px;
   color: var(--estate-muted);
@@ -475,7 +475,7 @@
   gap: 25px;
   border-bottom: 1px solid var(--estate-line);
   padding-block: 13px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .estate-specifications dt {
   color: var(--estate-muted);
