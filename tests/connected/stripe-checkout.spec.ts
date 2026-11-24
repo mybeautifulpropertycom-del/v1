@@ -123,7 +123,7 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       0,
     );
     await expect(page.getByRole("dialog")).toContainText(
-      "Site-ul proprietății a fost publicat.",
+      "Site-ul proprietății a fost publicat și pregătit de distribuire.",
     );
     await expect(page.getByRole("dialog")).not.toContainText(
       "Filmul inclus va apărea",
@@ -177,7 +177,7 @@ test("customers can switch from the 249 RON video selection to free photo public
     .getByRole("button", { name: "Publică proprietatea · Gratuit" })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Site-ul proprietății a fost publicat.",
+    "Site-ul proprietății a fost publicat și pregătit de distribuire.",
   );
   await expect(page.getByRole("button", { name: /^Plătește/ })).toHaveCount(0);
   expect(setup.posts).toBe(2);

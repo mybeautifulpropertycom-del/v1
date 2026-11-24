@@ -54,7 +54,7 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
     .click();
   await page.getByRole("button", { name: "Publică în demo" }).click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Site-ul proprietății a fost publicat.",
+    "Site-ul proprietății a fost publicat și pregătit de distribuire.",
   );
   await page.getByRole("button", { name: "Înapoi la editare" }).click();
   await page

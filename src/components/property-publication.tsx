@@ -634,12 +634,16 @@ export function usePropertyPublication(options: {
       {phase === "success" && (
         <div className="publish-success">
           <Check size={32} />
-          <p role="status">Site-ul proprietății a fost publicat.</p>
-          <p>
-            {status.videoIncluded !== false && status.videoStatus
-              ? "Filmul inclus va apărea pe site când este gata."
-              : "Site-ul este pregătit pentru distribuire."}
-          </p>
+          {status.videoIncluded !== false && status.videoStatus ? (
+            <>
+              <p role="status">Site-ul proprietății a fost publicat.</p>
+              <p>Filmul inclus va apărea pe site când este gata.</p>
+            </>
+          ) : (
+            <p role="status">
+              Site-ul proprietății a fost publicat și pregătit de distribuire.
+            </p>
+          )}
           {!options.demo && (
             <a
               className="button primary"

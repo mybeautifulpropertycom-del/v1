@@ -236,7 +236,7 @@ test("administrator chooses photos in the personal editor without a card form or
     .getByRole("button", { name: "Publică proprietatea · Gratuit" })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Site-ul proprietății a fost publicat.",
+    "Site-ul proprietății a fost publicat și pregătit de distribuire.",
   );
   await page.getByRole("button", { name: "Înapoi la editare" }).click();
   await expect(page.locator("#film,.property-video-status")).toHaveCount(0);
