@@ -18,6 +18,12 @@ type MapPoint = {
   listings: MapListing[];
 };
 
+type MapMarker = {
+  overlay: google.maps.OverlayView;
+  button: HTMLButtonElement;
+  listings: MapListing[];
+};
+
 const resultMapStyle: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#efe7d9" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#4e5c55" }] },
@@ -117,7 +123,33 @@ function addMarker(
   };
   overlay.onRemove = () => button.remove();
   overlay.setMap(map);
-  return overlay;
+  return { overlay, button };
+}
+
+function observeVisibleListings(list: HTMLElement, markers: MapMarker[]) {
+  const visibleLinks = new Set<string>();
+  const threshold = 0.25;
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const href = entry.target.getAttribute("data-listing-href");
+        if (!href) continue;
+        if (entry.intersectionRatio >= threshold) visibleLinks.add(href);
+        else visibleLinks.delete(href);
+      }
+      for (const { button, listings } of markers) {
+        button.toggleAttribute(
+          "data-visible-listing",
+          listings.some(({ href }) => visibleLinks.has(href)),
+        );
+      }
+    },
+    { root: list, threshold },
+  );
+  for (const card of list.querySelectorAll("[data-listing-href]")) {
+    observer.observe(card);
+  }
+  return observer;
 }
 
 type Status = "waiting" | "loading" | "ready" | "error";
@@ -162,7 +194,8 @@ export function DiscoveryResultsMap({
     const node = canvas.current;
     let current = true;
     let failed = false;
-    const markers: google.maps.OverlayView[] = [];
+    const markers: MapMarker[] = [];
+    let listingObserver: IntersectionObserver | undefined;
     const active = () => current && !failed;
     const unavailable = () => {
       failed = true;
@@ -211,8 +244,8 @@ export function DiscoveryResultsMap({
               ? `${point.listings.length} proprietăți`
               : first.price;
           bounds.extend(position);
-          markers.push(
-            addMarker(
+          markers.push({
+            ...addMarker(
               mapsLibrary.OverlayView,
               map,
               position,
@@ -224,9 +257,14 @@ export function DiscoveryResultsMap({
                 if (active()) setSelected(point);
               },
             ),
-          );
+            listings: point.listings,
+          });
         }
         if (points.length > 1) map.fitBounds(bounds, 54);
+        const list = document.getElementById("rezultate");
+        if (list && "IntersectionObserver" in window) {
+          listingObserver = observeVisibleListings(list, markers);
+        }
         setCount(
           points.reduce((total, point) => total + point.listings.length, 0),
         );
@@ -240,7 +278,8 @@ export function DiscoveryResultsMap({
       current = false;
       window.clearTimeout(timer);
       window.removeEventListener("mbp-maps-error", unavailable);
-      markers.forEach((marker) => marker.setMap(null));
+      listingObserver?.disconnect();
+      markers.forEach(({ overlay }) => overlay.setMap(null));
       node.replaceChildren();
     };
   }, [attempt, enabled, listings, visible]);

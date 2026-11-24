@@ -25,7 +25,7 @@
 .discovery-results[data-has-listings] {
   grid-template-areas: "intro map" "controls map" "list map";
   grid-template-columns: minmax(0, 1.76fr) minmax(310px, 1fr);
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto minmax(0, 1fr);
   column-gap: clamp(16px, 2vw, 32px);
 }
 
@@ -244,11 +244,8 @@
 
 .discovery-results-map {
   grid-area: map;
-  align-self: start;
-  position: sticky;
-  top: 16px;
+  position: relative;
   isolation: isolate;
-  height: min(670px, max(440px, calc(100svh - 105px)));
   min-width: 0;
   overflow: hidden;
   background: #efe7d9;
@@ -432,6 +429,33 @@
   font-weight: 650;
 }
 
+@media (min-width: 831px) {
+  .discovery-results[data-has-listings] {
+    height: calc(100svh - var(--platform-header-height));
+    min-height: 440px;
+    padding-bottom: 20px;
+  }
+
+  .discovery-results[data-has-listings] .discovery-results-list {
+    margin: -4px -8px 0;
+    padding: 4px 8px 16px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #ccbca4 transparent;
+  }
+
+  .discovery-results-map {
+    align-self: start;
+    height: min(670px, max(440px, calc(100svh - 105px)));
+    max-height: 100%;
+  }
+
+  .discovery-map-marker[data-visible-listing] {
+    background: #8b5e21;
+  }
+}
+
 @media (max-width: 1040px) {
   .discovery-listing-heading {
     grid-template-columns: minmax(0, 1fr);
@@ -456,8 +480,6 @@
   }
 
   .discovery-results-map {
-    position: relative;
-    top: auto;
     height: clamp(248px, 57vw, 390px);
     border-radius: 20px;
   }

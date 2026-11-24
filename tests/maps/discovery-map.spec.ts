@@ -60,3 +60,40 @@ test("search results show real listing details and map only the matches with sav
     390,
   );
 });
+
+test("desktop results scroll beside a stationary map that follows the list", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 540 });
+  await mockGoogleMaps(page);
+  const search = "/cauta/de-vanzare/apartamente/bucuresti";
+  await page.goto(search);
+  const list = page.getByRole("region", { name: "Lista proprietăților" });
+  const map = page.getByRole("complementary", { name: "Harta proprietăților" });
+  const first = map.getByRole("button", { name: /Apartament în buget/ });
+  const last = map.getByRole("button", { name: /Apartament cu trei camere/ });
+  await expect(first).toHaveAttribute("data-visible-listing", "");
+  await expect(last).not.toHaveAttribute("data-visible-listing");
+  const originalMapBox = await map.boundingBox();
+  const listBox = (await list.boundingBox())!;
+  await page.mouse.move(listBox.x + 50, listBox.y + 50);
+  await page.mouse.wheel(0, 700);
+  await expect
+    .poll(() => list.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(0);
+  await expect(first).not.toHaveAttribute("data-visible-listing");
+  await expect(last).toHaveAttribute("data-visible-listing", "");
+  expect(await map.boundingBox()).toEqual(originalMapBox);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);
+
+  await page.goto(`${search}?min=76000&max=100000&moneda=eur`);
+  await expect(list.locator("article")).toHaveCount(1);
+  await expect(last).toBeVisible();
+  await expect(first).toHaveCount(0);
+  await page.getByRole("link", { name: /Elimină bugetul/ }).click();
+  await expect(list.locator("article")).toHaveCount(3);
+  await expect(first).toBeVisible();
+  await expect(last).toBeVisible();
+  expect(await list.evaluate((element) => element.scrollTop)).toBe(0);
+});

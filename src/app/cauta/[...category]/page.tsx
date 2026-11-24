@@ -85,14 +85,10 @@ function ListingCard({ listing }: { listing: DiscoveryListing }) {
   const area =
     listing.area_unit === "sqft" ? listing.area * 0.09290304 : listing.area;
   const amenities = [...new Set(listing.amenities ?? [])];
+  const href = publicPath(listing);
   return (
-    <article className="discovery-listing">
-      <Link
-        href={publicPath(listing)}
-        target="_blank"
-        rel="noopener"
-        prefetch={false}
-      >
+    <article className="discovery-listing" data-listing-href={href}>
+      <Link href={href} target="_blank" rel="noopener" prefetch={false}>
         <div className="discovery-listing-image">
           {listing.image ? (
             <PropertyImage
@@ -163,6 +159,7 @@ export default async function ResultsPage(props: PageProps) {
       ? "1 proprietate"
       : `${total.toLocaleString("ro-RO")}${total >= 20 ? " de" : ""} proprietăți`;
   const personalized = total > 0 && Boolean(filters.currency);
+  const resultsPath = discoveryPath(category, filters);
   const mapListings = items.flatMap((item) =>
     item.google_place_id && PLACE_ID.test(item.google_place_id)
       ? [
@@ -227,7 +224,7 @@ export default async function ResultsPage(props: PageProps) {
         </header>
         {items.length > 0 && (
           <DiscoveryResultsMap
-            key={discoveryPath(category, filters)}
+            key={resultsPath}
             listings={mapListings}
             resultCount={items.length}
           />
@@ -261,6 +258,7 @@ export default async function ResultsPage(props: PageProps) {
           )}
         </div>
         <section
+          key={`list:${resultsPath}`}
           className="discovery-results-list"
           id="rezultate"
           aria-label="Lista proprietăților"
