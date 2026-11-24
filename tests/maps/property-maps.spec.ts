@@ -44,6 +44,7 @@ test("Romanian address selection persists; editing it clears the pin, without bl
     .poll(() => state.property.google_place_id)
     .toBe("ChIJ-test-home");
   expect(state.property.city).toBe("București");
+  expect(state.property.county).toBe("București");
   await page.reload();
   await expect(address).toHaveValue("Strada Test 123, București, România");
   await address.fill("Strada Exemplu 456, Cluj-Napoca");
@@ -54,6 +55,7 @@ test("Romanian address selection persists; editing it clears the pin, without bl
   await expect.poll(() => state.property.google_place_id).toBe(null);
   expect(state.property.location).toBe("Strada Exemplu 456, Cluj-Napoca");
   expect(state.property.city).toBeNull();
+  expect(state.property.county).toBeNull();
 });
 
 test("non-Romanian/city selections and stale asynchronous selections never create a pin", async ({

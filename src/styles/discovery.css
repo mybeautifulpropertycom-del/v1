@@ -248,6 +248,15 @@
 .discovery-city-choices {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.discovery-city-choices:not([data-expanded="true"]) > button:nth-child(n + 10) {
+  display: none;
+}
+@media (max-width: 780px) {
+  .discovery-city-choices:not([data-expanded="true"])
+    > button:nth-child(n + 9) {
+    display: none;
+  }
+}
 .discovery-choices button {
   border: 1px solid var(--discovery-line);
   background: #fffaf0aa;
@@ -340,6 +349,9 @@
   padding: 6px 0;
   background: transparent;
   color: var(--discovery-green);
+}
+.discovery-more-cities {
+  margin-inline-start: auto;
 }
 .discovery-primary {
   padding: 10px 14px;

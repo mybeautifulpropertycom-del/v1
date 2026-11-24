@@ -50,16 +50,24 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
     "Înapoi",
   ]);
   await page.getByRole("button", { name: "2", exact: true }).click();
+  const cities = page.locator(".discovery-city-choices").getByRole("button");
+  await expect(cities).toHaveCount(8);
+  await expect(cities.first()).toHaveText("București / Ilfov");
+  await page.getByRole("button", { name: "Mai multe orașe" }).click();
+  await expect(cities).toHaveCount(15);
+  await page.getByRole("button", { name: "Mai puține orașe" }).click();
+  await expect(cities).toHaveCount(8);
   await expect(page.getByRole("button", { name: "Cluj-Napoca" })).toBeVisible();
-  await page.getByRole("button", { name: "București", exact: true }).click();
+  await page
+    .getByRole("button", { name: "București / Ilfov", exact: true })
+    .click();
   await expect(mobileProgress).toHaveAttribute("aria-valuenow", "5");
   await page.getByRole("button", { name: "Înapoi" }).click();
   await expect(mobileProgress).toHaveAttribute("aria-valuenow", "4");
-  await expect(page.getByRole("button", { name: "București" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await page.getByRole("button", { name: "București" }).click();
+  await expect(
+    page.getByRole("button", { name: "București / Ilfov" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "București / Ilfov" }).click();
   await expect(
     page.getByRole("button", { name: "Vezi proprietățile" }),
   ).toHaveCount(0);
@@ -68,7 +76,7 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
     .getByRole("button", { name: "€50.000 – €100.000", exact: true })
     .click();
   await expect(page).toHaveURL(
-    /\/cauta\/de-vanzare\/apartamente\/2-camere\/bucuresti\?min=50000&max=100000&moneda=eur$/,
+    /\/cauta\/de-vanzare\/apartamente\/2-camere\/bucuresti-ilfov\?min=50000&max=100000&moneda=eur$/,
   );
   const header = page.getByRole("banner");
   await expect(
@@ -81,19 +89,28 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("heading", {
-      name: "1 proprietate potrivită pentru tine",
+      name: "2 proprietăți potrivite pentru tine",
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("Apartamente cu 2 camere de vânzare în București", {
+    page.getByText("Apartamente cu 2 camere de vânzare în București / Ilfov", {
       exact: true,
     }),
   ).toBeVisible();
-  await expect(page.locator(".discovery-listing")).toHaveCount(1);
+  await expect(
+    page.getByRole("link", { name: "Toate localitățile" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".discovery-listing h2")).toHaveText([
+    "Apartament în buget",
+    "Apartament în Voluntari",
+  ]);
   await expect(
     page.getByRole("heading", { name: "Apartament în buget" }),
   ).toBeVisible();
-  const facts = page.getByRole("list", { name: "Caracteristici" });
+  const card = page.locator(".discovery-listing").filter({
+    has: page.getByRole("heading", { name: "Apartament în buget" }),
+  });
+  const facts = card.getByRole("list", { name: "Caracteristici" });
   await expect(facts).toContainText("2 dormitoare");
   await expect(facts).toContainText("2 băi");
   await expect(facts).toContainText("m²");
@@ -104,7 +121,7 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
     }),
   ).toBeLessThan(1);
   await expect(
-    page
+    card
       .getByRole("list", { name: "Dotări și facilități" })
       .getByRole("listitem"),
   ).toHaveText([
@@ -157,13 +174,13 @@ test("canonical landing pages and the rent quiz show matching published listings
   await page.getByRole("button", { name: "Vreau să închiriez" }).click();
   await page.getByRole("button", { name: "Casă / Vilă", exact: true }).click();
   await page.getByRole("button", { name: "3", exact: true }).click();
-  await page.getByRole("button", { name: "București" }).click();
+  await page.getByRole("button", { name: "București / Ilfov" }).click();
   await expect(
     page.getByRole("heading", { name: "Care este bugetul tău lunar?" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "€500 – €800", exact: true }).click();
   await expect(page).toHaveURL(
-    /\/cauta\/de-inchiriat\/case\/3-camere\/bucuresti\?min=500&max=800&moneda=eur$/,
+    /\/cauta\/de-inchiriat\/case\/3-camere\/bucuresti-ilfov\?min=500&max=800&moneda=eur$/,
   );
   await expect(
     page.getByRole("heading", { name: "Casă de închiriat" }),
@@ -190,12 +207,12 @@ test("the 8+ choice includes houses with at least eight bedrooms", async ({
   await page.getByRole("button", { name: "Vreau să cumpăr" }).click();
   await page.getByRole("button", { name: "Casă / Vilă", exact: true }).click();
   await page.getByRole("button", { name: "8+", exact: true }).click();
-  await page.getByRole("button", { name: "București" }).click();
+  await page.getByRole("button", { name: "București / Ilfov" }).click();
   await page
     .getByRole("button", { name: "€300.000 – €500.000", exact: true })
     .click();
 
-  await expect(page).toHaveURL(/\/case\/8-plus-camere\/bucuresti\?/);
+  await expect(page).toHaveURL(/\/case\/8-plus-camere\/bucuresti-ilfov\?/);
   await expect(page.locator(".discovery-listing h2")).toHaveText([
     "Casă cu 8 camere",
     "Casă cu 9 camere",
@@ -220,9 +237,11 @@ test("studio searches skip the bedroom step and show studios without a separate 
   await page.getByRole("button", { name: "Înapoi" }).click();
   await expect(studio).toHaveAttribute("aria-pressed", "true");
   await studio.click();
-  await page.getByRole("button", { name: "București", exact: true }).click();
+  await page
+    .getByRole("button", { name: "București / Ilfov", exact: true })
+    .click();
   await page.getByRole("button", { name: "€0 – €50.000", exact: true }).click();
-  await expect(page).toHaveURL(/\/garsoniere\/bucuresti\?/);
+  await expect(page).toHaveURL(/\/garsoniere\/bucuresti-ilfov\?/);
   await expect(page.locator(".discovery-listing h2")).toHaveText([
     "Garsonieră în București",
   ]);
@@ -247,9 +266,18 @@ test("the editorial homepage lets visitors revisit completed steps and find matc
   await buy.click();
   await page.getByRole("button", { name: "Apartament", exact: true }).click();
   await page.getByRole("button", { name: "2", exact: true }).click();
-  await page.getByRole("button", { name: "București", exact: true }).click();
+  const cities = page.locator(".discovery-city-choices").getByRole("button");
+  await expect(cities).toHaveCount(9);
+  await expect(cities.first()).toHaveText("București / Ilfov");
+  await page.getByRole("button", { name: "Mai multe orașe" }).click();
+  await expect(page.getByRole("button", { name: "Ploiești" })).toBeVisible();
+  await page.getByRole("button", { name: "Cluj-Napoca", exact: true }).click();
   await page.getByRole("button", { name: "€50.000 – €100.000" }).press("Enter");
+  await expect(page).toHaveURL(/\/2-camere\/cluj-napoca\?/);
+  await expect(
+    page.getByRole("link", { name: "Toate localitățile" }),
+  ).toHaveCount(0);
   await expect(page.locator(".discovery-listing h2")).toHaveText([
-    "Apartament în buget",
+    "Apartament în Cluj",
   ]);
 });

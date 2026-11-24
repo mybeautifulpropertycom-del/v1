@@ -18,6 +18,7 @@ globalThis.fetch = async (input, init) => {
       currency: "EUR",
       city: "București",
       city_slug: "bucuresti",
+      bucharest_ilfov: true,
       kind: "apartamente",
       bedrooms: 2,
       bathrooms: 2,
@@ -60,6 +61,16 @@ globalThis.fetch = async (input, init) => {
         title: "Apartament în Cluj",
         city: "Cluj-Napoca",
         city_slug: "cluj-napoca",
+        bucharest_ilfov: false,
+      },
+      {
+        ...template,
+        price: 82000,
+        slug: "apartament-voluntari",
+        title: "Apartament în Voluntari",
+        location: "Strada Florilor 12, Voluntari, Ilfov",
+        city: "Voluntari",
+        city_slug: "voluntari",
       },
       {
         ...template,
@@ -98,14 +109,20 @@ globalThis.fetch = async (input, init) => {
         (body.room_filter === -8
           ? p.bedrooms >= 8
           : !body.room_filter || p.bedrooms === body.room_filter) &&
-        (!body.city_filter || p.city_slug === body.city_filter) &&
+        (body.city_filter === "bucuresti-ilfov"
+          ? p.bucharest_ilfov
+          : !body.city_filter || p.city_slug === body.city_filter) &&
         (!body.budget_currency || p.currency === body.budget_currency) &&
         (body.budget_min == null || p.price >= body.budget_min) &&
         (body.budget_max == null || p.price <= body.budget_max),
     );
     return Response.json({
       total: items.length,
-      city: body.city_filter === "bucuresti" ? "București" : null,
+      city:
+        body.city_filter === "bucuresti-ilfov"
+          ? "București / Ilfov"
+          : (inventory.find((p) => p.city_slug === body.city_filter)?.city ??
+            null),
       items,
     });
   }

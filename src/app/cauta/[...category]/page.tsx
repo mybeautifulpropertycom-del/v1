@@ -190,14 +190,6 @@ export default async function ResultsPage(props: PageProps) {
           },
         ]
       : []),
-    ...(category.city
-      ? [
-          {
-            label: "Toate localitățile",
-            category: { ...category, city: undefined },
-          },
-        ]
-      : []),
     ...(category.kind === "toate"
       ? (["apartamente", "case"] as const).map((kind) => ({
           label: listingKinds[kind],

@@ -103,6 +103,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
   const [kind, setKind] = useState<(typeof propertyTypes)[number]["kind"]>();
   const [rooms, setRooms] = useState<DiscoveryRooms>();
   const [city, setCity] = useState<string>();
+  const [showMoreCities, setShowMoreCities] = useState(false);
   const [budget, setBudget] = useState<Budget>();
   const [isPending, startTransition] = useTransition();
   const isStudioSearch = kind === "garsoniere";
@@ -234,7 +235,11 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
         </div>
       )}
       {step === 3 && (
-        <div className="discovery-choices discovery-city-choices">
+        <div
+          className="discovery-choices discovery-city-choices"
+          id="discovery-city-choices"
+          data-expanded={showMoreCities}
+        >
           {[...discoveryCities].map(([slug, name]) => (
             <button
               key={slug}
@@ -277,6 +282,17 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
       >
         <ArrowLeft size={16} aria-hidden="true" /> Înapoi
       </button>
+      {step === 3 && (
+        <button
+          className="discovery-back discovery-more-cities"
+          type="button"
+          aria-controls="discovery-city-choices"
+          aria-expanded={showMoreCities}
+          onClick={() => setShowMoreCities((expanded) => !expanded)}
+        >
+          {showMoreCities ? "Mai puține orașe" : "Mai multe orașe"}
+        </button>
+      )}
     </div>
   );
 

@@ -25,6 +25,7 @@ export type Property = {
   description: string;
   location: string;
   city?: string | null;
+  county?: string | null;
   google_place_id?: string | null;
   price: number;
   currency: "USD" | "EUR" | "RON";

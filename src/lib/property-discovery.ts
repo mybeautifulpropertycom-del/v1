@@ -24,7 +24,7 @@ export type DiscoveryFilters = {
 export const DISCOVERY_PAGE_SIZE = 24;
 
 export const discoveryCities = new Map([
-  ["bucuresti", "București"],
+  ["bucuresti-ilfov", "București / Ilfov"],
   ["cluj-napoca", "Cluj-Napoca"],
   ["timisoara", "Timișoara"],
   ["iasi", "Iași"],
@@ -140,6 +140,7 @@ export function discoveryTitle(
   const rooms = category.rooms === "8+" ? "8 sau mai multe" : category.rooms;
   const cityLabel =
     city ??
+    (category.city === "bucuresti" ? "București" : undefined) ??
     (category.city &&
       (discoveryCities.get(category.city) ??
         category.city

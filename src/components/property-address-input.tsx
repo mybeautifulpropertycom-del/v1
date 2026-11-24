@@ -18,7 +18,12 @@ export function PropertyAddressInput({
   value: string;
   placeId?: string | null;
   disabled?: boolean;
-  onChange: (address: string, placeId: string | null, city?: string) => void;
+  onChange: (
+    address: string,
+    placeId: string | null,
+    city?: string,
+    county?: string,
+  ) => void;
   guideField?: string;
   guideIssue?: string | null;
 }) {
@@ -135,10 +140,15 @@ export function PropertyAddressInput({
         part.types.includes("locality"),
       );
       const locality = (city?.longText || city?.shortText)?.trim();
+      const county = place.addressComponents?.find((part) =>
+        part.types.includes("administrative_area_level_1"),
+      );
+      const countyName = (county?.longText || county?.shortText)?.trim();
       onChange(
         place.formattedAddress,
         place.id,
         locality && locality.length <= 80 ? locality : undefined,
+        countyName && countyName.length <= 80 ? countyName : undefined,
       );
       setFocused(false);
       input.current?.focus();

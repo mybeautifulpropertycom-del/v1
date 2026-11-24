@@ -484,13 +484,16 @@ export function PropertyEditor({
                     value={property.location}
                     placeId={property.google_place_id}
                     disabled={busy}
-                    onChange={(location, placeId, city) => {
+                    onChange={(location, placeId, city, county) => {
                       if (saving.current) return;
                       setProperty((p) => ({
                         ...p,
                         location,
                         ...(city || p.city !== undefined
                           ? { city: city ?? null }
+                          : {}),
+                        ...(county || p.county !== undefined
+                          ? { county: county ?? null }
                           : {}),
                         // Keep old installations usable until Maps is activated.
                         ...(placeId || p.google_place_id !== undefined

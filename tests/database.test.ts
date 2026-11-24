@@ -2586,11 +2586,17 @@ test("public discovery filters published matches by exact or minimum bedrooms, c
       [agentA],
     );
     await discovery.exec("update public.profiles set phone='+40 700 000 001'");
-    const bedroomsMigration = await readFile(
-      new URL("../supabase/sql-editor-discovery-bedrooms.sql", import.meta.url),
-      "utf8",
-    );
-    await discovery.exec(bedroomsMigration);
+    for (const script of ["county", "bucharest-ilfov"]) {
+      await discovery.exec(
+        await readFile(
+          new URL(
+            `../supabase/sql-editor-discovery-${script}.sql`,
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+    }
     await discovery.query(
       `
       insert into public.properties(owner_id,slug,title,description,location,city,type,transaction,currency,price,area,rooms,bedrooms,images,status)
@@ -2607,8 +2613,13 @@ test("public discovery filters published matches by exact or minimum bedrooms, c
         ('ten-bedroom-villa','Strada Florilor 101, București, România','București','House','sale','EUR',450000,null,10,'published'),
         ('legacy-rooms','Strada Visului 17, București, România',null,'Condo','sale','EUR',75000,2,3,'published'),
         ('studio-without-bedroom','Strada Visului 19, București, România',null,'Studio','sale','EUR',45000,1,0,'published'),
-        ('different-city','Strada Test 12, Cluj-Napoca, România',null,'Condo','sale','EUR',75000,2,2,'published'),
+        ('different-city','Strada Ilfov 12, Cluj-Napoca, România',null,'Condo','sale','EUR',75000,2,2,'published'),
         ('numeric-town','1 Decembrie, Ilfov',null,'Condo','sale','EUR',75000,2,2,'published'),
+        ('legacy-voluntari','Strada Florilor 8, Voluntari, România',null,'Condo','sale','EUR',75000,2,2,'published'),
+        ('postal-code','Strada Viilor 8, Tunari 077180, România',null,'Condo','sale','EUR',75000,2,2,'published'),
+        ('confirmed-county','Strada Mică 17, Berceni, România','Berceni','Condo','sale','EUR',75000,2,2,'published'),
+        ('ambiguous-town','Strada Mică 18, Berceni, România','Berceni','Condo','sale','EUR',75000,2,2,'published'),
+        ('other-county','Strada Mică 19, Berceni, România','Berceni','Condo','sale','EUR',75000,2,2,'published'),
         ('draft-house','Aleea Primăverii 30, Iași, România','Iași','Condo','sale','EUR',75000,2,2,'draft')
       ) fixture(slug,address,city,kind,offer,currency,price,rooms,bedrooms,status)
     `,
@@ -2618,6 +2629,8 @@ test("public discovery filters published matches by exact or minimum bedrooms, c
       update public.properties
       set bathrooms = 2, amenities = array['Terasă', 'Parcare'], google_place_id = 'ChIJ-test-discovery'
       where slug = 'lower-bound';
+      update public.properties set county = 'Județul Ilfov' where slug = 'confirmed-county';
+      update public.properties set county = 'Județul Prahova' where slug = 'other-county';
       set role anon;
     `);
     await assert.rejects(
@@ -2654,6 +2667,28 @@ test("public discovery filters published matches by exact or minimum bedrooms, c
     assert.equal(card?.bathrooms, 2);
     assert.deepEqual(card?.amenities, ["Terasă", "Parcare"]);
     assert.equal(card?.google_place_id, "ChIJ-test-discovery");
+    const combined = (
+      await discovery.query<{
+        data: {
+          total: number;
+          city: string;
+          items: { slug: string; bucharest_ilfov?: boolean }[];
+        };
+      }>(
+        "select public.find_public_listings('sale','apartamente',2,'bucuresti-ilfov',50000,100000,'EUR') as data",
+      )
+    ).rows[0].data;
+    assert.equal(combined.city, "București / Ilfov");
+    assert.equal(combined.total, 6);
+    assert.deepEqual(combined.items.map(({ slug }) => slug).sort(), [
+      "confirmed-county",
+      "legacy-voluntari",
+      "lower-bound",
+      "numeric-town",
+      "postal-code",
+      "upper-bound",
+    ]);
+    assert.ok(combined.items.every((row) => row.bucharest_ilfov === undefined));
     const villas = async (rooms: number) =>
       (
         await discovery.query<{
@@ -2683,7 +2718,9 @@ test("public discovery filters published matches by exact or minimum bedrooms, c
           "select slug from public.get_public_listing_cities() order by slug",
         )
       ).rows,
-      [{ slug: "bucuresti" }, { slug: "cluj-napoca" }],
+      ["berceni", "bucuresti", "cluj-napoca", "tunari", "voluntari"].map(
+        (slug) => ({ slug }),
+      ),
     );
     const categories = (
       await discovery.query<{

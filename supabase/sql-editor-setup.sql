@@ -3591,6 +3591,119 @@ create or replace view public.property_discovery as
   join public.profiles a on a.id = p.owner_id
   where p.status = 'published';
 
+
+alter table public.properties
+  add column if not exists county text
+  check (county is null or char_length(btrim(county)) between 1 and 80);
+
+create or replace function public.discovery_in_bucharest_ilfov(county text, address text, city text)
+returns boolean language plpgsql immutable set search_path = '' as $$
+declare
+  region_names constant text[] := array[
+    'bucuresti', 'municipiul-bucuresti', 'bucharest',
+    'ilfov', 'judetul-ilfov', 'jud-ilfov', 'ilfov-county'
+  ];
+begin
+  if nullif(btrim(county), '') is not null then
+    return public.address_slug_base(county) = any(region_names || array['b', 'if']);
+  end if;
+  if public.address_slug_base(city) in ('bucuresti', 'bucharest') or exists (
+    select 1 from unnest(string_to_array(address, ',')) part
+      where public.address_slug_base(part) = any(region_names)
+  ) then return true; end if;
+  if address ~* '\m(RO[-[:space:]]*)?[0-9]{6}\M' then
+    return address ~* '\m(RO[-[:space:]]*)?0[1-7][0-9]{4}\M';
+  end if;
+  -- Older addresses may omit the county. Only infer it for distinctive place names.
+  return public.address_slug_base(coalesce(city, split_part(address, ',', 1))) in (
+    'buftea', 'chitila', 'otopeni', 'popesti-leordeni', 'voluntari', 'chiajna',
+    'corbeanca', 'ciolpani', 'ciorogarla', 'darasti-ilfov', 'dragomiresti-vale',
+    'dragomiresti-deal', 'jilava', 'moara-vlasiei', 'mogosoaia', 'petrachioaia',
+    'snagov', 'stefanestii-de-jos', 'stefanestii-de-sus'
+  );
+end;
+$$;
+revoke all on function public.discovery_in_bucharest_ilfov(text, text, text) from public, anon, authenticated;
+
+create or replace view public.property_discovery as
+  select p.id, p.slug, p.address_slug, p.title, p.location,
+    p.price, p.currency, p.transaction, p.area, p.area_unit,
+    case when p.type <> 'Land' then nullif(p.bedrooms, 0)::smallint end as rooms,
+    p.images[1] as image, p.updated_at,
+    case p.type
+      when 'Condo' then 'apartamente'
+      when 'Studio' then 'garsoniere'
+      when 'House' then 'case'
+      when 'Town House' then 'case'
+      when 'Penthouse' then 'penthouse-uri'
+      when 'Land' then 'terenuri'
+    end as kind,
+    coalesce(nullif(btrim(p.city), ''), public.discovery_legacy_city(p.location)) as city,
+    case when coalesce(nullif(btrim(p.city), ''), public.discovery_legacy_city(p.location)) is not null
+      then public.address_slug_base(coalesce(nullif(btrim(p.city), ''), public.discovery_legacy_city(p.location)))
+    end as city_slug,
+    p.bathrooms, p.amenities, p.google_place_id, p.bedrooms,
+    public.discovery_in_bucharest_ilfov(p.county, p.location,
+      coalesce(nullif(btrim(p.city), ''), public.discovery_legacy_city(p.location))) as bucharest_ilfov
+  from public.properties p
+  join public.profiles a on a.id = p.owner_id
+  where p.status = 'published';
+
+
+-- Keep individual cities exact and expose the combined region through the existing RPC.
+create or replace function public.find_public_listings(
+  offer text,
+  kind_filter text default null,
+  room_filter integer default null,
+  city_filter text default null,
+  budget_min numeric default null,
+  budget_max numeric default null,
+  budget_currency text default null,
+  result_page integer default 1
+) returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare result jsonb;
+begin
+  if offer is null or offer not in ('sale', 'rent')
+     or (kind_filter is not null and kind_filter not in ('apartamente', 'case', 'garsoniere', 'penthouse-uri', 'terenuri'))
+     or (room_filter is not null and room_filter <> -8 and room_filter not between 1 and 100)
+     or (city_filter is not null and city_filter !~ '^[a-z0-9]+(-[a-z0-9]+)*$')
+     or char_length(city_filter) > 90
+     or (budget_currency is not null and budget_currency not in ('EUR', 'RON', 'USD'))
+     or ((budget_min is not null or budget_max is not null) and budget_currency is null)
+     or (budget_min is not null and budget_min not between 0 and 999999999999)
+     or (budget_max is not null and budget_max not between 0 and 999999999999)
+     or budget_min > budget_max
+     or result_page is null or result_page not between 1 and 5000
+  then raise exception 'Invalid listing filters' using errcode = '22023'; end if;
+
+  with matching as not materialized (
+    select * from public.property_discovery p
+      where p.transaction = offer
+        and (kind_filter is null or p.kind = kind_filter)
+        and (
+          room_filter is null
+          or (room_filter = -8 and p.rooms >= 8)
+          or p.rooms = room_filter
+        )
+        and (city_filter is null or case when city_filter = 'bucuresti-ilfov'
+          then p.bucharest_ilfov else p.city_slug = city_filter end)
+        and (budget_currency is null or p.currency = budget_currency)
+        and (budget_min is null or p.price >= budget_min)
+        and (budget_max is null or p.price <= budget_max)
+  )
+  select jsonb_build_object(
+    'total', (select count(*) from matching),
+    'city', case when city_filter = 'bucuresti-ilfov' then 'București / Ilfov'
+      else (select min(p.city) from public.property_discovery p where p.city_slug = city_filter) end,
+    'items', coalesce((
+      select jsonb_agg(to_jsonb(page) - array['updated_at', 'id', 'bucharest_ilfov'] order by page.updated_at desc, page.id)
+      from (select * from matching order by updated_at desc, id limit 24 offset (result_page - 1) * 24) page
+    ), '[]'::jsonb)
+  ) into result;
+  return result;
+end;
+$$;
+
 notify pgrst, 'reload schema';
 commit;
 

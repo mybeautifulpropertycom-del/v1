@@ -215,6 +215,30 @@ commit;
 select 'MBP_DISCOVERY_BEDROOMS_READY' as status;
 `,
 );
+for (const [migrationName, scriptName, status] of [
+  [
+    "202611240001_property_discovery_county.sql",
+    "sql-editor-discovery-county.sql",
+    "MBP_DISCOVERY_COUNTY_READY",
+  ],
+  [
+    "202611240002_property_discovery_bucharest_ilfov.sql",
+    "sql-editor-discovery-bucharest-ilfov.sql",
+    "MBP_DISCOVERY_BUCHAREST_ILFOV_READY",
+  ],
+]) {
+  const sql = await readFile(new URL(migrationName, directory), "utf8");
+  await writeFile(
+    new URL(`../supabase/${scriptName}`, import.meta.url),
+    `-- Existing installations with property discovery enabled. Safe to rerun in order.
+begin;
+${sql.trim()}
+notify pgrst, 'reload schema';
+commit;
+select '${status}' as status;
+`,
+  );
+}
 const townHouse = await readFile(
   new URL("202610310001_town_house.sql", directory),
   "utf8",

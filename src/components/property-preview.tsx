@@ -100,6 +100,7 @@ export function PropertyPreview({ id }: { id: string }) {
                       ? { google_place_id: null }
                       : {}),
                     ...(property.city !== undefined ? { city: null } : {}),
+                    ...(property.county !== undefined ? { county: null } : {}),
                   }
                 : {}),
             },
