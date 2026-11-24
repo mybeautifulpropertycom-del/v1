@@ -593,7 +593,7 @@
   opacity: 1;
 }
 .atelier-gallery {
-  padding-block: 100px;
+  padding-block: 88px 100px;
   overflow: hidden;
 }
 .atelier-section-heading {
@@ -1054,7 +1054,7 @@
     margin-bottom: 28px;
   }
   .atelier-gallery {
-    padding-block: 55px;
+    padding-block: 48px;
   }
   .atelier-photo-grid {
     grid-template-columns: 1fr;
@@ -1080,9 +1080,12 @@
   .atelier-film video {
     aspect-ratio: 4/3;
   }
+  .atelier-website .property-neighbourhood {
+    padding-top: 42px;
+  }
   .atelier-contact {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
     padding-block: 55px;
     padding-top: 28.6px;
   }
@@ -1094,6 +1097,9 @@
   }
   .atelier-invitation {
     padding-block: 55px;
+  }
+  .atelier-invitation .atelier-kicker {
+    font-size: 9px;
   }
   .atelier-invitation h2 {
     font-size: calc(clamp(25px, 7.3vw, 32px) + 1px);

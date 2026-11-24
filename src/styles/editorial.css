@@ -965,6 +965,9 @@
   font-size: 9px;
   padding-right: 10px;
 }
+.viewing-property-title {
+  display: none;
+}
 .viewing-dialog .viewing-intro h2 {
   font-family: var(--serif);
   font-weight: 400;
@@ -1460,6 +1463,9 @@
   .estate-invitation {
     padding-block: 65px;
   }
+  .estate-invitation .estate-eyebrow {
+    font-size: 9px;
+  }
   .estate-invitation-note {
     font-size: 9px;
     align-items: flex-start;
@@ -1493,6 +1499,9 @@
   .viewing-intro .estate-eyebrow {
     font-size: 7px;
     padding-right: 15px;
+  }
+  .viewing-property-title {
+    display: inline;
   }
   .viewing-dialog .viewing-intro h2 {
     font-size: 37px;
