@@ -87,7 +87,12 @@ function ListingCard({ listing }: { listing: DiscoveryListing }) {
   const amenities = [...new Set(listing.amenities ?? [])];
   return (
     <article className="discovery-listing">
-      <Link href={publicPath(listing)}>
+      <Link
+        href={publicPath(listing)}
+        target="_blank"
+        rel="noopener"
+        prefetch={false}
+      >
         <div className="discovery-listing-image">
           {listing.image ? (
             <PropertyImage

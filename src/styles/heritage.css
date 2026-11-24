@@ -37,6 +37,22 @@
 .heritage-website :is(.property-neighbourhood, .property-mortgage) {
   padding-inline: var(--heritage-content-gutter);
 }
+.heritage-website .property-neighbourhood {
+  --heritage-neighbourhood-spacing: clamp(38px, 4.8vw, 72px);
+  padding-top: var(--heritage-neighbourhood-spacing);
+}
+.heritage-website .heritage-details:has(+ .property-neighbourhood) {
+  padding-bottom: 12px;
+}
+.heritage-website .heritage-film:has(+ .property-neighbourhood) {
+  padding-bottom: clamp(48px, 4vw, 58px);
+}
+.heritage-website .property-neighbourhood:has(+ .property-mortgage) {
+  padding-bottom: var(--heritage-neighbourhood-spacing);
+}
+.heritage-website .property-neighbourhood + .property-mortgage {
+  padding-top: clamp(30px, 3.5vw, 52px);
+}
 .heritage-section {
   padding-block: clamp(65px, 7.5vw, 110px);
 }

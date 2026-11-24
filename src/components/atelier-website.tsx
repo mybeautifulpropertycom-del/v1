@@ -57,6 +57,8 @@ export function AtelierWebsite({
   const isPreview = preview || sample;
   const side = property.images.slice(1, 7);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
+  const location = property.location.trim();
+  const hasConstructionYear = property.construction_year != null;
   const secondary = property.images[1] || property.images[0];
   const detail = property.images[2] || secondary;
   const initials = profile.name
@@ -380,12 +382,6 @@ export function AtelierWebsite({
                 <dt>Tipul proprietății</dt>
                 <dd>{propertyTypeLabel(property.type)}</dd>
               </div>
-              {property.construction_year != null && (
-                <div>
-                  <dt>Anul de construcție</dt>
-                  <dd>{property.construction_year}</dd>
-                </div>
-              )}
               <div>
                 <dt>Dormitoare</dt>
                 <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
@@ -394,11 +390,25 @@ export function AtelierWebsite({
                 <dt>Băi</dt>
                 <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
               </div>
-              <div className="atelier-spec-location">
-                <dt>Adresă</dt>
-                <dd>{property.location}</dd>
-              </div>
-              <div>
+              {hasConstructionYear && (
+                <div className={location ? undefined : "atelier-spec-wide"}>
+                  <dt>Anul de construcție</dt>
+                  <dd>{property.construction_year}</dd>
+                </div>
+              )}
+              {location && (
+                <div className="atelier-spec-location">
+                  <dt>Adresă</dt>
+                  <dd>{location}</dd>
+                </div>
+              )}
+              <div
+                className={
+                  hasConstructionYear || !location
+                    ? "atelier-spec-wide"
+                    : undefined
+                }
+              >
                 <dt>
                   {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
                 </dt>

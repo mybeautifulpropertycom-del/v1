@@ -305,7 +305,12 @@ export function DiscoveryResultsMap({
               <ul>
                 {selected.listings.map((listing) => (
                   <li key={listing.href}>
-                    <Link href={listing.href}>
+                    <Link
+                      href={listing.href}
+                      target="_blank"
+                      rel="noopener"
+                      prefetch={false}
+                    >
                       <strong>{listing.title}</strong>
                       <span>
                         {listing.price}{" "}

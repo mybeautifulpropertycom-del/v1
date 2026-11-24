@@ -136,11 +136,16 @@ test("the mobile quiz filters by rooms, city and inclusive budget, then opens th
     "content",
     "noindex, follow",
   );
-  await page.getByRole("link", { name: /Apartament în buget/ }).click();
-  await expect(page).toHaveURL(/\/print-test-address$/);
+  const resultsUrl = page.url();
+  const [listing] = await Promise.all([
+    page.waitForEvent("popup"),
+    card.getByRole("link", { name: /Apartament în buget/ }).click(),
+  ]);
+  await expect(listing).toHaveURL(/\/print-test-address$/);
   await expect(
-    page.getByRole("heading", { name: "A home ready to share", level: 1 }),
+    listing.getByRole("heading", { name: "A home ready to share", level: 1 }),
   ).toBeVisible();
+  await expect(page).toHaveURL(resultsUrl);
 });
 
 test("canonical landing pages and the rent quiz show matching published listings", async ({

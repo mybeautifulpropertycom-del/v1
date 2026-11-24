@@ -33,9 +33,14 @@ test("search results show real listing details and map only the matches with sav
   const details = map.getByRole("region", {
     name: "Proprietăți la această adresă",
   });
-  await expect(
-    details.getByRole("link", { name: /Apartament în buget/ }),
-  ).toHaveAttribute("href", "/print-test-address");
+  const link = details.getByRole("link", { name: /Apartament în buget/ });
+  await expect(link).toHaveAttribute("href", "/print-test-address");
+  const [listing] = await Promise.all([
+    page.waitForEvent("popup"),
+    link.click(),
+  ]);
+  await expect(listing).toHaveURL(/\/print-test-address$/);
+  await listing.close();
   await map
     .getByRole("button", { name: "Închide detaliile de pe hartă" })
     .click();

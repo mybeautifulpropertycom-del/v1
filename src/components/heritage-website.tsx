@@ -13,10 +13,10 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Asterisk,
+  Expand,
   Film,
   Mail,
   Phone,
-  Plus,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
 import { propertyStory } from "@/lib/property-story";
@@ -153,7 +153,7 @@ export function HeritageWebsite({
                 {property.images.length === 1
                   ? "Vezi fotografia"
                   : `Vezi cele ${property.images.length} fotografii`}
-                <ArrowUpRight size={16} />
+                <Expand size={16} aria-hidden="true" />
               </button>
             )}
             <div className="heritage-hero-copy">
@@ -323,7 +323,7 @@ export function HeritageWebsite({
                     loading="lazy"
                   />
                   <span>
-                    <Plus size={17} />
+                    <Expand size={17} aria-hidden="true" />
                   </span>
                 </button>
               </figure>

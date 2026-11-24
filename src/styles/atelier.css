@@ -495,6 +495,9 @@
   min-height: 108px;
   min-width: 0;
 }
+.atelier-spec-wide {
+  grid-column: 1 / -1;
+}
 .atelier-spec-grid dt {
   color: #bbc2b2;
   font-size: 9px;
@@ -698,7 +701,7 @@
   }
   .property-mortgage + .atelier-contact {
     padding-inline: max(6%, calc((100% - 1280px) / 2));
-    padding-top: 42.9px;
+    padding-top: 34px;
   }
   .property-neighbourhood + .atelier-contact {
     padding-inline: max(6%, calc((100% - 1440px) / 2));
