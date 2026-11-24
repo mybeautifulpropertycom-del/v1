@@ -330,21 +330,13 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
                     aria-valuenow={stepNumber}
                     aria-valuetext={`Pasul ${stepNumber} din ${visibleSteps.length}: ${timelineSteps[index]}`}
                   >
-                    <span aria-hidden="true">
-                      {String(stepNumber).padStart(2, "0")} /{" "}
-                      {String(visibleSteps.length).padStart(2, "0")}
-                    </span>
-                    <span
-                      className="discovery-editorial-progress-track"
-                      aria-hidden="true"
-                    >
-                      {visibleSteps.map(({ label, index }) => (
-                        <span
-                          key={label}
-                          data-filled={index <= step || undefined}
-                        />
-                      ))}
-                    </span>
+                    {visibleSteps.map(({ label, index }) => (
+                      <span
+                        key={label}
+                        aria-hidden="true"
+                        data-filled={index <= step || undefined}
+                      />
+                    ))}
                   </div>
                   {question}
                   {choices}

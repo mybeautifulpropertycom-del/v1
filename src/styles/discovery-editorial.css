@@ -144,7 +144,7 @@ button.discovery-editorial-step-label:hover {
 
 .discovery-editorial-step-content h2 {
   margin-bottom: 9px;
-  font: 600 clamp(19px, 1.85vw, 27px) / 1.2 var(--workspace-font);
+  font: 600 clamp(18px, 1.7vw, 24px) / 1.2 var(--workspace-font);
   letter-spacing: -0.025em;
   scroll-margin-top: 20px;
 }
@@ -360,32 +360,24 @@ button.discovery-editorial-step-label:hover {
   }
 
   .discovery-editorial-mobile-progress {
-    display: flex;
-    align-items: center;
-    gap: clamp(16px, 8vw, 36px);
-    margin-bottom: 10px;
-    color: #655745;
-    font-size: 11px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .discovery-editorial-progress-track {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
+    align-items: center;
     gap: 4px;
     width: 42%;
     max-width: 172px;
+    min-height: 16px;
+    margin-bottom: 10px;
   }
 
-  .discovery-editorial-progress-track span {
+  .discovery-editorial-mobile-progress > span {
     height: 5px;
     border-radius: 6px;
     background: #e5d8c8;
   }
 
-  .discovery-editorial-progress-track span[data-filled] {
+  .discovery-editorial-mobile-progress > span[data-filled] {
     background: #b86d48;
   }
 
