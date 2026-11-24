@@ -248,14 +248,8 @@
 .discovery-city-choices {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.discovery-city-choices:not([data-expanded="true"]) > button:nth-child(n + 10) {
-  display: none;
-}
-@media (max-width: 780px) {
-  .discovery-city-choices:not([data-expanded="true"])
-    > button:nth-child(n + 9) {
-    display: none;
-  }
+.discovery-extra-cities:not([hidden]) {
+  display: contents;
 }
 .discovery-choices button {
   border: 1px solid var(--discovery-line);
@@ -351,7 +345,16 @@
   color: var(--discovery-green);
 }
 .discovery-more-cities {
+  display: none;
   margin-inline-start: auto;
+}
+@media (max-width: 780px) {
+  .discovery-city-toggle {
+    display: none;
+  }
+  .discovery-more-cities {
+    display: inline-flex;
+  }
 }
 .discovery-primary {
   padding: 10px 14px;

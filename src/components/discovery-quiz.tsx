@@ -148,6 +148,30 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
         : questions[step]}
     </h2>
   );
+  const cityButtons = Array.from(discoveryCities, ([slug, name]) => (
+    <button
+      key={slug}
+      type="button"
+      aria-pressed={city === slug}
+      onClick={() => {
+        setCity(slug);
+        goTo(4);
+      }}
+    >
+      {name}
+    </button>
+  ));
+  const cityToggle = (className: string) => (
+    <button
+      className={className}
+      type="button"
+      aria-controls="discovery-extra-cities"
+      aria-expanded={showMoreCities}
+      onClick={() => setShowMoreCities((expanded) => !expanded)}
+    >
+      {showMoreCities ? "Mai puține orașe" : "Mai multe orașe"}
+    </button>
+  );
   const choices = (
     <div className="discovery-question">
       {step === 0 && (
@@ -235,24 +259,16 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
         </div>
       )}
       {step === 3 && (
-        <div
-          className="discovery-choices discovery-city-choices"
-          id="discovery-city-choices"
-          data-expanded={showMoreCities}
-        >
-          {[...discoveryCities].map(([slug, name]) => (
-            <button
-              key={slug}
-              type="button"
-              aria-pressed={city === slug}
-              onClick={() => {
-                setCity(slug);
-                goTo(4);
-              }}
-            >
-              {name}
-            </button>
-          ))}
+        <div className="discovery-choices discovery-city-choices">
+          {cityButtons.slice(0, 8)}
+          {cityToggle("discovery-city-toggle")}
+          <div
+            className="discovery-extra-cities"
+            id="discovery-extra-cities"
+            hidden={!showMoreCities}
+          >
+            {cityButtons.slice(8)}
+          </div>
         </div>
       )}
       {last && transaction && (
@@ -282,17 +298,7 @@ export function DiscoveryQuiz({ editorial = false }: { editorial?: boolean }) {
       >
         <ArrowLeft size={16} aria-hidden="true" /> Înapoi
       </button>
-      {step === 3 && (
-        <button
-          className="discovery-back discovery-more-cities"
-          type="button"
-          aria-controls="discovery-city-choices"
-          aria-expanded={showMoreCities}
-          onClick={() => setShowMoreCities((expanded) => !expanded)}
-        >
-          {showMoreCities ? "Mai puține orașe" : "Mai multe orașe"}
-        </button>
-      )}
+      {step === 3 && cityToggle("discovery-back discovery-more-cities")}
     </div>
   );
 

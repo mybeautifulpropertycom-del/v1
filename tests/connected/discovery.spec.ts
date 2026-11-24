@@ -269,7 +269,11 @@ test("the editorial homepage lets visitors revisit completed steps and find matc
   const cities = page.locator(".discovery-city-choices").getByRole("button");
   await expect(cities).toHaveCount(9);
   await expect(cities.first()).toHaveText("București / Ilfov");
-  await page.getByRole("button", { name: "Mai multe orașe" }).click();
+  await expect(cities.last()).toHaveText("Mai multe orașe");
+  await expect(page.getByRole("button", { name: "Sibiu" })).toHaveCount(0);
+  await cities.last().click();
+  await expect(page.getByRole("button", { name: "Sibiu" })).toBeVisible();
+  await expect(cities).toHaveCount(16);
   await expect(page.getByRole("button", { name: "Ploiești" })).toBeVisible();
   await page.getByRole("button", { name: "Cluj-Napoca", exact: true }).click();
   await page.getByRole("button", { name: "€50.000 – €100.000" }).press("Enter");
