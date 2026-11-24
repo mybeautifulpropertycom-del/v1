@@ -144,7 +144,7 @@ button.discovery-editorial-step-label:hover {
 
 .discovery-editorial-step-content h2 {
   margin-bottom: 9px;
-  font: 600 clamp(18px, 1.7vw, 24px) / 1.2 var(--workspace-font);
+  font: 600 calc(clamp(18px, 1.7vw, 24px) + 1px) / 1.2 var(--workspace-font);
   letter-spacing: -0.025em;
   scroll-margin-top: 20px;
 }
