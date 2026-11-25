@@ -12,6 +12,7 @@ import {
   siteOrigin,
 } from "../src/lib/seo";
 import robots from "../src/app/robots";
+import { sitemapUrls } from "../src/lib/sitemap";
 import {
   applyPropertyStory,
   propertyStory,
@@ -87,7 +88,7 @@ test("rental metadata keeps the saved city and facts even with a long address", 
   const meta = propertyMetadata(apartment);
   assert.equal(
     meta.title,
-    "Apartament cu balcon · de închiriat în Cluj-Napoca",
+    "Apartament cu balcon · de închiriat în Cluj-Napoca · Strada cu denumire foarte lungă…",
   );
   assert.match(meta.description!, /^Apartament de închiriat · Cluj-Napoca/);
   assert.match(meta.description!, /135 m² · 2 dormitoare · 850 .* \/ lună/);
@@ -100,6 +101,31 @@ test("rental metadata keeps the saved city and facts even with a long address", 
   assert.equal(structured.offers?.price, 850);
   assert.equal(structured.offers?.priceCurrency, "EUR");
   assert.match(structured.offers!.businessFunction, /#LeaseOut$/);
+});
+
+test("similar listings use their own street and headline in search metadata", () => {
+  const property = {
+    ...demoWorkspace().properties[1],
+    title: "Apartament luminos",
+    city: "București",
+    location: "Strada Lalelelor 7, București",
+  };
+  const first = propertyMetadata(property);
+  const otherStreet = propertyMetadata({
+    ...property,
+    location: "Strada Iasomiei 9, București",
+  });
+  const otherHome = propertyMetadata({
+    ...property,
+    title: "Apartament la ultimul etaj",
+  });
+  assert.match(String(first.title), /Strada Lalelelor 7/);
+  assert.notEqual(first.title, otherStreet.title);
+  assert.notEqual(first.description, otherStreet.description);
+  assert.notEqual(first.title, otherHome.title);
+  assert.notEqual(first.description, otherHome.description);
+  assert.match(otherHome.description!, /la ultimul etaj/);
+  assert.deepEqual(propertyMetadata(property), first);
 });
 
 test("the listing uses studio or house metadata from the saved type", () => {
@@ -129,7 +155,10 @@ test("production permits crawling noindex pages and preview deployments opt out"
   const before = process.env.VERCEL_ENV;
   try {
     process.env.VERCEL_ENV = "production";
-    assert.match(String(robots().sitemap), /\/sitemap.xml$/);
+    assert.deepEqual(robots().sitemap, [
+      "https://urmatoarea-proprietate.ro/sitemap.xml",
+      "https://urmatoarea-proprietate.ro/sitemap.xml/main.xml",
+    ]);
     assert.deepEqual(robots().rules, {
       userAgent: "*",
       allow: "/",
@@ -184,6 +213,30 @@ test("the purchased domain is the default canonical origin while explicit rollou
   } finally {
     if (previous === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
     else process.env.NEXT_PUBLIC_SITE_URL = previous;
+  }
+});
+
+test("Vercel production uses the purchased domain even with old environment configuration", () => {
+  const before = process.env.VERCEL_ENV;
+  const previousOrigin = process.env.NEXT_PUBLIC_SITE_URL;
+  try {
+    process.env.VERCEL_ENV = "production";
+    process.env.NEXT_PUBLIC_SITE_URL =
+      "https://pucioasa-premium-beige.vercel.app";
+    assert.equal(siteOrigin(), "https://urmatoarea-proprietate.ro");
+    assert.equal(
+      homeMetadata().alternates?.canonical,
+      "https://urmatoarea-proprietate.ro/",
+    );
+    assert.match(
+      sitemapUrls(),
+      /<loc>https:\/\/urmatoarea-proprietate\.ro\/<\/loc>/,
+    );
+  } finally {
+    if (before === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = before;
+    if (previousOrigin === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+    else process.env.NEXT_PUBLIC_SITE_URL = previousOrigin;
   }
 });
 

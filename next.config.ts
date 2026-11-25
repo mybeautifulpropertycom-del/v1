@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PLATFORM_ORIGIN } from "./src/lib/platform-brand";
 import { platformRedirects } from "./src/lib/platform-redirects";
 
 const photoOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -27,11 +28,28 @@ const config: NextConfig = {
   devIndicators: false,
   poweredByHeader: false,
   redirects() {
-    return platformRedirects.map(([source, destination]) => ({
+    const oldPages = platformRedirects.map(([source, destination]) => ({
       source,
       destination,
       permanent: true,
     }));
+    if (process.env.VERCEL_ENV !== "production") return oldPages;
+
+    const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    const aliases = new Set(["pucioasa-premium-beige.vercel.app"]);
+    if (vercelHost && /^[a-z0-9-]+\.vercel\.app$/.test(vercelHost)) {
+      aliases.add(vercelHost);
+    }
+    return [
+      ...Array.from(aliases, (host) => ({
+        // Existing payment and worker endpoints need a direct response.
+        source: "/:path((?!(?:api|_next|\\.well-known)(?:/|$)).*)",
+        destination: `${PLATFORM_ORIGIN}/:path`,
+        has: [{ type: "host" as const, value: host.replace(/\./g, "\\.") }],
+        permanent: true,
+      })),
+      ...oldPages,
+    ];
   },
   serverExternalPackages: ["@ffmpeg-installer/linux-x64"],
   outputFileTracingIncludes: {

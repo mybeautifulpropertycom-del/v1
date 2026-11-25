@@ -10,6 +10,9 @@ test("the public sitemap leads crawlers directly to indexable canonical pages", 
   expect(await robots.text()).toContain(
     "Sitemap: https://urmatoarea-proprietate.ro/sitemap.xml",
   );
+  expect(await robots.text()).toContain(
+    "Sitemap: https://urmatoarea-proprietate.ro/sitemap.xml/main.xml",
+  );
 
   const index = await request.get("/sitemap.xml", options);
   expect(index.status()).toBe(200);

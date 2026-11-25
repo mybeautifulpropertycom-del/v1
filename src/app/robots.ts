@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
   // Crawlers must be able to read noindex on private, account and demo pages.
   return {
     rules: { userAgent: "*", allow: "/", disallow: "/api/" },
-    sitemap: siteUrl("/sitemap.xml"),
+    sitemap: [siteUrl("/sitemap.xml"), siteUrl("/sitemap.xml/main.xml")],
   };
 }

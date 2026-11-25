@@ -16,6 +16,7 @@ export const HOME_DESCRIPTION =
   "Cauți o locuință? Descoperă apartamente și case de vânzare sau de închiriat, după oraș și buget. Agenții și proprietarii pot publica gratuit anunțuri cu fotografii.";
 
 export function siteOrigin(): string {
+  if (process.env.VERCEL_ENV === "production") return PLATFORM_ORIGIN;
   const url = new URL(process.env.NEXT_PUBLIC_SITE_URL || PLATFORM_ORIGIN);
   const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
   const localDevelopment = process.env.NODE_ENV === "development" && loopback;
@@ -157,12 +158,23 @@ export function propertyMetadata(property: PublicProperty): Metadata {
     locality && !headlineWords.includes(searchWords(locality))
       ? limitText(locality, 42)
       : "";
+  const street =
+    city &&
+    address
+      .split(",")
+      .map(compactText)
+      .find((part) => part && searchWords(part) !== searchWords(city));
+  const titleStreet =
+    street && !headlineWords.includes(searchWords(street))
+      ? limitText(street, 36)
+      : "";
   const title = [
     headlineWords.includes(searchWords(type)) ? "" : type,
     shortHeadline,
     titleTransaction && titleLocation
       ? `${titleTransaction}${city ? " în " : " · "}${titleLocation}`
       : titleTransaction || titleLocation,
+    titleStreet,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -177,6 +189,12 @@ export function propertyMetadata(property: PublicProperty): Metadata {
           .join(", ")
       : shortAddress;
   const lead = [`${type} ${transaction}`, location].filter(Boolean).join(" · ");
+  const headlineDetail = headline
+    .replace(
+      /^(?:(?:apartament(?:ul)?|cas[ăa]|vil[ăa]|garsonier[ăa]|penthouse(?:-ul)?|teren(?:ul)?)(?:\s+|$))?(?:de (?:vânzare|închiriat)(?:\s+|$))?/iu,
+      "",
+    )
+    .trim();
   const facts = [
     property.area > 0
       ? `${property.area.toLocaleString("ro-RO")} ${property.area_unit === "sqft" ? "ft²" : "m²"}`
@@ -187,6 +205,10 @@ export function propertyMetadata(property: PublicProperty): Metadata {
     property.price > 0 ? compactText(formatPrice(property)) : "",
     property.type !== "Land" && property.bathrooms > 0
       ? `${property.bathrooms} ${property.bathrooms === 1 ? "baie" : "băi"}`
+      : "",
+    headlineDetail &&
+    !searchWords(location).includes(searchWords(headlineDetail))
+      ? limitText(headlineDetail, 28)
       : "",
     property.construction_year
       ? `Construcție ${property.construction_year}`
