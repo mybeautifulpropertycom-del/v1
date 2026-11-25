@@ -865,9 +865,6 @@
 .atelier-footer strong {
   font-size: 12px;
 }
-.atelier-mobile-tour {
-  display: none;
-}
 @media (min-width: 1700px) {
   .atelier-website main,
   .atelier-nav,
@@ -935,9 +932,6 @@
   }
 }
 @media (max-width: 640px) {
-  .atelier-website {
-    padding-bottom: 78px;
-  }
   .atelier-nav {
     height: 76px;
   }
@@ -1142,39 +1136,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 20px;
-  }
-  .atelier-mobile-tour {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 20;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 20px max(12px, env(safe-area-inset-bottom));
-    background: #fafaf6f5;
-    border-top: 1px solid var(--at-line);
-    backdrop-filter: blur(10px);
-  }
-  .atelier-mobile-tour[data-hero-visible="true"] {
-    visibility: hidden;
-    pointer-events: none;
-  }
-  .atelier-mobile-tour > span {
-    font: 20px var(--serif);
-  }
-  .atelier-mobile-tour small {
-    display: block;
-    font: 8px var(--sans);
-    color: var(--at-muted);
-    margin-top: 4px;
-  }
-  .atelier-mobile-tour .atelier-button {
-    font-size: 10px;
-    padding: 13px 15px;
-    gap: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
