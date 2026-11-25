@@ -45,6 +45,53 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       ).toMatch(/^mailto:/);
     }
   });
+
+  test(`${template}: mobile seller actions appear at details and the footer`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/photos-test-${template}`);
+    const bar = page.locator(".property-mobile-contact");
+    const bringIntoView = (selector: string) =>
+      page
+        .locator(selector)
+        .evaluate((element) =>
+          element.scrollIntoView({ block: "start", behavior: "instant" }),
+        );
+
+    await expect(bar).toBeHidden();
+    await bringIntoView("#details");
+    await expect(bar).toBeVisible();
+    await expect(
+      bar.getByRole("link", { name: "Apelează vânzătorul" }),
+    ).toHaveAttribute("href", "tel:+40700000000");
+    const whatsapp = bar.getByRole("link", {
+      name: "Trimite mesaj pe WhatsApp",
+    });
+    const inContact = page.locator("#contact").getByRole("link", {
+      name: "Trimite mesaj pe WhatsApp",
+    });
+    await expect(whatsapp).toHaveAttribute(
+      "href",
+      (await inContact.getAttribute("href"))!,
+    );
+
+    await bringIntoView("#contact");
+    await expect(bar).toBeHidden();
+    await bringIntoView(".property-footer");
+    await expect(bar).toBeVisible();
+    expect(
+      await bar.evaluate((element) =>
+        Math.abs(element.getBoundingClientRect().bottom - innerHeight),
+      ),
+    ).toBeLessThan(1);
+
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(bar).toBeHidden();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await bringIntoView("#details");
+    await expect(bar).toBeHidden();
+  });
 }
 
 test("published listings show three stacked sharing cards and copy the saved canonical link", async ({

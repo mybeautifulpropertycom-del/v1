@@ -1,0 +1,55 @@
+.property-mobile-contact {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .property-footer:has(+ .property-mobile-contact) {
+    margin-bottom: calc(63px + env(safe-area-inset-bottom));
+  }
+
+  .property-mobile-contact:not([hidden]) {
+    position: fixed;
+    z-index: 20;
+    inset: auto 0 0;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px max(14px, env(safe-area-inset-right))
+      calc(9px + env(safe-area-inset-bottom))
+      max(14px, env(safe-area-inset-left));
+    background: #faf8f2;
+    border-top: 1px solid #25291926;
+    box-shadow: 0 -3px 16px #25291912;
+  }
+
+  .property-mobile-contact
+    :is(.property-mobile-whatsapp, .property-mobile-call) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    border-radius: 10px;
+    color: #fff;
+    font: 650 14px / 1.25 var(--workspace-font);
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .property-mobile-contact .property-mobile-whatsapp {
+    background: #163b2b;
+  }
+
+  .property-mobile-whatsapp-icon {
+    display: grid;
+    place-items: center;
+  }
+
+  .property-mobile-whatsapp-icon > svg {
+    grid-area: 1 / 1;
+  }
+
+  .property-mobile-contact .property-mobile-call {
+    background: #9c6a1c;
+  }
+}
