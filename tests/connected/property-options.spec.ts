@@ -161,11 +161,19 @@ test("floor and land area save for the selected property type and appear only in
   const bathrooms = page.getByLabel("Băi", { exact: true });
   const year = page.getByLabel("Anul de construcție", { exact: true });
   await expect(bedrooms).toBeVisible();
+  const areaBox = (await page.getByLabel("Suprafață utilă (m²)").boundingBox())!;
+  const floorBox = (await floor.boundingBox())!;
+  const totalBox = (await total.boundingBox())!;
   const bedroomsBox = (await bedrooms.boundingBox())!;
   const bathroomsBox = (await bathrooms.boundingBox())!;
   const yearBox = (await year.boundingBox())!;
-  expect(bedroomsBox.y).toBeCloseTo(yearBox.y, 0);
-  expect(bathroomsBox.y).toBeCloseTo(yearBox.y, 0);
+  expect(areaBox.y).toBeLessThan(floorBox.y);
+  expect(floorBox.y).toBeCloseTo(totalBox.y, 0);
+  expect(floorBox.width).toBeCloseTo(totalBox.width, 0);
+  expect(totalBox.y).toBeLessThan(yearBox.y);
+  expect(yearBox.width).toBeCloseTo(areaBox.width, 0);
+  expect(yearBox.y).toBeLessThan(bedroomsBox.y);
+  expect(bedroomsBox.y).toBeCloseTo(bathroomsBox.y, 0);
   expect(bedroomsBox.width).toBeCloseTo(bathroomsBox.width, 0);
   expect(bathroomsBox.x).toBeGreaterThan(bedroomsBox.x + bedroomsBox.width);
   expect(bathroomsBox.x + bathroomsBox.width - bedroomsBox.x).toBeCloseTo(

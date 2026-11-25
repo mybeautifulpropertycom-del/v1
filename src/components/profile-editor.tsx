@@ -147,7 +147,7 @@ export function ProfileEditor() {
   }
   return (
     <>
-      <div className="page-heading compact">
+      <div className="page-heading compact workspace-tab-heading">
         <div>
           <span className="eyebrow">{t.eyebrow}</span>
           <h1>{t.title}</h1>

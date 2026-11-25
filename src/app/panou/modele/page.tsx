@@ -5,7 +5,7 @@ import { TemplateMiniature } from "@/components/template-miniature";
 export default function Page() {
   return (
     <>
-      <div className="page-heading compact">
+      <div className="page-heading compact workspace-tab-heading">
         <div>
           <span className="eyebrow">COLECȚIA DE DESIGNURI</span>
           <h1>

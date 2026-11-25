@@ -612,7 +612,7 @@ export function PropertyEditor({
                     />
                   </label>
                   {hasLandArea(property.type) && (
-                    <label>
+                    <label className="property-land-field">
                       Suprafață teren (m²)
                       <input
                         type="number"
@@ -684,7 +684,7 @@ export function PropertyEditor({
                       </div>
                     </fieldset>
                   )}
-                  <label>
+                  <label className="property-construction-year">
                     Anul de construcție
                     <input
                       type="number"

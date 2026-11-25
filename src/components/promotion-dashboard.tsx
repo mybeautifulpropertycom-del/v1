@@ -587,7 +587,7 @@ export function PromotionDashboard() {
   }, [returned]);
   return (
     <div className="promotion-page">
-      <div className="page-heading compact">
+      <div className="page-heading compact workspace-tab-heading">
         <div>
           <span className="eyebrow">PROMOVARE PENTRU PROPRIETĂȚI</span>
           <h1 data-guide-promotions>Fii prezent în căutările potrivite.</h1>

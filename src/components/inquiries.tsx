@@ -105,7 +105,7 @@ export function Inquiries() {
   }
   return (
     <>
-      <div className="page-heading compact">
+      <div className="page-heading compact workspace-tab-heading">
         <div>
           <span className="eyebrow">CONVERSAȚIILE BUNE ÎNCEP AICI</span>
           <h1 data-guide-messages>

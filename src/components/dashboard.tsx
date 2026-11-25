@@ -168,7 +168,7 @@ export function Dashboard() {
   const complete = profileErrors(profile).length === 0;
   return (
     <>
-      <div className="page-heading">
+      <div className="page-heading workspace-tab-heading">
         <div>
           <span className="eyebrow">
             <span className="tiny-sun">✳</span> URMĂTORUL TĂU CAPITOL ÎNCEPE
