@@ -46,7 +46,7 @@ export const ro = {
       "Publicat în modul demonstrativ al acestui browser. Distribuirea online necesită un cont conectat.",
     unpublished: "Site-ul este acum o ciornă.",
     details: "Detaliile esențiale.",
-    description: "Spune povestea.",
+    amenities: "Facilități și dotări",
     photography: "Fotografii care te aduc mai aproape de acasă.",
     design: "Alege prezentarea potrivită.",
     contact: "Datele tale de contact, incluse.",

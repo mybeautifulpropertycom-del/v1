@@ -5,38 +5,27 @@ before AI is enabled. Its amenity ribbon loops **only the saved amenities** (or
 listing facts when no amenities exist), with no SVG icons. It can be paused and
 becomes a static wrapping list when reduced motion is preferred.
 
-OpenAI uses the saved **Tell the story** notes as the primary editorial brief and
-writes separate English paragraphs for the landing page. Notes are rewritten and
-distributed across the relevant sections; they are not overwritten or copied into
-every paragraph. Photographs support the story and supply visible details and captions.
-When the notes are blank, generation uses the structured listing facts and photographs.
-Structured facts take precedence over conflicting notes, and embedded instructions
-in notes or images are never treated as writing rules.
+OpenAI writes Romanian presentation text from the saved listing facts, facilities
+and photographs. The listing form collects facilities and equipment in section 02.
+Older notes remain available as supplementary factual context. Listing text and
+image text are treated as data.
 
-The writing direction is natural and specific: everyday words, active verbs, varied
-sentence openings and few adjectives. Headings and accents use concrete ideas rather
-than philosophical slogans, luxury clichés or stacked adjectives. Paragraphs use
-one or two short sentences without padding. This applies to all generated headings,
-introductions, body paragraphs, captions and invitations, and to the bounded length
-repair. There is no extra paid "humanizer" pass. The model's prose should still be
-reviewed for accuracy and taste; automated tests validate the instructions and data flow,
-not a guarantee that every generated sentence will read well.
+The second presentation section uses a separate introduction. It helps the visitor
+picture an everyday moment in the home in two or three sentences. A pool, garden,
+terrace or balcony can anchor that moment when the owner has confirmed it in the
+amenities. Other generated sections and captions use concrete factual copy.
 
-Section photo mappings remain: introduction/cover, main story/photo 2 (or cover),
-features/photo 3 (or last available), gallery/all photos. These mappings supplement
-the notes rather than overriding them. Editorial, Heritage and Atelier use independent
-section text. The page layouts and property facts remain unchanged.
+In a connected workspace, saving the listing, choosing its design or opening the
+private preview prepares missing or stale copy. A valid saved result is reused
+across designs. Freshly generated factual text is stored in
+`website_copy.description`; new listings also use it to satisfy the publication
+description requirement. Historical notes are preserved. If generation fails in
+the listing editor, **Continuă cu textul de bază** supplies an editable introduction
+based on confirmed data.
 
-There is no separate AI card, generation button, or review form. In a connected
-workspace, **Save changes**, **Choose your design**, and **Publish website** prepare
-missing or stale descriptions as part of saving. A valid saved result is reused,
-including after changing only the template. Agent-entered description notes are
-preserved. Generated main text is stored separately in `website_copy.description`;
-only an empty description is initialized from the generated paragraph.
-
-Editing and saving Tell the story invalidates the prior source snapshot and prepares
-fresh text from the new notes. Deploying new writing instructions alone does not
-rewrite existing saved or manually edited sections and does not trigger bulk API calls.
+Changes to listing facts or photographs invalidate the previous source snapshot.
+Prior saved copy stays readable after a deployment. Public pages and model examples
+render saved copy or a prepared introduction without calling OpenAI.
 
 Opening a private preview of a property without current section copy also prepares
 text, displayed directly in the page. This preview result is local until the agent
@@ -74,8 +63,8 @@ is upgraded on the next preparation. Changed facts or photo order invalidate cac
 copy. Results for an outdated input snapshot cannot be applied.
 
 Generation errors leave the entered details/photos saved and never publish a draft.
-The editor brings the error into view and offers manual continuation using the
-agent's own text. Save again to retry automatic preparation; private preview has a
+The editor brings the error into view and offers an editable starter text.
+Save again to retry automatic preparation; private preview has a
 **Try again** action. A complete response with an overlong section or caption can receive one text-only repair within the same 45-second provider deadline. The repair does not resend photos and only replaces invalid fields; valid sections and captions are preserved. This can incur one additional OpenAI text call, within the same reserved daily attempt. Missing content, refusals, truncation, provider errors and a failed repair are not retried automatically.
 
 ## Troubleshooting generation

@@ -9,6 +9,7 @@ import { publicPath } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { PropertyWebsite, type EditableField } from "./property-website";
 import {
+  applyFallbackPropertyStory,
   editWebsiteCopy,
   hasWebsiteDescriptions,
   type WebsiteCopyField,
@@ -123,11 +124,14 @@ export function PropertyPreview({ id }: { id: string }) {
     setError("");
     try {
       let value = await saveProperty(property);
-      if (!demo && value.images.length && !hasWebsiteDescriptions(value)) {
+      if (value.images.length && !hasWebsiteDescriptions(value)) {
         // Headline/location edits change the facts used by the section copy.
         // Save these inputs before asking the server to prepare their update.
-        setPreparing(true);
-        value = await preparePropertyWebsite(value);
+        if (demo) value = applyFallbackPropertyStory(value);
+        else {
+          setPreparing(true);
+          value = await preparePropertyWebsite(value);
+        }
         value = await saveProperty(value);
       }
       setProperty(value);
@@ -156,7 +160,12 @@ export function PropertyPreview({ id }: { id: string }) {
     },
     publishDemo: async () => {
       if (property) {
-        const value = await saveProperty(property, true);
+        const value = await saveProperty(
+          hasWebsiteDescriptions(property)
+            ? property
+            : applyFallbackPropertyStory(property),
+          true,
+        );
         setProperty(value);
       }
     },

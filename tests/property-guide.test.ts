@@ -8,7 +8,7 @@ import {
   propertyGuideIssues,
 } from "../src/lib/property-guide";
 
-test("the field tour includes every detail plus notes and amenities, even when defaults are already valid", () => {
+test("the field tour includes property details and amenities, even when defaults are already valid", () => {
   const property = demoWorkspace().properties[0];
   const issues = propertyGuideIssues(property);
   assert.deepEqual(
@@ -23,7 +23,6 @@ test("the field tour includes every detail plus notes and amenities, even when d
       "area",
       "bedrooms",
       "bathrooms",
-      "description",
       "amenities",
     ],
   );
@@ -39,15 +38,9 @@ test("the field tour includes every detail plus notes and amenities, even when d
   assert.equal(nextPropertyGuideField(done, changed)?.id, "title");
   const optional = propertyGuideIssues({
     ...property,
-    description: "",
     amenities: [],
   });
-  assert.equal(optional.description, null);
   assert.equal(optional.amenities, null);
-  assert.equal(
-    propertyGuideFields.find((field) => field.id === "description")?.optional,
-    true,
-  );
   assert.equal(
     propertyGuideFields.find((field) => field.id === "amenities")?.optional,
     true,
@@ -60,7 +53,7 @@ test("leaving area accepts untouched valid defaults, skips the single unit, and 
   const done = completePropertyGuideThrough(new Set(), issues, "area");
   assert.ok(done.has("currency"));
   assert.equal(nextPropertyGuideField(done, issues)?.id, "bedrooms");
-  assert.ok(!done.has("description"));
+  assert.ok(!done.has("amenities"));
   const invalid = { ...issues, price: "Adaugă prețul." };
   const partial = completePropertyGuideThrough(new Set(), invalid, "area");
   assert.equal(nextPropertyGuideField(partial, invalid)?.id, "price");
@@ -77,7 +70,6 @@ test("field guidance reports invalid facts and accepts legacy units, currencies 
     ["area", 0],
     ["bedrooms", -1],
     ["bathrooms", 0.25],
-    ["description", "a".repeat(12001)],
   ] as const)
     assert.ok(propertyGuideIssues({ ...property, [field]: value })[field]);
   const saved = {

@@ -33,10 +33,8 @@ test("agent creates, uploads, publishes locally, reloads, edits and unpublishes 
   await page.getByLabel("Preț", { exact: true }).fill("695000");
   await page.getByLabel("Suprafață utilă (m²)", { exact: true }).fill("2100");
   await page
-    .getByLabel("Descriere", { exact: false })
-    .fill(
-      "A beautiful home with generous spaces, a private garden, and abundant natural light throughout.",
-    );
+    .getByRole("button", { name: "Grădină privată", exact: true })
+    .click();
   await page.getByRole("button", { name: "Adaugă fotografiile" }).click();
   await page
     .locator('input[type="file"]')

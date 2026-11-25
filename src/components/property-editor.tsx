@@ -48,7 +48,10 @@ import {
 } from "@/lib/model";
 import { useWorkspace } from "./workspace-provider";
 import { TemplateMiniature } from "./template-miniature";
-import { editWebsiteCopy, hasWebsiteDescriptions } from "@/lib/property-story";
+import {
+  applyFallbackPropertyStory,
+  hasWebsiteDescriptions,
+} from "@/lib/property-story";
 import { preparePropertyWebsite } from "@/lib/request-property-story";
 import {
   propertyDetailsErrors,
@@ -77,6 +80,14 @@ function PropertySelect(props: ComponentProps<"select">) {
     </span>
   );
 }
+
+type PropertySaveOptions = {
+  publish?: boolean;
+  unpublish?: boolean;
+  redirect?: boolean;
+  fallback?: boolean;
+  onSaved?: (value: Property) => void;
+};
 
 export function PropertyEditor({
   id,
@@ -122,8 +133,8 @@ export function PropertyEditor({
   const [busy, setBusy] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const saving = useRef(false);
-  const pendingPublish = useRef(false);
-  const [writingFailed, setWritingFailed] = useState(false);
+  const [pendingFallback, setPendingFallback] =
+    useState<PropertySaveOptions | null>(null);
   const [uploading, setUploading] = useState(false);
   const uploadLock = useRef(false);
   const [uploadProgress, setUploadProgress] = useState({
@@ -169,17 +180,18 @@ export function PropertyEditor({
     setDirty(true);
     setPublished(false);
   }
-  async function persist(
+  async function persist({
     publish = false,
     unpublish = false,
     redirect = true,
-    manual = false,
-  ) {
+    fallback = false,
+    onSaved,
+  }: PropertySaveOptions = {}) {
     if (saving.current || uploading) return null;
     saving.current = true;
     setBusy(true);
     setError("");
-    setWritingFailed(false);
+    setPendingFallback(null);
     try {
       // Save the inputs first so the server reads the owned listing, not client
       // supplied facts or image URLs. A failed generation never publishes a draft.
@@ -189,23 +201,23 @@ export function PropertyEditor({
       setProperty(value);
       setDirty(false);
       setSaved(true);
-      if (manual && value.description.trim()) {
-        value = editWebsiteCopy(value, "storyBody", value.description);
-        value = await saveProperty(value, publish);
-      } else if (
-        !manual &&
-        !unpublish &&
-        !demo &&
-        value.images.length &&
-        !hasWebsiteDescriptions(value)
-      ) {
-        setPreparing(true);
-        try {
-          value = await preparePropertyWebsite(value);
-        } catch (error) {
-          setWritingFailed(true);
-          pendingPublish.current = publish;
-          throw error;
+      if (!unpublish && value.images.length && !hasWebsiteDescriptions(value)) {
+        if (fallback || demo) {
+          value = applyFallbackPropertyStory(value);
+        } else {
+          setPreparing(true);
+          try {
+            value = await preparePropertyWebsite(value);
+          } catch (error) {
+            setPendingFallback({
+              publish,
+              unpublish,
+              redirect,
+              fallback: true,
+              onSaved,
+            });
+            throw error;
+          }
         }
         setProperty(value);
         setDirty(true);
@@ -225,6 +237,7 @@ export function PropertyEditor({
       );
       if (publish) setPublished(true);
       if (!id && redirect) router.replace(`/panou/proprietati/${value.id}`);
+      onSaved?.(value);
       return value;
     } catch (e) {
       setError(
@@ -252,7 +265,10 @@ export function PropertyEditor({
         return;
       }
     }
-    if (next === 2 && !(await persist(false, false, false))) return;
+    if (next === 2) {
+      await persist({ redirect: false, onSaved: () => setStep(next) });
+      return;
+    }
     setError("");
     setStep(next);
   }
@@ -463,13 +479,13 @@ export function PropertyEditor({
           tabIndex={-1}
         >
           {error}
-          {writingFailed && (
+          {pendingFallback && (
             <button
               className="text-button"
               disabled={busy}
-              onClick={() => persist(pendingPublish.current, false, true, true)}
+              onClick={() => persist(pendingFallback)}
             >
-              Continuă cu textul meu
+              Continuă cu textul de bază
             </button>
           )}
           <button
@@ -773,29 +789,14 @@ export function PropertyEditor({
               <section className="form-card">
                 <div className="form-section-title">
                   <span>02</span>
-                  <h2>{t.description}</h2>
+                  <h2>{t.amenities}</h2>
                 </div>
-                <label>
-                  Descriere
-                  <textarea
-                    data-property-guide-field="description"
-                    data-guide-issue={guideIssues.description || undefined}
-                    rows={7}
-                    maxLength={12000}
-                    value={property.description}
-                    placeholder="Descrie locuința în cuvintele tale: compartimentarea, dotările, renovările recente și ce ai vrea să remarce vizitatorii…"
-                    onChange={(e) => update("description", e.target.value)}
-                  />
-                  <small>
-                    {property.description.length.toLocaleString("ro-RO")} /
-                    12.000 de caractere. Aceste detalii vor ghida textele
-                    fiecărei secțiuni din prezentare. La salvare, serviciul de
-                    redactare folosește aceste notițe, fotografiile și detaliile
-                    proprietății pentru a scrie texte clare. Notițele rămân
-                    aici; poți edita textele prezentării direct pe pagină
-                  </small>
-                </label>
-                <label className="amenity-label">Dotări și facilități</label>
+                {!demo && (
+                  <p className="form-intro">
+                    AI-ul folosește detaliile și fotografiile pentru a pregăti
+                    textele prezentării. Le poți edita în previzualizare.
+                  </p>
+                )}
                 <div
                   className="guide-facilities"
                   data-property-guide-field="amenities"
@@ -1021,8 +1022,11 @@ export function PropertyEditor({
                 data-guide-preview
                 disabled={busy || uploading}
                 onClick={async () => {
-                  const value = await persist(false, false, false);
-                  if (value) router.push(`/previzualizare/${value.id}`);
+                  await persist({
+                    redirect: false,
+                    onSaved: (value) =>
+                      router.push(`/previzualizare/${value.id}`),
+                  });
                 }}
               >
                 <Globe2 size={16} />
@@ -1135,7 +1139,7 @@ export function PropertyEditor({
               <button
                 className="unpublish-button"
                 disabled={busy}
-                onClick={() => persist(false, true)}
+                onClick={() => persist({ unpublish: true })}
               >
                 Șterge site-ul publicat
               </button>

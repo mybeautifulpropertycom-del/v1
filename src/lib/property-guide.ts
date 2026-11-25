@@ -52,14 +52,8 @@ export const propertyGuideFields = [
     body: "Alege numărul de băi din listă.",
   },
   {
-    id: "description",
-    title: "Spune povestea locuinței",
-    body: "Notează compartimentarea, renovările și detaliile pe care vrei să le remarce vizitatorii. Aceste notițe ghidează textele prezentării.",
-    optional: true,
-  },
-  {
     id: "amenities",
-    title: "Dotări și facilități",
+    title: "Facilități și dotări",
     body: "Selectează facilitățile proprietății sau adaugă dotări personalizate. Poți alege mai multe, apoi continua.",
     optional: true,
   },
@@ -135,10 +129,6 @@ export function propertyGuideIssues(
       ? null
       : "Alege unitatea de suprafață.",
     ...propertyRoomIssues(property, saved),
-    description:
-      property.description.length <= 12000
-        ? null
-        : "Scurtează notițele la maximum 12.000 de caractere.",
     amenities:
       property.amenities.length <= 30
         ? null

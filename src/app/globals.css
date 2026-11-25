@@ -1806,10 +1806,6 @@ label small,
   color: #9aa38d;
   margin-bottom: 24px;
 }
-.amenity-label {
-  margin-top: 25px;
-  margin-bottom: 13px;
-}
 .amenity-options {
   display: flex;
   gap: 8px;

@@ -75,7 +75,7 @@ test("reviewed property copy persists, gallery captions stay hidden, and changed
   const listing = workspace.properties[1];
   listing.website_copy = {
     version: 1,
-    source: propertyStorySource(listing),
+    source: propertyStorySource(listing, 1),
     content: {
       ...propertyStory(listing),
       introTitle: "Windows onto a new day.",

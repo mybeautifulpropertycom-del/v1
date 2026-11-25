@@ -454,10 +454,6 @@ test("one section card stays beside its heading while red borders walk through e
     ["area", "302"],
     ["bedrooms", "4"],
     ["bathrooms", "3"],
-    [
-      "description",
-      "O locuință cu grădină, patru dormitoare și acces din strada Șipca. Bucătăria și livingul se află la parter.",
-    ],
   ];
   for (const [field, value] of steps) {
     const input = page.locator(`[data-property-guide-field="${field}"]`);
@@ -631,23 +627,18 @@ test("a phone can visit and leave optional sections empty without adding markers
   }
   await expect(page.locator('[data-guide-highlight="true"]')).toHaveAttribute(
     "data-property-guide-field",
-    "description",
+    "amenities",
   );
   await expect(
     page.getByRole("dialog", { name: "Ghid de început" }),
   ).toHaveCount(0);
-  const notes = page.locator('[data-property-guide-field="description"]');
-  await notes.evaluate((element) =>
+  const facilities = page.locator('[data-property-guide-field="amenities"]');
+  await facilities.evaluate((element) =>
     element.scrollIntoView({ block: "center", behavior: "instant" }),
   );
   await page.screenshot({
     path: testInfo.outputPath("highlight-only-phone.png"),
   });
-  await notes.press("Tab");
-  await expect(page.locator('[data-guide-highlight="true"]')).toHaveAttribute(
-    "data-property-guide-field",
-    "amenities",
-  );
   await page.locator("[data-guide-editor-next]").click();
   await expect(page.locator("[data-guide-editor-step]")).toHaveAttribute(
     "data-guide-editor-step",

@@ -4,44 +4,50 @@ import { propertyStorySource } from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
 import { workspace, id } from "./workspace-fixture";
 
-test("Tell the story notes are saved before generation and updated notes refresh the website copy", async ({
+test("facilities are saved before generation and refresh the second section without written notes", async ({
   page,
 }) => {
-  const state = await workspace(page, { template: "panorama" });
-  const notes = [
-    "Kitchen opens onto the courtyard. Roof replaced in 2024.",
-    "Kitchen opens onto the courtyard. Roof replaced in 2025.",
+  const state = await workspace(page, {
+    template: "panorama",
+    description: "",
+    amenities: [],
+  });
+  const copy = [
+    "Imaginează-ți o după-amiază de vară lângă piscină. Vino să vezi cum ți-ai petrece zilele aici.",
+    "Imaginează-ți o dimineață în care îți bei cafeaua pe balcon, înainte să înceapă ziua.",
   ];
   let requests = 0;
   await page.route("**/api/property-story", async (route) => {
-    expect(state.property.description).toBe(notes[requests]);
+    expect(state.property.amenities).toEqual([
+      requests === 0 ? "Piscină" : "Balcon",
+    ]);
+    if (requests === 0) expect(state.property.description).toBe("");
     const draft = storyFixture(state.property);
-    draft.description = `The kitchen opens onto the courtyard. The roof was replaced in ${requests === 0 ? "2024" : "2025"}.`;
-    draft.content.introBody = "Step from the kitchen into the courtyard.";
-    requests++;
+    draft.content.introBody = copy[requests++];
     await route.fulfill({
       json: { draft, source: propertyStorySource(state.property) },
     });
   });
-  for (let i = 0; i < notes.length; i++) {
+  for (let i = 0; i < copy.length; i++) {
     await page.goto(`/panou/proprietati/${id}`);
-    await page.getByLabel("Descriere", { exact: false }).fill(notes[i]);
+    await expect(
+      page.getByRole("heading", { name: "Facilități și dotări" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "Descriere", exact: true }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Piscină", exact: true }).click();
+    if (i === 1)
+      await page.getByRole("button", { name: "Balcon", exact: true }).click();
     await page
       .getByRole("button", { name: "Salvează modificările", exact: true })
       .click();
     await expect(
       page.getByText("Modificările au fost salvate.", { exact: true }),
     ).toBeVisible();
-    expect(state.property.description).toBe(notes[i]);
+    expect(state.property.description.length).toBeGreaterThanOrEqual(30);
     await page.goto(`/previzualizare/${id}`);
-    await expect(page.locator(".atelier-website")).toContainText(
-      `The roof was replaced in ${i === 0 ? "2024" : "2025"}.`,
-    );
-    // The compact hero contains property facts; the saved introduction remains
-    // available in the copy without duplicating the main story on the page.
-    expect(state.property.website_copy?.content.introBody).toBe(
-      "Step from the kitchen into the courtyard.",
-    );
+    await expect(page.locator(".atelier-story-copy > p")).toHaveText(copy[i]);
     expect(requests).toBe(i + 1);
   }
 });
@@ -86,7 +92,7 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
   ).toBeEnabled();
   await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".heritage-story-text > p")).toHaveText(
-    draft.description,
+    draft.content.introBody,
   );
   await expect(
     page.locator(".heritage-story > .heritage-section-heading"),
@@ -103,7 +109,7 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
     "Your personal introduction belongs right here. Visit to explore this home for yourself.";
   await page
     .getByRole("textbox", {
-      name: "Editează Descrierea secțiunii principale",
+      name: "Editează Textul introducerii",
       exact: true,
     })
     .fill(custom);
@@ -142,7 +148,7 @@ test("private preview prepares text in place but only saves it on request", asyn
   });
   await page.goto(`/previzualizare/${id}`);
   await expect(page.locator(".heritage-story-text > p")).toHaveText(
-    draft.description,
+    draft.content.introBody,
   );
   await expect(
     page.getByRole("button", { name: "Salvează site-ul" }),
@@ -184,7 +190,7 @@ test("choosing a design saves photos and prepares the page without a separate AI
 test("missing configuration keeps the draft saved, shows a useful error, and allows manual continuation", async ({
   page,
 }) => {
-  const state = await workspace(page);
+  const state = await workspace(page, { description: "" });
   await page.route("**/api/property-story", (route) =>
     route.fulfill({
       status: 503,
@@ -196,9 +202,8 @@ test("missing configuration keeps the draft saved, shows a useful error, and all
   );
   await page.goto(`/panou/proprietati/${id}`);
   await page.getByLabel(/^Adresă/).fill("Austin, TX");
-  await page
-    .getByRole("button", { name: "Salvează modificările", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Adaugă fotografiile" }).click();
+  await page.getByRole("button", { name: "Alege designul" }).click();
   await expect(page.locator(".editor-error")).toContainText(
     "AI_NOT_CONFIGURED",
   );
@@ -208,12 +213,9 @@ test("missing configuration keeps the draft saved, shows a useful error, and all
   expect(state.property.location).toBe("Austin, TX");
   expect(state.property.status).toBe("draft");
   expect(state.property.website_copy).toBeUndefined();
-  await page.getByRole("button", { name: "Continuă cu textul meu" }).click();
-  await expect(
-    page.getByText("Modificările au fost salvate.", { exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Adaugă fotografiile" }).click();
-  await page.getByRole("button", { name: "Alege designul" }).click();
+  await page
+    .getByRole("button", { name: "Continuă cu textul de bază" })
+    .click();
   await expect(page.locator(".template-choices")).toBeVisible();
   await page
     .getByRole("button", { name: "Deschide editorul site-ului", exact: true })
@@ -251,7 +253,7 @@ test("private preview reports a platform timeout and lets the agent retry in pla
     .getByRole("button", { name: "Încearcă din nou", exact: true })
     .click();
   await expect(page.locator(".heritage-story-text > p")).toHaveText(
-    storyFixture(state.property).description,
+    storyFixture(state.property).content.introBody,
   );
   expect(requests).toBe(2);
 });
@@ -317,12 +319,12 @@ test("Atelier uses separate photo-based paragraphs and saves inline section edit
     state.property.location,
   );
   await expect(page.locator(".atelier-story-copy > p")).toHaveText(
-    draft.description,
+    draft.content.introBody,
   );
   await expect(page.locator(".atelier-details-copy > p")).toHaveCount(0);
   await page
     .getByRole("textbox", {
-      name: "Editează Descrierea secțiunii principale",
+      name: "Editează Textul introducerii",
       exact: true,
     })
     .fill(

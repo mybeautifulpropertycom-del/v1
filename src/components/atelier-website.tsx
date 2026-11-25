@@ -24,7 +24,11 @@ import {
   X,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
-import { propertyStory, type WebsiteCopyField } from "@/lib/property-story";
+import {
+  propertyIntroductionField,
+  propertyStory,
+  type WebsiteCopyField,
+} from "@/lib/property-story";
 import { EditableText } from "./website-editable-text";
 import type { PropertyWebsiteProps } from "./property-website";
 import { PropertyPhotoDialog } from "./property-photo-dialog";
@@ -344,7 +348,7 @@ export function AtelierWebsite({
               {presentationCopy.introduction.title}
               <em>{presentationCopy.introduction.accent}</em>
             </h2>
-            <p>{text("storyBody")}</p>
+            <p>{text(propertyIntroductionField(property))}</p>
             <a className="atelier-round-link" href="#gallery">
               <span>Descoperă această proprietate</span>
               <ArrowUpRight size={24} />

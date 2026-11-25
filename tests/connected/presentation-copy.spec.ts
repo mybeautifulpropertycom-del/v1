@@ -220,7 +220,7 @@ for (const [template, prefix, introduction] of designs) {
       draft.content[field] = "Text salvat de versiunea anterioară";
     state.property.website_copy = {
       version: 1,
-      source: propertyStorySource(state.property),
+      source: propertyStorySource(state.property, 1),
       description: draft.description,
       content: draft.content,
     };

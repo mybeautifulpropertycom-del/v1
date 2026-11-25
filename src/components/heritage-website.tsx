@@ -23,7 +23,7 @@ import {
   Phone,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
-import { propertyStory } from "@/lib/property-story";
+import { propertyIntroductionField, propertyStory } from "@/lib/property-story";
 import type { PropertyWebsiteProps } from "./property-website";
 import { EditableText } from "./website-editable-text";
 import { PropertyPhotoDialog } from "./property-photo-dialog";
@@ -46,6 +46,7 @@ export function HeritageWebsite({
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [highlights, setHighlights] = useState(false);
   const copy = propertyStory(property);
+  const introductionField = propertyIntroductionField(property);
   const isPreview = preview || sample;
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
   const size = `${property.area.toLocaleString("ro-RO")} ${unit}`;
@@ -244,11 +245,8 @@ export function HeritageWebsite({
                 </h2>
                 <p>
                   <EditableText
-                    field="copy.storyBody"
-                    value={
-                      copy.storyBody ||
-                      "Povestea proprietății va apărea aici. Adaugă o descriere în editor pentru a spune ce o face deosebită."
-                    }
+                    field={`copy.${introductionField}`}
+                    value={copy[introductionField]}
                     onEdit={onEdit}
                   />
                 </p>

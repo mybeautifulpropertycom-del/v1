@@ -426,10 +426,7 @@ export function EditorialWebsite({
             <p>
               <EditableText
                 field="copy.introBody"
-                value={
-                  copy.introBody ||
-                  "Spune povestea proprietății. Adaugă o descriere în editor pentru a da viață acestui spațiu."
-                }
+                value={copy.introBody}
                 onEdit={onEdit}
               />
             </p>
