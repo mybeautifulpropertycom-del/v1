@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   Copy,
   ExternalLink,
@@ -626,25 +627,28 @@ export function PropertyEditor({
                     <fieldset className="property-floor-field">
                       <legend>Etaj</legend>
                       <div className="property-floor-inputs">
-                        <select
-                          aria-label="Etaj"
-                          value={property.floor ?? ""}
-                          onChange={(e) =>
-                            update(
-                              "floor",
-                              e.target.value === ""
-                                ? null
-                                : Number(e.target.value),
-                            )
-                          }
-                        >
-                          <option value="">—</option>
-                          {floorOptions.map((floor) => (
-                            <option key={floor} value={floor}>
-                              {propertyFloorLabel(floor)}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="property-floor-select">
+                          <select
+                            aria-label="Etaj"
+                            value={property.floor ?? ""}
+                            onChange={(e) =>
+                              update(
+                                "floor",
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value),
+                              )
+                            }
+                          >
+                            <option value="">—</option>
+                            {floorOptions.map((floor) => (
+                              <option key={floor} value={floor}>
+                                {propertyFloorLabel(floor)}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} aria-hidden="true" />
+                        </div>
                         <span aria-hidden="true">din</span>
                         <input
                           aria-label="Număr total de etaje"
