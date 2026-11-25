@@ -494,6 +494,9 @@ test("one section card stays beside its heading while red borders walk through e
       await page.locator('[data-property-guide-field="area"]').focus();
     else await input.press("Tab");
     if (field === "area") {
+      const land = page.getByRole("spinbutton", { name: "Suprafață teren (m²)" });
+      await expect(land).toBeFocused();
+      await land.press("Tab");
       const constructionYear = page.getByRole("spinbutton", {
         name: "Anul de construcție",
       });

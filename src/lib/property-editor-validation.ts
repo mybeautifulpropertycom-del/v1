@@ -7,7 +7,7 @@ export function propertyDetailsErrors(
   property: Property,
   saved?: Property,
 ): string[] {
-  const issues = propertyGuideIssues(property);
+  const issues = propertyGuideIssues(property, saved);
   const errors = [
     issues.title,
     issues.location,

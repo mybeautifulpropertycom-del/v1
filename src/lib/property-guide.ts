@@ -1,5 +1,6 @@
 import {
   isReservedPropertyAddress,
+  propertyRoomIssues,
   propertyTypeOptions,
   type Property,
 } from "./model";
@@ -93,6 +94,7 @@ export function nextPropertyGuideField(
 
 export function propertyGuideIssues(
   property: Property,
+  saved?: Property,
 ): Record<PropertyGuideField | "area_unit", string | null> {
   return {
     title:
@@ -132,19 +134,7 @@ export function propertyGuideIssues(
     area_unit: ["sqm", "sqft"].includes(property.area_unit)
       ? null
       : "Alege unitatea de suprafață.",
-    bedrooms:
-      Number.isInteger(property.bedrooms) &&
-      property.bedrooms >= 0 &&
-      property.bedrooms <= 100
-        ? null
-        : "Numărul de dormitoare trebuie să fie întreg, între 0 și 100.",
-    bathrooms:
-      Number.isFinite(property.bathrooms) &&
-      property.bathrooms >= 0 &&
-      property.bathrooms <= 100 &&
-      Number.isInteger(property.bathrooms * 2)
-        ? null
-        : "Numărul de băi trebuie să fie între 0 și 100, în pași de 0,5.",
+    ...propertyRoomIssues(property, saved),
     description:
       property.description.length <= 12000
         ? null

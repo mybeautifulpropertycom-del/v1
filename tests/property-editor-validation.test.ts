@@ -37,6 +37,27 @@ test("an incomplete draft remains saveable while forward navigation requires val
     assert.ok(propertyDetailsErrors({ ...draft, ...invalid }).length > 0);
 });
 
+test("new room counts follow the dropdown ranges and existing room counts can be retained", () => {
+  const listing = createProperty("11111111-1111-4111-8111-111111111111");
+  assert.deepEqual(
+    propertyErrors({ ...listing, bedrooms: 20, bathrooms: 15 }),
+    [],
+  );
+  assert.deepEqual(propertyErrors({ ...listing, bathrooms: 1.5 }), []);
+
+  for (const counts of [
+    { bedrooms: 0, bathrooms: 0.5 },
+    { bedrooms: 21, bathrooms: 16 },
+  ]) {
+    const saved = { ...listing, ...counts };
+    assert.equal(propertyErrors(saved).length, 2);
+    assert.deepEqual(
+      propertyErrors({ ...saved, title: "Locuință renovată" }, saved),
+      [],
+    );
+  }
+});
+
 test("new floor details are capped at 40 and previously saved values can be retained", () => {
   const listing = {
     ...createProperty("11111111-1111-4111-8111-111111111111"),

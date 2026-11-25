@@ -1340,7 +1340,7 @@ label small,
 }
 .property-floor-inputs {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 6px;
 }
@@ -3328,7 +3328,6 @@ html:has(.image-editor-card[data-dragging]) {
     grid-column: 1 / -1;
   }
   .property-floor-inputs {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     gap: 8px;
   }
   .page-heading p {

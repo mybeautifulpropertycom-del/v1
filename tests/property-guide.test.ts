@@ -68,7 +68,7 @@ test("leaving area accepts untouched valid defaults, skips the single unit, and 
   assert.equal(nextPropertyGuideField(done, edited)?.id, "area");
 });
 
-test("field guidance reports invalid facts and accepts legacy units, currencies and valid zero room counts", () => {
+test("field guidance reports invalid facts and accepts legacy units, currencies and saved zero room counts", () => {
   const property = demoWorkspace().properties[0];
   for (const [field, value] of [
     ["title", "abc"],
@@ -80,13 +80,14 @@ test("field guidance reports invalid facts and accepts legacy units, currencies 
     ["description", "a".repeat(12001)],
   ] as const)
     assert.ok(propertyGuideIssues({ ...property, [field]: value })[field]);
-  const legacy = propertyGuideIssues({
+  const saved = {
     ...property,
-    currency: "USD",
-    area_unit: "sqft",
+    currency: "USD" as const,
+    area_unit: "sqft" as const,
     bedrooms: 0,
     bathrooms: 0,
-  });
+  };
+  const legacy = propertyGuideIssues(saved, saved);
   assert.equal(legacy.currency, null);
   assert.equal(legacy.area_unit, null);
   assert.equal(legacy.bedrooms, null);

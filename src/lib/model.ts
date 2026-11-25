@@ -6,6 +6,8 @@ import type { ProfileBioRole } from "./profile-bio";
 export type TemplateId = "editorial" | "minimal" | "panorama";
 export const MAX_PROFILE_BIO_LENGTH = 300;
 export const MAX_BUILDING_FLOORS = 40;
+export const MAX_PROPERTY_BEDROOMS = 20;
+export const MAX_PROPERTY_BATHROOMS = 15;
 export type Profile = {
   id: string;
   name: string;
@@ -224,6 +226,24 @@ export function publicationErrors(
   return errors;
 }
 
+export function propertyRoomIssues(property: Property, saved?: Property) {
+  const { bedrooms, bathrooms } = property;
+  return {
+    bedrooms:
+      Number.isInteger(bedrooms) &&
+      ((bedrooms >= 1 && bedrooms <= MAX_PROPERTY_BEDROOMS) ||
+        (bedrooms === saved?.bedrooms && bedrooms >= 0 && bedrooms <= 100))
+        ? null
+        : `Alege un număr de dormitoare între 1 și ${MAX_PROPERTY_BEDROOMS}.`,
+    bathrooms:
+      Number.isInteger(bathrooms * 2) &&
+      ((bathrooms >= 1 && bathrooms <= MAX_PROPERTY_BATHROOMS) ||
+        (bathrooms === saved?.bathrooms && bathrooms >= 0 && bathrooms <= 100))
+        ? null
+        : `Alege un număr de băi între 1 și ${MAX_PROPERTY_BATHROOMS}, în pași de 0,5.`,
+  };
+}
+
 export function propertyErrors(property: Property, saved?: Property): string[] {
   const errors: string[] = [];
   if (platformPageSlugs.has(slugify(property.location)))
@@ -275,21 +295,9 @@ export function propertyErrors(property: Property, saved?: Property): string[] {
       property.construction_year > 9999)
   )
     errors.push("Introdu un an de construcție din patru cifre.");
-  if (
-    !Number.isInteger(property.bedrooms) ||
-    property.bedrooms < 0 ||
-    property.bedrooms > 100
-  )
-    errors.push("Numărul de dormitoare trebuie să fie întreg, între 0 și 100.");
-  if (
-    !Number.isFinite(property.bathrooms) ||
-    property.bathrooms < 0 ||
-    property.bathrooms > 100 ||
-    !Number.isInteger(property.bathrooms * 2)
-  )
-    errors.push(
-      "Numărul de băi trebuie să fie între 0 și 100, în pași de 0,5.",
-    );
+  const roomIssues = propertyRoomIssues(property, saved);
+  if (roomIssues.bedrooms) errors.push(roomIssues.bedrooms);
+  if (roomIssues.bathrooms) errors.push(roomIssues.bathrooms);
   if (
     property.title.length > 160 ||
     property.location.length > 200 ||

@@ -36,6 +36,8 @@ import {
   hasLandArea,
   hasUnitFloor,
   MAX_BUILDING_FLOORS,
+  MAX_PROPERTY_BATHROOMS,
+  MAX_PROPERTY_BEDROOMS,
   profileErrors,
   propertyFloorLabel,
   propertyTypeOptions,
@@ -58,6 +60,14 @@ const totalFloorOptions = Array.from(
   (_, index) => index,
 );
 const floorOptions = [-1, ...totalFloorOptions];
+const bedroomOptions = Array.from(
+  { length: MAX_PROPERTY_BEDROOMS },
+  (_, index) => index + 1,
+);
+const bathroomOptions = Array.from(
+  { length: (MAX_PROPERTY_BATHROOMS - 1) * 2 + 1 },
+  (_, index) => 1 + index / 2,
+);
 
 function PropertySelect(props: ComponentProps<"select">) {
   return (
@@ -135,7 +145,7 @@ export function PropertyEditor({
   const [customAmenity, setCustomAmenity] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const t = ro.editor;
-  const guideIssues = propertyGuideIssues(property);
+  const guideIssues = propertyGuideIssues(property, existing);
   const stepRequirement = propertyStepRequirement(property, step, existing);
   useEffect(() => {
     if (
@@ -712,32 +722,49 @@ export function PropertyEditor({
                   <div className="field-grid property-room-fields">
                     <label>
                       Dormitoare
-                      <input
+                      <PropertySelect
                         data-property-guide-field="bedrooms"
                         data-guide-issue={guideIssues.bedrooms || undefined}
-                        type="number"
-                        min="0"
-                        max="100"
                         value={property.bedrooms}
                         onChange={(e) =>
                           update("bedrooms", Number(e.target.value))
                         }
-                      />
+                      >
+                        {bedroomOptions.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                        {(property.bedrooms < 1 ||
+                          property.bedrooms > MAX_PROPERTY_BEDROOMS) && (
+                          <option value={property.bedrooms}>
+                            {property.bedrooms}
+                          </option>
+                        )}
+                      </PropertySelect>
                     </label>
                     <label>
                       Băi
-                      <input
+                      <PropertySelect
                         data-property-guide-field="bathrooms"
                         data-guide-issue={guideIssues.bathrooms || undefined}
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.5"
                         value={property.bathrooms}
                         onChange={(e) =>
                           update("bathrooms", Number(e.target.value))
                         }
-                      />
+                      >
+                        {bathroomOptions.map((value) => (
+                          <option key={value} value={value}>
+                            {value.toLocaleString("ro-RO")}
+                          </option>
+                        ))}
+                        {(property.bathrooms < 1 ||
+                          property.bathrooms > MAX_PROPERTY_BATHROOMS) && (
+                          <option value={property.bathrooms}>
+                            {property.bathrooms.toLocaleString("ro-RO")}
+                          </option>
+                        )}
+                      </PropertySelect>
                     </label>
                   </div>
                 </div>
