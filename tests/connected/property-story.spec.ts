@@ -34,6 +34,12 @@ test("facilities are saved before generation and refresh the second section with
       page.getByRole("heading", { name: "Facilități și dotări" }),
     ).toBeVisible();
     await expect(
+      page.locator(".form-section-title + .guide-facilities").getByRole(
+        "button",
+        { name: "Piscină", exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
       page.getByRole("textbox", { name: "Descriere", exact: true }),
     ).toHaveCount(0);
     await page.getByRole("button", { name: "Piscină", exact: true }).click();

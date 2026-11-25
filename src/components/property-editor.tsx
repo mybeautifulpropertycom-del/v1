@@ -791,12 +791,6 @@ export function PropertyEditor({
                   <span>02</span>
                   <h2>{t.amenities}</h2>
                 </div>
-                {!demo && (
-                  <p className="form-intro">
-                    AI-ul folosește detaliile și fotografiile pentru a pregăti
-                    textele prezentării. Le poți edita în previzualizare.
-                  </p>
-                )}
                 <div
                   className="guide-facilities"
                   data-property-guide-field="amenities"

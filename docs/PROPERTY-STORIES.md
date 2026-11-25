@@ -10,10 +10,10 @@ and photographs. The listing form collects facilities and equipment in section 0
 Older notes remain available as supplementary factual context. Listing text and
 image text are treated as data.
 
-The second presentation section uses a separate introduction. It helps the visitor
-picture an everyday moment in the home in two or three sentences. A pool, garden,
-terrace or balcony can anchor that moment when the owner has confirmed it in the
-amenities. Other generated sections and captions use concrete factual copy.
+The second presentation section uses a separate introduction based on the saved
+property fields and facilities. It helps the visitor picture an everyday moment
+in the home in two or three sentences. Other generated sections and captions use
+concrete factual copy and can draw on the photographs.
 
 In a connected workspace, saving the listing, choosing its design or opening the
 private preview prepares missing or stale copy. A valid saved result is reused
@@ -95,9 +95,7 @@ platform timeout pages produce readable messages. Structured output uses basic o
 - Only photos in the configured Supabase bucket under that exact agent/property
   directory can be sent. Remote URLs, other owners' uploads, SVGs, query strings,
   credentials in URLs, and path traversal are rejected.
-- Only property details and image URLs go to OpenAI. Agent name, phone, email,
-  buyer inquiries, and auth tokens are not included. The editor explains the use
-  of an AI writing service before generation.
+- The request to OpenAI contains property details and listing image URLs.
 - PostgreSQL serializes a durable budget of **five attempts per agent per UTC day**,
   with at least one minute between attempts. Failed provider calls still consume
   an attempt. The counter cannot be read/reset directly by clients. This MVP limit
