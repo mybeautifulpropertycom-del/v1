@@ -124,16 +124,22 @@ inițial; modificarea lor ar încălca idempotency la furnizor.
 
 ## 7. Redirecționarea adreselor vechi
 
-După verificările de mai sus, configurați redirecționarea permanentă a paginilor
-vechi către domeniul principal, păstrând căile și parametrii. Domeniul vechi
-`mybeautifulproperty.com` poate fi încă atașat altui proiect Vercel; configurați
-redirecționarea în proiectul care îl deține. Verificați și varianta `www`.
+Build-ul de producție redirecționează cu HTTP 308 paginile de pe
+`mybeautifulproperty.com` și `www.mybeautifulproperty.com` către
+`https://urmatoarea-proprietate.ro`, păstrând căile și parametrii. Regula
+se aplică în proiectul care servește domeniul vechi după ce acesta primește
+noul build. Dacă acel proiect folosește alt depozit, configurați
+redirecționarea în proiectul care deține domeniul. Verificați ambele
+variante ale domeniului vechi și cel puțin un link de proprietate.
 
 Actualizați endpointurile API externe înainte de a activa o redirecționare globală:
 Stripe și workerii au nevoie de un răspuns direct, nu de un redirect HTTP.
 Păstrați vechea adresă temporară până când plățile și solicitările active sunt
 închise. În Search Console adăugați noua proprietate, trimiteți sitemap-ul nou și,
 dacă este cazul, folosiți schimbarea adresei pentru vechiul domeniu verificat.
+Pentru ascunderea rapidă a rezultatelor rămase, folosiți **Removals** în
+proprietatea Search Console a domeniului vechi. Redirecționările permanente
+rămân active pentru migrarea indexului.
 
 ## Starea inițială a migrării
 

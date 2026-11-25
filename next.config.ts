@@ -36,7 +36,11 @@ const config: NextConfig = {
     if (process.env.VERCEL_ENV !== "production") return oldPages;
 
     const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-    const aliases = new Set(["pucioasa-premium-beige.vercel.app"]);
+    const aliases = new Set([
+      "mybeautifulproperty.com",
+      "www.mybeautifulproperty.com",
+      "pucioasa-premium-beige.vercel.app",
+    ]);
     if (vercelHost && /^[a-z0-9-]+\.vercel\.app$/.test(vercelHost)) {
       aliases.add(vercelHost);
     }
