@@ -194,7 +194,7 @@ export function ViewingDialog({
       <div className="viewing-intro">
         <span className="estate-eyebrow">
           <span className="viewing-property-title">
-            {title || "Următoarea ta locuință"} ·{" "}
+            {title || "Următoarea ta locuință"}&nbsp;·
           </span>
           O vizionare doar pentru tine
         </span>

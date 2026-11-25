@@ -1508,7 +1508,7 @@
     padding-right: 15px;
   }
   .viewing-property-title {
-    display: inline;
+    display: block;
   }
   .viewing-dialog .viewing-intro h2 {
     font-size: 37px;
