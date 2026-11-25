@@ -9,7 +9,7 @@ import { readFile } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
 import sharp from "sharp";
 
-for (const template of ["editorial", "minimal", "panorama"]) {
+for (const template of ["editorial", "minimal", "panorama"] as const) {
   test(`${template}: the contact form and WhatsApp link use the listing's details`, async ({
     page,
   }) => {
@@ -62,9 +62,8 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect(bar).toBeHidden();
     await bringIntoView("#details");
     await expect(bar).toBeVisible();
-    await expect(
-      bar.getByRole("link", { name: "Apelează vânzătorul" }),
-    ).toHaveAttribute("href", "tel:+40700000000");
+    const call = bar.getByRole("link", { name: "Apelează vânzătorul" });
+    await expect(call).toHaveAttribute("href", "tel:+40700000000");
     const whatsapp = bar.getByRole("link", {
       name: "Trimite mesaj pe WhatsApp",
     });
@@ -75,6 +74,13 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       "href",
       (await inContact.getAttribute("href"))!,
     );
+    const colors = {
+      editorial: "rgb(23, 51, 45)",
+      minimal: "rgb(48, 69, 54)",
+      panorama: "rgb(40, 43, 39)",
+    };
+    await expect(call).toHaveCSS("background-color", colors[template]);
+    await expect(whatsapp).toHaveCSS("color", colors[template]);
 
     await bringIntoView("#contact");
     await expect(bar).toBeHidden();
@@ -86,13 +92,16 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       return {
         bottom: innerHeight - rect.bottom,
         center: rect.left + rect.width / 2,
-        width: rect.width,
+        left: rect.left,
+        footerInset:
+          footer.getBoundingClientRect().left +
+          parseFloat(getComputedStyle(footer).paddingLeft),
         footerGap: rect.top - footer.getBoundingClientRect().bottom,
       };
     });
     expect(position.bottom).toBeCloseTo(14);
     expect(position.center).toBeCloseTo(195);
-    expect(position.width).toBeLessThan(390);
+    expect(Math.abs(position.left - position.footerInset)).toBeLessThan(1);
     expect(position.footerGap).toBeGreaterThanOrEqual(9);
 
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
