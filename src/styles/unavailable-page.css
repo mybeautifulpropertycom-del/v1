@@ -1,0 +1,26 @@
+.discovery-unavailable {
+  display: flex;
+  flex-direction: column;
+  background: #f7f7f1;
+}
+
+.discovery-unavailable > .discovery-header {
+  flex-shrink: 0;
+}
+
+.discovery-unavailable-content {
+  display: grid;
+  flex: 1;
+  place-content: center;
+  justify-items: center;
+  gap: clamp(20px, 4vh, 32px);
+  padding: 24px var(--platform-header-gutter, 5.2vw);
+  text-align: center;
+}
+
+.discovery-unavailable-content h1 {
+  margin: 0;
+  font: 600 clamp(27px, 4.6vw, 39px) / 1.12 var(--workspace-font);
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}

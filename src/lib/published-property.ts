@@ -27,7 +27,18 @@ export const getPublished = cache(
 
 export async function publishedMetadata(slug: string): Promise<Metadata> {
   const data = await getPublished(slug);
-  if (!data)
-    return { title: "Proprietate indisponibilă", robots: { index: false } };
+  if (!data) return { title: "Proprietate indisponibilă" };
   return propertyMetadata(data.property);
+}
+
+export async function getUnavailablePropertyOffer(
+  slug: string,
+): Promise<PublicProperty["transaction"] | null> {
+  if (!/^[a-z0-9-]{1,110}$/.test(slug)) return null;
+  const supabase = serverSupabase(undefined, AbortSignal.timeout(2500));
+  if (!supabase) return null;
+  const { data } = await supabase.rpc("get_unavailable_property_offer", {
+    property_slug: slug,
+  });
+  return data === "sale" || data === "rent" ? data : null;
 }

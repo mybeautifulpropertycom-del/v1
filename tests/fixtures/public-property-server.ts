@@ -12,6 +12,16 @@ globalThis.fetch = async (input, init) => {
     : input instanceof Request
       ? await input.clone().json()
       : {};
+  if (url.pathname === "/rest/v1/rpc/get_unavailable_property_offer") {
+    if (body.property_slug === "migration-not-installed") {
+      return Response.json({ code: "PGRST202" }, { status: 404 });
+    }
+    if (body.property_slug === "proprietate-vanduta")
+      return Response.json("sale");
+    if (body.property_slug === "proprietate-inchiriata")
+      return Response.json("rent");
+    return Response.json(null);
+  }
   if (url.pathname === "/rest/v1/rpc/get_public_sitemap") {
     return Response.json({
       total: 1,

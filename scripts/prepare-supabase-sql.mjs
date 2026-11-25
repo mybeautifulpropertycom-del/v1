@@ -44,6 +44,20 @@ commit;
 select 'MBP_FREE_PHOTO_PUBLICATION_READY' as status;
 `,
 );
+const unavailablePropertyLinks = await readFile(
+  new URL("202611250001_unavailable_property_links.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL("../supabase/sql-editor-unavailable-property-links.sql", import.meta.url),
+  `-- Existing installations with address URLs. Safe to rerun.
+begin;
+${unavailablePropertyLinks.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_UNAVAILABLE_PROPERTY_LINKS_READY' as status;
+`,
+);
 const promotions = await readFile(
   new URL("202611180001_property_promotions.sql", directory),
   "utf8",

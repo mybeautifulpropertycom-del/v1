@@ -58,6 +58,59 @@ test("the public sitemap leads crawlers directly to indexable canonical pages", 
   expect(iconBytes.readUInt16LE(4)).toBeGreaterThan(1);
 });
 
+test("retired property links keep their 404 status and share the homepage header", async ({
+  page,
+}) => {
+  const check = async (path: string, title: string) => {
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(404);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      /noindex/,
+    );
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
+    await expect(page.locator("header .discovery-brand")).toHaveAttribute(
+      "href",
+      "/",
+    );
+    await expect(
+      page.getByRole("link", { name: "Vezi alte proprietăți" }),
+    ).toHaveAttribute("href", "/#cautare");
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight),
+    ).toBeLessThanOrEqual(await page.evaluate(() => window.innerHeight));
+  };
+
+  await page.setViewportSize({ width: 1440, height: 810 });
+  await check("/proprietate-vanduta", "Această proprietate a fost vândută.");
+  await expect(
+    page.getByRole("link", { name: "Publică anunțul" }),
+  ).toBeVisible();
+  expect(
+    await page
+      .locator("h1")
+      .evaluate((heading) => getComputedStyle(heading).fontFamily),
+  ).toContain("Nunito Sans Variable");
+  await check(
+    "/migration-not-installed",
+    "Această pagină nu este disponibilă.",
+  );
+  await check("/cale/necunoscuta", "Această pagină nu este disponibilă.");
+
+  await page.setViewportSize({ width: 360, height: 640 });
+  await check(
+    "/p/proprietate-inchiriata",
+    "Această proprietate a fost închiriată.",
+  );
+  await page.getByRole("button", { name: "Opțiuni de publicare" }).click();
+  await expect(
+    page.getByRole("link", { name: "Publică anunțul" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("link", { name: "Vezi alte proprietăți" }).click();
+  await expect(page).toHaveURL(/\/#cautare$/);
+});
+
 test("search pagination has a canonical page of its own while budget variants stay noindex", async ({
   request,
 }) => {
