@@ -19,6 +19,9 @@ for (const url of ["/modele/panorama", "/p/photos-test-panorama"]) {
     await expect(hero.locator(".atelier-cover-label")).toContainText(
       "DE VÂNZARE",
     );
+    const story = page.locator(".atelier-story");
+    await expect(story.locator("figcaption")).toHaveCount(0);
+    const storyPhoto = story.locator(".atelier-story-photo");
     for (const viewport of [
       { width: 1920, height: 1000 },
       { width: 1440, height: 900 },
@@ -29,6 +32,10 @@ for (const url of ["/modele/panorama", "/p/photos-test-panorama"]) {
     ]) {
       await page.setViewportSize(viewport);
       await page.evaluate(() => window.scrollTo(0, 0));
+      await expect(storyPhoto.locator(".atelier-expand")).toHaveCSS(
+        "opacity",
+        "1",
+      );
       const button = hero.getByRole("button", {
         name: "Programează o vizionare",
         exact: true,
@@ -58,6 +65,11 @@ for (const url of ["/modele/panorama", "/p/photos-test-panorama"]) {
         });
     }
     await hero.locator(".atelier-all-photos").click();
+    await expect(
+      page.getByRole("dialog", { name: "Galeria foto a proprietății" }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    await storyPhoto.click();
     await expect(
       page.getByRole("dialog", { name: "Galeria foto a proprietății" }),
     ).toBeVisible();

@@ -337,10 +337,6 @@ export function AtelierWebsite({
             ) : (
               <div className="atelier-no-photo">O privire mai atentă</div>
             )}
-            <figcaption>
-              <span>O PRIVIRE MAI ATENTĂ</span>
-              <span>{property.location}</span>
-            </figcaption>
           </figure>
           <div className="atelier-story-copy">
             <span className="atelier-kicker">SIMTE-TE ACASĂ</span>
