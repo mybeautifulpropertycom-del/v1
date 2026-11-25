@@ -153,6 +153,21 @@ test("floor and land area save for the selected property type and appear only in
     .filter({ hasText: "Modificările au fost salvate" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(editor);
+  const bedrooms = page.getByLabel("Dormitoare", { exact: true });
+  const bathrooms = page.getByLabel("Băi", { exact: true });
+  const year = page.getByLabel("Anul de construcție", { exact: true });
+  await expect(bedrooms).toBeVisible();
+  const bedroomsBox = (await bedrooms.boundingBox())!;
+  const bathroomsBox = (await bathrooms.boundingBox())!;
+  const yearBox = (await year.boundingBox())!;
+  expect(bedroomsBox.y).toBeCloseTo(yearBox.y, 0);
+  expect(bathroomsBox.y).toBeCloseTo(yearBox.y, 0);
+  expect(bedroomsBox.width).toBeCloseTo(bathroomsBox.width, 0);
+  expect(bathroomsBox.x).toBeGreaterThan(bedroomsBox.x + bedroomsBox.width);
+  expect(bathroomsBox.x + bathroomsBox.width - bedroomsBox.x).toBeCloseTo(
+    yearBox.width,
+    0,
+  );
   for (const apartmentType of ["Condo", "Penthouse", "Studio"]) {
     await type.selectOption(apartmentType);
     await expect(floor).toBeVisible();

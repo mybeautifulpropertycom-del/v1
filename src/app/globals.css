@@ -1322,6 +1322,10 @@ label small,
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px 20px;
 }
+.field-grid.property-room-fields {
+  align-items: end;
+  column-gap: 12px;
+}
 .property-floor-field {
   min-width: 0;
   margin: 0;
@@ -1344,6 +1348,9 @@ label small,
   .property-area-field:has(+ .property-floor-field),
   .property-floor-field {
     grid-column: 1 / -1;
+  }
+  .field-grid.property-room-fields > label {
+    font-size: 10px;
   }
 }
 .full-width {
@@ -3808,6 +3815,12 @@ html:has(.image-editor-card[data-dragging]) {
   .field-grid select {
     font-size: 12px;
     padding: 11px;
+  }
+  .field-grid.property-room-fields {
+    column-gap: 8px;
+  }
+  .property-room-fields input {
+    padding-inline: 6px;
   }
   .property-floor-inputs {
     grid-template-columns: minmax(0, 1.8fr) auto minmax(0, 1fr);

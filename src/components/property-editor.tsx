@@ -685,35 +685,37 @@ export function PropertyEditor({
                       }
                     />
                   </label>
-                  <label>
-                    Dormitoare
-                    <input
-                      data-property-guide-field="bedrooms"
-                      data-guide-issue={guideIssues.bedrooms || undefined}
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={property.bedrooms}
-                      onChange={(e) =>
-                        update("bedrooms", Number(e.target.value))
-                      }
-                    />
-                  </label>
-                  <label>
-                    Băi
-                    <input
-                      data-property-guide-field="bathrooms"
-                      data-guide-issue={guideIssues.bathrooms || undefined}
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.5"
-                      value={property.bathrooms}
-                      onChange={(e) =>
-                        update("bathrooms", Number(e.target.value))
-                      }
-                    />
-                  </label>
+                  <div className="field-grid property-room-fields">
+                    <label>
+                      Dormitoare
+                      <input
+                        data-property-guide-field="bedrooms"
+                        data-guide-issue={guideIssues.bedrooms || undefined}
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={property.bedrooms}
+                        onChange={(e) =>
+                          update("bedrooms", Number(e.target.value))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Băi
+                      <input
+                        data-property-guide-field="bathrooms"
+                        data-guide-issue={guideIssues.bathrooms || undefined}
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        value={property.bathrooms}
+                        onChange={(e) =>
+                          update("bathrooms", Number(e.target.value))
+                        }
+                      />
+                    </label>
+                  </div>
                 </div>
               </section>
               <section className="form-card">
