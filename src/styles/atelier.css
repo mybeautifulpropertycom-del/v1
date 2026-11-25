@@ -153,6 +153,9 @@
 .atelier-nav-tour svg {
   flex-shrink: 0;
 }
+.atelier-menu-tour {
+  display: none;
+}
 .atelier-menu-button {
   display: flex;
   align-items: center;
@@ -881,6 +884,12 @@
   .atelier-nav > nav:not(.atelier-menu) {
     display: none;
   }
+  .atelier-nav-tour {
+    display: none;
+  }
+  .atelier-menu-tour {
+    display: inline-flex;
+  }
   .atelier-brand {
     max-width: 80%;
   }
@@ -931,7 +940,6 @@
   }
   .atelier-nav {
     height: 76px;
-    gap: 10px;
   }
   .atelier-brand {
     font-size: 11px;
@@ -947,14 +955,6 @@
   }
   .atelier-menu-button {
     gap: 8px;
-  }
-  .atelier-nav-tour {
-    gap: 5px;
-    padding: 8px;
-    font-size: 10px;
-  }
-  .atelier-nav-tour svg {
-    width: 13px;
   }
   .atelier-menu {
     left: 15px;

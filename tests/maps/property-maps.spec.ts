@@ -290,7 +290,11 @@ for (const [template, headerSelector, desktopWidth, mobileToggle] of [
     ).toBe(true);
 
     await page.setViewportSize({ width: 320, height: 760 });
-    await expect(schedule).toBeVisible();
+    if (template === "panorama") {
+      await expect(schedule).toBeHidden();
+    } else {
+      await expect(schedule).toBeVisible();
+    }
     expect(
       await header.evaluate(
         (element) => element.scrollWidth <= element.clientWidth,
@@ -303,6 +307,14 @@ for (const [template, headerSelector, desktopWidth, mobileToggle] of [
       await link.click();
       await expect.poll(() => new URL(page.url()).hash).toBe(anchor);
       await expect(link).toBeHidden();
+    }
+    if (template === "panorama") {
+      await header.locator(mobileToggle).click();
+      await expect(
+        header.locator(".atelier-menu").getByRole("button", {
+          name: "Programează o vizionare",
+        }),
+      ).toBeVisible();
     }
     await schedule.click();
     await expect(

@@ -212,6 +212,7 @@ export function AtelierWebsite({
               onNavigate={() => setMenu(false)}
               showArrow
             />
+            {tour("atelier-button atelier-menu-tour")}
           </nav>
         )}
       </header>
