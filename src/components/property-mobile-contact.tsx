@@ -11,38 +11,42 @@ import "@/styles/property-mobile-contact.css";
 export function PropertyMobileContact({
   phone,
   location,
+  startSection = "details",
 }: {
   phone: string;
   location: string;
+  startSection?: "details" | "gallery";
 }) {
   const number = whatsappPhoneNumber(phone);
   const bar = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [position, setPosition] = useState<"hidden" | "content" | "footer">(
+    "hidden",
+  );
 
   useEffect(() => {
     if (!number) return;
     const page = bar.current?.parentElement;
-    const details = page?.querySelector("#details");
+    const start = page?.querySelector(`#${startSection}`);
     const contact = page?.querySelector("#contact");
     const footer = page?.querySelector(".property-footer");
-    if (!page || !details || !contact || !footer) return;
+    if (!page || !start || !contact || !footer) return;
 
     const mobile = window.matchMedia("(max-width: 767px)");
     let frame = 0;
     const update = () => {
       frame = 0;
       if (!mobile.matches) {
-        setVisible(false);
+        setPosition("hidden");
         return;
       }
       const bottom = window.innerHeight;
       const footerRect = footer.getBoundingClientRect();
       const beforeContact =
-        details.getBoundingClientRect().top < bottom &&
+        start.getBoundingClientRect().top < bottom &&
         contact.getBoundingClientRect().top >= bottom;
       // A tall phone may still show the end of the contact form above the footer.
       const atFooter = footerRect.top < bottom && footerRect.bottom > 0;
-      setVisible(beforeContact || atFooter);
+      setPosition(atFooter ? "footer" : beforeContact ? "content" : "hidden");
     };
     const schedule = () => {
       if (!frame) frame = window.requestAnimationFrame(update);
@@ -59,7 +63,7 @@ export function PropertyMobileContact({
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  }, [number]);
+  }, [number, startSection]);
 
   if (!number) return null;
 
@@ -68,7 +72,8 @@ export function PropertyMobileContact({
       ref={bar}
       className="property-mobile-contact"
       aria-label="Contact rapid"
-      hidden={!visible}
+      hidden={position === "hidden"}
+      data-position={position}
     >
       <PropertyWhatsAppLink phone={phone} location={location} compact />
       <a className="property-mobile-call" href={`tel:+${number}`}>

@@ -46,7 +46,8 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     }
   });
 
-  test(`${template}: mobile seller actions appear at details and the footer`, async ({
+  const startSection = template === "minimal" ? "#gallery" : "#details";
+  test(`${template}: mobile seller actions appear at ${startSection} and the footer`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -60,8 +61,9 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
         );
 
     await expect(bar).toBeHidden();
-    await bringIntoView("#details");
+    await bringIntoView(startSection);
     await expect(bar).toBeVisible();
+    const contentBarHeight = (await bar.boundingBox())!.height;
     const call = bar.getByRole("link", { name: "Apelează vânzătorul" });
     await expect(call).toHaveAttribute("href", "tel:+40700000000");
     const whatsapp = bar.getByRole("link", {
@@ -100,16 +102,22 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
         bottom: innerHeight - rect.bottom,
         divider: getComputedStyle(element, "::before").height,
         footerGap: rect.top - footer.getBoundingClientRect().bottom,
+          height: rect.height,
       };
     });
     expect(position.bottom).toBeCloseTo(0);
     expect(position.divider).toBe("24px");
-    expect(position.footerGap).toBeGreaterThanOrEqual(3);
+    if (template === "minimal") {
+      expect(position.height - contentBarHeight).toBeCloseTo(2);
+      expect(position.footerGap).toBeCloseTo(0, 0);
+    } else {
+      expect(position.footerGap).toBeGreaterThanOrEqual(3);
+    }
 
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await expect(bar).toBeHidden();
     await page.setViewportSize({ width: 1440, height: 900 });
-    await bringIntoView("#details");
+    await bringIntoView(startSection);
     await expect(bar).toBeHidden();
   });
 }

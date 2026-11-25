@@ -7,6 +7,10 @@
     margin-bottom: calc(63px + env(safe-area-inset-bottom));
   }
 
+  .heritage-footer.property-footer:has(+ .property-mobile-contact) {
+    margin-bottom: calc(61px + env(safe-area-inset-bottom));
+  }
+
   .property-mobile-contact:not([hidden]) {
     position: fixed;
     z-index: 20;
@@ -28,6 +32,10 @@
     );
     border-top: 1px solid #e9e4dc;
     background: #f8f6f2;
+  }
+
+  .heritage-footer + .property-mobile-contact[data-position="footer"] {
+    padding-bottom: calc(9px + env(safe-area-inset-bottom));
   }
 
   .property-mobile-contact::before {
