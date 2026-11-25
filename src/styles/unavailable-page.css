@@ -20,7 +20,7 @@
 
 .discovery-unavailable-content h1 {
   margin: 0;
-  font: 600 clamp(27px, 4.6vw, 39px) / 1.12 var(--workspace-font);
+  font: 600 clamp(23px, 4.2vw, 33px) / 1.12 var(--workspace-font);
   letter-spacing: -0.04em;
   text-wrap: balance;
 }

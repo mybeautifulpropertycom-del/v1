@@ -5,10 +5,7 @@ import { type PublicProfile, type PublicProperty } from "./model";
 import { propertyMetadata } from "./seo";
 
 export const UNAVAILABLE_PAGE_TITLE = "Această pagină nu este disponibilă.";
-const unavailablePropertyTitles = {
-  sale: "Această proprietate a fost vândută.",
-  rent: "Această proprietate a fost închiriată.",
-};
+export const SOLD_PROPERTY_TITLE = "Această proprietate a fost vândută.";
 
 export const getPublished = cache(
   async (
@@ -45,14 +42,13 @@ export async function publishedMetadata(slug: string): Promise<Metadata> {
 }
 
 export const unavailablePropertyTitle = cache(async (slug: string) => {
-  if (!/^[a-z0-9-]{1,110}$/.test(slug)) return UNAVAILABLE_PAGE_TITLE;
+  if (!/^[a-z0-9-]{1,110}$/.test(slug)) return SOLD_PROPERTY_TITLE;
   const supabase = serverSupabase(undefined, AbortSignal.timeout(2500));
-  if (!supabase) return UNAVAILABLE_PAGE_TITLE;
+  if (!supabase) return SOLD_PROPERTY_TITLE;
   const { data } = await supabase.rpc("get_unavailable_property_offer", {
     property_slug: slug,
   });
-  const offer: unknown = data;
-  return offer === "sale" || offer === "rent"
-    ? unavailablePropertyTitles[offer]
-    : UNAVAILABLE_PAGE_TITLE;
+  return data === "rent"
+    ? "Această proprietate a fost închiriată."
+    : SOLD_PROPERTY_TITLE;
 });

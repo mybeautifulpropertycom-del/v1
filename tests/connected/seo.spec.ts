@@ -98,9 +98,14 @@ test("retired property links keep their 404 status and share the homepage header
       .locator("h1")
       .evaluate((heading) => getComputedStyle(heading).fontFamily),
   ).toContain("Nunito Sans Variable");
+  await expect(page.locator("h1")).toHaveCSS("font-size", "33px");
   await check(
     "/migration-not-installed",
-    "Această pagină nu este disponibilă.",
+    "Această proprietate a fost vândută.",
+  );
+  await check(
+    "/bulevardul-unirii-15-040102-bucuresti",
+    "Această proprietate a fost vândută.",
   );
   await check("/cale/necunoscuta", "Această pagină nu este disponibilă.");
 
@@ -109,6 +114,7 @@ test("retired property links keep their 404 status and share the homepage header
     "/p/proprietate-inchiriata",
     "Această proprietate a fost închiriată.",
   );
+  await expect(page.locator("h1")).toHaveCSS("font-size", "23px");
   await page.getByRole("button", { name: "Opțiuni de publicare" }).click();
   await expect(
     page.getByRole("link", { name: "Publică anunțul" }),
