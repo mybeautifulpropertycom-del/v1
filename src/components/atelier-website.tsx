@@ -365,7 +365,21 @@ export function AtelierWebsite({
           </div>
           <div className="atelier-details-copy">
             <dl className="atelier-spec-grid">
-              <div>
+              <div
+                className={
+                  hasConstructionYear ? undefined : "atelier-spec-wide"
+                }
+              >
+                <dt>Tipul proprietății</dt>
+                <dd>{propertyTypeLabel(property.type)}</dd>
+              </div>
+              {hasConstructionYear && (
+                <div>
+                  <dt>Anul de construcție</dt>
+                  <dd>{property.construction_year}</dd>
+                </div>
+              )}
+              <div className={extraDetail ? undefined : "atelier-spec-wide"}>
                 <dt>
                   {property.type === "Land"
                     ? "Suprafață teren"
@@ -381,10 +395,6 @@ export function AtelierWebsite({
                   <dd>{extraDetail.value}</dd>
                 </div>
               )}
-              <div className={extraDetail ? "atelier-spec-wide" : undefined}>
-                <dt>Tipul proprietății</dt>
-                <dd>{propertyTypeLabel(property.type)}</dd>
-              </div>
               <div>
                 <dt>Dormitoare</dt>
                 <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
@@ -393,25 +403,13 @@ export function AtelierWebsite({
                 <dt>Băi</dt>
                 <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
               </div>
-              {hasConstructionYear && (
-                <div className={location ? undefined : "atelier-spec-wide"}>
-                  <dt>Anul de construcție</dt>
-                  <dd>{property.construction_year}</dd>
-                </div>
-              )}
               {location && (
-                <div className="atelier-spec-location">
+                <div className="atelier-spec-location atelier-spec-wide">
                   <dt>Adresă</dt>
                   <dd>{location}</dd>
                 </div>
               )}
-              <div
-                className={
-                  hasConstructionYear || !location
-                    ? "atelier-spec-wide"
-                    : undefined
-                }
-              >
+              <div className="atelier-spec-wide">
                 <dt>
                   {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
                 </dt>

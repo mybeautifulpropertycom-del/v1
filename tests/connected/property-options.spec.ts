@@ -115,7 +115,7 @@ test("the optional construction year persists and appears only in the details of
     await expect(yearDetail.locator("dd")).toHaveText("1987");
     await expect(
       yearDetail.locator("xpath=preceding-sibling::div[1]/dt"),
-    ).toHaveText(template === "panorama" ? "Băi" : "Tipul proprietății");
+    ).toHaveText("Tipul proprietății");
     await expect(
       website.getByText("Anul de construcție", { exact: true }),
     ).toHaveCount(1);
@@ -138,7 +138,11 @@ test("the optional construction year persists and appears only in the details of
 test("floor and land area save for the selected property type and appear only in its details", async ({
   page,
 }) => {
-  const state = await workspace(page, { type: "Condo", images: [] });
+  const state = await workspace(page, {
+    type: "Condo",
+    construction_year: 2026,
+    images: [],
+  });
   const editor = `/panou/proprietati/${id}`;
   const type = page.getByLabel("Tipul proprietății");
   const floor = page.getByRole("combobox", { name: "Etaj", exact: true });
@@ -196,6 +200,26 @@ test("floor and land area save for the selected property type and appear only in
     await expect(detail.locator("dd")).toHaveText(value);
     await expect(page.getByText(label, { exact: true })).toHaveCount(1);
   };
+  const expectPanoramaDetails = async (extraLabel: string) => {
+    const specs = page.locator("#details .atelier-spec-grid");
+    await expect(specs.locator("dt")).toHaveText([
+      "Tipul proprietății",
+      "Anul de construcție",
+      "Suprafață utilă",
+      extraLabel,
+      "Dormitoare",
+      "Băi",
+      "Adresă",
+      "Preț",
+    ]);
+    await expect(specs.locator(".atelier-spec-wide dt")).toHaveText([
+      "Adresă",
+      "Preț",
+    ]);
+    await expect(
+      page.getByRole("heading", { name: "Dotările locuinței", exact: true }),
+    ).toBeVisible();
+  };
   for (const template of ["editorial", "minimal", "panorama"] as const) {
     state.property.template = template;
     await page.goto(`/previzualizare/${id}`);
@@ -203,6 +227,7 @@ test("floor and land area save for the selected property type and appear only in
     await expect(
       page.getByText("Suprafață teren", { exact: true }),
     ).toHaveCount(0);
+    if (template === "panorama") await expectPanoramaDetails("Etaj");
   }
 
   await page.goto(editor);
@@ -222,6 +247,7 @@ test("floor and land area save for the selected property type and appear only in
     await page.goto(`/modele/${template}`);
     await expectDetail("Suprafață teren", "600 m²");
     await expect(page.getByText("Etaj", { exact: true })).toHaveCount(0);
+    if (template === "panorama") await expectPanoramaDetails("Suprafață teren");
   }
 });
 
