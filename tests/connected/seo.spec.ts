@@ -35,7 +35,12 @@ test("the public sitemap leads crawlers directly to indexable canonical pages", 
       expect(head).toContain('name="robots" content="index, follow"');
       expect(head).toContain('href="/favicon.ico');
       if (url.endsWith("/print-test-address")) {
-        expect(head).toContain('name="description" content="Casă de vânzare');
+        expect(head).toContain(
+          "<title>Casă de vânzare în Floreasca | Strada Test 123, București</title>",
+        );
+        expect(head).toContain(
+          'name="description" content="Cauți o casă de vânzare în zona Floreasca, București? Vezi această proprietate deosebită și programează o vizionare."',
+        );
         expect(html).toContain('"@type":"RealEstateListing"');
       }
     }

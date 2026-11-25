@@ -1,12 +1,8 @@
 import { PLATFORM_NAME, PLATFORM_ORIGIN } from "./platform-brand";
 import type { Metadata } from "next";
-import {
-  formatPrice,
-  propertyTypeLabel,
-  publicPath,
-  type PublicProperty,
-} from "./model";
+import { propertyTypeLabel, publicPath, type PublicProperty } from "./model";
 import { propertyStory } from "./property-story";
+import { discoveryCities } from "./property-discovery";
 
 export const SITE_NAME = PLATFORM_NAME;
 export const HOME_IMAGE = "/images/discovery/quiz-terasa-apus.webp";
@@ -134,104 +130,120 @@ export function homeJsonLd() {
   };
 }
 
+const knownCities = [
+  "București",
+  ...[...discoveryCities.values()].filter((name) => !name.includes("/")),
+];
+
+const addressZonePrefix = /^(?:cartier(?:ul)?|zona)\s+/iu;
+const streetPrefix =
+  /^(?:str(?:ada)?\.?|[șs]os(?:eaua)?\.?|bulevardul|bd\.?|b-dul|calea|aleea|intrarea|splaiul|pia[țt]a)\s+/iu;
+const sectorLabel = /^sector(?:ul)?\s+([1-6])$/iu;
+
+function propertySearchLocation(property: PublicProperty) {
+  const parts = compactText(property.location)
+    .split(/\s*[,·]\s*/u)
+    .filter((part) => part && !/^(?:românia|romania|ro)$/iu.test(part));
+  const street = parts.find((part) => streetPrefix.test(part));
+  const namedZone = parts.find((part) => addressZonePrefix.test(part));
+  const sector = parts.map((part) => sectorLabel.exec(part)?.[1]).find(Boolean);
+  const postalPrefix = /^(?:RO[-\s]*)?\d{6}\s+/iu;
+
+  const cityCandidates = parts.map((part) => part.replace(postalPrefix, ""));
+  const namedCity = knownCities.find((name) => {
+    const cityWords = searchWords(name);
+    return cityCandidates.some((part) => {
+      const words = searchWords(part);
+      return (
+        words === cityWords ||
+        (streetPrefix.test(part) &&
+          words.endsWith(cityWords) &&
+          /\d $/u.test(words.slice(0, -cityWords.length + 1)))
+      );
+    });
+  });
+  const county = compactText(property.county ?? "");
+  const addressCities = street
+    ? cityCandidates
+        .slice(parts.indexOf(street) + 1)
+        .filter(
+          (part) =>
+            /^[\p{L}][\p{L} .'-]{1,79}$/u.test(part) &&
+            !/^(?:jude[țt](?:ul)?|jud\.|bloc|scara|etaj|apartament|municipiul\s+sector)\b/iu.test(
+              part,
+            ) &&
+            !addressZonePrefix.test(part) &&
+            !streetPrefix.test(part) &&
+            (!county || searchWords(part) !== searchWords(county)),
+        )
+    : [];
+  const city =
+    compactText(property.city ?? "") ||
+    namedCity ||
+    addressCities.find((name) =>
+      parts.some(
+        (part) =>
+          postalPrefix.test(part) && part.replace(postalPrefix, "") === name,
+      ),
+    ) ||
+    (addressCities.length === 1 ? addressCities[0] : "");
+  const neighborhood = namedZone?.replace(addressZonePrefix, "");
+  const zone = neighborhood || (sector ? `Sectorul ${sector}` : "");
+  const address = parts.filter((part) => part !== namedZone).join(", ");
+  const addressWithCity =
+    address && city && !searchWords(address).includes(searchWords(city))
+      ? `${address}, ${city}`
+      : address;
+
+  return { city, zone, neighborhood, address: addressWithCity, street };
+}
+
 export function propertyMetadata(property: PublicProperty): Metadata {
-  const headline = compactText(property.title);
-  const shortHeadline = limitText(headline, 58);
-  const headlineWords = searchWords(shortHeadline);
   const type =
     (property.type === "House" || property.type === "Town House") &&
-    searchWords(headline).includes(" vila ")
+    searchWords(property.title).includes(" vila ")
       ? "Vilă"
       : propertyTypeLabel(property.type);
   const transaction =
     property.transaction === "rent" ? "de închiriat" : "de vânzare";
-  const city = compactText(property.city ?? "");
-  const address = compactText(property.location).replace(
-    /,\s*(?:România|Romania)$/i,
-    "",
-  );
-  const locality = city || address;
-  const titleTransaction = headlineWords.includes(searchWords(transaction))
-    ? ""
-    : transaction;
-  const titleLocation =
-    locality && !headlineWords.includes(searchWords(locality))
-      ? limitText(locality, 42)
-      : "";
-  const street =
-    city &&
-    address
-      .split(",")
-      .map(compactText)
-      .find((part) => part && searchWords(part) !== searchWords(city));
-  const titleStreet =
-    street && !headlineWords.includes(searchWords(street))
-      ? limitText(street, 36)
-      : "";
-  const title = [
-    headlineWords.includes(searchWords(type)) ? "" : type,
-    shortHeadline,
-    titleTransaction && titleLocation
-      ? `${titleTransaction}${city ? " în " : " · "}${titleLocation}`
-      : titleTransaction || titleLocation,
-    titleStreet,
+  const { city, zone, neighborhood, address, street } =
+    propertySearchLocation(property);
+  const titleArea = zone || city;
+  const titlePreposition =
+    neighborhood && searchWords(neighborhood) === " unirii " ? "la" : "în";
+  const searchTitle = `${type} ${transaction}${titleArea ? ` ${titlePreposition} ${titleArea}` : ""}`;
+  const title =
+    address && searchWords(address) !== searchWords(titleArea)
+      ? `${searchTitle} | ${limitText(address, 96)}`
+      : searchTitle;
+
+  const article = /^(Casă|Vilă|Garsonieră)$/u.test(type) ? "o" : "un";
+  const descriptionArea = [
+    neighborhood ? `zona ${neighborhood}` : zone.toLocaleLowerCase("ro-RO"),
+    city,
   ]
     .filter(Boolean)
-    .join(" · ");
-
-  // Leave room for the listing facts when a saved address contains many parts.
-  const shortAddress = limitText(address, 60);
-  const shortCity = limitText(city, 36);
-  const location =
-    city && !searchWords(shortAddress).includes(searchWords(city))
-      ? [shortCity, limitText(address, 60 - shortCity.length - 2)]
-          .filter(Boolean)
-          .join(", ")
-      : shortAddress;
-  const lead = [`${type} ${transaction}`, location].filter(Boolean).join(" · ");
-  const headlineDetail = headline
-    .replace(
-      /^(?:(?:apartament(?:ul)?|cas[ăa]|vil[ăa]|garsonier[ăa]|penthouse(?:-ul)?|teren(?:ul)?)(?:\s+|$))?(?:de (?:vânzare|închiriat)(?:\s+|$))?/iu,
-      "",
-    )
-    .trim();
-  const facts = [
-    property.area > 0
-      ? `${property.area.toLocaleString("ro-RO")} ${property.area_unit === "sqft" ? "ft²" : "m²"}`
-      : "",
-    property.type !== "Land" && property.bedrooms > 0
-      ? `${property.bedrooms} ${property.bedrooms === 1 ? "dormitor" : "dormitoare"}`
-      : "",
-    property.price > 0 ? compactText(formatPrice(property)) : "",
-    property.type !== "Land" && property.bathrooms > 0
-      ? `${property.bathrooms} ${property.bathrooms === 1 ? "baie" : "băi"}`
-      : "",
-    headlineDetail &&
-    !searchWords(location).includes(searchWords(headlineDetail))
-      ? limitText(headlineDetail, 28)
-      : "",
-    property.construction_year
-      ? `Construcție ${property.construction_year}`
-      : "",
-    ...[...new Set(property.amenities.map(compactText).filter(Boolean))].slice(
-      0,
-      2,
-    ),
-  ];
+    .join(", ");
+  const question = `Cauți ${article} ${type.toLocaleLowerCase("ro-RO")} ${transaction}${descriptionArea ? ` în ${limitText(descriptionArea, 58)}` : ""}?`;
+  const promotion = "Vezi această proprietate deosebită";
+  const invitation = "și programează o vizionare.";
+  const aboutStreet =
+    !zone && street
+      ? `${question} ${promotion} de pe ${street} ${invitation}`
+      : "";
+  const aboutArea =
+    !zone && property.area > 0
+      ? `${question} ${promotion} de ${property.area.toLocaleString("ro-RO")} ${property.area_unit === "sqft" ? "ft²" : "m²"} ${invitation}`
+      : "";
   const description =
-    facts.reduce(
-      (snippet, fact) =>
-        fact && snippet.length + fact.length + 3 <= 159
-          ? `${snippet} · ${fact}`
-          : snippet,
-      lead,
-    ) + ".";
+    [aboutStreet, aboutArea].find((text) => text && text.length <= 160) ||
+    `${question} ${promotion} ${invitation}`;
   const url = siteUrl(publicPath(property));
   const images = property.images
     .slice(0, 1)
     .map((image) => ({ url: siteUrl(image), alt: title }));
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: url },
     robots: publicRobots(),

@@ -31,41 +31,29 @@ test("home metadata uses the requested copy and one canonical origin", () => {
   assert.equal(meta.openGraph?.description, HOME_DESCRIPTION);
 });
 
-test("new listings derive unique metadata and update it from their current property data", () => {
+test("sale metadata uses the saved type, city and address", () => {
   const property = {
     ...demoWorkspace().properties[0],
     address_slug: "123-palm-drive",
     city: "București",
     location: "Strada Șipca 9, București, România",
-    description: " A bright home.\n\nWith space for everyone. ",
   };
   const meta = propertyMetadata(property);
   assert.equal(
     meta.alternates?.canonical,
     "https://urmatoarea-proprietate.ro/123-palm-drive",
   );
-  assert.match(String(meta.title), /Vila cu grădină · de vânzare în București/);
-  assert.match(
-    String(meta.description),
-    /^Vilă de vânzare · Strada Șipca 9, București/,
+  assert.deepEqual(meta.title, {
+    absolute: "Vilă de vânzare în București | Strada Șipca 9, București",
+  });
+  assert.equal(
+    meta.description,
+    "Cauți o vilă de vânzare în București? Vezi această proprietate deosebită de pe Strada Șipca 9 și programează o vizionare.",
   );
-  for (const fact of [
-    "302 m²",
-    "4 dormitoare",
-    "3 băi",
-    "EUR",
-    "Grădină privată",
-  ]) {
-    assert.ok(meta.description?.includes(fact), fact);
-  }
   assert.equal(meta.twitter?.description, meta.description);
-  assert.notEqual(
-    propertyMetadata({
-      ...property,
-      title: "A new listing",
-      location: "Portland, OR",
-    }).title,
-    meta.title,
+  assert.equal(
+    meta.openGraph?.title,
+    (meta.title as { absolute: string }).absolute,
   );
   assert.match(
     String(
@@ -76,22 +64,79 @@ test("new listings derive unique metadata and update it from their current prope
   );
 });
 
-test("rental metadata keeps the saved city and facts even with a long address", () => {
+test("rental metadata uses a confirmed neighborhood and the saved street", () => {
+  const property = {
+    ...demoWorkspace().properties[1],
+    transaction: "rent" as const,
+    city: "București",
+    location: "Strada Unirii număr 15 București, Zona Unirii",
+  };
+  const meta = propertyMetadata(property);
+  assert.deepEqual(meta.title, {
+    absolute:
+      "Apartament de închiriat la Unirii | Strada Unirii număr 15 București",
+  });
+  assert.equal(
+    meta.description,
+    "Cauți un apartament de închiriat în zona Unirii, București? Vezi această proprietate deosebită și programează o vizionare.",
+  );
+});
+
+test("legacy metadata reads the locality after a postal code without treating the street as the neighborhood", () => {
+  const property = {
+    ...demoWorkspace().properties[1],
+    location: "Bulevardul Unirii 15, 040102 București, România",
+    city: null,
+  };
+  const meta = propertyMetadata(property);
+  assert.deepEqual(meta.title, {
+    absolute:
+      "Apartament de vânzare în București | Bulevardul Unirii 15, 040102 București",
+  });
+  assert.match(
+    meta.description!,
+    /^Cauți un apartament de vânzare în București\?/,
+  );
+  assert.deepEqual(
+    propertyMetadata({
+      ...property,
+      location: "Strada Unirii număr 15 București",
+    }).title,
+    {
+      absolute:
+        "Apartament de vânzare în București | Strada Unirii număr 15 București",
+    },
+  );
+  assert.deepEqual(
+    propertyMetadata({
+      ...property,
+      location: "Strada Șesului 12, Domnești, Județul Ilfov",
+    }).title,
+    {
+      absolute:
+        "Apartament de vânzare în Domnești | Strada Șesului 12, Domnești, Județul Ilfov",
+    },
+  );
+  assert.deepEqual(
+    propertyMetadata({ ...property, location: "Strada Lalelelor 7" }).title,
+    { absolute: "Apartament de vânzare | Strada Lalelelor 7" },
+  );
+});
+
+test("a long address falls back to a factual description that fits the snippet", () => {
   const apartment = {
     ...demoWorkspace().properties[1],
-    title: "Apartament cu balcon",
     price: 850,
     city: "Cluj-Napoca",
     location: `${"Strada cu denumire foarte lungă ".repeat(5)}, Cluj-Napoca`,
     transaction: "rent" as const,
   };
   const meta = propertyMetadata(apartment);
-  assert.equal(
-    meta.title,
-    "Apartament cu balcon · de închiriat în Cluj-Napoca · Strada cu denumire foarte lungă…",
+  assert.match(
+    meta.description!,
+    /^Cauți un apartament de închiriat în Cluj-Napoca\?/,
   );
-  assert.match(meta.description!, /^Apartament de închiriat · Cluj-Napoca/);
-  assert.match(meta.description!, /135 m² · 2 dormitoare · 850 .* \/ lună/);
+  assert.match(meta.description!, /de 135 m²/);
   assert.ok(meta.description!.length <= 160);
   const structured = propertyJsonLd(apartment);
   assert.equal(structured.about["@type"], "Apartment");
@@ -103,10 +148,9 @@ test("rental metadata keeps the saved city and facts even with a long address", 
   assert.match(structured.offers!.businessFunction, /#LeaseOut$/);
 });
 
-test("similar listings use their own street and headline in search metadata", () => {
+test("similar listings use the current street in search metadata", () => {
   const property = {
     ...demoWorkspace().properties[1],
-    title: "Apartament luminos",
     city: "București",
     location: "Strada Lalelelor 7, București",
   };
@@ -115,30 +159,28 @@ test("similar listings use their own street and headline in search metadata", ()
     ...property,
     location: "Strada Iasomiei 9, București",
   });
-  const otherHome = propertyMetadata({
-    ...property,
-    title: "Apartament la ultimul etaj",
-  });
-  assert.match(String(first.title), /Strada Lalelelor 7/);
-  assert.notEqual(first.title, otherStreet.title);
+  assert.notDeepEqual(first.title, otherStreet.title);
   assert.notEqual(first.description, otherStreet.description);
-  assert.notEqual(first.title, otherHome.title);
-  assert.notEqual(first.description, otherHome.description);
-  assert.match(otherHome.description!, /la ultimul etaj/);
   assert.deepEqual(propertyMetadata(property), first);
 });
 
-test("the listing uses studio or house metadata from the saved type", () => {
-  const property = demoWorkspace().properties[0];
-  assert.match(
-    propertyMetadata({ ...property, type: "Studio", bedrooms: 0 }).description!,
-    /^Garsonieră de vânzare/,
-  );
-  assert.match(
-    propertyMetadata({ ...property, title: "O locuință cu grădină" })
-      .description!,
-    /^Casă de vânzare/,
-  );
+test("the listing uses its saved type and the correct article", () => {
+  const property = {
+    ...demoWorkspace().properties[0],
+    title: "O locuință cu grădină",
+  };
+  for (const [type, wording] of [
+    ["Studio", "o garsonieră"],
+    ["House", "o casă"],
+    ["Penthouse", "un penthouse"],
+    ["Land", "un teren"],
+  ] as const) {
+    assert.ok(
+      propertyMetadata({ ...property, type }).description?.startsWith(
+        `Cauți ${wording} de vânzare`,
+      ),
+    );
+  }
 });
 
 test("structured property data cannot terminate the JSON-LD script", () => {

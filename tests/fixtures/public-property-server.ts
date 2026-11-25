@@ -242,6 +242,8 @@ globalThis.fetch = async (input, init) => {
       slug: "print-test-home",
       address_slug: "print-test-address",
       title: "A home ready to share",
+      location: "Strada Test 123, Cartierul Floreasca, București",
+      city: "București",
       status: "published",
     },
     profile: sample.profile,
