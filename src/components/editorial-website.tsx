@@ -1,6 +1,6 @@
 "use client";
 import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
-import { propertyTypeLabel } from "@/lib/model";
+import { propertyExtraDetail, propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertySectionLinks } from "./property-section-links";
@@ -206,6 +206,7 @@ export function EditorialWebsite({
   const showFilm = videoIncluded && (Boolean(film?.src) || isPreview);
   const copy = propertyStory(property);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
+  const extraDetail = propertyExtraDetail(property);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -485,11 +486,21 @@ export function EditorialWebsite({
             </p>
             <dl className="estate-specifications">
               <div>
-                <dt>Suprafață locuibilă</dt>
+                <dt>
+                  {property.type === "Land"
+                    ? "Suprafață teren"
+                    : "Suprafață utilă"}
+                </dt>
                 <dd>
                   {property.area.toLocaleString("ro-RO")} {unit}
                 </dd>
               </div>
+              {extraDetail && (
+                <div>
+                  <dt>{extraDetail.label}</dt>
+                  <dd>{extraDetail.value}</dd>
+                </div>
+              )}
               <div>
                 <dt>Dormitoare</dt>
                 <dd>{property.bedrooms}</dd>

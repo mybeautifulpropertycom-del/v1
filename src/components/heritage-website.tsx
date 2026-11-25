@@ -1,6 +1,6 @@
 "use client";
 import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
-import { propertyTypeLabel } from "@/lib/model";
+import { propertyExtraDetail, propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertySectionLinks } from "./property-section-links";
@@ -49,6 +49,7 @@ export function HeritageWebsite({
   const isPreview = preview || sample;
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
   const size = `${property.area.toLocaleString("ro-RO")} ${unit}`;
+  const extraDetail = propertyExtraDetail(property);
   const photographs = property.images.map((src, index) => ({ src, index }));
   const visiblePhotographs = highlights ? photographs.slice(0, 3) : photographs;
   const secondaryPhoto = property.images[1] || property.images[0];
@@ -382,7 +383,15 @@ export function HeritageWebsite({
             </h2>
             <dl className="heritage-property-details">
               {[
-                ["Suprafață locuibilă", size],
+                [
+                  property.type === "Land"
+                    ? "Suprafață teren"
+                    : "Suprafață utilă",
+                  size,
+                ],
+                ...(extraDetail
+                  ? [[extraDetail.label, extraDetail.value]]
+                  : []),
                 ["Dormitoare", String(property.bedrooms)],
                 ["Băi", String(property.bathrooms)],
                 ["Tipul proprietății", propertyTypeLabel(property.type)],

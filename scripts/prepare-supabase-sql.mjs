@@ -58,6 +58,17 @@ commit;
 select 'MBP_UNAVAILABLE_PROPERTY_LINKS_READY' as status;
 `,
 );
+const propertyLandAreaAndFloor = await readFile(
+  new URL("202611250002_property_land_area_and_floor.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL(
+    "../supabase/sql-editor-property-land-area-and-floor.sql",
+    import.meta.url,
+  ),
+  `-- Existing installations: run the entire file. Safe to rerun.\nbegin;\n${propertyLandAreaAndFloor.trim()}\nnotify pgrst, 'reload schema';\ncommit;\nselect 'MBP_PROPERTY_LAND_AREA_AND_FLOOR_READY' as status;\n`,
+);
 const promotions = await readFile(
   new URL("202611180001_property_promotions.sql", directory),
   "utf8",

@@ -5,6 +5,7 @@ import type { SavedPropertyStory } from "./property-story";
 import type { ProfileBioRole } from "./profile-bio";
 export type TemplateId = "editorial" | "minimal" | "panorama";
 export const MAX_PROFILE_BIO_LENGTH = 300;
+export const MAX_BUILDING_FLOORS = 100;
 export type Profile = {
   id: string;
   name: string;
@@ -33,6 +34,9 @@ export type Property = {
   type: "Condo" | "Studio" | "House" | "Town House" | "Penthouse" | "Land";
   area: number;
   area_unit: "sqft" | "sqm";
+  land_area?: number | null;
+  floor?: number | null;
+  total_floors?: number | null;
   construction_year?: number | null;
   bedrooms: number;
   bathrooms: number;
@@ -77,6 +81,38 @@ export function propertyTypeLabel(type: string): string {
       } as Record<string, string>
     )[type] || type
   );
+}
+
+export function hasLandArea(type: Property["type"]) {
+  return type === "House" || type === "Town House";
+}
+
+export function hasUnitFloor(type: Property["type"]) {
+  return type === "Condo" || type === "Studio" || type === "Penthouse";
+}
+
+export function propertyFloorLabel(floor: number) {
+  if (floor === -1) return "Demisol";
+  if (floor === 0) return "Parter";
+  return String(floor);
+}
+
+export function propertyExtraDetail(property: PublicProperty) {
+  if (hasLandArea(property.type) && property.land_area != null)
+    return {
+      label: "Suprafață teren",
+      value: `${property.land_area.toLocaleString(locale)} m²`,
+    };
+  const { floor, total_floors } = property;
+  if (hasUnitFloor(property.type) && floor != null && total_floors != null)
+    return {
+      label: "Etaj",
+      value:
+        total_floors === 0
+          ? propertyFloorLabel(floor)
+          : `${propertyFloorLabel(floor)} din ${total_floors}`,
+    };
+  return null;
 }
 
 export const templates = [
@@ -199,6 +235,29 @@ export function propertyErrors(property: Property): string[] {
     property.area > 999999999
   )
     errors.push("Introdu o suprafață validă, mai mare sau egală cu zero.");
+  if (
+    hasLandArea(property.type) &&
+    property.land_area != null &&
+    (!Number.isFinite(property.land_area) ||
+      property.land_area <= 0 ||
+      property.land_area > 999999999)
+  )
+    errors.push("Introdu o suprafață de teren validă, mai mare decât zero.");
+  const { floor, total_floors } = property;
+  if (hasUnitFloor(property.type) && (floor != null || total_floors != null)) {
+    if (floor == null || total_floors == null)
+      errors.push("Alege etajul și introdu numărul total de etaje.");
+    else if (
+      !Number.isInteger(total_floors) ||
+      total_floors < 0 ||
+      total_floors > MAX_BUILDING_FLOORS
+    )
+      errors.push(
+        `Introdu un număr întreg de etaje între 0 și ${MAX_BUILDING_FLOORS}.`,
+      );
+    else if (!Number.isInteger(floor) || floor < -1 || floor > total_floors)
+      errors.push("Etajul ales trebuie să existe în clădire.");
+  }
   if (
     property.construction_year != null &&
     (!Number.isInteger(property.construction_year) ||

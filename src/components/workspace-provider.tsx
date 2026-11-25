@@ -14,6 +14,8 @@ import { Check, LoaderCircle, X } from "lucide-react";
 import type { Profile, Property, Workspace } from "@/lib/model";
 import {
   MAX_PROFILE_BIO_LENGTH,
+  hasLandArea,
+  hasUnitFloor,
   propertyErrors,
   publicationErrors,
   slugify,
@@ -245,6 +247,12 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       owner_id: current.profile.id,
       updated_at: new Date().toISOString(),
     };
+    if (!hasLandArea(nextProperty.type) && nextProperty.land_area != null)
+      nextProperty.land_area = null;
+    if (!hasUnitFloor(nextProperty.type)) {
+      if (nextProperty.floor != null) nextProperty.floor = null;
+      if (nextProperty.total_floors != null) nextProperty.total_floors = null;
+    }
     const fieldErrors = propertyErrors(nextProperty);
     if (fieldErrors.length) throw new Error(fieldErrors.join(" "));
     if (publish || nextProperty.status === "published") {

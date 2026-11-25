@@ -21,6 +21,7 @@ export default async function Page({
         price: 850000,
         currency: "EUR",
         construction_year: 2026,
+        land_area: 600,
         location: TEMPLATE_LOCATION,
         google_place_id: null,
         description: data.properties[0].description,

@@ -1,6 +1,6 @@
 "use client";
 import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
-import { propertyTypeLabel } from "@/lib/model";
+import { propertyExtraDetail, propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertySectionLinks } from "./property-section-links";
@@ -59,6 +59,7 @@ export function AtelierWebsite({
   const isPreview = preview || sample;
   const side = property.images.slice(1, 7);
   const unit = property.area_unit === "sqm" ? "m²" : "sq ft";
+  const extraDetail = propertyExtraDetail(property);
   const location = property.location.trim();
   const hasConstructionYear = property.construction_year != null;
   const secondary = property.images[1] || property.images[0];
@@ -365,12 +366,22 @@ export function AtelierWebsite({
           <div className="atelier-details-copy">
             <dl className="atelier-spec-grid">
               <div>
-                <dt>Suprafață locuibilă</dt>
+                <dt>
+                  {property.type === "Land"
+                    ? "Suprafață teren"
+                    : "Suprafață utilă"}
+                </dt>
                 <dd>
                   {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
                 </dd>
               </div>
-              <div>
+              {extraDetail && (
+                <div>
+                  <dt>{extraDetail.label}</dt>
+                  <dd>{extraDetail.value}</dd>
+                </div>
+              )}
+              <div className={extraDetail ? "atelier-spec-wide" : undefined}>
                 <dt>Tipul proprietății</dt>
                 <dd>{propertyTypeLabel(property.type)}</dd>
               </div>

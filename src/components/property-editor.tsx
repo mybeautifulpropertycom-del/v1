@@ -32,7 +32,11 @@ import {
 import { ro } from "@/i18n/ro";
 import {
   createProperty,
+  hasLandArea,
+  hasUnitFloor,
+  MAX_BUILDING_FLOORS,
   profileErrors,
+  propertyFloorLabel,
   propertyTypeOptions,
   publicPath,
   templates,
@@ -47,6 +51,11 @@ import {
   propertyDetailsErrors,
   propertyStepRequirement,
 } from "@/lib/property-editor-validation";
+
+const floorOptions = Array.from(
+  { length: MAX_BUILDING_FLOORS + 2 },
+  (_, index) => index - 1,
+);
 
 export function PropertyEditor({
   id,
@@ -518,9 +527,12 @@ export function PropertyEditor({
                     >
                       {propertyTypeOptions.map((v) => (
                         <option key={v} value={v}>
-                          {propertyTypeLabel(v)}
+                          {v === "House" ? "Casă / Vilă" : propertyTypeLabel(v)}
                         </option>
                       ))}
+                      {property.type === "Land" && (
+                        <option value="Land">Teren</option>
+                      )}
                     </select>
                   </label>
                   <label>
@@ -573,8 +585,10 @@ export function PropertyEditor({
                       )}
                     </select>
                   </label>
-                  <label>
-                    Suprafață (m²)
+                  <label className="property-area-field">
+                    {property.type === "Land"
+                      ? "Suprafață (m²)"
+                      : "Suprafață utilă (m²)"}
                     <input
                       data-property-guide-field="area"
                       data-guide-issue={guideIssues.area || undefined}
@@ -586,6 +600,73 @@ export function PropertyEditor({
                       onChange={(e) => update("area", Number(e.target.value))}
                     />
                   </label>
+                  {hasLandArea(property.type) && (
+                    <label>
+                      Suprafață teren (m²)
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min="0.01"
+                        max="999999999"
+                        step="0.01"
+                        value={property.land_area ?? ""}
+                        placeholder="500"
+                        onChange={(e) =>
+                          update(
+                            "land_area",
+                            e.target.value === ""
+                              ? null
+                              : e.target.valueAsNumber,
+                          )
+                        }
+                      />
+                    </label>
+                  )}
+                  {hasUnitFloor(property.type) && (
+                    <fieldset className="property-floor-field">
+                      <legend>Etaj</legend>
+                      <div className="property-floor-inputs">
+                        <select
+                          aria-label="Etaj"
+                          value={property.floor ?? ""}
+                          onChange={(e) =>
+                            update(
+                              "floor",
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value),
+                            )
+                          }
+                        >
+                          <option value="">—</option>
+                          {floorOptions.map((floor) => (
+                            <option key={floor} value={floor}>
+                              {propertyFloorLabel(floor)}
+                            </option>
+                          ))}
+                        </select>
+                        <span aria-hidden="true">din</span>
+                        <input
+                          aria-label="Număr total de etaje"
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max={MAX_BUILDING_FLOORS}
+                          step="1"
+                          placeholder="5"
+                          value={property.total_floors ?? ""}
+                          onChange={(e) =>
+                            update(
+                              "total_floors",
+                              e.target.value === ""
+                                ? null
+                                : e.target.valueAsNumber,
+                            )
+                          }
+                        />
+                      </div>
+                    </fieldset>
+                  )}
                   <label>
                     Anul de construcție
                     <input

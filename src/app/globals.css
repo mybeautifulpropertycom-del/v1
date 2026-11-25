@@ -1322,6 +1322,30 @@ label small,
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px 20px;
 }
+.property-floor-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+.property-floor-field legend {
+  margin-bottom: 9px;
+  padding: 0;
+}
+.property-floor-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+@media (max-width: 360px) {
+  .property-area-field:has(+ .property-floor-field),
+  .property-floor-field {
+    grid-column: 1 / -1;
+  }
+}
 .full-width {
   grid-column: 1/-1;
 }
@@ -3776,13 +3800,21 @@ html:has(.image-editor-card[data-dragging]) {
   .field-grid {
     gap: 20px 14px;
   }
-  .field-grid > label {
+  .field-grid > label,
+  .property-floor-field {
     font-size: 11px;
   }
   .field-grid input,
   .field-grid select {
     font-size: 12px;
     padding: 11px;
+  }
+  .property-floor-inputs {
+    grid-template-columns: minmax(0, 1.8fr) auto minmax(0, 1fr);
+    gap: 4px;
+  }
+  .field-grid .property-floor-inputs :is(input, select) {
+    padding-inline: 4px;
   }
   .form-actions {
     flex-direction: column-reverse;

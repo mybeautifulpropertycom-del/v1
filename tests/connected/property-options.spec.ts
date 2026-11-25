@@ -26,13 +26,13 @@ test("legacy dimensions convert once, house filters include old types, and selec
 
   await page.goto(`/panou/proprietati/${id}`);
   const type = page.getByLabel("Tipul proprietății");
-  const area = page.getByLabel("Suprafață (m²)", { exact: true });
+  const area = page.getByLabel("Suprafață utilă (m²)", { exact: true });
   const address = page.getByLabel("Adresă", { exact: true });
   const bedrooms = page.getByLabel("Dormitoare", { exact: true });
   await expect(type.locator("option")).toHaveText([
     "Apartament",
     "Garsonieră",
-    "Casă",
+    "Casă / Vilă",
     "Penthouse",
   ]);
   await expect(type).toHaveValue("House");
@@ -77,7 +77,7 @@ test("legacy dimensions convert once, house filters include old types, and selec
   await expect(area).toHaveValue("120.5");
 });
 
-test("the optional construction year persists and appears only after the property type in each presentation", async ({
+test("the optional construction year persists and appears only in the details of each presentation", async ({
   page,
 }) => {
   const state = await workspace(page, { images: [] });
@@ -109,13 +109,13 @@ test("the optional construction year persists and appears only after the propert
     state.property.template = template;
     await page.goto(`/previzualizare/${id}`);
     const website = page.locator(".property-website, .atelier-website");
-    const yearDetail = website.locator("dl > div").filter({
+    const yearDetail = website.locator("#details dl > div").filter({
       has: page.getByText("Anul de construcție", { exact: true }),
     });
     await expect(yearDetail.locator("dd")).toHaveText("1987");
     await expect(
       yearDetail.locator("xpath=preceding-sibling::div[1]/dt"),
-    ).toHaveText("Tipul proprietății");
+    ).toHaveText(template === "panorama" ? "Băi" : "Tipul proprietății");
     await expect(
       website.getByText("Anul de construcție", { exact: true }),
     ).toHaveCount(1);
@@ -133,6 +133,79 @@ test("the optional construction year persists and appears only after the propert
   await expect(
     page.getByText("Anul de construcție", { exact: true }),
   ).toHaveCount(0);
+});
+
+test("floor and land area save for the selected property type and appear only in its details", async ({
+  page,
+}) => {
+  const state = await workspace(page, { type: "Condo", images: [] });
+  const editor = `/panou/proprietati/${id}`;
+  const type = page.getByLabel("Tipul proprietății");
+  const floor = page.getByRole("combobox", { name: "Etaj", exact: true });
+  const total = page.getByLabel("Număr total de etaje");
+  const land = page.getByLabel("Suprafață teren (m²)", { exact: true });
+  const save = page.getByRole("button", {
+    name: "Salvează modificările",
+    exact: true,
+  });
+  const saved = page
+    .getByRole("status")
+    .filter({ hasText: "Modificările au fost salvate" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(editor);
+  for (const apartmentType of ["Condo", "Penthouse", "Studio"]) {
+    await type.selectOption(apartmentType);
+    await expect(floor).toBeVisible();
+    await expect(land).toHaveCount(0);
+  }
+  await floor.selectOption("3");
+  await total.fill("2");
+  await save.click();
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Etajul ales trebuie să existe în clădire.",
+    }),
+  ).toBeVisible();
+  await total.fill("10");
+  await save.click();
+  await expect(saved).toBeVisible();
+  expect(state.property.floor).toBe(3);
+  expect(state.property.total_floors).toBe(10);
+
+  const expectDetail = async (label: string, value: string) => {
+    const detail = page.locator("#details dl > div").filter({
+      has: page.getByText(label, { exact: true }),
+    });
+    await expect(detail.locator("dd")).toHaveText(value);
+    await expect(page.getByText(label, { exact: true })).toHaveCount(1);
+  };
+  for (const template of ["editorial", "minimal", "panorama"] as const) {
+    state.property.template = template;
+    await page.goto(`/previzualizare/${id}`);
+    await expectDetail("Etaj", "3 din 10");
+    await expect(
+      page.getByText("Suprafață teren", { exact: true }),
+    ).toHaveCount(0);
+  }
+
+  await page.goto(editor);
+  await expect(floor).toHaveValue("3");
+  await expect(total).toHaveValue("10");
+  await type.selectOption("House");
+  await expect(floor).toHaveCount(0);
+  await land.fill("450.5");
+  await save.click();
+  await expect(saved).toBeVisible();
+  expect(state.property.land_area).toBe(450.5);
+  expect(state.property.floor).toBeNull();
+  expect(state.property.total_floors).toBeNull();
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  for (const template of ["editorial", "minimal", "panorama"] as const) {
+    await page.goto(`/modele/${template}`);
+    await expectDetail("Suprafață teren", "600 m²");
+    await expect(page.getByText("Etaj", { exact: true })).toHaveCount(0);
+  }
 });
 
 test("studios and the new amenities persist, replace the old parking label and appear in filters and every presentation", async ({

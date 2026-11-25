@@ -93,3 +93,69 @@ test("the construction year upgrade accepts an optional year and preserves exist
     await db.close();
   }
 });
+
+test("land area and floor details are optional, type-specific and preserved on rerun", async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(`
+      create table public.properties (type text not null, area numeric not null);
+      insert into public.properties values ('Town House', 140), ('Condo', 60);
+    `);
+    const sql = await readFile(
+      new URL(
+        "../supabase/sql-editor-property-land-area-and-floor.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const listings = async () =>
+      (await db.query("select * from public.properties order by type")).rows;
+
+    await db.exec(sql);
+    assert.deepEqual(await listings(), [
+      {
+        type: "Condo",
+        area: "60",
+        land_area: null,
+        floor: null,
+        total_floors: null,
+      },
+      {
+        type: "Town House",
+        area: "140",
+        land_area: null,
+        floor: null,
+        total_floors: null,
+      },
+    ]);
+    await db.exec(`
+      update public.properties set land_area = 450.5 where type = 'Town House';
+      update public.properties set floor = 3, total_floors = 10 where type = 'Condo';
+    `);
+    const saved = await listings();
+    await db.exec(sql);
+    assert.deepEqual(await listings(), saved);
+    for (const update of [
+      "set land_area = 0 where type = 'Town House'",
+      "set land_area = 450 where type = 'Condo'",
+    ])
+      await assert.rejects(
+        db.exec(`update public.properties ${update}`),
+        /properties_land_area_check/,
+      );
+    for (const update of [
+      "set floor = 11 where type = 'Condo'",
+      "set total_floors = null where type = 'Condo'",
+      "set floor = 0, total_floors = 1 where type = 'Town House'",
+    ])
+      await assert.rejects(
+        db.exec(`update public.properties ${update}`),
+        /properties_floor_check/,
+      );
+    await db.exec(
+      "update public.properties set floor = 0, total_floors = 0 where type = 'Condo'",
+    );
+  } finally {
+    await db.close();
+  }
+});
