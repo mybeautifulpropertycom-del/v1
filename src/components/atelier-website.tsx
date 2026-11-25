@@ -5,6 +5,7 @@ import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
+import { PropertyWhatsAppLink } from "./property-whatsapp-link";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -541,6 +542,10 @@ export function AtelierWebsite({
                   <ArrowUpRight size={15} />
                 </a>
               )}
+              <PropertyWhatsAppLink
+                phone={profile.phone}
+                location={property.location}
+              />
             </div>
             {tour()}
           </div>
@@ -556,7 +561,7 @@ export function AtelierWebsite({
                 name="name"
                 autoComplete="name"
                 maxLength={100}
-                placeholder="Alex Popescu"
+                placeholder="Numele și prenumele tău"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />

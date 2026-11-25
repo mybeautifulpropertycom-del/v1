@@ -5,6 +5,7 @@ import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
+import { PropertyWhatsAppLink } from "./property-whatsapp-link";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 
 import Link from "next/link";
@@ -683,6 +684,10 @@ export function EditorialWebsite({
                   <ArrowUpRight size={15} />
                 </a>
               )}
+              <PropertyWhatsAppLink
+                phone={profile.phone}
+                location={property.location}
+              />
             </div>
             {viewingButton(
               "Să alegem o zi pentru vizionare",

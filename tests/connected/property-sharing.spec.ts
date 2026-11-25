@@ -9,6 +9,44 @@ import { readFile } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
 import sharp from "sharp";
 
+for (const template of ["editorial", "minimal", "panorama"]) {
+  test(`${template}: the contact form and WhatsApp link use the listing's details`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    for (const [path, phone, street] of [
+      [`/modele/${template}`, "40755436284", "Sipca Numar 9, București"],
+      [
+        `/photos-test-${template}`,
+        "40700000000",
+        "Test 123, București, România",
+      ],
+    ]) {
+      await page.goto(path);
+      const contact = page.locator("#contact");
+      await expect(
+        contact.getByPlaceholder("Numele și prenumele tău", { exact: true }),
+      ).toBeVisible();
+      const link = contact.getByRole("link", {
+        name: "Trimite mesaj pe WhatsApp",
+      });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute("target", "_blank");
+      const whatsapp = new URL((await link.getAttribute("href"))!);
+      expect(whatsapp.origin).toBe("https://wa.me");
+      expect(whatsapp.pathname).toBe(`/${phone}`);
+      expect(whatsapp.searchParams.get("text")).toBe(
+        `Bună ziua! Sunt interesat de proprietatea de pe strada ${street}.`,
+      );
+      expect(
+        await link.evaluate((node) =>
+          node.previousElementSibling?.getAttribute("href"),
+        ),
+      ).toMatch(/^mailto:/);
+    }
+  });
+}
+
 test("published listings show three stacked sharing cards and copy the saved canonical link", async ({
   page,
 }, testInfo) => {
