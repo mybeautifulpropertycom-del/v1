@@ -486,6 +486,16 @@ export function EditorialWebsite({
             </p>
             <dl className="estate-specifications">
               <div>
+                <dt>Tipul proprietății</dt>
+                <dd>{propertyTypeLabel(property.type)}</dd>
+              </div>
+              {property.construction_year != null && (
+                <div>
+                  <dt>Anul de construcție</dt>
+                  <dd>{property.construction_year}</dd>
+                </div>
+              )}
+              <div>
                 <dt>
                   {property.type === "Land"
                     ? "Suprafață teren"
@@ -509,16 +519,6 @@ export function EditorialWebsite({
                 <dt>Băi</dt>
                 <dd>{property.bathrooms}</dd>
               </div>
-              <div>
-                <dt>Tipul proprietății</dt>
-                <dd>{propertyTypeLabel(property.type)}</dd>
-              </div>
-              {property.construction_year != null && (
-                <div>
-                  <dt>Anul de construcție</dt>
-                  <dd>{property.construction_year}</dd>
-                </div>
-              )}
               <div>
                 <dt>Adresă</dt>
                 <dd>{property.location || "—"}</dd>

@@ -200,8 +200,8 @@ test("floor and land area save for the selected property type and appear only in
     await expect(detail.locator("dd")).toHaveText(value);
     await expect(page.getByText(label, { exact: true })).toHaveCount(1);
   };
-  const expectPanoramaDetails = async (extraLabel: string) => {
-    const specs = page.locator("#details .atelier-spec-grid");
+  const expectDetailsOrder = async (extraLabel: string, panorama: boolean) => {
+    const specs = page.locator("#details dl");
     await expect(specs.locator("dt")).toHaveText([
       "Tipul proprietății",
       "Anul de construcție",
@@ -210,15 +210,21 @@ test("floor and land area save for the selected property type and appear only in
       "Dormitoare",
       "Băi",
       "Adresă",
-      "Preț",
+      panorama ? "Preț" : "Preț solicitat",
     ]);
-    await expect(specs.locator(".atelier-spec-wide dt")).toHaveText([
-      "Adresă",
-      "Preț",
-    ]);
-    await expect(
-      page.getByRole("heading", { name: "Dotările locuinței", exact: true }),
-    ).toBeVisible();
+    if (panorama) {
+      await expect(specs.locator(".atelier-spec-wide dt")).toHaveText([
+        "Adresă",
+        "Preț",
+      ]);
+      await expect(
+        page.getByRole("heading", { name: "Dotările locuinței", exact: true }),
+      ).toBeVisible();
+    } else {
+      await expect(page.locator("#details dl + ul")).toHaveAccessibleName(
+        "Dotările proprietății",
+      );
+    }
   };
   for (const template of ["editorial", "minimal", "panorama"] as const) {
     state.property.template = template;
@@ -227,7 +233,7 @@ test("floor and land area save for the selected property type and appear only in
     await expect(
       page.getByText("Suprafață teren", { exact: true }),
     ).toHaveCount(0);
-    if (template === "panorama") await expectPanoramaDetails("Etaj");
+    await expectDetailsOrder("Etaj", template === "panorama");
   }
 
   await page.goto(editor);
@@ -247,7 +253,7 @@ test("floor and land area save for the selected property type and appear only in
     await page.goto(`/modele/${template}`);
     await expectDetail("Suprafață teren", "600 m²");
     await expect(page.getByText("Etaj", { exact: true })).toHaveCount(0);
-    if (template === "panorama") await expectPanoramaDetails("Suprafață teren");
+    await expectDetailsOrder("Suprafață teren", template === "panorama");
   }
 });
 

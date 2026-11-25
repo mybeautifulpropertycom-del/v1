@@ -383,6 +383,10 @@ export function HeritageWebsite({
             </h2>
             <dl className="heritage-property-details">
               {[
+                ["Tipul proprietății", propertyTypeLabel(property.type)],
+                ...(property.construction_year != null
+                  ? [["Anul de construcție", String(property.construction_year)]]
+                  : []),
                 [
                   property.type === "Land"
                     ? "Suprafață teren"
@@ -394,10 +398,6 @@ export function HeritageWebsite({
                   : []),
                 ["Dormitoare", String(property.bedrooms)],
                 ["Băi", String(property.bathrooms)],
-                ["Tipul proprietății", propertyTypeLabel(property.type)],
-                ...(property.construction_year != null
-                  ? [["Anul de construcție", String(property.construction_year)]]
-                  : []),
                 ["Adresă", property.location || "—"],
                 [
                   property.transaction === "rent"
