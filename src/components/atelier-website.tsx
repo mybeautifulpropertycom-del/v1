@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
+  CalendarDays,
   Check,
   Expand,
   Film,
@@ -70,13 +71,13 @@ export function AtelierWebsite({
   const text = (field: WebsiteCopyField) => (
     <EditableText field={`copy.${field}`} value={copy[field]} onEdit={onEdit} />
   );
-  const tour = (className = "atelier-button") => (
+  const tour = (className = "atelier-button", Icon = ArrowUpRight) => (
     <button
       type="button"
       className={className}
       onClick={() => setViewing(true)}
     >
-      Programează o vizionare <ArrowUpRight size={17} />
+      Programează o vizionare <Icon size={17} />
     </button>
   );
   useEffect(() => {
@@ -547,7 +548,7 @@ export function AtelierWebsite({
                 location={property.location}
               />
             </div>
-            {tour()}
+            {tour("atelier-button", CalendarDays)}
           </div>
           <form className="landing-inquiry" onSubmit={submit}>
             <h3 className="presentation-inquiry-heading">

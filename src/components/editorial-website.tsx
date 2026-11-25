@@ -243,7 +243,11 @@ export function EditorialWebsite({
     }
   }
 
-  const viewingButton = (label: string, className = "estate-button") => (
+  const viewingButton = (
+    label: string,
+    className = "estate-button",
+    Icon = ArrowUpRight,
+  ) => (
     <button
       type="button"
       className={className}
@@ -264,7 +268,7 @@ export function EditorialWebsite({
       ) : (
         label
       )}
-      <ArrowUpRight size={17} />
+      <Icon size={17} />
     </button>
   );
 
@@ -692,6 +696,7 @@ export function EditorialWebsite({
             {viewingButton(
               "Să alegem o zi pentru vizionare",
               "estate-text-link",
+              CalendarDays,
             )}
           </div>
           <form className="estate-inquiry" onSubmit={submit}>
