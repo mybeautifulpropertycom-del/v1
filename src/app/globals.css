@@ -1344,15 +1344,16 @@ label small,
   align-items: center;
   gap: 6px;
 }
-.property-floor-select {
+.property-editor-select {
+  display: block;
   position: relative;
 }
-.field-grid .property-floor-select select {
+.field-grid .property-editor-select select {
   display: block;
   appearance: none;
   padding-inline-end: 22px;
 }
-.property-floor-select svg {
+.property-editor-select > svg {
   position: absolute;
   top: 50%;
   inset-inline-end: 8px;
@@ -3844,7 +3845,7 @@ html:has(.image-editor-card[data-dragging]) {
   .field-grid .property-floor-inputs input {
     padding-inline: 4px;
   }
-  .field-grid .property-floor-select select {
+  .property-floor-inputs .property-editor-select select {
     padding-inline-start: 4px;
   }
   .form-actions {

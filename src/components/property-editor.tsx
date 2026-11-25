@@ -9,7 +9,7 @@ import { PropertyAddressInput } from "./property-address-input";
 import { MAX_PROPERTY_PHOTOS } from "@/lib/photo-limits";
 import { AgentAvatar } from "./agent-avatar";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -58,6 +58,15 @@ const floorOptions = Array.from(
   { length: MAX_BUILDING_FLOORS + 2 },
   (_, index) => index - 1,
 );
+
+function PropertySelect(props: ComponentProps<"select">) {
+  return (
+    <span className="property-editor-select">
+      <select {...props} />
+      <ChevronDown size={12} strokeWidth={3.5} aria-hidden="true" />
+    </span>
+  );
+}
 
 export function PropertyEditor({
   id,
@@ -517,7 +526,7 @@ export function PropertyEditor({
                   />
                   <label>
                     Tipul proprietății
-                    <select
+                    <PropertySelect
                       data-property-guide-field="type"
                       data-guide-issue={guideIssues.type || undefined}
                       value={
@@ -535,11 +544,11 @@ export function PropertyEditor({
                       {property.type === "Land" && (
                         <option value="Land">Teren</option>
                       )}
-                    </select>
+                    </PropertySelect>
                   </label>
                   <label>
                     Tipul ofertei
-                    <select
+                    <PropertySelect
                       data-property-guide-field="transaction"
                       data-guide-issue={guideIssues.transaction || undefined}
                       value={property.transaction}
@@ -552,7 +561,7 @@ export function PropertyEditor({
                     >
                       <option value="sale">De vânzare</option>
                       <option value="rent">De închiriat</option>
-                    </select>
+                    </PropertySelect>
                   </label>
                   <label>
                     Preț{property.transaction === "rent" ? " / lună" : ""}
@@ -567,7 +576,7 @@ export function PropertyEditor({
                   </label>
                   <label>
                     Monedă
-                    <select
+                    <PropertySelect
                       data-property-guide-field="currency"
                       data-guide-issue={guideIssues.currency || undefined}
                       value={property.currency}
@@ -585,7 +594,7 @@ export function PropertyEditor({
                           USD — Dolar american (existent)
                         </option>
                       )}
-                    </select>
+                    </PropertySelect>
                   </label>
                   <label className="property-area-field">
                     {property.type === "Land"
@@ -628,38 +637,31 @@ export function PropertyEditor({
                     <fieldset className="property-floor-field">
                       <legend>Etaj</legend>
                       <div className="property-floor-inputs">
-                        <div className="property-floor-select">
-                          <select
-                            aria-label="Etaj"
-                            value={property.floor ?? ""}
-                            onChange={(e) =>
-                              update(
-                                "floor",
-                                e.target.value === ""
-                                  ? null
-                                  : Number(e.target.value),
-                              )
-                            }
-                          >
-                            <option value="">—</option>
-                            {floorOptions.map((floor) => (
-                              <option key={floor} value={floor}>
-                                {propertyFloorLabel(floor)}
+                        <PropertySelect
+                          aria-label="Etaj"
+                          value={property.floor ?? ""}
+                          onChange={(e) =>
+                            update(
+                              "floor",
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value),
+                            )
+                          }
+                        >
+                          <option value="">—</option>
+                          {floorOptions.map((floor) => (
+                            <option key={floor} value={floor}>
+                              {propertyFloorLabel(floor)}
+                            </option>
+                          ))}
+                          {property.floor != null &&
+                            property.floor > MAX_BUILDING_FLOORS && (
+                              <option value={property.floor}>
+                                {propertyFloorLabel(property.floor)}
                               </option>
-                            ))}
-                            {property.floor != null &&
-                              property.floor > MAX_BUILDING_FLOORS && (
-                                <option value={property.floor}>
-                                  {propertyFloorLabel(property.floor)}
-                                </option>
-                              )}
-                          </select>
-                          <ChevronDown
-                            size={12}
-                            strokeWidth={3.5}
-                            aria-hidden="true"
-                          />
-                        </div>
+                            )}
+                        </PropertySelect>
                         <span aria-hidden="true">din</span>
                         <input
                           aria-label="Număr total de etaje"
