@@ -204,6 +204,54 @@ for (const template of ["editorial", "minimal", "panorama"]) {
   });
 }
 
+for (const [template, gallery, videoPadding] of [
+  ["panorama", ".atelier-gallery", "100px"],
+  ["editorial", ".estate-gallery", "128px"],
+]) {
+  test(`${template}: balances the gallery-to-map spacing when the film section is absent`, async ({
+    page,
+  }) => {
+    await mockGoogleMaps(page);
+    await page.goto(`/photos-test-${template}`);
+    await expect(page.locator("#film")).toHaveCount(0);
+    const map = page.locator(`${gallery} + .property-neighbourhood`);
+    await expect(map).toBeVisible();
+
+    for (const [width, spacing] of [
+      [1600, 56],
+      [390, 32],
+    ]) {
+      await page.setViewportSize({ width, height: 900 });
+      const gaps = await map.evaluate((section) => {
+        const top = section.getBoundingClientRect().top;
+        const photos = section.previousElementSibling!.querySelector(
+          ".atelier-photo-grid, .estate-gallery-grid",
+        )!;
+        const heading = section.querySelector(".neighbourhood-heading")!;
+        const border = parseFloat(getComputedStyle(section).borderTopWidth);
+        return {
+          belowPhotos: top - photos.getBoundingClientRect().bottom,
+          aboveHeading: heading.getBoundingClientRect().top - top - border,
+        };
+      });
+      expect(gaps.belowPhotos).toBeCloseTo(spacing);
+      expect(gaps.aboveHeading).toBeCloseTo(spacing);
+    }
+
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.goto(`/modele/${template}`);
+    await expect(page.locator("#film + .property-neighbourhood")).toBeVisible();
+    await expect(page.locator(gallery)).toHaveCSS(
+      "padding-bottom",
+      videoPadding,
+    );
+    await expect(page.locator(".property-neighbourhood")).toHaveCSS(
+      "padding-top",
+      "90px",
+    );
+  });
+}
+
 test("quota errors keep the property page usable and let the visitor retry", async ({
   page,
 }) => {

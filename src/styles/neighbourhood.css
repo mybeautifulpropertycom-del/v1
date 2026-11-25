@@ -57,6 +57,18 @@
   border-top: 1px solid #84957630;
 }
 
+:is(.estate-website, .atelier-website) {
+  --gallery-map-gap: clamp(32px, 3.6vw, 56px);
+}
+:is(.estate-gallery, .atelier-gallery):has(+ .property-neighbourhood) {
+  padding-bottom: var(--gallery-map-gap);
+}
+:is(.estate-website, .atelier-website)
+  :is(.estate-gallery, .atelier-gallery)
+  + .property-neighbourhood {
+  padding-top: var(--gallery-map-gap);
+}
+
 .neighbourhood-heading {
   margin-bottom: 30px;
 }
