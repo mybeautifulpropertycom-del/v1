@@ -4,22 +4,20 @@
 
 @media (max-width: 767px) {
   .property-footer:has(+ .property-mobile-contact) {
-    margin-bottom: calc(63px + env(safe-area-inset-bottom));
+    margin-bottom: calc(70px + env(safe-area-inset-bottom));
   }
 
   .property-mobile-contact:not([hidden]) {
     position: fixed;
     z-index: 20;
-    inset: auto 0 0;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    left: max(14px, env(safe-area-inset-left));
+    right: max(14px, env(safe-area-inset-right));
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 46px minmax(0, 1fr);
     gap: 8px;
-    padding: 9px max(14px, env(safe-area-inset-right))
-      calc(9px + env(safe-area-inset-bottom))
-      max(14px, env(safe-area-inset-left));
-    background: #faf8f2;
-    border-top: 1px solid #25291926;
-    box-shadow: 0 -3px 16px #25291912;
+    max-width: 290px;
+    margin-inline: auto;
   }
 
   .property-mobile-contact
@@ -28,8 +26,10 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    min-height: 44px;
-    border-radius: 10px;
+    min-height: 46px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    box-shadow: 0 3px 14px #1d251e29, 0 1px 3px #1d251e26;
     color: #fff;
     font: 650 14px / 1.25 var(--workspace-font);
     text-align: center;
@@ -38,6 +38,7 @@
 
   .property-mobile-contact .property-mobile-whatsapp {
     background: #163b2b;
+    border-color: #ffffff30;
   }
 
   .property-mobile-whatsapp-icon {
@@ -50,6 +51,9 @@
   }
 
   .property-mobile-contact .property-mobile-call {
-    background: #9c6a1c;
+    padding-inline: 12px;
+    border-color: #9c722e66;
+    background: linear-gradient(145deg, #f2dca6, #e2b66b);
+    color: #352719;
   }
 }

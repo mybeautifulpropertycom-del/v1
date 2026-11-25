@@ -80,11 +80,20 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect(bar).toBeHidden();
     await bringIntoView(".property-footer");
     await expect(bar).toBeVisible();
-    expect(
-      await bar.evaluate((element) =>
-        Math.abs(element.getBoundingClientRect().bottom - innerHeight),
-      ),
-    ).toBeLessThan(1);
+    const position = await bar.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const footer = document.querySelector(".property-footer")!;
+      return {
+        bottom: innerHeight - rect.bottom,
+        center: rect.left + rect.width / 2,
+        width: rect.width,
+        footerGap: rect.top - footer.getBoundingClientRect().bottom,
+      };
+    });
+    expect(position.bottom).toBeCloseTo(14);
+    expect(position.center).toBeCloseTo(195);
+    expect(position.width).toBeLessThan(390);
+    expect(position.footerGap).toBeGreaterThanOrEqual(9);
 
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await expect(bar).toBeHidden();
