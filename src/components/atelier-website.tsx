@@ -409,7 +409,7 @@ export function AtelierWebsite({
             </dl>
             {property.amenities.length > 0 && (
               <div className="atelier-extras">
-                <h3>Dotări atent alese</h3>
+                <h3>Dotările locuinței</h3>
                 <ul>
                   {property.amenities.map((amenity) => (
                     <li key={amenity}>{amenity}</li>

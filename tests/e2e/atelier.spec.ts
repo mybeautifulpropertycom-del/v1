@@ -43,13 +43,30 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   page,
 }) => {
   await page.goto("/modele/panorama");
-  await page.getByRole("button", { name: "Meniu", exact: true }).click();
+  const desktopNav = page.getByRole("navigation", {
+    name: "Navigarea proprietății",
+  });
+  const menuButton = page.getByRole("button", { name: "Meniu", exact: true });
+  await expect(desktopNav.getByRole("link", { name: "Detalii" })).toBeVisible();
+  await expect(menuButton).toBeHidden();
+  await expect(page.locator(".atelier-nav-tour")).toBeVisible();
+
+  const desktopViewport = page.viewportSize()!;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(desktopNav).toBeHidden();
+  await menuButton.click();
   await expect(page.locator("#atelier-menu")).toBeVisible();
   await page
     .locator("#atelier-menu")
     .getByRole("link", { name: "Detalii" })
     .click();
   await expect(page.locator("#atelier-menu")).toHaveCount(0);
+  await page.setViewportSize(desktopViewport);
+  await expect(
+    page
+      .locator("#details")
+      .getByRole("heading", { name: "Dotările locuinței" }),
+  ).toBeVisible();
   await expect(page.locator(".atelier-extras ul")).toContainText(
     "Grădină privată",
   );

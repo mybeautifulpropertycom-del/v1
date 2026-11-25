@@ -157,7 +157,7 @@
   display: none;
 }
 .atelier-menu-button {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 22px;
   font-size: 11px;
@@ -173,7 +173,7 @@
   box-shadow: 0 12px 50px #23272118;
   border: 1px solid var(--at-line);
   padding: 25px;
-  display: grid;
+  display: none;
   gap: 10px;
   min-width: 280px;
 }
@@ -883,6 +883,12 @@
   }
   .atelier-nav-tour {
     display: none;
+  }
+  .atelier-menu-button {
+    display: flex;
+  }
+  .atelier-menu {
+    display: grid;
   }
   .atelier-menu-tour {
     display: inline-flex;
