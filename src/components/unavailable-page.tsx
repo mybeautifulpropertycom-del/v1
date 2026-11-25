@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { UNAVAILABLE_PAGE_TITLE } from "@/lib/published-property";
 import { DiscoveryHeader } from "./discovery-header";
 import "@/styles/discovery.css";
 import "@/styles/unavailable-page.css";
 
 export function UnavailablePage({
-  title = "Această pagină nu este disponibilă.",
+  title = UNAVAILABLE_PAGE_TITLE,
 }: {
   title?: string;
 }) {

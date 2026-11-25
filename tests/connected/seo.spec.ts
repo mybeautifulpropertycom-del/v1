@@ -69,6 +69,13 @@ test("retired property links keep their 404 status and share the homepage header
       /noindex/,
     );
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
+    if (path !== "/cale/necunoscuta") {
+      await expect(page).toHaveTitle(title);
+      await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+        "content",
+        title,
+      );
+    }
     await expect(page.locator("header .discovery-brand")).toHaveAttribute(
       "href",
       "/",

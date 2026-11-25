@@ -4,6 +4,12 @@ import { serverSupabase } from "./supabase";
 import { type PublicProfile, type PublicProperty } from "./model";
 import { propertyMetadata } from "./seo";
 
+export const UNAVAILABLE_PAGE_TITLE = "Această pagină nu este disponibilă.";
+const unavailablePropertyTitles = {
+  sale: "Această proprietate a fost vândută.",
+  rent: "Această proprietate a fost închiriată.",
+};
+
 export const getPublished = cache(
   async (
     slug: string,
@@ -27,18 +33,26 @@ export const getPublished = cache(
 
 export async function publishedMetadata(slug: string): Promise<Metadata> {
   const data = await getPublished(slug);
-  if (!data) return { title: "Proprietate indisponibilă" };
-  return propertyMetadata(data.property);
+  if (data) return propertyMetadata(data.property);
+
+  const title = await unavailablePropertyTitle(slug);
+  const description = `${title} Vezi alte proprietăți pe Următoarea Proprietate.`;
+  return {
+    title: { absolute: title },
+    description,
+    openGraph: { title, description },
+  };
 }
 
-export async function getUnavailablePropertyOffer(
-  slug: string,
-): Promise<PublicProperty["transaction"] | null> {
-  if (!/^[a-z0-9-]{1,110}$/.test(slug)) return null;
+export const unavailablePropertyTitle = cache(async (slug: string) => {
+  if (!/^[a-z0-9-]{1,110}$/.test(slug)) return UNAVAILABLE_PAGE_TITLE;
   const supabase = serverSupabase(undefined, AbortSignal.timeout(2500));
-  if (!supabase) return null;
+  if (!supabase) return UNAVAILABLE_PAGE_TITLE;
   const { data } = await supabase.rpc("get_unavailable_property_offer", {
     property_slug: slug,
   });
-  return data === "sale" || data === "rent" ? data : null;
-}
+  const offer: unknown = data;
+  return offer === "sale" || offer === "rent"
+    ? unavailablePropertyTitles[offer]
+    : UNAVAILABLE_PAGE_TITLE;
+});
