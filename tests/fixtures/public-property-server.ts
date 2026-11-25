@@ -208,11 +208,14 @@ globalThis.fetch = async (input, init) => {
   )?.[1];
   const mapTemplate =
     photoOnly ||
-    /^map-test-(editorial|minimal|panorama|unmapped)$/.exec(
+    /^map-test-(editorial|minimal|panorama|unmapped|manual|incomplete)$/.exec(
       body.property_slug || "",
     )?.[1];
   if (mapTemplate) {
     const sample = demoWorkspace();
+    const hasSavedPin = !["unmapped", "manual", "incomplete"].includes(
+      mapTemplate,
+    );
     return Response.json({
       videoIncluded: !photoOnly,
       ...(photoOnly
@@ -220,15 +223,19 @@ globalThis.fetch = async (input, init) => {
         : {}),
       property: {
         ...sample.properties[0],
-        template: mapTemplate === "unmapped" ? "editorial" : mapTemplate,
+        template: hasSavedPin ? mapTemplate : "editorial",
         slug: body.property_slug,
         address_slug: body.property_slug,
         status: "published",
         location:
           mapTemplate === "unmapped"
             ? "București · proprietate demonstrativă"
-            : "Strada Test 123, București, România",
-        google_place_id: mapTemplate === "unmapped" ? null : "ChIJ-test-home",
+            : mapTemplate === "manual"
+              ? "Strada Traian 15, București"
+              : mapTemplate === "incomplete"
+                ? "Strada Traian 15"
+                : "Strada Test 123, București, România",
+        google_place_id: hasSavedPin ? "ChIJ-test-home" : null,
       },
       profile: sample.profile,
     });

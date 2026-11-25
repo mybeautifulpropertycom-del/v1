@@ -7,8 +7,11 @@ import {
   transportTypeLabel,
   walkingDirectionsLink,
   isRomanianAddress,
+  manualPropertyAddress,
   mapsLink,
+  matchesManualPropertyAddress,
   PLACE_ID,
+  propertyAddressNeedsLocality,
   safeExternalUrl,
 } from "../src/lib/property-location";
 
@@ -43,6 +46,39 @@ test("only precise Romanian addresses are accepted", () => {
     false,
   );
   assert.equal(isRomanianAddress({}), false);
+});
+
+test("manual lookups require a locality and confirm the street, number and city", () => {
+  assert.ok(propertyAddressNeedsLocality("Strada Traian 15, Sectorul 3"));
+  assert.ok(!propertyAddressNeedsLocality("Strada Traian 15", "București"));
+  assert.ok(
+    !propertyAddressNeedsLocality("Strada Traian 15", null, "ChIJ-home"),
+  );
+  const address = manualPropertyAddress(
+    "Str. Traian, nr. 15, 030572 București",
+  );
+  assert.ok(address);
+  const addressComponents = [
+    { types: ["country"], shortText: "RO" },
+    { types: ["street_number"], shortText: "15" },
+    { types: ["route"], shortText: "Strada Traian" },
+    { types: ["locality"], shortText: "București" },
+    { types: ["administrative_area_level_1"], shortText: "București" },
+  ];
+  assert.ok(matchesManualPropertyAddress(address, { addressComponents }));
+  for (const [index, value] of [
+    [0, "CA"],
+    [1, "15A"],
+    [2, "Calea Traian"],
+    [3, "Constanța"],
+  ] as const) {
+    const changed = addressComponents.map((part, i) =>
+      i === index ? { ...part, shortText: value } : part,
+    );
+    assert.ok(
+      !matchesManualPropertyAddress(address, { addressComponents: changed }),
+    );
+  }
 });
 
 test("distance is a finite straight-line estimate and provider links cannot inject scripts", () => {

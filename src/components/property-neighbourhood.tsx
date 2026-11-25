@@ -18,7 +18,9 @@ import {
   walkingDirectionsLink,
   type NearbyTransportMode,
   isRomanianAddress,
+  manualPropertyAddress,
   mapsEnabled,
+  matchesManualPropertyAddress,
   nearbyCategories,
   NEARBY_LIMIT,
   NEARBY_RADIUS_METERS,
@@ -29,7 +31,7 @@ import {
 
 type MappedProperty = Pick<
   PublicProperty,
-  "location" | "google_place_id" | "template"
+  "location" | "city" | "google_place_id" | "template"
 >;
 
 export function hasPropertyNeighbourhood(
@@ -39,7 +41,10 @@ export function hasPropertyNeighbourhood(
   return (
     mapsEnabled() &&
     (PLACE_ID.test(property.google_place_id ?? "") ||
-      (sample && property.location === TEMPLATE_LOCATION))
+      (sample && property.location === TEMPLATE_LOCATION) ||
+      Boolean(
+        manualPropertyAddress(property.location, property.city)?.locality,
+      ))
   );
 }
 
@@ -55,12 +60,17 @@ export function PropertyNeighbourhood({
     sample &&
     property.location === TEMPLATE_LOCATION &&
     !PLACE_ID.test(property.google_place_id ?? "");
+  const manualAddress =
+    !resolveSampleAddress && !PLACE_ID.test(property.google_place_id ?? "")
+      ? manualPropertyAddress(property.location, property.city)
+      : null;
   // Remount on address changes: a pending request must never populate a new listing.
   return (
     <Neighbourhood
-      key={`${resolveSampleAddress}:${property.google_place_id}:${property.location}`}
+      key={`${resolveSampleAddress}:${property.google_place_id}:${property.location}:${property.city}`}
       property={property}
       resolveSampleAddress={resolveSampleAddress}
+      manualAddress={manualAddress}
     />
   );
 }
@@ -68,9 +78,11 @@ export function PropertyNeighbourhood({
 function Neighbourhood({
   property,
   resolveSampleAddress,
+  manualAddress,
 }: {
   property: MappedProperty;
   resolveSampleAddress: boolean;
+  manualAddress: ReturnType<typeof manualPropertyAddress>;
 }) {
   const heading = useId();
   const section = useRef<HTMLElement>(null);
@@ -79,7 +91,6 @@ function Neighbourhood({
   const map = useRef<google.maps.Map | null>(null);
   const centre = useRef<google.maps.LatLngLiteral | null>(null);
   const homePlaceId = useRef<string | null>(null);
-  const samplePlaceId = useRef<string | null>(null);
   const homeMarker = useRef<google.maps.marker.AdvancedMarkerElement | null>(
     null,
   );
@@ -171,21 +182,23 @@ function Neighbourhood({
       );
       if (request !== currentRequest.current) return;
       let placeId = property.google_place_id;
-      if (resolveSampleAddress) {
-        placeId = samplePlaceId.current;
-        if (!placeId) {
-          const response = await withMapsTimeout(
-            placesLibrary.Place.searchByText({
-              textQuery: TEMPLATE_LOCATION_QUERY,
-              fields: ["id"],
-              maxResultCount: 1,
-              language: "ro",
-              region: "ro",
-            }),
-          );
-          if (request !== currentRequest.current) return;
-          placeId = response.places[0]?.id;
-        }
+      const searchAddress = resolveSampleAddress
+        ? TEMPLATE_LOCATION_QUERY
+        : manualAddress?.locality
+          ? `${manualAddress.line}, ${manualAddress.locality}, România`
+          : null;
+      if (searchAddress) {
+        const response = await withMapsTimeout(
+          placesLibrary.Place.searchByText({
+            textQuery: searchAddress,
+            fields: ["id"],
+            maxResultCount: 1,
+            language: "ro",
+            region: "ro",
+          }),
+        );
+        if (request !== currentRequest.current) return;
+        placeId = response.places[0]?.id;
       }
       if (!placeId || !PLACE_ID.test(placeId))
         throw new Error("Adresa nu a putut fi localizată.");
@@ -202,10 +215,10 @@ function Neighbourhood({
       if (
         !home.location ||
         !isRomanianAddress(home) ||
-        (resolveSampleAddress && !isTemplateAddress(home))
+        (resolveSampleAddress && !isTemplateAddress(home)) ||
+        (manualAddress && !matchesManualPropertyAddress(manualAddress, home))
       )
         throw new Error("Adresa nu a putut fi localizată.");
-      if (resolveSampleAddress) samplePlaceId.current = home.id;
       homePlaceId.current = home.id;
       centre.current = home.location.toJSON();
       map.current = new mapsLibrary.Map(mapContainer.current, {

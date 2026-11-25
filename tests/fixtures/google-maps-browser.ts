@@ -112,6 +112,20 @@ export async function mockGoogleMaps(page: Page) {
             { types: ["administrative_area_level_1"], shortText: "București" },
           ];
         }
+        if (this.id === "ChIJ-traian") {
+          this.addressComponents = [
+            { types: ["country"], shortText: "RO" },
+            { types: ["street_number"], shortText: "15" },
+            { types: ["route"], shortText: "Strada Traian" },
+            {
+              types: ["locality"],
+              shortText:
+                state.templateAddressResult === "wrong-address"
+                  ? "Constanța"
+                  : "București",
+            },
+          ];
+        }
         return { place: this };
       }
       static async searchByText(
@@ -122,7 +136,13 @@ export async function mockGoogleMaps(page: Page) {
           places:
             state.templateAddressResult === "empty"
               ? []
-              : [new Place({ id: "ChIJ-template-home" })],
+              : [
+                  new Place({
+                    id: request.textQuery.startsWith("Strada Traian ")
+                      ? "ChIJ-traian"
+                      : "ChIJ-template-home",
+                  }),
+                ],
         };
       }
       static async searchNearby(request: MapsTestState["searches"][number]) {

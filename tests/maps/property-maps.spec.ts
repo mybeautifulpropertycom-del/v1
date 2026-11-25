@@ -18,7 +18,7 @@ test("Romanian address selection persists; editing it clears the pin, without bl
   const address = page.getByRole("combobox", { name: "Adresă", exact: true });
   await expect(
     page.getByText(
-      "Caută adresa și alege o sugestie pentru a adăuga harta. Adresa devine și linkul public al proprietății.",
+      "Pentru hartă, alege o sugestie Google Maps sau scrie strada, numărul și localitatea după o virgulă. Adresa devine și linkul public al proprietății.",
     ),
   ).toBeVisible();
   await address.fill("123 Test");
@@ -396,6 +396,34 @@ test("old listings without a selected place keep their existing layout", async (
   await page.goto("/map-test-unmapped");
   await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
   expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
+});
+
+test("a manually entered full address shows the neighbourhood only at the verified location", async ({
+  page,
+}) => {
+  await mockGoogleMaps(page);
+  await page.goto("/map-test-incomplete");
+  await expect(page.locator(".property-neighbourhood")).toHaveCount(0);
+  expect(await page.evaluate(() => window.__mapsTest.textSearches)).toEqual([]);
+
+  await page.goto("/map-test-manual");
+  await page.evaluate(() => {
+    window.__mapsTest.templateAddressResult = "wrong-address";
+  });
+  const section = page.locator(".property-neighbourhood");
+  await expect(section).toContainText("Strada Traian 15, București");
+  await section.scrollIntoViewIfNeeded();
+  const retry = section.getByRole("button", { name: "Reîncarcă harta" });
+  await expect(retry).toBeVisible();
+  expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(0);
+  await page.evaluate(() => {
+    window.__mapsTest.templateAddressResult = "match";
+  });
+  await retry.click();
+  await expect(section.getByText("Următoarea ta locuință")).toBeVisible();
+  await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
+  const search = await page.evaluate(() => window.__mapsTest.textSearches[0]);
+  expect(search.textQuery).toBe("Strada Traian 15, București, România");
 });
 
 for (const template of ["editorial", "minimal", "panorama"]) {

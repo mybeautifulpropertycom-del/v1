@@ -359,8 +359,8 @@ export function AtelierWebsite({
           <div className="atelier-details-heading">
             <span className="atelier-kicker">DETALIILE CARE CONTEAZĂ</span>
             <h2>
-              {text("detailsTitle")}
-              <em>{text("detailsAccent")}</em>
+              {presentationCopy.panoramaDetails.title}{" "}
+              <em>{presentationCopy.panoramaDetails.accent}</em>
             </h2>
           </div>
           <div className="atelier-details-copy">

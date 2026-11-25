@@ -4,6 +4,10 @@ import {
   propertyTypeOptions,
   type Property,
 } from "./model";
+import {
+  propertyAddressLocalityMessage,
+  propertyAddressNeedsLocality,
+} from "./property-location";
 
 export const propertyGuideFields = [
   {
@@ -103,7 +107,13 @@ export function propertyGuideIssues(
         ? "Introdu adresa completă a proprietății, inclusiv strada și numărul."
         : property.location.length > 200
           ? "Adresa poate avea maximum 200 de caractere."
-          : null,
+          : propertyAddressNeedsLocality(
+                property.location,
+                property.city,
+                property.google_place_id,
+              )
+            ? propertyAddressLocalityMessage
+            : null,
     type: [...propertyTypeOptions, "Town House", "Land"].includes(property.type)
       ? null
       : "Alege tipul proprietății.",

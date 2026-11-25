@@ -249,7 +249,7 @@ export function PropertyAddressInput({
         {enabled
           ? placeId
             ? "Adresa a fost selectată."
-            : "Caută adresa și alege o sugestie pentru a adăuga harta. Adresa devine și linkul public al proprietății."
+            : "Pentru hartă, alege o sugestie Google Maps sau scrie strada, numărul și localitatea după o virgulă. Adresa devine și linkul public al proprietății."
           : "Introdu adresa completă, cu localitatea după o virgulă. Adresa devine linkul public al proprietății."}
       </small>
       {enabled && (

@@ -62,6 +62,11 @@ async function checkPresentation(
       "rgb(137, 149, 117)",
     );
   }
+  if (prefix === "atelier") {
+    await expect(page.locator("#details h2")).toHaveText(
+      "Detalii de care te vei bucura zilnic",
+    );
+  }
   const contact = page.locator("#contact");
   await expect(contact.locator(".presentation-agent-heading")).toHaveText(
     "Comunică eficient cu vânzătorul",

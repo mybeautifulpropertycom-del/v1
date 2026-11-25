@@ -26,6 +26,8 @@ test("an incomplete draft remains saveable while forward navigation requires val
     { title: "abc" },
     { location: " " },
     { location: "panou" },
+    { location: "Strada Traian 15" },
+    { location: "Strada Traian 15, Sector 3, România" },
     { price: 0 },
     { price: -1 },
     { price: NaN },

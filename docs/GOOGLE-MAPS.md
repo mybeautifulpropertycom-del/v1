@@ -14,16 +14,17 @@ Search Console verification does not enable these services.
   Ineligible selections leave manual entry intact without a regional warning.
 - The agent's editor saves the selection without showing a map card. The map
   section appears on public landing pages and saved website previews.
-  Existing listings acquire a map only when an
-  agent selects their address from the suggestions and saves it; no bulk geocoding.
+  A saved Google suggestion loads directly. A manually entered street and
+  number plus a locality can also load, after a lazy Google lookup verifies
+  the street, number, locality and country. The lookup uses the saved address
+  and keeps the result in memory for the current page.
 - The three public design samples at `/modele/editorial`, `/modele/minimal`
   and `/modele/panorama` use **Strada Sipca Numar 9, București**. When the map
   section approaches the viewport, Places Text Search requests one place ID for
   this fixed address. Place Details then checks the street number, street, city,
   and country before showing a pin. A missing or mismatched address shows
-  the normal retry state. This exception applies only to design samples; ordinary
-  listings without an agent-selected place ID still do not load a map. The sample
-  marker reads **Adresă demonstrativă**. These photographs illustrate the design;
+  the normal retry state. The sample marker reads **Adresă demonstrativă**.
+  These photographs illustrate the design;
   they are not verification of the real appearance of the demonstration address.
 - All three property templates show **Descoperă cartierul.** before the
   contact section for selected addresses. The map loads automatically when the

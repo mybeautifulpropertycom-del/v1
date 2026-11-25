@@ -1,6 +1,8 @@
 // Persist only the agent-confirmed address and Google's place ID. Coordinates,
 // nearby results and photo URLs are fetched on demand, never stored in our DB.
 export const PLACE_ID = /^[A-Za-z0-9_-]{1,512}$/;
+export const propertyAddressLocalityMessage =
+  "Adaugă localitatea după stradă și număr, de exemplu „Strada Traian 15, București”.";
 export const NEARBY_RADIUS_METERS = 5000; // Five kilometres.
 export const NEARBY_LIMIT = 6;
 export const TRANSPORT_RADIUS_METERS = 1500;
@@ -52,7 +54,11 @@ export function mapsEnabled() {
 }
 
 export function isRomanianAddress(place: {
-  addressComponents?: { types: string[]; shortText: string | null }[];
+  addressComponents?: {
+    types: string[];
+    shortText: string | null;
+    longText?: string | null;
+  }[];
   types?: string[];
 }) {
   const components = place.addressComponents || [];
@@ -64,6 +70,123 @@ export function isRomanianAddress(place: {
       (place.types || []).some((type) =>
         ["premise", "subpremise", "street_address"].includes(type),
       ))
+  );
+}
+
+function normalizedAddressPart(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+const streetPrefixes: Record<string, string> = {
+  str: "strada",
+  strada: "strada",
+  bd: "bulevardul",
+  bulevard: "bulevardul",
+  bulevardul: "bulevardul",
+  sos: "soseaua",
+  sosea: "soseaua",
+  soseaua: "soseaua",
+  calea: "calea",
+  aleea: "aleea",
+  intrarea: "intrarea",
+  splaiul: "splaiul",
+  piata: "piata",
+};
+
+function streetName(value: string) {
+  const normalized = normalizedAddressPart(value);
+  const [prefix, ...words] = normalized.split(" ");
+  return Object.hasOwn(streetPrefixes, prefix)
+    ? { prefix: streetPrefixes[prefix], name: words.join(" ") }
+    : { prefix: "", name: normalized };
+}
+
+function localityName(value: string) {
+  const locality = normalizedAddressPart(value)
+    .replace(/^\d{6}\s*|\s*\d{6}$/g, "")
+    .replace(/^(?:municipiul|orasul|comuna|satul) /, "");
+  return locality === "bucharest" ? "bucuresti" : locality;
+}
+
+function isLocality(value: string) {
+  const name = localityName(value);
+  return (
+    /[a-z]/.test(name) &&
+    !/^(?:sector(?:ul)?\b|romania$|ro$|jud(?:etul)?\b|cartier\b|bloc\b|scara\b|etaj\b|apartament\b|nr\b)/.test(
+      name,
+    )
+  );
+}
+
+export function manualPropertyAddress(location: string, city?: string | null) {
+  const [line, ...parts] = location
+    .replace(/,\s*(?=(?:nr\.?|num[ăa]r(?:ul)?)\s*\d)/iu, " ")
+    .split(",")
+    .map((part) => part.trim());
+  const match =
+    /^(.+?)\s+(?:(?:nr\.?|num[ăa]r(?:ul)?)\s*)?(\d{1,5}[a-z]?(?:\/\d{1,5}[a-z]?)?)$/iu.exec(
+      line,
+    );
+  if (!match) return null;
+  const street = streetName(match[1]);
+  if (!street.name || !/[a-z]/.test(street.name)) return null;
+  return {
+    line,
+    street,
+    number: normalizedAddressPart(match[2]),
+    locality: [city || "", ...parts].find(isLocality) ?? "",
+  };
+}
+
+export function propertyAddressNeedsLocality(
+  location: string,
+  city?: string | null,
+  placeId?: string | null,
+) {
+  if (PLACE_ID.test(placeId ?? "")) return false;
+  const address = manualPropertyAddress(location, city);
+  return Boolean(address?.street.prefix && !address.locality);
+}
+
+export function matchesManualPropertyAddress(
+  expected: NonNullable<ReturnType<typeof manualPropertyAddress>>,
+  place: Parameters<typeof isRomanianAddress>[0],
+) {
+  if (!expected.locality || !isRomanianAddress(place)) return false;
+  const matches = (types: string[], check: (value: string) => boolean) =>
+    place.addressComponents?.some(
+      (part) =>
+        part.types.some((type) => types.includes(type)) &&
+        [part.longText, part.shortText].some((value) => value && check(value)),
+    );
+  const city = localityName(expected.locality);
+  const localityTypes = ["locality", "postal_town"];
+  return Boolean(
+    matches(["route"], (value) => {
+      const actual = streetName(value);
+      return (
+        actual.name === expected.street.name &&
+        (!expected.street.prefix ||
+          !actual.prefix ||
+          actual.prefix === expected.street.prefix)
+      );
+    }) &&
+    matches(
+      ["street_number"],
+      (value) => normalizedAddressPart(value) === expected.number,
+    ) &&
+    (matches(localityTypes, (value) => localityName(value) === city) ||
+      (city === "bucuresti" &&
+        !matches(localityTypes, isLocality) &&
+        matches(
+          ["administrative_area_level_1"],
+          (value) => localityName(value) === city,
+        ))),
   );
 }
 

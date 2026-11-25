@@ -1,4 +1,8 @@
 import { MAX_PROPERTY_PHOTOS } from "./photo-limits";
+import {
+  propertyAddressLocalityMessage,
+  propertyAddressNeedsLocality,
+} from "./property-location";
 import { platformRedirects } from "./platform-redirects";
 import { locale, defaultCurrency, defaultAreaUnit } from "@/i18n/config";
 import type { SavedPropertyStory } from "./property-story";
@@ -216,6 +220,15 @@ export function publicationErrors(
   if (!property.location.trim()) errors.push("Adaugă adresa proprietății.");
   if (platformPageSlugs.has(slugify(property.location)))
     errors.push(reservedAddressError);
+  if (
+    property.status === "draft" &&
+    propertyAddressNeedsLocality(
+      property.location,
+      property.city,
+      property.google_place_id,
+    )
+  )
+    errors.push(propertyAddressLocalityMessage);
   if (property.description.trim().length < 30)
     errors.push("Adaugă o descriere de cel puțin 30 de caractere.");
   if (!Number.isFinite(property.price) || property.price <= 0)
