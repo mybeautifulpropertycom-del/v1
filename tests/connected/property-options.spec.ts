@@ -146,7 +146,10 @@ test("floor and land area save for the selected property type and appear only in
   const editor = `/panou/proprietati/${id}`;
   const type = page.getByLabel("Tipul proprietății");
   const floor = page.getByRole("combobox", { name: "Etaj", exact: true });
-  const total = page.getByLabel("Număr total de etaje");
+  const total = page.getByRole("combobox", {
+    name: "Număr total de etaje",
+    exact: true,
+  });
   const land = page.getByLabel("Suprafață teren (m²)", { exact: true });
   const save = page.getByRole("button", {
     name: "Salvează modificările",
@@ -186,16 +189,16 @@ test("floor and land area save for the selected property type and appear only in
     await expect(land).toHaveCount(0);
   }
   await expect(floor.locator("option").last()).toHaveAttribute("value", "40");
-  await expect(total).toHaveAttribute("max", "40");
+  await expect(total.locator("option").last()).toHaveAttribute("value", "40");
   await floor.selectOption("3");
-  await total.fill("2");
+  await total.selectOption("2");
   await save.click();
   await expect(
     page.getByRole("alert").filter({
       hasText: "Etajul ales trebuie să existe în clădire.",
     }),
   ).toBeVisible();
-  await total.fill("10");
+  await total.selectOption("10");
   await save.click();
   await expect(saved).toBeVisible();
   expect(state.property.floor).toBe(3);

@@ -32,7 +32,6 @@ import {
 } from "lucide-react";
 import { ro } from "@/i18n/ro";
 import {
-  buildingFloorLimit,
   createProperty,
   hasLandArea,
   hasUnitFloor,
@@ -54,10 +53,11 @@ import {
   propertyStepRequirement,
 } from "@/lib/property-editor-validation";
 
-const floorOptions = Array.from(
-  { length: MAX_BUILDING_FLOORS + 2 },
-  (_, index) => index - 1,
+const totalFloorOptions = Array.from(
+  { length: MAX_BUILDING_FLOORS + 1 },
+  (_, index) => index,
 );
+const floorOptions = [-1, ...totalFloorOptions];
 
 function PropertySelect(props: ComponentProps<"select">) {
   return (
@@ -663,24 +663,31 @@ export function PropertyEditor({
                             )}
                         </PropertySelect>
                         <span aria-hidden="true">din</span>
-                        <input
+                        <PropertySelect
                           aria-label="Număr total de etaje"
-                          type="number"
-                          inputMode="numeric"
-                          min="0"
-                          max={buildingFloorLimit(property, existing)}
-                          step="1"
-                          placeholder="5"
                           value={property.total_floors ?? ""}
                           onChange={(e) =>
                             update(
                               "total_floors",
                               e.target.value === ""
                                 ? null
-                                : e.target.valueAsNumber,
+                                : Number(e.target.value),
                             )
                           }
-                        />
+                        >
+                          <option value="">—</option>
+                          {totalFloorOptions.map((total) => (
+                            <option key={total} value={total}>
+                              {total}
+                            </option>
+                          ))}
+                          {property.total_floors != null &&
+                            property.total_floors > MAX_BUILDING_FLOORS && (
+                              <option value={property.total_floors}>
+                                {property.total_floors}
+                              </option>
+                            )}
+                        </PropertySelect>
                       </div>
                     </fieldset>
                   )}
