@@ -26,7 +26,7 @@ import {
   parseDiscoveryCategory,
   parseDiscoveryFilters,
 } from "@/lib/property-discovery";
-import { publicIndexing, serializeJsonLd, siteUrl } from "@/lib/seo";
+import { publicRobots, serializeJsonLd, siteUrl } from "@/lib/seo";
 import { PLACE_ID } from "@/lib/property-location";
 import "@/styles/discovery.css";
 import "@/styles/discovery-results.css";
@@ -67,17 +67,17 @@ async function search(props: PageProps) {
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const { category, filters, result, title } = await search(props);
-  const index = Boolean(
-    publicIndexing() &&
-    result?.total &&
-    filters.page === 1 &&
-    !filters.currency,
-  );
+  const pageLabel = filters.page > 1 ? ` · Pagina ${filters.page}` : "";
+  const canonical = discoveryPath(category, {
+    page: filters.currency ? 1 : filters.page,
+  });
   return {
-    title,
-    description: `${title}. Compară prețurile și vezi fotografiile, detaliile și opțiunile de vizionare din prezentările publicate.`,
-    alternates: { canonical: siteUrl(discoveryPath(category)) },
-    robots: { index, follow: true },
+    title: `${title}${pageLabel}`,
+    description: `${title}${pageLabel}. Compară prețurile și vezi fotografiile, detaliile și opțiunile de vizionare din prezentările publicate.`,
+    alternates: { canonical: siteUrl(canonical) },
+    robots: result?.total && !filters.currency
+      ? publicRobots()
+      : { index: false, follow: true },
   };
 }
 

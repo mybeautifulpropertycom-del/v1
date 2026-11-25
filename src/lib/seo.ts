@@ -1,14 +1,19 @@
 import { PLATFORM_NAME, PLATFORM_ORIGIN } from "./platform-brand";
 import type { Metadata } from "next";
-import { publicPath, type PublicProperty } from "./model";
+import {
+  formatPrice,
+  propertyTypeLabel,
+  publicPath,
+  type PublicProperty,
+} from "./model";
 import { propertyStory } from "./property-story";
 
 export const SITE_NAME = PLATFORM_NAME;
 export const HOME_IMAGE = "/images/discovery/quiz-terasa-apus.webp";
 export const HOME_TITLE =
-  "Proprietăți de vânzare și de închiriat | Următoarea Proprietate";
+  "Caută sau publică o locuință | Următoarea Proprietate";
 export const HOME_DESCRIPTION =
-  "Caută apartamente, case și vile după localitate, numărul de camere și buget. Descoperă prezentările proprietăților publicate de agenți și proprietari.";
+  "Cauți o locuință? Descoperă apartamente și case de vânzare sau de închiriat, după oraș și buget. Agenții și proprietarii pot publica gratuit anunțuri cu fotografii.";
 
 export function siteOrigin(): string {
   const url = new URL(process.env.NEXT_PUBLIC_SITE_URL || PLATFORM_ORIGIN);
@@ -53,12 +58,24 @@ export function publicRobots(): Metadata["robots"] {
   };
 }
 
-export function descriptionSnippet(value: string): string {
-  const text = value.replace(/\s+/g, " ").trim();
-  if (text.length <= 160) return text;
-  const shortened = text.slice(0, 157);
+function compactText(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function limitText(text: string, length: number): string {
+  if (text.length <= length) return text;
+  const shortened = text.slice(0, length - 1);
   const boundary = shortened.lastIndexOf(" ");
-  return `${boundary > 100 ? shortened.slice(0, boundary) : shortened}…`;
+  return `${boundary > length * 0.65 ? shortened.slice(0, boundary) : shortened}…`;
+}
+
+function searchWords(text: string): string {
+  return ` ${text
+    .toLocaleLowerCase("ro-RO")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()} `;
 }
 
 export function homeMetadata(): Metadata {
@@ -117,8 +134,76 @@ export function homeJsonLd() {
 }
 
 export function propertyMetadata(property: PublicProperty): Metadata {
-  const title = `${property.title} · ${property.location}`;
-  const description = descriptionSnippet(propertyStory(property).storyBody);
+  const headline = compactText(property.title);
+  const shortHeadline = limitText(headline, 58);
+  const headlineWords = searchWords(shortHeadline);
+  const type =
+    (property.type === "House" || property.type === "Town House") &&
+    searchWords(headline).includes(" vila ")
+      ? "Vilă"
+      : propertyTypeLabel(property.type);
+  const transaction =
+    property.transaction === "rent" ? "de închiriat" : "de vânzare";
+  const city = compactText(property.city ?? "");
+  const address = compactText(property.location).replace(
+    /,\s*(?:România|Romania)$/i,
+    "",
+  );
+  const locality = city || address;
+  const titleTransaction = headlineWords.includes(searchWords(transaction))
+    ? ""
+    : transaction;
+  const titleLocation =
+    locality && !headlineWords.includes(searchWords(locality))
+      ? limitText(locality, 42)
+      : "";
+  const title = [
+    headlineWords.includes(searchWords(type)) ? "" : type,
+    shortHeadline,
+    titleTransaction && titleLocation
+      ? `${titleTransaction}${city ? " în " : " · "}${titleLocation}`
+      : titleTransaction || titleLocation,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  // Leave room for the listing facts when a saved address contains many parts.
+  const shortAddress = limitText(address, 60);
+  const shortCity = limitText(city, 36);
+  const location =
+    city && !searchWords(shortAddress).includes(searchWords(city))
+      ? [shortCity, limitText(address, 60 - shortCity.length - 2)]
+          .filter(Boolean)
+          .join(", ")
+      : shortAddress;
+  const lead = [`${type} ${transaction}`, location].filter(Boolean).join(" · ");
+  const facts = [
+    property.area > 0
+      ? `${property.area.toLocaleString("ro-RO")} ${property.area_unit === "sqft" ? "ft²" : "m²"}`
+      : "",
+    property.type !== "Land" && property.bedrooms > 0
+      ? `${property.bedrooms} ${property.bedrooms === 1 ? "dormitor" : "dormitoare"}`
+      : "",
+    property.price > 0 ? compactText(formatPrice(property)) : "",
+    property.type !== "Land" && property.bathrooms > 0
+      ? `${property.bathrooms} ${property.bathrooms === 1 ? "baie" : "băi"}`
+      : "",
+    property.construction_year
+      ? `Construcție ${property.construction_year}`
+      : "",
+    ...[...new Set(property.amenities.map(compactText).filter(Boolean))].slice(
+      0,
+      2,
+    ),
+  ];
+  const description =
+    facts.reduce(
+      (snippet, fact) =>
+        fact && snippet.length + fact.length + 3 <= 159
+          ? `${snippet} · ${fact}`
+          : snippet,
+      lead,
+    ) + ".";
   const url = siteUrl(publicPath(property));
   const images = property.images
     .slice(0, 1)
@@ -147,20 +232,52 @@ export function propertyMetadata(property: PublicProperty): Metadata {
 }
 
 export function propertyJsonLd(property: PublicProperty) {
+  const url = siteUrl(publicPath(property));
+  const isLand = property.type === "Land";
+  const placeType = isLand
+    ? "Place"
+    : property.type === "House" || property.type === "Town House"
+      ? "House"
+      : "Apartment";
   return {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
-    "@id": `${siteUrl(publicPath(property))}#listing`,
-    url: siteUrl(publicPath(property)),
+    "@id": `${url}#listing`,
+    url,
     name: property.title,
     description: propertyStory(property).storyBody,
     image: property.images.map((image) => siteUrl(image)),
     inLanguage: "ro-RO",
     about: {
-      "@type": "Place",
+      "@type": placeType,
       name: property.title,
-      address: property.location,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: property.location,
+        addressLocality: property.city || undefined,
+        addressRegion: property.county || undefined,
+      },
+      ...(!isLand && {
+        numberOfBedrooms: property.bedrooms,
+        numberOfBathroomsTotal: property.bathrooms,
+        ...(property.area > 0 && {
+          floorSize: {
+            "@type": "QuantitativeValue",
+            value: property.area,
+            unitCode: property.area_unit === "sqft" ? "FTK" : "MTK",
+          },
+        }),
+      }),
     },
+    ...(property.price > 0 && {
+      offers: {
+        "@type": "Offer",
+        url,
+        price: property.price,
+        priceCurrency: property.currency,
+        businessFunction: `http://purl.org/goodrelations/v1#${property.transaction === "rent" ? "LeaseOut" : "Sell"}`,
+      },
+    }),
   };
 }
 

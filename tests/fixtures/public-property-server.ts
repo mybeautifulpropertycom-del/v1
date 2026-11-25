@@ -1,6 +1,7 @@
 // Test-server preload only. Production does not import this file.
 // Fake Supabase responses let browser tests exercise server-rendered public routes.
 import { demoWorkspace } from "../../src/lib/demo";
+import { DISCOVERY_PAGE_SIZE } from "../../src/lib/property-discovery";
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input, init) => {
   const url = new URL(input instanceof Request ? input.url : String(input));
@@ -11,7 +12,31 @@ globalThis.fetch = async (input, init) => {
     : input instanceof Request
       ? await input.clone().json()
       : {};
+  if (url.pathname === "/rest/v1/rpc/get_public_sitemap") {
+    return Response.json({
+      total: 1,
+      items: [
+        {
+          slug: "print-test-home",
+          address_slug: "print-test-address",
+          updated_at: "2026-11-25T08:00:00Z",
+        },
+      ],
+    });
+  }
+  if (url.pathname === "/rest/v1/rpc/get_public_listing_categories") {
+    return Response.json([
+      {
+        transaction: "sale",
+        kind: "apartamente",
+        rooms: 2,
+        city_slug: "bucuresti",
+      },
+    ]);
+  }
   if (url.pathname === "/rest/v1/rpc/find_public_listings") {
+    if (body.city_filter === "bucuresti")
+      await new Promise((resolve) => setTimeout(resolve, 60));
     const template = {
       ...demoWorkspace().properties[0],
       transaction: "sale",
@@ -102,6 +127,18 @@ globalThis.fetch = async (input, init) => {
         transaction: "rent",
       },
     ];
+    if (body.city_filter === "brasov") {
+      inventory.push(
+        ...Array.from({ length: DISCOVERY_PAGE_SIZE + 1 }, (_, index) => ({
+          ...template,
+          slug: `apartament-seo-${index + 1}`,
+          title: `Apartament în Brașov ${index + 1}`,
+          city: "Brașov",
+          city_slug: "brasov",
+          bucharest_ilfov: false,
+        })),
+      );
+    }
     const items = inventory.filter(
       (p) =>
         p.transaction === body.offer &&
@@ -116,6 +153,7 @@ globalThis.fetch = async (input, init) => {
         (body.budget_min == null || p.price >= body.budget_min) &&
         (body.budget_max == null || p.price <= body.budget_max),
     );
+    const offset = (body.result_page - 1) * DISCOVERY_PAGE_SIZE;
     return Response.json({
       total: items.length,
       city:
@@ -123,11 +161,16 @@ globalThis.fetch = async (input, init) => {
           ? "București / Ilfov"
           : (inventory.find((p) => p.city_slug === body.city_filter)?.city ??
             null),
-      items,
+      items: items.slice(offset, offset + DISCOVERY_PAGE_SIZE),
     });
   }
   if (url.pathname !== "/rest/v1/rpc/get_public_property")
     throw new Error(`Unexpected test-server Supabase request: ${url.pathname}`);
+  if (
+    body.property_slug?.startsWith("print-test-") ||
+    body.property_slug === "proprietate-inexistenta"
+  )
+    await new Promise((resolve) => setTimeout(resolve, 60));
   const priceCase =
     /^(rent|sale)-price-test-(editorial|minimal|panorama)-(apartment|house)$/.exec(
       body.property_slug || "",

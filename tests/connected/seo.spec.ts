@@ -2,6 +2,81 @@ import { test, expect } from "@playwright/test";
 import { workspace } from "./workspace-fixture";
 import { HOME_TITLE, HOME_DESCRIPTION, HOME_IMAGE } from "../../src/lib/seo";
 
+test("the public sitemap leads crawlers directly to indexable canonical pages", async ({
+  request,
+}) => {
+  const options = { maxRedirects: 0, headers: { "User-Agent": "Googlebot" } };
+  const robots = await request.get("/robots.txt", options);
+  expect(await robots.text()).toContain(
+    "Sitemap: https://urmatoarea-proprietate.ro/sitemap.xml",
+  );
+
+  const index = await request.get("/sitemap.xml", options);
+  expect(index.status()).toBe(200);
+  const readLocations = (xml: string) =>
+    [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+  const children = readLocations(await index.text());
+  expect(children).toHaveLength(3);
+  for (const child of children) {
+    const sitemap = await request.get(new URL(child).pathname, options);
+    expect(sitemap.status()).toBe(200);
+    const urls = readLocations(await sitemap.text());
+    expect(urls).toHaveLength(1);
+    for (const url of urls) {
+      const response = await request.get(new URL(url).pathname, options);
+      expect(response.status(), url).toBe(200);
+      const html = await response.text();
+      const head = html.split("</head>", 1)[0];
+      const canonical = /<link rel="canonical" href="([^"]+)"/.exec(head)?.[1];
+      expect(canonical && new URL(canonical).href, url).toBe(url);
+      expect(head).toContain('name="robots" content="index, follow"');
+      expect(head).toContain('href="/favicon.ico');
+      if (url.endsWith("/print-test-address")) {
+        expect(head).toContain('name="description" content="Casă de vânzare');
+        expect(html).toContain('"@type":"RealEstateListing"');
+      }
+    }
+  }
+
+  const old = await request.get("/p/print-test-home", options);
+  expect(old.status()).toBe(307);
+  expect(old.headers().location).toBe("/print-test-address");
+  const missing = await request.get("/proprietate-inexistenta", options);
+  expect(missing.status()).toBe(404);
+  expect(await missing.text()).toMatch(/name="robots" content="noindex/);
+
+  const icon = await request.get("/favicon.ico", options);
+  expect(icon.status()).toBe(200);
+  expect(icon.headers()["content-type"]).toMatch(
+    /image\/(?:x-icon|vnd\.microsoft\.icon)/,
+  );
+  const iconBytes = await icon.body();
+  expect(iconBytes.readUInt16LE(2)).toBe(1);
+  expect(iconBytes.readUInt16LE(4)).toBeGreaterThan(1);
+});
+
+test("search pagination has a canonical page of its own while budget variants stay noindex", async ({
+  request,
+}) => {
+  const path = "/cauta/de-vanzare/apartamente/brasov";
+  const canonical = `https://urmatoarea-proprietate.ro${path}`;
+  const first = await request.get(path);
+  expect(await first.text()).toContain(`href="${path}?pagina=2"`);
+  const second = await request.get(`${path}?pagina=2`);
+  const html = await second.text();
+  expect(second.status()).toBe(200);
+  expect(html).toContain(`${canonical}?pagina=2`);
+  expect(html).toContain('name="robots" content="index, follow"');
+  expect(html).toContain("Pagina 2");
+  expect(html).toContain("Apartament în Brașov 25");
+
+  const filtered = await request.get(`${path}?min=1&moneda=eur&pagina=2`);
+  const filteredHtml = await filtered.text();
+  expect(filteredHtml).toContain(`<link rel="canonical" href="${canonical}"`);
+  expect(filteredHtml).toContain('name="robots" content="noindex, follow"');
+  expect((await request.get(`${path}?pagina=3`)).status()).toBe(404);
+});
+
 test("anonymous visitors see the property quiz at an indexable homepage", async ({
   page,
   request,
