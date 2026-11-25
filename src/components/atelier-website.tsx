@@ -701,7 +701,6 @@ export function AtelierWebsite({
       )}
       {viewing && (
         <ViewingDialog
-          title={property.title}
           slug={property.slug}
           agentName={profile.name}
           preview={isPreview}

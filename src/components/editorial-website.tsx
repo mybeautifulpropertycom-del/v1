@@ -829,7 +829,6 @@ export function EditorialWebsite({
       </footer>
       {viewing && (
         <ViewingDialog
-          title={property.title}
           slug={property.slug}
           agentName={profile.name}
           preview={isPreview}

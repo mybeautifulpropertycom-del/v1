@@ -13,13 +13,11 @@ import { localDateKey, viewingDateLabel } from "@/lib/viewing-date";
 import { trapDialogFocus } from "./website-dialog-focus";
 
 export function ViewingDialog({
-  title,
   slug,
   agentName,
   preview,
   onClose,
 }: {
-  title: string;
   slug: string;
   agentName: string;
   preview: boolean;
@@ -192,12 +190,7 @@ export function ViewingDialog({
         <X size={21} />
       </button>
       <div className="viewing-intro">
-        <span className="estate-eyebrow">
-          <span className="viewing-property-title">
-            {title || "Următoarea ta locuință"}&nbsp;·
-          </span>
-          O vizionare doar pentru tine
-        </span>
+        <span className="estate-eyebrow">O vizionare doar pentru tine</span>
         <h2 id="viewing-title">
           Să ne întâlnim
           <br />
