@@ -1824,12 +1824,12 @@ label small,
   padding: 7px 10px;
   font-size: 10px;
   border-radius: 5px;
-  color: #a0a68f;
+  color: #858c76;
 }
 .amenity-options > button.selected {
   background: #edf2e7;
   border-color: #d4dfc8;
-  color: #758d5f;
+  color: #6d8458;
 }
 .custom-amenity {
   display: flex;
