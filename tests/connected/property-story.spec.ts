@@ -1,6 +1,9 @@
 import { propertyInvitation } from "../../src/lib/presentation-copy";
 import { test, expect } from "@playwright/test";
-import { propertyStorySource } from "../../src/lib/property-story";
+import {
+  applyPropertyStory,
+  propertyStorySource,
+} from "../../src/lib/property-story";
 import { storyFixture } from "../story-fixture";
 import { workspace, id } from "./workspace-fixture";
 
@@ -34,10 +37,9 @@ test("facilities are saved before generation and refresh the second section with
       page.getByRole("heading", { name: "Facilități și dotări" }),
     ).toBeVisible();
     await expect(
-      page.locator(".form-section-title + .guide-facilities").getByRole(
-        "button",
-        { name: "Piscină", exact: true },
-      ),
+      page
+        .locator(".form-section-title + .guide-facilities")
+        .getByRole("button", { name: "Piscină", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("textbox", { name: "Descriere", exact: true }),
@@ -137,6 +139,51 @@ test("save prepares separate section text, preserves notes, and reuses saved cop
   ).toBeVisible();
   expect(state.property.location).toBe("Portland, OR");
   expect(requests).toBe(2);
+});
+
+test("rewriting an existing introduction only saves the reviewed section", async ({
+  page,
+}) => {
+  const state = await workspace(page, { template: "panorama" });
+  const draft = storyFixture(state.property);
+  const replacement = draft.content.introBody;
+  const previous = "Imaginează-ți o dimineață liniștită. Vino să vezi locul.";
+  draft.content.introBody = previous;
+  Object.assign(
+    state.property,
+    applyPropertyStory(
+      state.property,
+      draft,
+      propertyStorySource(state.property),
+    ),
+  );
+  await page.route("**/api/property-story", async (route) => {
+    expect(route.request().postDataJSON()).toEqual({
+      propertyId: id,
+      section: "introduction",
+    });
+    await route.fulfill({
+      json: {
+        introBody: replacement,
+        source: propertyStorySource(state.property),
+      },
+    });
+  });
+  await page.goto(`/previzualizare/${id}`);
+  const introduction = page.locator(".atelier-story-copy > p");
+  await expect(introduction).toHaveText(previous);
+  await page.getByRole("button", { name: "Rescrie introducerea" }).click();
+  await expect(introduction).toHaveText(replacement);
+  expect(state.property.website_copy?.content.introBody).toBe(previous);
+  await page.getByRole("button", { name: "Salvează site-ul" }).click();
+  await expect(
+    page.getByText("Modificările site-ului au fost salvate."),
+  ).toBeVisible();
+  expect(state.property.website_copy?.content).toEqual({
+    ...draft.content,
+    introBody: replacement,
+  });
+  expect(state.property.website_copy?.description).toBe(draft.description);
 });
 
 test("private preview prepares text in place but only saves it on request", async ({

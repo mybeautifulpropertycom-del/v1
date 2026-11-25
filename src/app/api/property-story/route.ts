@@ -3,6 +3,7 @@ import { serverSupabase } from "@/lib/supabase";
 import { propertyStorySource } from "@/lib/property-story";
 import {
   approvedStoryImages,
+  generatePropertyIntroduction,
   generatePropertyStory,
 } from "@/lib/property-story-generator";
 import type { Property } from "@/lib/model";
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
         },
         503,
       );
-    // Bound the request before parsing it. Only an ID is accepted; facts and
+    // Bound the request before parsing it. Only an ID and section are accepted; facts and
     // image URLs always come from an RLS-protected listing owned by this user.
     const reader = request.body?.getReader();
     let body = "";
@@ -74,14 +75,18 @@ export async function POST(request: Request) {
       body += decoder.decode();
     }
     let id: unknown;
+    let section: unknown;
     try {
-      id = JSON.parse(body)?.propertyId;
+      const parsed = JSON.parse(body);
+      id = parsed?.propertyId;
+      section = parsed?.section;
     } catch {
       return json({ error: "Alege o proprietate salvată." }, 400);
     }
     if (
       typeof id !== "string" ||
-      !/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)
+      !/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id) ||
+      (section !== undefined && section !== "introduction")
     )
       return json({ error: "Alege o proprietate salvată." }, 400);
     const { data, error } = await supabase
@@ -134,13 +139,19 @@ export async function POST(request: Request) {
         },
         429,
       );
-    const draft = await generatePropertyStory(property, images, {
+    const options = {
       apiKey,
       model: process.env.OPENAI_PROPERTY_MODEL?.trim() || "gpt-4.1-mini",
       signal: deadline,
-    });
+    };
     // Generating never writes to a listing or publishes it.
-    return json({ draft, source: propertyStorySource(property) });
+    const source = propertyStorySource(property);
+    if (section === "introduction") {
+      const introBody = await generatePropertyIntroduction(property, options);
+      return json({ introBody, source });
+    }
+    const draft = await generatePropertyStory(property, images, options);
+    return json({ draft, source });
   } catch (error) {
     const failure =
       error instanceof PropertyStoryError

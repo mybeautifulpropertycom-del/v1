@@ -149,6 +149,26 @@ export function PropertyPreview({ id }: { id: string }) {
       saving.current = false;
     }
   }
+  async function rewriteIntroduction() {
+    if (!property || dirty || preparing || saving.current) return;
+    saving.current = true;
+    setPreparing(true);
+    setError("");
+    try {
+      const next = await preparePropertyWebsite(property, "introduction");
+      setProperty(next);
+      setDirty(true);
+      setEditing(true);
+      notify("Textul nou este în previzualizare. Salvează-l dacă îți place.");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Introducerea nu a putut fi rescrisă.",
+      );
+    } finally {
+      setPreparing(false);
+      saving.current = false;
+    }
+  }
   const publication = usePropertyPublication({
     property,
     demo,
@@ -242,6 +262,18 @@ export function PropertyPreview({ id }: { id: string }) {
             </button>
           )}
           {!demo &&
+            savedProperty &&
+            savedProperty.images.length > 0 &&
+            hasWebsiteDescriptions(savedProperty) && (
+              <button
+                className="button secondary"
+                disabled={busy || preparing || dirty}
+                onClick={rewriteIntroduction}
+              >
+                Rescrie introducerea
+              </button>
+            )}
+          {!demo &&
             property.status === "published" &&
             publication.film?.src && <OwnerVideoDownload propertyId={id} />}
           {property.status === "published" ? (
@@ -279,7 +311,7 @@ export function PropertyPreview({ id }: { id: string }) {
       {error && (
         <div className="inline-edit-error" role="alert">
           {error}
-          {!dirty && !preparing && (
+          {!dirty && !preparing && !hasWebsiteDescriptions(property) && (
             <button
               className="text-button"
               onClick={() => {

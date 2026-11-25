@@ -11,9 +11,10 @@ Older notes remain available as supplementary factual context. Listing text and
 image text are treated as data.
 
 The second presentation section uses a separate introduction based on the saved
-property fields and facilities. It helps the visitor picture an everyday moment
-in the home in two or three sentences. Other generated sections and captions use
-concrete factual copy and can draw on the photographs.
+property fields and facilities. It follows a moment in the visitor's future
+in three to five connected sentences, usually 70–105 words. Thin or generic
+introductions get a separate text-only rewrite within the same deadline and
+reserved attempt. Other sections and captions can draw on the photographs.
 
 In a connected workspace, saving the listing, choosing its design or opening the
 private preview prepares missing or stale copy. A valid saved result is reused
@@ -24,8 +25,10 @@ the listing editor, **Continuă cu textul de bază** supplies an editable introd
 based on confirmed data.
 
 Changes to listing facts or photographs invalidate the previous source snapshot.
-Prior saved copy stays readable after a deployment. Public pages and model examples
-render saved copy or a prepared introduction without calling OpenAI.
+Prior saved copy stays readable after a deployment. In the private preview,
+**Rescrie introducerea** prepares a replacement for that section alone. It uses
+the usual per-account generation limits. The owner can review the replacement
+and save it with **Salvează site-ul**.
 
 Opening a private preview of a property without current section copy also prepares
 text, displayed directly in the page. This preview result is local until the agent

@@ -131,7 +131,7 @@ test("vision request sends each image in order, excludes agent data, and validat
     assert.equal(context.agent_story, property.description.trim());
     assert.ok(request.instructions.includes(storyVoiceInstructions));
     assert.match(request.instructions, /Romanian with correct diacritics/);
-    assert.deepEqual(context.section_photographs.introBody, [1]);
+    assert.equal(context.section_photographs.introBody, undefined);
     assert.deepEqual(context.section_photographs.description, [2]);
     assert.deepEqual(context.section_photographs.detailsBody, [3]);
     assert.deepEqual(
@@ -194,29 +194,35 @@ test("vision request sends each image in order, excludes agent data, and validat
     );
 });
 
-test("the second section supports three sentences and the factual description stays concise", async () => {
+test("the actual flat introduction triggers a targeted rewrite and the factual description stays concise", async () => {
   const property = demoWorkspace().properties[0];
   const draft = storyFixture(property);
   const text =
     "A generous terrace opens up new possibilities. Arrange a tour to enjoy the setting in person.";
   draft.description = `${text} This extra sentence should not appear.`;
-  draft.content.introBody = `${draft.description} A fourth sentence is outside the limit.`;
+  draft.content.introBody =
+    "Imaginează-ți o dimineață liniștită, cu soarele care luminează încăperea principală. Spațiul generos, alături de două băi și dressing, îți oferă confortul necesar zilnic. Poate fi locul potrivit pentru tine, vino să vezi cum ți s-ar potrivi.";
+  const replacement =
+    "La început, poate ți-ai lăsa cutiile în camera pe care încă nu știi cum vrei să o folosești. Între timp ai face loc pentru lucrurile tale, ai găsi un loc bun pentru cafeaua de dimineață, iar într-o seară ai primi un telefon de la cineva drag care vine în oraș. Te-ai bucura să îi poți spune să rămână peste noapte și să mai stați de vorbă, fără să vă uitați la ceas. La vizionare, gândește-te unde ați sta la povești și cum ai face loc în viața ta pentru mai multe seri ca aceasta.";
+  assert.ok(replacement.length > 450);
+  let calls = 0;
   const result = await generatePropertyStory(property, property.images, {
     apiKey: "test",
     model: "test",
-    fetcher: async () =>
-      Response.json({
-        status: "completed",
-        output: [
-          {
-            type: "message",
-            content: [{ type: "output_text", text: JSON.stringify(draft) }],
-          },
-        ],
-      }),
+    fetcher: async (_url, init) => {
+      calls++;
+      if (calls === 1) return generatedResponse(draft);
+      const request = JSON.parse(String(init?.body));
+      assert.equal(request.text.format.name, "property_introduction");
+      assert.deepEqual(JSON.parse(request.input).amenities, property.amenities);
+      assert.doesNotMatch(request.input, /supabase|https?:\/\//);
+      return generatedResponse({ introBody: replacement });
+    },
   });
+  assert.equal(calls, 2);
   assert.equal(result.description, text);
-  assert.equal(result.content.introBody, draft.description);
+  assert.equal(result.content.introBody, replacement);
+  assert.deepEqual(result.content.captions, draft.content.captions);
   const old = { ...draft.content } as Partial<typeof draft.content>;
   delete old.galleryBody;
   delete old.closingBody;
@@ -472,8 +478,6 @@ test("legacy notes are untrusted context and generation accepts listings without
     const draft = storyFixture(original);
     draft.description =
       "The kitchen opens onto the courtyard, with room to sit outside.";
-    draft.content.introBody =
-      "From the kitchen, step straight into the courtyard.";
     const result = await generatePropertyStory(property, property.images, {
       apiKey: "test",
       model: "test",
@@ -517,12 +521,17 @@ test("the second section falls back to a grounded scene when the model adds an u
   };
   const draft = storyFixture(property);
   draft.content.introBody =
-    "Imaginează-ți cum ar arăta o după-amiază la piscina proprietății. Vino să descoperi locul.";
+    "Poate că duminica ar începe cu un telefon către cineva drag, ca să vezi dacă are timp de o vizită. După prânz ați putea să coborâți la piscină și să continuați acolo o discuție pe care n-ați mai avut vreme să o terminați de mult. S-ar putea ca tocmai astfel de întâlniri să îți fie cele mai dragi peste câțiva ani. Când vii la vizionare, gândește-te pe cine ai invita în prima astfel de zi.";
   const generate = (amenities: string[]) =>
     generatePropertyStory({ ...property, amenities }, property.images, {
       apiKey: "test",
       model: "test",
-      fetcher: async () => generatedResponse(draft),
+      fetcher: async (_url, init) =>
+        generatedResponse(
+          JSON.parse(String(init?.body)).text.format.name === "property_story"
+            ? draft
+            : { introBody: draft.content.introBody },
+        ),
     });
   const fallback = await generate(property.amenities);
   assert.match(fallback.content.introBody, /cafea pe balcon/);

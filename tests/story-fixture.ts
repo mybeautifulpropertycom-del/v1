@@ -12,7 +12,7 @@ export function storyFixture(property: Property): StoryDraft {
       heroIntro:
         "A welcoming first view sets the scene for this home. Step inside for a new perspective.",
       introBody:
-        "The cover view introduces a home with room for your next chapter. Discover its possibilities on a private visit.",
+        "Într-o zi, printre cutiile rămase după mutare, găsești în sfârșit cana pe care o cauți de dimineață. Îți faci o cafea și dai un telefon să îi spui cuiva drag că ai început să te așezi. Poate că la început o să te gândești la tot ce mai ai de făcut, iar peste câteva luni la serile în care ai vrea să îi ai pe ai tăi aproape. Când vii la vizionare, gândește-te cum ai vrea să arate o zi obișnuită petrecută aici.",
       detailsBody:
         "Look closer at the details of the third photograph. A tour is an opportunity to explore the features that matter to you.",
       settingBody:

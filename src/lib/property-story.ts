@@ -5,7 +5,7 @@ export const storyFields = {
   heroIntro: { label: "Introducere de deschidere", max: 240 },
   introTitle: { label: "Titlul introducerii", max: 90 },
   introAccent: { label: "Subtitlul introducerii", max: 90 },
-  introBody: { label: "Textul introducerii", max: 450 },
+  introBody: { label: "Textul introducerii", max: 800 },
   storyTitle: { label: "Titlul poveștii proprietății", max: 90 },
   storyAccent: { label: "Subtitlul poveștii proprietății", max: 90 },
   galleryTitle: { label: "Titlul galeriei", max: 90 },
@@ -131,6 +131,7 @@ const lifestyleAmenities = {
   garden: /\bgradin(?:a|i|ii|ile|ilor)\b/,
   terrace: /\bteras(?:a|e|ei|ele|elor)\b/,
   balcony: /\b(?:balcon(?:ul|ului)?|balcoan(?:e|ele|elor))\b/,
+  dressing: /\bdressing(?:ul|ului|uri|urile|urilor)?\b/,
 };
 
 function amenityText(value: string) {
@@ -158,20 +159,18 @@ export function groundedPropertyIntroduction(p: Listing, text: string) {
 export function propertyLifestyleIntroduction(p: Listing): string {
   const amenities = confirmedLifestyleAmenities(p);
   if (p.type === "Land")
-    return "Imaginează-ți ce ai vrea să găsești aici peste câțiva ani. O vizionare îți dă timp să privești terenul și împrejurimile și să vezi cum se potrivesc planurilor tale.";
+    return "Când te gândești la un teren, probabil ai în minte ceva ce ai vrea să existe aici peste câțiva ani. Unele lucruri devin mai clare abia când ajungi la fața locului și ai timp să privești împrejurimile, să parcurgi distanțele și să îți imaginezi cum ai folosi spațiul. La o vizită poți vedea ce se potrivește planurilor tale și ce ai vrea să afli mai departe.";
   if (amenities.some((value) => lifestyleAmenities.pool.test(value)))
-    return "Imaginează-ți o după-amiază de vară în care te poți opri lângă piscină, chiar acasă. Vino la o vizionare și vezi cum s-ar potrivi un astfel de loc cu felul în care îți place să îți petreci timpul liber.";
+    return "Imaginează-ți o duminică de vară în care ai lăsat ziua liberă. Poate începi cu o cafea, apoi mergi la piscină, intri în apă și rămâi acolo mai mult decât plănuiai, pentru că în sfârșit ai timp. Peste câțiva ani, s-ar putea ca tocmai după-amiezile acestea obișnuite, petrecute acasă cu cei dragi, să îți rămână cel mai bine în minte. La o vizionare poți vedea dacă ți-ai dori să îți petreci aici mai multe dintre zilele libere.";
   if (amenities.some((value) => lifestyleAmenities.garden.test(value)))
-    return "Cum ar fi să închei o zi aglomerată cu câteva clipe în grădină? La o vizionare poți să-ți imaginezi mai ușor ce loc ar avea în zilele tale, de la o cafea dimineața până la timpul petrecut cu cei dragi.";
+    return "Poate că primele momente în care te-ai simți acasă aici ar fi cele petrecute în grădină. Într-o dimineață ai ieși doar să îți bei cafeaua, iar după o vreme te-ai surprinde urmărind cum crește ceva plantat chiar de tine. În weekend ai putea să îi chemi pe cei dragi și să rămâneți afară la povești mai mult decât plănuiați. La o vizionare, gândește-te la lucrurile pentru care ți-ar plăcea să ai mai mult timp acasă.";
   if (amenities.some((value) => lifestyleAmenities.terrace.test(value)))
-    return "Imaginează-ți o seară în care îți poți lua cina pe terasă și mai poți sta puțin la povești. Descoperă la o vizionare dacă ritmul acesta ți s-ar potrivi și într-o zi obișnuită.";
+    return "Gândește-te la o seară obișnuită, când ajungi acasă și hotărăști să duci cina pe terasă. Uneori ai rămâne acolo citind până târziu, alteori i-ai chema pe cei dragi și ați mai avea câte ceva de spus după ce se strânge masa. Peste un timp, poate că tocmai serile acestea ar fi cele la care te-ai gândi cu drag în drum spre casă. Merită să vezi locul și să îți imaginezi ce ai vrea să faci aici după o zi plină.";
   if (amenities.some((value) => lifestyleAmenities.balcony.test(value)))
-    return "Poate că diminețile tale aici ar începe cu o cafea pe balcon. Gândește-te cum ar arăta și restul zilei, apoi vino să vezi dacă locuința se potrivește obiceiurilor tale.";
-  if (p.transaction === "rent")
-    return "Imaginează-ți primele zile după mutare, când începi să dai fiecărui lucru locul lui. La o vizionare poți vedea cum s-ar potrivi spațiul cu obiceiurile tale, de la o dimineață aglomerată până la o seară în care vrei doar să te odihnești.";
-  if (p.type === "Studio")
-    return "Gândește-te la o zi obișnuită aici, cu lucrurile care îți fac diminețile mai simple și serile mai liniștite. Vino să vezi unde ți-ar plăcea să găsești loc pentru ele și cum ai folosi spațiul în ritmul tău.";
-  return "Imaginează-ți o duminică în această locuință, de la prima cafea până la momentul în care îți faci planuri pentru săptămâna care urmează. La o vizionare poți descoperi dacă spațiul se potrivește cu felul în care vrei să trăiești zi de zi.";
+    return "În primele zile după mutare, poate ai ieși la o cafea pe balcon doar cât să faci o pauză între două cutii. Peste câteva luni, același loc ar putea fi cel în care te oprești dimineața, înainte să înceapă ziua, sau unde mai stai câteva minute când ajungi acasă. Așa îți faci, încet, obiceiuri într-un loc nou. La o vizionare, vezi dacă acesta e unul pe care ți-ar plăcea să îl ai.";
+  if (p.bedrooms >= 2)
+    return "Gândește-te la cine ți-ar plăcea să poți găzdui peste noapte la tine acasă. Poate că atunci când vine cineva drag din alt oraș ați putea să mai stați seara de vorbă, fără să vă grăbiți, și să luați micul dejun împreună a doua zi. Între vizite, camera în care a stat ar putea primi un cu totul alt rost, în funcție de ce ai nevoie în perioada aceea. La o vizionare îți poți da seama cum ai împărți spațiul între zilele tale obișnuite și momentele pe care ai vrea să le petreci cu alții.";
+  return "Când te muți, îți ia câteva zile să afli unde îți vine cel mai firesc să lași cheile și unde îți place să te așezi când ai zece minute pentru tine. La început totul ține de cutii și de lucruri de pus la loc. Apoi vine prima duminică în care te trezești fără planuri și îți dai seama că ai început să îți găsești ritmul. La vizionare, gândește-te la o zi ca aceea și la ce ți-ar face plăcere să poți face aici.";
 }
 
 // Factual copy works before AI is configured and when older generated copy is
@@ -381,7 +380,9 @@ export function editWebsiteCopy(
       : propertyLifestyleIntroduction(property),
   );
   const version =
-    property.website_copy?.version === 1 && savedPropertyStory(property) ? 1 : 2;
+    property.website_copy?.version === 1 && savedPropertyStory(property)
+      ? 1
+      : 2;
   return {
     ...next,
     website_copy: {
@@ -394,6 +395,26 @@ export function editWebsiteCopy(
         !property.description.trim()) && {
         generatedDescription: true,
       }),
+    },
+  };
+}
+
+export function applyPropertyIntroduction(
+  property: Property,
+  introBody: string,
+  source: string,
+): Property {
+  if (source !== propertyStorySource(property))
+    throw new Error(
+      "Detaliile proprietății s-au schimbat. Salvează-le și încearcă din nou.",
+    );
+  const next = editWebsiteCopy(property, "introBody", introBody);
+  return {
+    ...next,
+    website_copy: {
+      ...next.website_copy!,
+      version: 2,
+      source: propertyStorySource(next),
     },
   };
 }

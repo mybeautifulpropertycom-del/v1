@@ -72,13 +72,16 @@ globalThis.fetch = async (input, init) => {
       { status: providerStatus },
     );
   const draft = storyFixture(property);
+  const sectionOnly =
+    JSON.parse(String(init?.body)).text.format.name === "property_introduction";
+  const result = sectionOnly ? { introBody: draft.content.introBody } : draft;
   if (providerPayload !== undefined) return Response.json(providerPayload);
   return Response.json({
     status: "completed",
     output: [
       {
         type: "message",
-        content: [{ type: "output_text", text: JSON.stringify(draft) }],
+        content: [{ type: "output_text", text: JSON.stringify(result) }],
       },
     ],
   });
@@ -132,6 +135,20 @@ test("authorized generation returns a reviewable draft without saving or publish
   assert.equal(body.draft.content.captions.length, 1);
   assert.equal(typeof body.source, "string");
   assert.equal(providerCalls, 1);
+  assert.equal(mutationCalls, 0);
+});
+
+test("the same authenticated route can regenerate only the introduction", async () => {
+  const body = JSON.stringify({
+    propertyId: property.id,
+    section: "introduction",
+  });
+  const response = await POST(request("test-user-token", body));
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.introBody, storyFixture(property).content.introBody);
+  assert.equal(result.draft, undefined);
+  assert.equal(typeof result.source, "string");
   assert.equal(mutationCalls, 0);
 });
 

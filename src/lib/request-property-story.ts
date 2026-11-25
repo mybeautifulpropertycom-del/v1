@@ -3,6 +3,7 @@
 import type { Property } from "./model";
 import { getSupabase } from "./supabase";
 import {
+  applyPropertyIntroduction,
   applyPropertyStory,
   parseStoryDraft,
   propertyStorySource,
@@ -12,16 +13,22 @@ import {
 // Public property pages never import or call this module.
 const pending = new Map<string, Promise<Property>>();
 
-export function preparePropertyWebsite(property: Property): Promise<Property> {
-  const key = `${property.id}:${propertyStorySource(property)}`;
+export function preparePropertyWebsite(
+  property: Property,
+  section?: "introduction",
+): Promise<Property> {
+  const key = `${property.id}:${section ?? "website"}:${propertyStorySource(property)}`;
   const existing = pending.get(key);
   if (existing) return existing;
-  const job = request(property).finally(() => pending.delete(key));
+  const job = request(property, section).finally(() => pending.delete(key));
   pending.set(key, job);
   return job;
 }
 
-async function request(property: Property): Promise<Property> {
+async function request(
+  property: Property,
+  section?: "introduction",
+): Promise<Property> {
   const supabase = getSupabase();
   if (!supabase)
     throw new Error(
@@ -54,7 +61,7 @@ async function request(property: Property): Promise<Property> {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ propertyId: property.id }),
+      body: JSON.stringify({ propertyId: property.id, section }),
       signal: AbortSignal.timeout(65000),
     });
     let result;
@@ -81,6 +88,16 @@ async function request(property: Property): Promise<Property> {
         `${typeof result.error === "string" ? result.error : "Textele site-ului nu au putut fi pregătite."}${code ? ` (${code})` : ""}${reference ? ` Reference: ${reference}` : ""}`,
       );
     }
+    if (
+      section === "introduction" &&
+      typeof result.introBody === "string" &&
+      typeof result.source === "string"
+    )
+      return applyPropertyIntroduction(
+        property,
+        result.introBody,
+        result.source,
+      );
     const draft = parseStoryDraft(result.draft, property.images.length);
     if (!draft || typeof result.source !== "string")
       throw new Error(
