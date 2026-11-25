@@ -7,7 +7,6 @@ import { PropertySectionLinks } from "./property-section-links";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { PropertyWhatsAppLink } from "./property-whatsapp-link";
-import { PropertyMobileContact } from "./property-mobile-contact";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 
 import Link from "next/link";
@@ -601,10 +600,6 @@ export function HeritageWebsite({
         </a>
         <FooterBrand />
       </footer>
-      <PropertyMobileContact
-        phone={profile.phone}
-        location={property.location}
-      />
       {viewing && (
         <ViewingDialog
           slug={property.slug}

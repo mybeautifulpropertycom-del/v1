@@ -1,26 +1,19 @@
-import { ArrowUpRight, MessageCircle, Phone } from "lucide-react";
+import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { safePhone } from "@/lib/model";
 
-export function whatsappPhoneNumber(phone: string) {
+export function PropertyWhatsAppLink({
+  phone,
+  location,
+}: {
+  phone: string;
+  location: string;
+}) {
   if (!/^\s*\+?[\d\s().-]+$/u.test(phone)) return null;
   const dial = safePhone(phone);
   const number = /^0[1-9]\d{8}$/u.test(dial)
     ? `40${dial.slice(1)}`
     : dial.replace(/^(?:\+|00)/u, "");
-  return /^[1-9]\d{7,14}$/u.test(number) ? number : null;
-}
-
-export function PropertyWhatsAppLink({
-  phone,
-  location,
-  compact = false,
-}: {
-  phone: string;
-  location: string;
-  compact?: boolean;
-}) {
-  const number = whatsappPhoneNumber(phone);
-  if (!number) return null;
+  if (!/^[1-9]\d{7,14}$/u.test(number)) return null;
 
   const address = location.trim().replace(/\s+/gu, " ").replace(/\.+$/u, "");
   const road =
@@ -42,21 +35,10 @@ export function PropertyWhatsAppLink({
       href={`https://wa.me/${number}?text=${text}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={compact ? "property-mobile-whatsapp" : undefined}
-      aria-label={compact ? "Trimite mesaj pe WhatsApp" : undefined}
     >
-      {compact ? (
-        <span className="property-mobile-whatsapp-icon" aria-hidden="true">
-          <MessageCircle size={21} />
-          <Phone size={10} />
-        </span>
-      ) : (
-        <>
-          <MessageCircle size={17} aria-hidden="true" />
-          <span>Trimite mesaj pe WhatsApp</span>
-          <ArrowUpRight size={15} aria-hidden="true" />
-        </>
-      )}
+      <MessageCircle size={17} aria-hidden="true" />
+      <span>Trimite mesaj pe WhatsApp</span>
+      <ArrowUpRight size={15} aria-hidden="true" />
     </a>
   );
 }

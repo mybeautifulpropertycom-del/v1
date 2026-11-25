@@ -9,7 +9,7 @@ import { readFile } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
 import sharp from "sharp";
 
-for (const template of ["editorial", "minimal", "panorama"] as const) {
+for (const template of ["editorial", "minimal", "panorama"]) {
   test(`${template}: the contact form and WhatsApp link use the listing's details`, async ({
     page,
   }) => {
@@ -44,71 +44,6 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
         ),
       ).toMatch(/^mailto:/);
     }
-  });
-
-  test(`${template}: mobile seller actions appear at details and the footer`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/photos-test-${template}`);
-    const bar = page.locator(".property-mobile-contact");
-    const bringIntoView = (selector: string) =>
-      page
-        .locator(selector)
-        .evaluate((element) =>
-          element.scrollIntoView({ block: "start", behavior: "instant" }),
-        );
-
-    await expect(bar).toBeHidden();
-    await bringIntoView("#details");
-    await expect(bar).toBeVisible();
-    const call = bar.getByRole("link", { name: "Apelează vânzătorul" });
-    await expect(call).toHaveAttribute("href", "tel:+40700000000");
-    const whatsapp = bar.getByRole("link", {
-      name: "Trimite mesaj pe WhatsApp",
-    });
-    const inContact = page.locator("#contact").getByRole("link", {
-      name: "Trimite mesaj pe WhatsApp",
-    });
-    await expect(whatsapp).toHaveAttribute(
-      "href",
-      (await inContact.getAttribute("href"))!,
-    );
-    const colors = {
-      editorial: "rgb(23, 51, 45)",
-      minimal: "rgb(48, 69, 54)",
-      panorama: "rgb(40, 43, 39)",
-    };
-    await expect(call).toHaveCSS("background-color", colors[template]);
-    await expect(whatsapp).toHaveCSS("color", colors[template]);
-
-    await bringIntoView("#contact");
-    await expect(bar).toBeHidden();
-    await bringIntoView(".property-footer");
-    await expect(bar).toBeVisible();
-    const position = await bar.evaluate((element) => {
-      const rect = element.getBoundingClientRect();
-      const footer = document.querySelector(".property-footer")!;
-      return {
-        bottom: innerHeight - rect.bottom,
-        center: rect.left + rect.width / 2,
-        left: rect.left,
-        footerInset:
-          footer.getBoundingClientRect().left +
-          parseFloat(getComputedStyle(footer).paddingLeft),
-        footerGap: rect.top - footer.getBoundingClientRect().bottom,
-      };
-    });
-    expect(position.bottom).toBeCloseTo(14);
-    expect(position.center).toBeCloseTo(195);
-    expect(Math.abs(position.left - position.footerInset)).toBeLessThan(1);
-    expect(position.footerGap).toBeGreaterThanOrEqual(9);
-
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    await expect(bar).toBeHidden();
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await bringIntoView("#details");
-    await expect(bar).toBeHidden();
   });
 }
 

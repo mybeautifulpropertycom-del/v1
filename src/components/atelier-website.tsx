@@ -7,10 +7,9 @@ import { PropertySectionLinks } from "./property-section-links";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { PropertyWhatsAppLink } from "./property-whatsapp-link";
-import { PropertyMobileContact } from "./property-mobile-contact";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -44,6 +43,8 @@ export function AtelierWebsite({
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [viewing, setViewing] = useState(false);
   const [menu, setMenu] = useState(false);
+  const hero = useRef<HTMLElement>(null);
+  const [heroVisible, setHeroVisible] = useState(true);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -83,6 +84,14 @@ export function AtelierWebsite({
       Programează o vizionare <Icon size={17} />
     </button>
   );
+  useEffect(() => {
+    if (!("IntersectionObserver" in window) || !hero.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setHeroVisible(entry.isIntersecting);
+    });
+    observer.observe(hero.current);
+    return () => observer.disconnect();
+  }, []);
   const photo = (src: string, index: number, className = "") => (
     <button
       type="button"
@@ -210,6 +219,7 @@ export function AtelierWebsite({
       <main>
         <section
           className="atelier-hero-stage"
+          ref={hero}
           aria-label="Prezentarea proprietății"
         >
           <section
@@ -678,10 +688,15 @@ export function AtelierWebsite({
         </a>
         <FooterBrand />
       </footer>
-      <PropertyMobileContact
-        phone={profile.phone}
-        location={property.location}
-      />
+      <div className="atelier-mobile-tour" data-hero-visible={heroVisible}>
+        <span>
+          {formatPrice(property)}
+          <small>
+            {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
+          </small>
+        </span>
+        {tour()}
+      </div>
       {lightbox !== null && property.images.length > 0 && (
         <PropertyPhotoDialog
           images={property.images}

@@ -51,7 +51,7 @@ for (const url of ["/modele/panorama", "/p/photos-test-panorama"]) {
       const summary = await hero.locator(".atelier-intro").boundingBox();
       expect(mosaic!.y + mosaic!.height).toBeLessThanOrEqual(summary!.y);
       if (viewport.width <= 640)
-        await expect(page.locator(".property-mobile-contact")).toBeHidden();
+        await expect(page.locator(".atelier-mobile-tour")).toBeHidden();
       if (url.startsWith("/modele") && [1440, 390].includes(viewport.width))
         await hero.screenshot({
           path: `/tmp/panorama-hero-${viewport.width}.png`,
@@ -69,12 +69,9 @@ for (const url of ["/modele/panorama", "/p/photos-test-panorama"]) {
       page.getByRole("dialog", { name: /Să ne întâlnim/ }),
     ).toBeVisible();
     await page.keyboard.press("Escape");
-    const contact = page.locator("#contact");
-    await contact.scrollIntoViewIfNeeded();
-    await expect(page.locator(".property-mobile-contact")).toBeHidden();
-    await contact
-      .getByRole("button", { name: "Programează o vizionare" })
-      .click();
+    await page.locator("#contact").scrollIntoViewIfNeeded();
+    await expect(page.locator(".atelier-mobile-tour")).toBeVisible();
+    await page.locator(".atelier-mobile-tour").getByRole("button").click();
     await expect(
       page.getByRole("dialog", { name: /Să ne întâlnim/ }),
     ).toBeVisible();
