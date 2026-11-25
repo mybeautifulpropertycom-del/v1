@@ -3,6 +3,7 @@ import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
+import { PropertySectionLinks } from "./property-section-links";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { PropertyWhatsAppLink } from "./property-whatsapp-link";
@@ -334,15 +335,11 @@ export function EditorialWebsite({
               className={menuOpen ? "is-open" : undefined}
               aria-label="Navigarea proprietății"
             >
-              <a href="#story" onClick={() => setMenuOpen(false)}>
-                Locuința
-              </a>
-              <a href="#gallery" onClick={() => setMenuOpen(false)}>
-                Galerie
-              </a>
-              <a href="#contact" onClick={() => setMenuOpen(false)}>
-                Agentul tău
-              </a>
+              <PropertySectionLinks
+                property={property}
+                sample={sample}
+                onNavigate={() => setMenuOpen(false)}
+              />
             </nav>
             <button
               ref={menuToggle}
@@ -440,7 +437,7 @@ export function EditorialWebsite({
           images={property.images.slice(0, SCROLL_GALLERY_CAPTIONS.length)}
           title={property.title}
         />
-        <section className="estate-details estate-pad estate-space">
+        <section className="estate-details estate-pad estate-space" id="details">
           <div className="estate-details-photo">
             {property.images[1] || property.images[0] ? (
               <>

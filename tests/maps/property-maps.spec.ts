@@ -252,6 +252,81 @@ for (const [template, gallery, videoPadding] of [
   });
 }
 
+for (const [template, headerSelector, desktopWidth, mobileToggle] of [
+  ["editorial", ".estate-nav", 900, ".estate-menu-toggle"],
+  ["minimal", ".heritage-nav", 768, ".heritage-mobile-menu summary"],
+  ["panorama", ".atelier-nav", 901, ".atelier-menu-button"],
+] as const) {
+  test(`${template}: the header reaches every available section on desktop and phone`, async ({
+    page,
+  }) => {
+    await mockGoogleMaps(page);
+    const sections = [
+      ["Detalii", "#details"],
+      ["Galerie Foto", "#gallery"],
+      ["Cunoaște Zonă", "#neighbourhood"],
+      ["Calculator de Credit", "#mortgage"],
+      ["Contact", "#contact"],
+    ] as const;
+
+    await page.setViewportSize({ width: desktopWidth, height: 900 });
+    await page.goto(`/modele/${template}`);
+    const header = page.locator(headerSelector);
+    const schedule = header.getByRole("button", {
+      name: "Programează o vizionare",
+    });
+    for (const [label, anchor] of sections) {
+      await expect(header.getByRole("link", { name: label })).toHaveAttribute(
+        "href",
+        anchor,
+      );
+      await expect(page.locator(anchor)).toBeVisible();
+    }
+    await expect(schedule).toBeVisible();
+    expect(
+      await header.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
+
+    await page.setViewportSize({ width: 320, height: 760 });
+    await expect(schedule).toBeVisible();
+    expect(
+      await header.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
+    for (const [label, anchor] of sections) {
+      const link = header.getByRole("link", { name: label });
+      await header.locator(mobileToggle).click();
+      await expect(link).toBeVisible();
+      await link.click();
+      await expect.poll(() => new URL(page.url()).hash).toBe(anchor);
+      await expect(link).toBeHidden();
+    }
+    await schedule.click();
+    await expect(
+      page.getByRole("dialog", { name: /Să ne întâlnim/ }),
+    ).toBeVisible();
+  });
+}
+
+test("the property header hides links whose sections are absent", async ({
+  page,
+}) => {
+  await mockGoogleMaps(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/rent-price-test-editorial-house");
+  const header = page.locator(".estate-nav");
+  await expect(header.getByRole("link", { name: "Cunoaște Zonă" })).toHaveCount(
+    0,
+  );
+  await expect(
+    header.getByRole("link", { name: "Calculator de Credit" }),
+  ).toHaveCount(0);
+  await expect(header.getByRole("link", { name: "Contact" })).toBeVisible();
+});
+
 test("quota errors keep the property page usable and let the visitor retry", async ({
   page,
 }) => {

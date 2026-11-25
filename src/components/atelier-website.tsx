@@ -3,6 +3,7 @@ import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
+import { PropertySectionLinks } from "./property-section-links";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { PropertyWhatsAppLink } from "./property-whatsapp-link";
@@ -75,7 +76,10 @@ export function AtelierWebsite({
     <button
       type="button"
       className={className}
-      onClick={() => setViewing(true)}
+      onClick={() => {
+        setMenu(false);
+        setViewing(true);
+      }}
     >
       Programează o vizionare <Icon size={17} />
     </button>
@@ -181,38 +185,33 @@ export function AtelierWebsite({
           </span>
         </a>
         <nav aria-label="Navigarea proprietății">
-          <a href="#residence">Locuința</a>
-          <a href="#gallery">Fotografii</a>
-          <a href="#contact">Agentul tău</a>
+          <PropertySectionLinks property={property} sample={sample} />
         </nav>
-        <button
-          className="atelier-menu-button"
-          aria-expanded={menu}
-          aria-controls="atelier-menu"
-          onClick={() => setMenu(!menu)}
-        >
-          {menu ? "Închide" : "Meniu"}
-          {menu ? <X size={18} /> : <Plus size={18} />}
-        </button>
+        <div className="atelier-nav-actions">
+          {tour("atelier-button atelier-nav-tour")}
+          <button
+            type="button"
+            className="atelier-menu-button"
+            aria-expanded={menu}
+            aria-controls="atelier-menu"
+            onClick={() => setMenu(!menu)}
+          >
+            {menu ? "Închide" : "Meniu"}
+            {menu ? <X size={18} /> : <Plus size={18} />}
+          </button>
+        </div>
         {menu && (
           <nav
             id="atelier-menu"
             className="atelier-menu"
             aria-label="Mai multe secțiuni ale proprietății"
           >
-            <a href="#residence" onClick={() => setMenu(false)}>
-              Locuința <ArrowUpRight />
-            </a>
-            <a href="#details" onClick={() => setMenu(false)}>
-              Detalii <ArrowUpRight />
-            </a>
-            <a href="#gallery" onClick={() => setMenu(false)}>
-              Toate fotografiile <ArrowUpRight />
-            </a>
-            <a href="#contact" onClick={() => setMenu(false)}>
-              Cunoaște agentul <ArrowUpRight />
-            </a>
-            {tour()}
+            <PropertySectionLinks
+              property={property}
+              sample={sample}
+              onNavigate={() => setMenu(false)}
+              showArrow
+            />
           </nav>
         )}
       </header>

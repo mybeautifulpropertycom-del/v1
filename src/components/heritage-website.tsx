@@ -3,13 +3,14 @@ import { presentationCopy, propertyInvitation } from "@/lib/presentation-copy";
 import { propertyTypeLabel } from "@/lib/model";
 import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
+import { PropertySectionLinks } from "./property-section-links";
 import { PropertyImage } from "./property-image";
 import { AgentAvatar } from "./agent-avatar";
 import { PropertyWhatsAppLink } from "./property-whatsapp-link";
 import { FooterBrand, FooterIdentityLogo } from "./footer-brand";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -17,6 +18,7 @@ import {
   Expand,
   Film,
   Mail,
+  Menu,
   Phone,
 } from "lucide-react";
 import { formatPrice, safePhone } from "@/lib/model";
@@ -39,6 +41,7 @@ export function HeritageWebsite({
   previewBackLink,
 }: PropertyWebsiteProps) {
   const [viewing, setViewing] = useState(false);
+  const mobileMenu = useRef<HTMLDetailsElement>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [highlights, setHighlights] = useState(false);
   const copy = propertyStory(property);
@@ -78,7 +81,10 @@ export function HeritageWebsite({
       type="button"
       className={className}
       aria-haspopup="dialog"
-      onClick={() => setViewing(true)}
+      onClick={() => {
+        if (mobileMenu.current) mobileMenu.current.open = false;
+        setViewing(true);
+      }}
     >
       Programează o vizionare <ArrowUpRight size={15} />
     </button>
@@ -116,11 +122,34 @@ export function HeritageWebsite({
           <Asterisk size={21} strokeWidth={1} />
         </a>
         <nav aria-label="Navigarea proprietății">
-          <a href="#story">Locuința</a>
-          <a href="#gallery">Încăperile</a>
-          <a href="#contact">Agentul tău</a>
+          <PropertySectionLinks property={property} sample={sample} />
         </nav>
-        {tourButton("heritage-nav-tour")}
+        <div className="heritage-nav-actions">
+          <details
+            className="heritage-mobile-menu"
+            ref={mobileMenu}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && event.currentTarget.open) {
+                event.currentTarget.open = false;
+                event.currentTarget.querySelector("summary")?.focus();
+              }
+            }}
+          >
+            <summary aria-label="Meniu">
+              <Menu size={18} aria-hidden="true" />
+            </summary>
+            <nav aria-label="Navigarea proprietății">
+              <PropertySectionLinks
+                property={property}
+                sample={sample}
+                onNavigate={() => {
+                  if (mobileMenu.current) mobileMenu.current.open = false;
+                }}
+              />
+            </nav>
+          </details>
+          {tourButton("heritage-nav-tour")}
+        </div>
       </header>
       <main>
         <section
@@ -338,6 +367,7 @@ export function HeritageWebsite({
         </section>
         <section
           className="heritage-details heritage-section heritage-pad"
+          id="details"
           aria-labelledby="heritage-details-title"
         >
           <div className="heritage-details-copy">

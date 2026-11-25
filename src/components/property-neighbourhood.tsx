@@ -31,6 +31,18 @@ type MappedProperty = Pick<
   PublicProperty,
   "location" | "google_place_id" | "template"
 >;
+
+export function hasPropertyNeighbourhood(
+  property: MappedProperty,
+  sample = false,
+) {
+  return (
+    mapsEnabled() &&
+    (PLACE_ID.test(property.google_place_id ?? "") ||
+      (sample && property.location === TEMPLATE_LOCATION))
+  );
+}
+
 export function PropertyNeighbourhood({
   property,
   sample = false,
@@ -38,13 +50,11 @@ export function PropertyNeighbourhood({
   property: MappedProperty;
   sample?: boolean;
 }) {
-  const hasSavedPlace = Boolean(
-    property.google_place_id && PLACE_ID.test(property.google_place_id),
-  );
+  if (!hasPropertyNeighbourhood(property, sample)) return null;
   const resolveSampleAddress =
-    sample && property.location === TEMPLATE_LOCATION && !hasSavedPlace;
-  // Ordinary listings still require an agent-selected place ID.
-  if (!mapsEnabled() || (!hasSavedPlace && !resolveSampleAddress)) return null;
+    sample &&
+    property.location === TEMPLATE_LOCATION &&
+    !PLACE_ID.test(property.google_place_id ?? "");
   // Remount on address changes: a pending request must never populate a new listing.
   return (
     <Neighbourhood
@@ -364,6 +374,7 @@ function Neighbourhood({
   return (
     <section
       ref={section}
+      id="neighbourhood"
       className="property-neighbourhood"
       aria-labelledby={heading}
     >

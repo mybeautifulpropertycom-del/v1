@@ -133,11 +133,14 @@
   justify-content: space-between;
   gap: 25px;
   padding-inline: 5%;
+  position: relative;
+  z-index: 5;
 }
 .heritage-wordmark {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
   max-width: 35%;
   font: 500 15px var(--serif);
   letter-spacing: 0.6px;
@@ -146,15 +149,26 @@
 .heritage-wordmark svg {
   color: #889775;
 }
-.heritage-nav nav {
+.heritage-nav > nav {
   display: flex;
   align-items: center;
-  gap: 30px;
+  flex-shrink: 0;
+  gap: clamp(12px, 1.6vw, 30px);
   font-size: 10px;
   color: #66735f;
 }
-.heritage-nav nav a {
+.heritage-nav > nav a {
   padding-block: 15px;
+  white-space: nowrap;
+}
+.heritage-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.heritage-mobile-menu {
+  display: none;
 }
 .heritage-nav-tour {
   display: inline-flex;
@@ -1077,10 +1091,38 @@
   }
   .heritage-nav {
     min-height: 70px;
-    gap: 20px;
+    gap: 10px;
   }
-  .heritage-nav nav {
+  .heritage-nav > nav {
     display: none;
+  }
+  .heritage-mobile-menu {
+    display: block;
+  }
+  .heritage-mobile-menu summary {
+    display: grid;
+    place-items: center;
+    min-width: 36px;
+    min-height: 40px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .heritage-mobile-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .heritage-mobile-menu nav {
+    position: absolute;
+    inset: calc(100% + 6px) 5% auto;
+    display: grid;
+    padding: 10px 16px;
+    background: #fffdf7;
+    border: 1px solid var(--heritage-line);
+    border-radius: 5px;
+    box-shadow: 0 10px 24px #1a26151c;
+    font-size: 13px;
+  }
+  .heritage-mobile-menu nav a {
+    padding-block: 11px;
   }
   .heritage-wordmark {
     max-width: 56%;

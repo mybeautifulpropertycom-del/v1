@@ -133,9 +133,9 @@ for (const source of ["saved", "sample", "published"] as const) {
         await expect(menu).toBeHidden();
         await expect(toggle).toBeFocused();
         await toggle.click();
-        await menu.getByRole("link", { name: "Locuința", exact: true }).click();
+        await menu.getByRole("link", { name: "Detalii", exact: true }).click();
         await expect(menu).toBeHidden();
-        await expect(page).toHaveURL(/#story$/);
+        await expect(page).toHaveURL(/#details$/);
       } else {
         await expect(menu).toBeVisible();
         await expect(toggle).toBeHidden();

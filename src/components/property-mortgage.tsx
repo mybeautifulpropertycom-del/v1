@@ -17,13 +17,16 @@ type MortgageProperty = Pick<
   PublicProperty,
   "price" | "currency" | "transaction" | "images"
 >;
+export function hasPropertyMortgage(property: MortgageProperty) {
+  return (
+    property.transaction === "sale" &&
+    Number.isFinite(property.price) &&
+    property.price > 0
+  );
+}
+
 export function PropertyMortgage({ property }: { property: MortgageProperty }) {
-  if (
-    property.transaction !== "sale" ||
-    !Number.isFinite(property.price) ||
-    property.price <= 0
-  )
-    return null;
+  if (!hasPropertyMortgage(property)) return null;
   return <MortgageCalculator key={property.currency} property={property} />;
 }
 
@@ -96,7 +99,11 @@ function MortgageCalculator({ property }: { property: MortgageProperty }) {
   const rows = schedule.slice(visiblePage * 6, visiblePage * 6 + 6);
   const valid = Boolean(result);
   return (
-    <section className="property-mortgage" aria-labelledby={`${id}-heading`}>
+    <section
+      id="mortgage"
+      className="property-mortgage"
+      aria-labelledby={`${id}-heading`}
+    >
       <div className="mortgage-intro">
         {photo && failedPhoto !== photo && (
           <PropertyImage
