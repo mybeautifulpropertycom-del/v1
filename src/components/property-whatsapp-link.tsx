@@ -1,4 +1,5 @@
-import { ArrowUpRight, MessageCircle, Phone } from "lucide-react";
+import { ArrowUpRight, MessageCircle } from "lucide-react";
+import Image from "next/image";
 import { safePhone } from "@/lib/model";
 
 export function whatsappPhoneNumber(phone: string) {
@@ -46,10 +47,7 @@ export function PropertyWhatsAppLink({
       aria-label={compact ? "Trimite mesaj pe WhatsApp" : undefined}
     >
       {compact ? (
-        <span className="property-mobile-whatsapp-icon" aria-hidden="true">
-          <MessageCircle size={21} />
-          <Phone size={10} />
-        </span>
+        <Image src="/images/whatsapp-mark.svg" width={18} height={18} alt="" />
       ) : (
         <>
           <MessageCircle size={17} aria-hidden="true" />

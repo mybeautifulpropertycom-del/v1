@@ -76,6 +76,18 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     );
     await expect(call).toHaveCSS("background-color", "rgb(16, 52, 37)");
     await expect(whatsapp).toHaveCSS("background-color", "rgb(251, 249, 245)");
+    const icon = whatsapp.locator("img");
+    await expect(icon).toBeVisible();
+    const iconBox = (await icon.boundingBox())!;
+    const buttonBox = (await whatsapp.boundingBox())!;
+    expect(iconBox.x + iconBox.width / 2).toBeCloseTo(
+      buttonBox.x + buttonBox.width / 2,
+      0,
+    );
+    expect(iconBox.y + iconBox.height / 2).toBeCloseTo(
+      buttonBox.y + buttonBox.height / 2,
+      0,
+    );
 
     await bringIntoView("#contact");
     await expect(bar).toBeHidden();
