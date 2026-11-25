@@ -236,11 +236,15 @@ export function propertyRoomIssues(property: Property, saved?: Property) {
         ? null
         : `Alege un număr de dormitoare între 1 și ${MAX_PROPERTY_BEDROOMS}.`,
     bathrooms:
-      Number.isInteger(bathrooms * 2) &&
-      ((bathrooms >= 1 && bathrooms <= MAX_PROPERTY_BATHROOMS) ||
-        (bathrooms === saved?.bathrooms && bathrooms >= 0 && bathrooms <= 100))
+      (Number.isInteger(bathrooms) &&
+        bathrooms >= 1 &&
+        bathrooms <= MAX_PROPERTY_BATHROOMS) ||
+      (bathrooms === saved?.bathrooms &&
+        Number.isInteger(bathrooms * 2) &&
+        bathrooms >= 0 &&
+        bathrooms <= 100)
         ? null
-        : `Alege un număr de băi între 1 și ${MAX_PROPERTY_BATHROOMS}, în pași de 0,5.`,
+        : `Alege un număr întreg de băi între 1 și ${MAX_PROPERTY_BATHROOMS}.`,
   };
 }
 

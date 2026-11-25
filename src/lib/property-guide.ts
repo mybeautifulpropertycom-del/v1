@@ -49,7 +49,7 @@ export const propertyGuideFields = [
   {
     id: "bathrooms",
     title: "Băile",
-    body: "Adaugă numărul de băi. Poți folosi și valori în pași de 0,5.",
+    body: "Alege numărul de băi din listă.",
   },
   {
     id: "description",

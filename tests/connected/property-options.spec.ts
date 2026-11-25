@@ -8,6 +8,7 @@ test("legacy dimensions convert once, house filters include old types, and selec
     type: "Town House",
     area: 1000,
     area_unit: "sqft",
+    bathrooms: 1.5,
     city: "București",
     images: [],
   });
@@ -32,6 +33,7 @@ test("legacy dimensions convert once, house filters include old types, and selec
     name: "Dormitoare",
     exact: true,
   });
+  const bathrooms = page.getByRole("combobox", { name: "Băi", exact: true });
   await expect(type.locator("option")).toHaveText([
     "Apartament",
     "Garsonieră",
@@ -40,6 +42,11 @@ test("legacy dimensions convert once, house filters include old types, and selec
   ]);
   await expect(type).toHaveValue("House");
   await expect(area).toHaveValue("92.9");
+  await expect(bathrooms).toHaveValue("1.5");
+  await expect(bathrooms.locator('option[value="1.5"]')).toHaveAttribute(
+    "hidden",
+    "",
+  );
   await expect(page.getByLabel("Unitatea de suprafață")).toHaveCount(0);
   await expect(page.getByLabel(/Oraș \/ localitate/)).toHaveCount(0);
   await expect(page.getByLabel(/Număr total de camere/)).toHaveCount(0);
@@ -61,6 +68,7 @@ test("legacy dimensions convert once, house filters include old types, and selec
   expect(state.property.location).toBe("Strada Florilor 12, Cluj-Napoca");
   expect(state.property.city).toBeNull();
   expect(state.property.bedrooms).toBe(2);
+  expect(state.property.bathrooms).toBe(1.5);
   await page.reload();
   await expect(type).toHaveValue("Condo");
   await expect(area).toHaveValue("92.9");
@@ -198,21 +206,19 @@ test("floor and land area save for the selected property type and appear only in
   }
   await expect(floor.locator("option").last()).toHaveAttribute("value", "40");
   await expect(total.locator("option").last()).toHaveAttribute("value", "40");
-  for (const [control, last] of [
-    [bedrooms, "20"],
-    [bathrooms, "15"],
-  ] as const) {
-    await expect(control.locator("option").first()).toHaveAttribute(
-      "value",
-      "1",
-    );
-    await expect(control.locator("option").last()).toHaveAttribute(
-      "value",
-      last,
-    );
-  }
+  await expect(bedrooms.locator("option").first()).toHaveAttribute(
+    "value",
+    "1",
+  );
+  await expect(bedrooms.locator("option").last()).toHaveAttribute(
+    "value",
+    "20",
+  );
+  await expect(bathrooms.locator("option")).toHaveText(
+    Array.from({ length: 15 }, (_, index) => String(index + 1)),
+  );
   await bedrooms.selectOption("20");
-  await bathrooms.selectOption("14.5");
+  await bathrooms.selectOption("15");
   await floor.selectOption("3");
   await total.selectOption("2");
   await save.click();
@@ -227,7 +233,7 @@ test("floor and land area save for the selected property type and appear only in
   expect(state.property.floor).toBe(3);
   expect(state.property.total_floors).toBe(10);
   expect(state.property.bedrooms).toBe(20);
-  expect(state.property.bathrooms).toBe(14.5);
+  expect(state.property.bathrooms).toBe(15);
 
   const expectDetail = async (label: string, value: string) => {
     const detail = page.locator("#details dl > div").filter({

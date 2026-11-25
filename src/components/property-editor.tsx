@@ -65,8 +65,8 @@ const bedroomOptions = Array.from(
   (_, index) => index + 1,
 );
 const bathroomOptions = Array.from(
-  { length: (MAX_PROPERTY_BATHROOMS - 1) * 2 + 1 },
-  (_, index) => 1 + index / 2,
+  { length: MAX_PROPERTY_BATHROOMS },
+  (_, index) => index + 1,
 );
 
 function PropertySelect(props: ComponentProps<"select">) {
@@ -755,12 +755,13 @@ export function PropertyEditor({
                       >
                         {bathroomOptions.map((value) => (
                           <option key={value} value={value}>
-                            {value.toLocaleString("ro-RO")}
+                            {value}
                           </option>
                         ))}
-                        {(property.bathrooms < 1 ||
+                        {(!Number.isInteger(property.bathrooms) ||
+                          property.bathrooms < 1 ||
                           property.bathrooms > MAX_PROPERTY_BATHROOMS) && (
-                          <option value={property.bathrooms}>
+                          <option hidden value={property.bathrooms}>
                             {property.bathrooms.toLocaleString("ro-RO")}
                           </option>
                         )}

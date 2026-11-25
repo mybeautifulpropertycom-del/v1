@@ -43,7 +43,9 @@ test("new room counts follow the dropdown ranges and existing room counts can be
     propertyErrors({ ...listing, bedrooms: 20, bathrooms: 15 }),
     [],
   );
-  assert.deepEqual(propertyErrors({ ...listing, bathrooms: 1.5 }), []);
+  const fractional = { ...listing, bathrooms: 1.5 };
+  assert.equal(propertyErrors(fractional).length, 1);
+  assert.deepEqual(propertyErrors(fractional, fractional), []);
 
   for (const counts of [
     { bedrooms: 0, bathrooms: 0.5 },
