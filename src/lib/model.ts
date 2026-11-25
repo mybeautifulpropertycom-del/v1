@@ -5,7 +5,7 @@ import type { SavedPropertyStory } from "./property-story";
 import type { ProfileBioRole } from "./profile-bio";
 export type TemplateId = "editorial" | "minimal" | "panorama";
 export const MAX_PROFILE_BIO_LENGTH = 300;
-export const MAX_BUILDING_FLOORS = 100;
+export const MAX_BUILDING_FLOORS = 40;
 export type Profile = {
   id: string;
   name: string;
@@ -89,6 +89,16 @@ export function hasLandArea(type: Property["type"]) {
 
 export function hasUnitFloor(type: Property["type"]) {
   return type === "Condo" || type === "Studio" || type === "Penthouse";
+}
+
+export function buildingFloorLimit(property: Property, saved?: Property) {
+  if (
+    saved &&
+    property.floor === saved.floor &&
+    property.total_floors === saved.total_floors
+  )
+    return Math.max(MAX_BUILDING_FLOORS, saved.total_floors ?? 0);
+  return MAX_BUILDING_FLOORS;
 }
 
 export function propertyFloorLabel(floor: number) {
@@ -214,7 +224,7 @@ export function publicationErrors(
   return errors;
 }
 
-export function propertyErrors(property: Property): string[] {
+export function propertyErrors(property: Property, saved?: Property): string[] {
   const errors: string[] = [];
   if (platformPageSlugs.has(slugify(property.location)))
     errors.push(reservedAddressError);
@@ -250,7 +260,7 @@ export function propertyErrors(property: Property): string[] {
     else if (
       !Number.isInteger(total_floors) ||
       total_floors < 0 ||
-      total_floors > MAX_BUILDING_FLOORS
+      total_floors > buildingFloorLimit(property, saved)
     )
       errors.push(
         `Introdu un număr întreg de etaje între 0 și ${MAX_BUILDING_FLOORS}.`,

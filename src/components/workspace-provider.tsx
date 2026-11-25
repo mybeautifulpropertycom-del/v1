@@ -253,14 +253,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (nextProperty.floor != null) nextProperty.floor = null;
       if (nextProperty.total_floors != null) nextProperty.total_floors = null;
     }
-    const fieldErrors = propertyErrors(nextProperty);
+    const existing = current.properties.find((p) => p.id === property.id);
+    const fieldErrors = propertyErrors(nextProperty, existing);
     if (fieldErrors.length) throw new Error(fieldErrors.join(" "));
     if (publish || nextProperty.status === "published") {
       const errors = publicationErrors(nextProperty, current.profile);
       if (errors.length) throw new Error(errors.join(" "));
       nextProperty.status = "published";
     }
-    const existing = current.properties.find((p) => p.id === property.id);
     if (!existing)
       nextProperty.slug = `${slugify(property.title)}-${property.id}`;
     const supabase = getSupabase();

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { ro } from "@/i18n/ro";
 import {
+  buildingFloorLimit,
   createProperty,
   hasLandArea,
   hasUnitFloor,
@@ -126,11 +127,11 @@ export function PropertyEditor({
   const fileInput = useRef<HTMLInputElement>(null);
   const t = ro.editor;
   const guideIssues = propertyGuideIssues(property);
-  const stepRequirement = propertyStepRequirement(property, step);
+  const stepRequirement = propertyStepRequirement(property, step, existing);
   useEffect(() => {
     if (
       new URLSearchParams(window.location.search).has("checkout") &&
-      !propertyDetailsErrors(property).length &&
+      !propertyDetailsErrors(property, existing).length &&
       property.images.length
     )
       setStep(2);
@@ -220,7 +221,7 @@ export function PropertyEditor({
   async function goToStep(next: number) {
     if (busy || uploading || next === step) return;
     if (next > step) {
-      const detailsErrors = propertyDetailsErrors(property);
+      const detailsErrors = propertyDetailsErrors(property, existing);
       if (detailsErrors.length) {
         setStep(0);
         setError(detailsErrors.join(" "));
@@ -646,8 +647,18 @@ export function PropertyEditor({
                                 {propertyFloorLabel(floor)}
                               </option>
                             ))}
+                            {property.floor != null &&
+                              property.floor > MAX_BUILDING_FLOORS && (
+                                <option value={property.floor}>
+                                  {propertyFloorLabel(property.floor)}
+                                </option>
+                              )}
                           </select>
-                          <ChevronDown size={12} aria-hidden="true" />
+                          <ChevronDown
+                            size={12}
+                            strokeWidth={3.5}
+                            aria-hidden="true"
+                          />
                         </div>
                         <span aria-hidden="true">din</span>
                         <input
@@ -655,7 +666,7 @@ export function PropertyEditor({
                           type="number"
                           inputMode="numeric"
                           min="0"
-                          max={MAX_BUILDING_FLOORS}
+                          max={buildingFloorLimit(property, existing)}
                           step="1"
                           placeholder="5"
                           value={property.total_floors ?? ""}

@@ -173,6 +173,8 @@ test("floor and land area save for the selected property type and appear only in
     await expect(floor).toBeVisible();
     await expect(land).toHaveCount(0);
   }
+  await expect(floor.locator("option").last()).toHaveAttribute("value", "40");
+  await expect(total).toHaveAttribute("max", "40");
   await floor.selectOption("3");
   await total.fill("2");
   await save.click();

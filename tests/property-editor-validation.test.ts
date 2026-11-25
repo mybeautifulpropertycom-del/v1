@@ -36,3 +36,28 @@ test("an incomplete draft remains saveable while forward navigation requires val
   ])
     assert.ok(propertyDetailsErrors({ ...draft, ...invalid }).length > 0);
 });
+
+test("new floor details are capped at 40 and previously saved values can be retained", () => {
+  const listing = {
+    ...createProperty("11111111-1111-4111-8111-111111111111"),
+    title: "Apartament luminos",
+    location: "Strada Șipca 9, București",
+    price: 100000,
+    area: 85,
+    floor: 40,
+    total_floors: 40,
+  };
+  const saved = { ...listing, floor: 44, total_floors: 45 };
+  const limitError = "Introdu un număr întreg de etaje între 0 și 40.";
+
+  assert.deepEqual(propertyDetailsErrors(listing), []);
+  assert.deepEqual(propertyErrors(saved), [limitError]);
+  assert.deepEqual(
+    propertyDetailsErrors({ ...saved, title: "Apartament renovat" }, saved),
+    [],
+  );
+  assert.deepEqual(propertyErrors({ ...saved, floor: 40 }, saved), [
+    limitError,
+  ]);
+  assert.deepEqual(propertyErrors(listing, saved), []);
+});
