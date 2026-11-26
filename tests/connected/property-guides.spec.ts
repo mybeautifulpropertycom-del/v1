@@ -72,8 +72,20 @@ test("a guide has its own searchable page and links to the existing property sea
   );
 });
 
+const guideDestinations = {
+  sale: {
+    label: "Vezi apartamentele de vânzare",
+    href: "/cauta/de-vanzare/apartamente",
+  },
+  rent: {
+    label: "Vezi apartamentele de închiriat",
+    href: "/cauta/de-inchiriat/apartamente",
+  },
+  publish: { label: "Publică anunțul de vânzare", href: "/inregistrare" },
+};
+
 for (const article of guideArticles) {
-  test(`${article.slug} has indexable article text and the matching search link`, async ({
+  test(`${article.slug} has indexable article text and a relevant next action`, async ({
     page,
   }) => {
     const path = guideArticlePath(article.slug);
@@ -109,13 +121,10 @@ for (const article of guideArticles) {
       "@type": "Article",
       headline: article.title,
     });
-    const offer = article.offer === "rent" ? "de închiriat" : "de vânzare";
+    const destination = guideDestinations[article.action];
     await expect(
-      page.getByRole("link", { name: `Vezi apartamentele ${offer}` }),
-    ).toHaveAttribute(
-      "href",
-      `/cauta/${article.offer === "rent" ? "de-inchiriat" : "de-vanzare"}/apartamente`,
-    );
+      page.getByRole("link", { name: destination.label }),
+    ).toHaveAttribute("href", destination.href);
     await expect(
       page
         .getByRole("navigation", { name: "Alte ghiduri" })

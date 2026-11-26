@@ -4,7 +4,7 @@ type GuideArticle = {
   seoTitle: string;
   description: string;
   introduction: string;
-  offer: "sale" | "rent";
+  action: "sale" | "rent" | "publish";
   sections: {
     id: string;
     title: string;
@@ -19,10 +19,10 @@ export const guideArticles: GuideArticle[] = [
     title: "Ce acte verifici când cumperi un apartament",
     seoTitle: "Acte necesare pentru cumpărarea unui apartament",
     description:
-      "Vezi ce acte să ceri pentru cumpărarea unui apartament. Bifează verificările dinaintea avansului, semnării și predării cheilor.",
+      "Află ce acte să ceri înainte să cumperi un apartament și ce să verifici în actul de proprietate, cartea funciară și planul cadastral.",
     introduction:
       "Ai găsit un apartament care îți place și discuția a ajuns la avans. Înainte să stabilești suma sau data semnării, cere vânzătorului documentele pe care le are și alege notarul cu care vei discuta. Uită-te cine vinde, ce este înscris în cartea funciară și cum arată apartamentul în plan.",
-    offer: "sale",
+    action: "sale",
     sections: [
       {
         id: "proprietarul",
@@ -70,12 +70,12 @@ export const guideArticles: GuideArticle[] = [
   {
     slug: "costuri-cumparare-apartament",
     title: "Cât te costă să cumperi un apartament",
-    seoTitle: "Calculator de costuri la cumpărarea unui apartament",
+    seoTitle: "Cât costă să cumperi un apartament",
     description:
-      "Calculează costurile de cumpărare cu sau fără credit. Adaugă avansul, notarul, comisionul și mutarea ca să vezi câți bani îți rămân.",
+      "Vezi ce costuri apar când cumperi un apartament, de la avans și notar până la mutare. Estimează bugetul pentru situația ta.",
     introduction:
       "Când deschizi un anunț, prețul e prima cifră pe care o notezi. Merită să mai faci o listă cu banii de care ai nevoie până primești cheile și cu ce vei plăti în lunile următoare. Un apartament ceva mai ieftin poate cere mai mulți bani înainte de mutare dacă trebuie refăcută instalația sau cumpărat mobilierul.",
-    offer: "sale",
+    action: "sale",
     sections: [
       {
         id: "la-semnare",
@@ -108,10 +108,10 @@ export const guideArticles: GuideArticle[] = [
     title: "Ce verifici în contractul de închiriere al unui apartament",
     seoTitle: "Contract de închiriere a unui apartament | Ce verifici",
     description:
-      "Verifică garanția, chiria, facturile și preavizul. Descarcă modelul Word de proces-verbal de predare-primire pentru apartament.",
+      "Află ce să verifici înainte să semnezi contractul de închiriere al unui apartament, de la chirie și garanție până la utilități și preaviz.",
     introduction:
       "La vizionare te gândești unde ai pune masa sau cum ai ajunge dimineața la muncă. Înainte să dai garanția, fă-ți puțin timp și pentru contract. Câteva lucruri puse clar în scris acum îți vor prinde bine dacă o factură vine târziu, se strică un aparat sau trebuie să te muți mai devreme decât ai plănuit.",
-    offer: "rent",
+    action: "rent",
     sections: [
       {
         id: "partile",
@@ -141,6 +141,50 @@ export const guideArticles: GuideArticle[] = [
         title: "Cum anunți o reparație sau o mutare",
         paragraphs: [
           "Stabiliți cui îi scrii când apare o defecțiune și cum vă dați acordul pentru reparații. Citește clauzele despre durata contractului, prelungire, încetare și preaviz. Dacă o formulare poate fi înțeleasă în două feluri, cere să fie clarificată înainte de semnare. La final, păstrează contractul, inventarul și dovezile plăților în același loc.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "pregatire-apartament-pentru-vanzare",
+    title: "Cum pregătești apartamentul pentru vânzare",
+    seoTitle: "Cum pregătești apartamentul pentru vânzare",
+    description:
+      "Află ce merită pregătit înainte să vinzi un apartament, de la acte și mici reparații până la fotografii, stabilirea prețului și vizionări.",
+    introduction:
+      "Începe cu detaliile care răspund la primele întrebări ale cumpărătorului. Ce suprafață are apartamentul, ce lucrări ai făcut și ce rămâne când predai cheile? Apoi pregătește locuința pentru fotografii și vizionări. Uneori, o după-amiază de ordine și câteva detalii verificate fac mai mult pentru prezentare decât o renovare pornită în grabă.",
+    action: "publish",
+    sections: [
+      {
+        id: "date-si-acte",
+        title: "Adună datele și actele înainte să scrii anunțul",
+        paragraphs: [
+          "Verifică suprafața utilă în documente și notează etajul, numărul de dormitoare și anul construcției, dacă îl ai confirmat. Dacă oferi și locul de parcare sau boxa, clarifică dreptul pe care îl transmiți și dacă intră în preț. Cumpărătorul poate decide mai repede dacă merită să vină la vizionare când găsește aceste răspunsuri în anunț.",
+          "Ține la îndemână actul de proprietate și planul cadastral. Dacă ai mutat un perete sau ai schimbat compartimentarea, pregătește documentele pe care le ai și discută din timp cu notarul. Când apare un cumpărător hotărât, vei ști deja ce informații mai trebuie completate.",
+        ],
+      },
+      {
+        id: "ordine-si-reparatii",
+        title: "Fă ordine și repară lucrurile pe care le-ar încerca oricine",
+        paragraphs: [
+          "Începe cu intrarea și spațiile de trecere. Eliberează holul, blatul din bucătărie și suprafețele pe care ai adunat obiecte în timp. Verifică dacă se deschid ușor geamurile, dacă funcționează luminile și dacă robinetele picură. Dacă există o problemă cunoscută, pregătește o explicație clară despre ce ai observat și ce ai făcut până acum.",
+          "Înainte să cumperi materiale pentru o renovare mai mare, cere un deviz și vezi ce rezolvi cu acea lucrare. Un cumpărător poate avea deja alte planuri pentru bucătărie sau baie.",
+        ],
+      },
+      {
+        id: "fotografii",
+        title: "Fotografiază locuința în ordinea în care ai arăta-o",
+        paragraphs: [
+          "Alege un moment din zi cu lumină bună. Ridică jaluzelele, pune deoparte actele și fotografiile personale și fă imagini din care se înțelege cum se leagă camerele. Începe cu fotografia care explică cel mai bine spațiul. Continuă cu celelalte camere și cu balconul, dacă face parte din ofertă.",
+          "Scrie în anunț ce poți confirma. De exemplu, dacă ferestrele au fost schimbate recent, precizează anul doar dacă îl știi. Dacă lași electrocasnice sau mobilier, spune exact ce este inclus.",
+        ],
+      },
+      {
+        id: "pret-si-vizionari",
+        title: "Stabilește prețul și pregătește prima vizionare",
+        paragraphs: [
+          "Compară apartamente din aceeași zonă, cu suprafață și compartimentare apropiate. Uită-te la etaj, starea blocului și la lucrările de care ar avea nevoie fiecare. Prețurile anunțurilor sunt prețuri cerute. Folosește-le ca punct de pornire și discută cu un evaluator sau un agent dacă ai nevoie de o estimare mai bine documentată.",
+          "Înainte de prima vizionare, stabilește când poți preda apartamentul și ce obiecte rămân. Ai la îndemână câteva răspunsuri despre întreținere, încălzire și lucrările din bloc. Lasă vizitatorului timp să vadă camerele și să îți pună întrebările lui.",
         ],
       },
     ],

@@ -16,6 +16,24 @@ export const dynamicParams = false;
 
 type Props = { params: Promise<{ slug: string }> };
 
+const guideActions = {
+  sale: {
+    title: "Caută un apartament de cumpărat",
+    label: "Vezi apartamentele de vânzare",
+    href: discoveryPath({ transaction: "sale", kind: "apartamente" }),
+  },
+  rent: {
+    title: "Caută un apartament de închiriat",
+    label: "Vezi apartamentele de închiriat",
+    href: discoveryPath({ transaction: "rent", kind: "apartamente" }),
+  },
+  publish: {
+    title: "Pregătit să vinzi apartamentul?",
+    label: "Publică anunțul de vânzare",
+    href: "/inregistrare",
+  },
+} as const;
+
 export function generateStaticParams() {
   return guideArticles.map(({ slug }) => ({ slug }));
 }
@@ -49,7 +67,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 export default async function GuideArticlePage(props: Props) {
   const article = await readArticle(props);
   const path = guideArticlePath(article.slug);
-  const rent = article.offer === "rent";
+  const action = guideActions[article.action];
   const resource = articleResources[article.slug];
   return (
     <div className={`discovery-site ${styles.site}`}>
@@ -124,21 +142,9 @@ export default async function GuideArticlePage(props: Props) {
             </section>
           )}
           <aside className={styles.next} aria-labelledby="oferte">
-            <h2 id="oferte">
-              {rent
-                ? "Caută un apartament de închiriat"
-                : "Caută un apartament de cumpărat"}
-            </h2>
-            <Link
-              href={discoveryPath({
-                transaction: article.offer,
-                kind: "apartamente",
-              })}
-            >
-              {rent
-                ? "Vezi apartamentele de închiriat"
-                : "Vezi apartamentele de vânzare"}{" "}
-              <ArrowRight size={17} aria-hidden="true" />
+            <h2 id="oferte">{action.title}</h2>
+            <Link href={action.href}>
+              {action.label} <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </aside>
         </article>

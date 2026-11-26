@@ -39,12 +39,11 @@ export default function ApartmentViewingGuide() {
           <header className={styles.intro}>
             <h1>{viewingGuide.title}</h1>
             <p>
-              Dacă după vizionare îți amintești mai ales cum intra lumina în
-              living, e ușor să uiți ce voiai să întrebi. Îți propunem să faci
-              vizita în ordinea în care ai ajunge acasă într-o zi obișnuită.
-              Începe cu drumul până la bloc, apoi ia la rând spațiile prin care
-              ai trece zilnic. Lasă câteva minute la final pentru cheltuieli și
-              acte.
+              Înainte să cumperi un apartament, verifică starea blocului și a
+              locuinței, cere câteva facturi și compară compartimentarea cu
+              planul cadastral. La vizionare poți observa ce ai folosi zilnic.
+              Înainte să dai un avans, clarifică actele și întrebările rămase cu
+              notarul, banca sau un specialist, după caz.
             </p>
             <a className={toolStyles.jump} href="#checklist">
               Deschide lista de vizionare
@@ -75,6 +74,12 @@ export default function ApartmentViewingGuide() {
               dacă există, și verifică adresa în evidențele publice locale. Dacă
               ai nelămuriri despre starea blocului, discută cu un inginer
               structurist înainte să iei o decizie.
+            </p>
+            <p>
+              Într-un bloc vechi, întreabă ce lucrări s-au făcut efectiv și în
+              ce an. Dacă apartamentul este într-un bloc nou, verifică ce spații
+              comune, locuri de parcare și finisaje sunt incluse în oferta pe
+              care ai primit-o.
             </p>
           </section>
           <section id={apartment.id} className={styles.section}>
