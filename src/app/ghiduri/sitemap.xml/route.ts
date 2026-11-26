@@ -1,6 +1,7 @@
 import { publicIndexing } from "@/lib/seo";
 import { discoverySitemapUrls, xmlResponse } from "@/lib/sitemap";
 import { guideArticlePath, guideArticles } from "../articles";
+import { apartmentQuestions } from "../apartment-questions";
 import { viewingGuide } from "../vizionare-apartament-bloc-vechi/guide";
 
 export function GET() {
@@ -8,7 +9,9 @@ export function GET() {
   return xmlResponse(
     discoverySitemapUrls([
       viewingGuide.path,
-      ...guideArticles.map(({ slug }) => guideArticlePath(slug)),
+      ...[...guideArticles, ...apartmentQuestions].map(({ slug }) =>
+        guideArticlePath(slug),
+      ),
     ]),
   );
 }

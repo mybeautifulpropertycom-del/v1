@@ -1,22 +1,34 @@
 import { expect, test } from "@playwright/test";
-import {
-  apartmentQuestionPath,
-  apartmentQuestions,
-} from "../../src/app/alege/apartment-questions";
+import { apartmentQuestions } from "../../src/app/ghiduri/apartment-questions";
+import { guideArticlePath } from "../../src/app/ghiduri/articles";
 
-test("buyer questions have their own canonical pages and sitemap", async ({
+test("buyer questions use canonical guide URLs and preserve their old links", async ({
   page,
   request,
 }) => {
-  const sitemap = await request.get("/alege/sitemap.xml");
+  const sitemap = await request.get("/ghiduri/sitemap.xml");
   expect(sitemap.status()).toBe(200);
   const xml = await sitemap.text();
+  expect(xml).not.toContain("/alege/");
+  const oldSitemap = await request.get("/alege/sitemap.xml", {
+    maxRedirects: 0,
+  });
+  expect(oldSitemap.status()).toBe(308);
+  expect(oldSitemap.headers().location).toBe("/ghiduri/sitemap.xml");
 
   await page.setViewportSize({ width: 390, height: 844 });
   for (const question of apartmentQuestions) {
-    const path = apartmentQuestionPath(question.slug);
+    const path = guideArticlePath(question.slug);
     const canonical = `https://urmatoarea-proprietate.ro${path}`;
     expect(xml).toContain(`<loc>${canonical}</loc>`);
+    const previous = await request.get(
+      `/alege/${question.slug}?utm_source=exemplu`,
+      {
+        maxRedirects: 0,
+      },
+    );
+    expect(previous.status()).toBe(308);
+    expect(previous.headers().location).toBe(`${path}?utm_source=exemplu`);
     expect((await page.goto(path))?.status()).toBe(200);
     await expect(page).toHaveTitle(question.title);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
@@ -60,4 +72,7 @@ test("buyer questions have their own canonical pages and sitemap", async ({
 
   const mainSitemap = await request.get("/sitemap.xml");
   expect(await mainSitemap.text()).not.toContain("/alege/");
+  expect(
+    (await request.get("/alege/necunoscut", { maxRedirects: 0 })).status(),
+  ).toBe(404);
 });

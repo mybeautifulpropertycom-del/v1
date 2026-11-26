@@ -7,6 +7,8 @@ import { discoveryPath } from "@/lib/property-discovery";
 import { publicRobots, serializeJsonLd, siteUrl, SITE_NAME } from "@/lib/seo";
 import "@/styles/discovery.css";
 import { guideArticlePath, guideArticles } from "../articles";
+import { ApartmentQuestionPage } from "../apartment-question-page";
+import { apartmentQuestions } from "../apartment-questions";
 import { articleResources } from "../article-resources";
 import { GuideLinks } from "../guide-links";
 import toolStyles from "../guide-tools.module.css";
@@ -35,12 +37,16 @@ const guideActions = {
 } as const;
 
 export function generateStaticParams() {
-  return guideArticles.map(({ slug }) => ({ slug }));
+  return [...guideArticles, ...apartmentQuestions].map(({ slug }) => ({
+    slug,
+  }));
 }
 
 async function readArticle({ params }: Props) {
   const { slug } = await params;
-  const article = guideArticles.find((item) => item.slug === slug);
+  const article =
+    guideArticles.find((item) => item.slug === slug) ??
+    apartmentQuestions.find((item) => item.slug === slug);
   if (!article) notFound();
   return article;
 }
@@ -48,14 +54,15 @@ async function readArticle({ params }: Props) {
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const article = await readArticle(props);
   const url = siteUrl(guideArticlePath(article.slug));
+  const title = "seoTitle" in article ? article.seoTitle : article.title;
   return {
-    title: { absolute: article.seoTitle },
+    title: { absolute: title },
     description: article.description,
     alternates: { canonical: url },
     robots: publicRobots(),
     openGraph: {
       type: "article",
-      title: article.seoTitle,
+      title,
       description: article.description,
       url,
       locale: "ro_RO",
@@ -66,6 +73,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function GuideArticlePage(props: Props) {
   const article = await readArticle(props);
+  if ("answer" in article) return <ApartmentQuestionPage question={article} />;
   const path = guideArticlePath(article.slug);
   const action = guideActions[article.action];
   const resource = articleResources[article.slug];

@@ -1,4 +1,4 @@
-type ApartmentQuestion = {
+export type ApartmentQuestion = {
   slug: string;
   title: string;
   description: string;
@@ -101,7 +101,3 @@ export const apartmentQuestions: ApartmentQuestion[] = [
     ],
   },
 ];
-
-export function apartmentQuestionPath(slug: string) {
-  return `/alege/${slug}`;
-}
