@@ -120,6 +120,20 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     await bringIntoView(startSection);
     await expect(bar).toBeHidden();
   });
+
+  test(`${template}: the mobile call button identifies a property owner`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/owner-contact-test-${template}`);
+    await page.locator(startSection).scrollIntoViewIfNeeded();
+    const call = page.locator(".property-mobile-contact").getByRole("link", {
+      name: "Apelează proprietarul",
+      exact: true,
+    });
+    await expect(call).toBeVisible();
+    await expect(call).toHaveAttribute("href", "tel:+40700000000");
+  });
 }
 
 test("published listings show three stacked sharing cards and copy the saved canonical link", async ({

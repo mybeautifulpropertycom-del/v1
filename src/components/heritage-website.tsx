@@ -611,6 +611,7 @@ export function HeritageWebsite({
       <PropertyMobileContact
         phone={profile.phone}
         location={property.location}
+        profileRole={profile.profile_role}
         startSection="gallery"
       />
       {viewing && (

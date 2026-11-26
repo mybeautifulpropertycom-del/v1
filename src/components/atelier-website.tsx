@@ -690,6 +690,7 @@ export function AtelierWebsite({
       <PropertyMobileContact
         phone={profile.phone}
         location={property.location}
+        profileRole={profile.profile_role}
       />
       {lightbox !== null && property.images.length > 0 && (
         <PropertyPhotoDialog

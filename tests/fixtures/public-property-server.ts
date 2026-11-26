@@ -209,11 +209,12 @@ globalThis.fetch = async (input, init) => {
       profile: sample.profile,
     });
   }
-  const photoOnly = /^photos-test-(editorial|minimal|panorama)$/.exec(
-    body.property_slug || "",
-  )?.[1];
+  const photoOnly =
+    /^(photos|owner-contact)-test-(editorial|minimal|panorama)$/.exec(
+      body.property_slug || "",
+    );
   const mapTemplate =
-    photoOnly ||
+    photoOnly?.[2] ||
     /^map-test-(editorial|minimal|panorama|unmapped|manual|incomplete)$/.exec(
       body.property_slug || "",
     )?.[1];
@@ -243,7 +244,12 @@ globalThis.fetch = async (input, init) => {
                 : "Strada Test 123, București, România",
         google_place_id: hasSavedPin ? "ChIJ-test-home" : null,
       },
-      profile: sample.profile,
+      profile: photoOnly
+        ? {
+            ...sample.profile,
+            profile_role: photoOnly[1] === "owner-contact" ? "owner" : "agent",
+          }
+        : sample.profile,
     });
   }
   if (!["print-test-home", "print-test-address"].includes(body.property_slug))

@@ -59,7 +59,7 @@ export type PublicProperty = Omit<
   Property,
   "owner_id" | "created_at" | "updated_at"
 >;
-export type PublicProfile = Omit<Profile, "id" | "profile_role">;
+export type PublicProfile = Omit<Profile, "id">;
 
 const platformPageSlugs = new Set(
   platformRedirects.map(([, destination]) => destination.split("/")[1]),

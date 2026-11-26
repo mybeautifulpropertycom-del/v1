@@ -202,6 +202,23 @@ commit;
 select 'MBP_PROFILE_ROLE_READY' as status;
 `,
 );
+const publicPropertyProfileRole = await readFile(
+  new URL("202611260001_public_property_profile_role.sql", directory),
+  "utf8",
+);
+await writeFile(
+  new URL(
+    "../supabase/sql-editor-public-property-profile-role.sql",
+    import.meta.url,
+  ),
+  `-- Existing installations with publication packages and profile roles. Safe to rerun.
+begin;
+${publicPropertyProfileRole.trim()}
+notify pgrst, 'reload schema';
+commit;
+select 'MBP_PUBLIC_PROPERTY_PROFILE_ROLE_READY' as status;
+`,
+);
 const discovery = await readFile(
   new URL("202611230004_property_discovery.sql", directory),
   "utf8",

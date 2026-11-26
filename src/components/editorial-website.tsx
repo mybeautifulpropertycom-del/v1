@@ -846,6 +846,7 @@ export function EditorialWebsite({
       <PropertyMobileContact
         phone={profile.phone}
         location={property.location}
+        profileRole={profile.profile_role}
       />
       {viewing && (
         <ViewingDialog

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Phone } from "lucide-react";
+import type { PublicProfile } from "@/lib/model";
 import {
   PropertyWhatsAppLink,
   whatsappPhoneNumber,
@@ -11,10 +12,12 @@ import "@/styles/property-mobile-contact.css";
 export function PropertyMobileContact({
   phone,
   location,
+  profileRole,
   startSection = "details",
 }: {
   phone: string;
   location: string;
+  profileRole: PublicProfile["profile_role"];
   startSection?: "details" | "gallery";
 }) {
   const number = whatsappPhoneNumber(phone);
@@ -78,7 +81,9 @@ export function PropertyMobileContact({
       <PropertyWhatsAppLink phone={phone} location={location} compact />
       <a className="property-mobile-call" href={`tel:+${number}`}>
         <Phone size={16} aria-hidden="true" />
-        Apelează vânzătorul
+        {profileRole === "owner"
+          ? "Apelează proprietarul"
+          : "Apelează vânzătorul"}
       </a>
     </aside>
   );

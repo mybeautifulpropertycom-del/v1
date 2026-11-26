@@ -25,13 +25,16 @@ test("package tariffs, administrator grants and paid fulfilment cannot create vi
     const directory = new URL("../supabase/migrations/", import.meta.url);
     const upgradeName = "202611170001_publication_packages.sql";
     const freeUpgradeName = "202611240003_free_photo_publication.sql";
+    const publicRoleUpgradeName =
+      "202611260001_public_property_profile_role.sql";
     for (const name of (await readdir(directory))
       .sort()
       .filter(
         (name) =>
           name.endsWith(".sql") &&
           name !== upgradeName &&
-          name !== freeUpgradeName,
+          name !== freeUpgradeName &&
+          name !== publicRoleUpgradeName,
       ))
       await db.exec(await readFile(new URL(name, directory), "utf8"));
     await db.query(
@@ -148,6 +151,29 @@ test("package tariffs, administrator grants and paid fulfilment cannot create vi
     assert.equal(publicPhoto.videoIncluded, false);
     assert.equal(publicPhoto.film, null);
     assert.equal(publicPhoto.property.owner_id, undefined);
+    const publicRoleUpgrade = await readFile(
+      new URL(
+        "../supabase/sql-editor-public-property-profile-role.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    await db.exec(publicRoleUpgrade);
+    await db.exec(publicRoleUpgrade);
+    await db.query("update profiles set profile_role='owner' where id=$1", [
+      owner,
+    ]);
+    await db.exec("set role anon");
+    const withRole = (
+      await db.query<{ page: unknown }>(
+        "select get_public_property('test-package-1') as page",
+      )
+    ).rows[0].page;
+    assert.deepEqual(withRole, {
+      ...publicPhoto,
+      profile: { ...publicPhoto.profile, profile_role: "owner" },
+    });
+    await db.exec("reset role");
     const adminPhoto = (
       await db.query<any>(
         "select admin_publish_property($1,$2,'Fără videoclip',null,null,false) as result",
