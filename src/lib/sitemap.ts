@@ -85,9 +85,21 @@ export function sitemapUrls(items?: SitemapItem[]): string {
   return `${header}<urlset ${namespace}>${urls.join("")}</urlset>`;
 }
 
-export function discoverySitemapUrls(paths: string[]): string {
-  return `${header}<urlset ${namespace}>${[...new Set(paths)]
-    .map((path) => `<url><loc>${xmlEscape(siteUrl(path))}</loc></url>`)
+export function discoverySitemapUrls(
+  paths: string[],
+  images?: ReadonlyMap<string, string>,
+): string {
+  const imageNamespace = images?.size
+    ? ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'
+    : "";
+  return `${header}<urlset ${namespace}${imageNamespace}>${[...new Set(paths)]
+    .map((path) => {
+      const image = images?.get(path);
+      const imageEntry = image
+        ? `<image:image><image:loc>${xmlEscape(siteUrl(image))}</image:loc></image:image>`
+        : "";
+      return `<url><loc>${xmlEscape(siteUrl(path))}</loc>${imageEntry}</url>`;
+    })
     .join("")}</urlset>`;
 }
 

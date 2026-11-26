@@ -32,6 +32,25 @@
   font-size: clamp(1.06rem, 2vw, 1.2rem);
 }
 
+.illustration {
+  margin: clamp(24px, 5vw, 38px) 0 0;
+}
+
+.illustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #dfd8cb;
+  border-radius: 14px;
+}
+
+.illustration figcaption {
+  margin-top: 10px;
+  color: #46554a;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
 .section,
 .next {
   margin-top: clamp(35px, 6vw, 56px);

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { DiscoveryHeader } from "@/components/discovery-header";
@@ -5,6 +6,7 @@ import { discoveryPath } from "@/lib/property-discovery";
 import { serializeJsonLd, siteUrl, SITE_NAME } from "@/lib/seo";
 import {
   apartmentQuestions,
+  apartmentQuestionImageSize,
   type ApartmentQuestion,
 } from "./apartment-questions";
 import { guideArticlePath } from "./articles";
@@ -27,6 +29,7 @@ export function ApartmentQuestionPage({
             headline: question.title,
             description: question.description,
             mainEntityOfPage: url,
+            image: [siteUrl(question.image.src)],
             inLanguage: "ro-RO",
             publisher: {
               "@type": "Organization",
@@ -43,6 +46,15 @@ export function ApartmentQuestionPage({
             <h1>{question.title}</h1>
             <p>{question.answer}</p>
           </header>
+          <figure className={styles.illustration}>
+            <Image
+              src={question.image.src}
+              alt={question.image.alt}
+              {...apartmentQuestionImageSize}
+              unoptimized
+            />
+            <figcaption>{question.image.caption}</figcaption>
+          </figure>
           {question.sections.map(({ title, paragraphs }) => (
             <section className={styles.section} key={title}>
               <h2>{title}</h2>

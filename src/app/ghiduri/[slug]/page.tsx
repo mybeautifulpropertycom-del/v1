@@ -8,7 +8,10 @@ import { publicRobots, serializeJsonLd, siteUrl, SITE_NAME } from "@/lib/seo";
 import "@/styles/discovery.css";
 import { guideArticlePath, guideArticles } from "../articles";
 import { ApartmentQuestionPage } from "../apartment-question-page";
-import { apartmentQuestions } from "../apartment-questions";
+import {
+  apartmentQuestionImageSize,
+  apartmentQuestions,
+} from "../apartment-questions";
 import { articleResources } from "../article-resources";
 import { GuideLinks } from "../guide-links";
 import toolStyles from "../guide-tools.module.css";
@@ -55,6 +58,15 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const article = await readArticle(props);
   const url = siteUrl(guideArticlePath(article.slug));
   const title = "seoTitle" in article ? article.seoTitle : article.title;
+  const image =
+    "image" in article
+      ? {
+          url: siteUrl(article.image.src),
+          alt: article.image.alt,
+          type: "image/webp",
+          ...apartmentQuestionImageSize,
+        }
+      : undefined;
   return {
     title: { absolute: title },
     description: article.description,
@@ -67,7 +79,16 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       url,
       locale: "ro_RO",
       siteName: SITE_NAME,
+      ...(image && { images: [image] }),
     },
+    ...(image && {
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description: article.description,
+        images: [image],
+      },
+    }),
   };
 }
 

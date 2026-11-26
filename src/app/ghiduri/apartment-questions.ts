@@ -3,8 +3,11 @@ export type ApartmentQuestion = {
   title: string;
   description: string;
   answer: string;
+  image: { src: string; alt: string; caption: string };
   sections: { title: string; paragraphs: string[] }[];
 };
+
+export const apartmentQuestionImageSize = { width: 1200, height: 675 } as const;
 
 export const apartmentQuestions: ApartmentQuestion[] = [
   {
@@ -14,6 +17,12 @@ export const apartmentQuestions: ApartmentQuestion[] = [
       "Compară un apartament într-un bloc nou cu unul într-un bloc vechi. Vezi ce contează la predare, cum verifici starea blocului și ce lucrări sunt necesare.",
     answer:
       "Compară apartamentele după ce primești la predare, cum este întreținut blocul și cât de bine ți se potrivește zona. Dacă te poți muta imediat într-unul dintre ele, iar celălalt cere lucrări sau luni de așteptare, ia în calcul și ce presupun acele luni pentru tine.",
+    image: {
+      src: "/images/ghiduri/apartament-nou-sau-vechi.webp",
+      alt: "Ilustrație comparativă cu un bloc nou și unul vechi, cu repere despre finisaje, predare, instalații și lucrări",
+      caption:
+        "La blocul nou verifici ce primești la predare. La blocul vechi te interesează și lucrările făcute în clădire.",
+    },
     sections: [
       {
         title: "Ce verifici la un apartament într-un bloc nou",
@@ -45,6 +54,12 @@ export const apartmentQuestions: ApartmentQuestion[] = [
       "Află ce înseamnă apartament decomandat și semidecomandat. Compară accesul în camere, intimitatea și modul în care vei folosi livingul.",
     answer:
       "Într-un apartament decomandat, camerele au acces separat din hol. La un semidecomandat, treci de obicei printr-o cameră, adesea prin living, ca să ajungi în altă parte a locuinței. Planul îți arată traseul exact, iar acesta contează mai ales când mai multe persoane au programe diferite.",
+    image: {
+      src: "/images/ghiduri/decomandat-sau-semidecomandat.webp",
+      alt: "Schemă comparativă de compartimentare, cu acces separat din hol în stânga și traseu spre dormitor prin living în dreapta",
+      caption:
+        "Săgețile arată traseul de la intrare. În exemplul decomandat, holul duce separat la living și dormitor.",
+    },
     sections: [
       {
         title: "Cum recunoști compartimentarea pe plan",
@@ -76,6 +91,12 @@ export const apartmentQuestions: ApartmentQuestion[] = [
       "Compară parterul, etajele intermediare și ultimul etaj când cumperi un apartament. Vezi ce să verifici la lift, lumină, zgomot și acoperiș.",
     answer:
       "Alege etajul după felul în care vei folosi apartamentul. La parter contează accesul și intimitatea. La etajele intermediare merită să verifici lumina și zgomotul de la vecini. La ultimul etaj, întreabă despre acoperiș și cât de cald se face vara.",
+    image: {
+      src: "/images/ghiduri/parter-etaj-intermediar-sau-ultimul-etaj.webp",
+      alt: "Schemă a unui bloc cu parterul, un etaj intermediar și ultimul etaj marcate, alături de verificările pentru fiecare nivel",
+      caption:
+        "De la intrarea în bloc până la acoperiș, ce merită să verifici depinde de etajul la care se află apartamentul.",
+    },
     sections: [
       {
         title: "Parterul și etajele joase",

@@ -6,12 +6,21 @@ import { viewingGuide } from "../vizionare-apartament-bloc-vechi/guide";
 
 export function GET() {
   if (!publicIndexing()) return new Response("Not found", { status: 404 });
-  return xmlResponse(
-    discoverySitemapUrls([
-      viewingGuide.path,
-      ...[...guideArticles, ...apartmentQuestions].map(({ slug }) =>
-        guideArticlePath(slug),
-      ),
+  const images = new Map(
+    apartmentQuestions.map(({ slug, image }) => [
+      guideArticlePath(slug),
+      image.src,
     ]),
+  );
+  return xmlResponse(
+    discoverySitemapUrls(
+      [
+        viewingGuide.path,
+        ...[...guideArticles, ...apartmentQuestions].map(({ slug }) =>
+          guideArticlePath(slug),
+        ),
+      ],
+      images,
+    ),
   );
 }
