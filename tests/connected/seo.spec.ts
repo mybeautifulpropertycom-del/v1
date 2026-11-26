@@ -7,10 +7,12 @@ test("the public sitemap leads crawlers directly to indexable canonical pages", 
 }) => {
   const options = { maxRedirects: 0, headers: { "User-Agent": "Googlebot" } };
   const robots = await request.get("/robots.txt", options);
-  expect(await robots.text()).toContain(
+  const robotsText = await robots.text();
+  expect(robotsText).toContain("User-Agent: *\nAllow: /\nDisallow: /api/");
+  expect(robotsText).toContain(
     "Sitemap: https://urmatoarea-proprietate.ro/sitemap.xml",
   );
-  expect(await robots.text()).toContain(
+  expect(robotsText).toContain(
     "Sitemap: https://urmatoarea-proprietate.ro/sitemap.xml/main.xml",
   );
 
@@ -33,7 +35,11 @@ test("the public sitemap leads crawlers directly to indexable canonical pages", 
       const canonical = /<link rel="canonical" href="([^"]+)"/.exec(head)?.[1];
       expect(canonical && new URL(canonical).href, url).toBe(url);
       expect(head).toContain('name="robots" content="index, follow"');
-      expect(head).toContain('href="/favicon.ico');
+      const icons = head.match(/<link rel="icon"[^>]+>/g) ?? [];
+      expect(icons).toHaveLength(1);
+      expect(icons[0]).toContain('href="/icon.png"');
+      expect(icons[0]).toContain('type="image/png"');
+      expect(icons[0]).toContain('sizes="96x96"');
       if (url.endsWith("/print-test-address")) {
         expect(head).toContain(
           "<title>Casă de vânzare în Floreasca | Strada Test 123, București</title>",
@@ -53,12 +59,24 @@ test("the public sitemap leads crawlers directly to indexable canonical pages", 
   expect(missing.status()).toBe(404);
   expect(await missing.text()).toMatch(/name="robots" content="noindex/);
 
-  const icon = await request.get("/favicon.ico", options);
-  expect(icon.status()).toBe(200);
-  expect(icon.headers()["content-type"]).toMatch(
+  const png = await request.get("/icon.png", {
+    maxRedirects: 0,
+    headers: { "User-Agent": "Googlebot-Image/1.0" },
+  });
+  expect(png.status()).toBe(200);
+  expect(png.headers()["content-type"]).toMatch(/^image\/png/);
+  expect(png.headers()["x-robots-tag"]).toBeUndefined();
+  const pngBytes = await png.body();
+  expect(pngBytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+  expect(pngBytes.readUInt32BE(16)).toBe(96);
+  expect(pngBytes.readUInt32BE(20)).toBe(96);
+
+  const legacyIcon = await request.get("/favicon.ico", options);
+  expect(legacyIcon.status()).toBe(200);
+  expect(legacyIcon.headers()["content-type"]).toMatch(
     /image\/(?:x-icon|vnd\.microsoft\.icon)/,
   );
-  const iconBytes = await icon.body();
+  const iconBytes = await legacyIcon.body();
   expect(iconBytes.readUInt16LE(2)).toBe(1);
   expect(iconBytes.readUInt16LE(4)).toBeGreaterThan(1);
 });

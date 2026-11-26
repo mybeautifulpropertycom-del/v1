@@ -22,6 +22,10 @@ export const metadata: Metadata = {
     template: "%s | Următoarea Proprietate",
   },
   description: HOME_DESCRIPTION,
+  // Give search crawlers a stable URL for the platform favicon.
+  icons: {
+    icon: { url: "/icon.png", type: "image/png", sizes: "96x96" },
+  },
 };
 
 export default function RootLayout({
