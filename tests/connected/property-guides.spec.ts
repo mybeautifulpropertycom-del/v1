@@ -15,7 +15,15 @@ test("a guide has its own searchable page and links to the existing property sea
   const canonical = `https://urmatoarea-proprietate.ro${viewingGuide.path}`;
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(viewingGuide.path);
-  await expect(page).toHaveTitle(viewingGuide.title);
+  await expect(page).toHaveTitle(viewingGuide.seoTitle);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    viewingGuide.description,
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content",
+    viewingGuide.seoTitle,
+  );
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     viewingGuide.title,
   );
@@ -72,13 +80,17 @@ for (const article of guideArticles) {
     await page.setViewportSize({ width: 390, height: 844 });
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);
-    await expect(page).toHaveTitle(article.title);
+    await expect(page).toHaveTitle(article.seoTitle);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       article.title,
     );
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       "content",
       article.description,
+    );
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      "content",
+      article.seoTitle,
     );
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
       "content",

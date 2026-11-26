@@ -1,6 +1,7 @@
 type GuideArticle = {
   slug: string;
   title: string;
+  seoTitle: string;
   description: string;
   introduction: string;
   offer: "sale" | "rent";
@@ -16,8 +17,9 @@ export const guideArticles: GuideArticle[] = [
   {
     slug: "acte-cumparare-apartament",
     title: "Ce acte verifici când cumperi un apartament",
+    seoTitle: "Acte necesare pentru cumpărarea unui apartament",
     description:
-      "Află ce să verifici în actul de proprietate, cartea funciară și planul cadastral înainte de a semna sau de a plăti un avans pentru apartament.",
+      "Vezi ce acte să ceri pentru cumpărarea unui apartament. Bifează verificările dinaintea avansului, semnării și predării cheilor.",
     introduction:
       "Ai găsit un apartament care îți place și discuția a ajuns la avans. Înainte să stabilești suma sau data semnării, cere vânzătorului documentele pe care le are și alege notarul cu care vei discuta. Uită-te cine vinde, ce este înscris în cartea funciară și cum arată apartamentul în plan.",
     offer: "sale",
@@ -68,8 +70,9 @@ export const guideArticles: GuideArticle[] = [
   {
     slug: "costuri-cumparare-apartament",
     title: "Cât te costă să cumperi un apartament",
+    seoTitle: "Calculator de costuri la cumpărarea unui apartament",
     description:
-      "Calculează bugetul de cumpărare dincolo de prețul afișat. Pune deoparte bani pentru semnare, credit, mutare și primele lucrări.",
+      "Calculează costurile de cumpărare cu sau fără credit. Adaugă avansul, notarul, comisionul și mutarea ca să vezi câți bani îți rămân.",
     introduction:
       "Când deschizi un anunț, prețul e prima cifră pe care o notezi. Merită să mai faci o listă cu banii de care ai nevoie până primești cheile și cu ce vei plăti în lunile următoare. Un apartament ceva mai ieftin poate cere mai mulți bani înainte de mutare dacă trebuie refăcută instalația sau cumpărat mobilierul.",
     offer: "sale",
@@ -103,8 +106,9 @@ export const guideArticles: GuideArticle[] = [
   {
     slug: "contract-inchiriere-apartament",
     title: "Ce verifici în contractul de închiriere al unui apartament",
+    seoTitle: "Contract de închiriere a unui apartament | Ce verifici",
     description:
-      "Verifică înainte de semnare garanția, plata chiriei, utilitățile, reparațiile și inventarul de predare al apartamentului.",
+      "Verifică garanția, chiria, facturile și preavizul. Descarcă modelul Word de proces-verbal de predare-primire pentru apartament.",
     introduction:
       "La vizionare te gândești unde ai pune masa sau cum ai ajunge dimineața la muncă. Înainte să dai garanția, fă-ți puțin timp și pentru contract. Câteva lucruri puse clar în scris acum îți vor prinde bine dacă o factură vine târziu, se strică un aparat sau trebuie să te muți mai devreme decât ai plănuit.",
     offer: "rent",

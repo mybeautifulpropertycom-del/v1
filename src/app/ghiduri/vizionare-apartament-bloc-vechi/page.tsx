@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { DiscoveryHeader } from "@/components/discovery-header";
 import { discoveryPath } from "@/lib/property-discovery";
-import { publicRobots, siteUrl } from "@/lib/seo";
+import { publicRobots, siteUrl, SITE_NAME } from "@/lib/seo";
 import "@/styles/discovery.css";
 import { GuideChecklist } from "../guide-checklist";
 import { apartmentViewingChecklist } from "../guide-checklists";
@@ -12,11 +12,21 @@ import toolStyles from "../guide-tools.module.css";
 import { viewingGuide } from "./guide";
 import styles from "./guide.module.css";
 
+const canonical = siteUrl(viewingGuide.path);
+
 export const metadata: Metadata = {
-  title: { absolute: viewingGuide.title },
+  title: { absolute: viewingGuide.seoTitle },
   description: viewingGuide.description,
-  alternates: { canonical: siteUrl(viewingGuide.path) },
+  alternates: { canonical },
   robots: publicRobots(),
+  openGraph: {
+    type: "article",
+    title: viewingGuide.seoTitle,
+    description: viewingGuide.description,
+    url: canonical,
+    locale: "ro_RO",
+    siteName: SITE_NAME,
+  },
 };
 
 export default function ApartmentViewingGuide() {

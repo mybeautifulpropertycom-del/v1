@@ -31,13 +31,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const article = await readArticle(props);
   const url = siteUrl(guideArticlePath(article.slug));
   return {
-    title: { absolute: article.title },
+    title: { absolute: article.seoTitle },
     description: article.description,
     alternates: { canonical: url },
     robots: publicRobots(),
     openGraph: {
       type: "article",
-      title: article.title,
+      title: article.seoTitle,
       description: article.description,
       url,
       locale: "ro_RO",
