@@ -70,7 +70,7 @@
   font-size: 1.05rem;
 }
 
-.contents ol {
+.contents :is(ol, ul) {
   margin: 0;
   padding-left: 22px;
   line-height: 1.65;

@@ -5,6 +5,7 @@ import { DiscoveryHeader } from "@/components/discovery-header";
 import { discoveryPath } from "@/lib/property-discovery";
 import { publicRobots, siteUrl } from "@/lib/seo";
 import "@/styles/discovery.css";
+import { GuideLinks } from "../guide-links";
 import { viewingGuide } from "./guide";
 import styles from "./guide.module.css";
 
@@ -113,6 +114,7 @@ export default function ApartmentViewingGuide() {
             </Link>
           </aside>
         </article>
+        <GuideLinks currentPath={viewingGuide.path} />
       </main>
     </div>
   );
