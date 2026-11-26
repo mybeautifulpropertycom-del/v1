@@ -1,0 +1,97 @@
+.site {
+  min-height: 100svh;
+  background: #f5f2eb;
+  color: #26372d;
+}
+
+.main {
+  width: min(calc(100% - 40px), 1080px);
+  margin-inline: auto;
+  padding-block: clamp(42px, 8vw, 86px);
+}
+
+.intro {
+  max-width: 800px;
+  margin-bottom: clamp(26px, 5vw, 42px);
+}
+
+.intro h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2rem, 5vw, 3.65rem);
+  letter-spacing: -0.041em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.intro p,
+.aside p {
+  margin: 0;
+  color: #46584d;
+  line-height: 1.65;
+}
+
+.intro p {
+  max-width: 65ch;
+  font-size: clamp(1.05rem, 2vw, 1.18rem);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: clamp(24px, 5vw, 54px);
+}
+
+.calculator {
+  padding: clamp(16px, 4vw, 28px);
+  border: 1px solid #d9ddd2;
+  border-radius: 17px;
+  background: #fffdf8;
+}
+
+.calculator h2,
+.aside h2 {
+  margin: 0 0 13px;
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  letter-spacing: -0.02em;
+}
+
+.aside p + p {
+  margin-top: 12px;
+}
+
+.aside a {
+  color: #2b553e;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.aside > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  font-weight: 750;
+}
+
+.related {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #d9ddd2;
+}
+
+.related h2 {
+  font-size: 1.06rem;
+}
+
+.related ul {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.65;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
