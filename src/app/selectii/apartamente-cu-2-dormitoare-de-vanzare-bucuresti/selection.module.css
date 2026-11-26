@@ -1,0 +1,163 @@
+.site {
+  min-height: 100svh;
+  background: #f7f3ed;
+  color: #26352d;
+}
+
+.main {
+  width: min(100% - 2 * clamp(19px, 6vw, 64px), 1070px);
+  margin-inline: auto;
+  padding-block: clamp(44px, 7vw, 95px);
+}
+
+.intro {
+  max-width: 810px;
+  margin-bottom: clamp(35px, 6vw, 68px);
+}
+
+.location {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  color: #775637;
+}
+
+.intro h1 {
+  margin: 12px 0 16px;
+  font-size: clamp(2rem, 5vw, 3.8rem);
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.intro > p:last-child,
+.guide p {
+  max-width: 65ch;
+  margin: 0;
+  color: #46554a;
+  line-height: 1.65;
+}
+
+.offers h2,
+.guide h2 {
+  margin: 0 0 20px;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  letter-spacing: -0.025em;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 22px);
+}
+
+.card {
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid #e2dbcf;
+  border-radius: 16px;
+  background: #fffaf4;
+}
+
+.card > a {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.card > a:focus-visible {
+  outline: 3px solid #58765c;
+  outline-offset: -3px;
+}
+
+.card > a:hover h3 {
+  text-decoration: underline;
+}
+
+.photo {
+  aspect-ratio: 3 / 2;
+  background: #e7ded1;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.cardBody h3,
+.cardBody p,
+.guide h3 {
+  margin: 0;
+}
+
+.cardBody h3,
+.guide h3 {
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.cardBody p {
+  color: #46554a;
+  font-size: 0.88rem;
+}
+
+.cardEnd,
+.pages {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardEnd {
+  padding-top: 6px;
+  margin-top: auto;
+  color: #35573e;
+}
+
+.pages {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.offers p a,
+.pages a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.guide {
+  margin-top: clamp(36px, 8vw, 74px);
+  border-top: 1px solid #ded7ca;
+  padding-top: 30px;
+}
+
+.guide h3 {
+  margin: 18px 0 6px;
+}
+
+@media (max-width: 860px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
