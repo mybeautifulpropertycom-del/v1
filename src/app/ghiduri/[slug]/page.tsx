@@ -7,7 +7,9 @@ import { discoveryPath } from "@/lib/property-discovery";
 import { publicRobots, serializeJsonLd, siteUrl, SITE_NAME } from "@/lib/seo";
 import "@/styles/discovery.css";
 import { guideArticlePath, guideArticles } from "../articles";
+import { articleResources } from "../article-resources";
 import { GuideLinks } from "../guide-links";
+import toolStyles from "../guide-tools.module.css";
 import styles from "../vizionare-apartament-bloc-vechi/guide.module.css";
 
 export const dynamicParams = false;
@@ -48,6 +50,7 @@ export default async function GuideArticlePage(props: Props) {
   const article = await readArticle(props);
   const path = guideArticlePath(article.slug);
   const rent = article.offer === "rent";
+  const resource = articleResources[article.slug];
   return (
     <div className={`discovery-site ${styles.site}`}>
       <script
@@ -74,6 +77,11 @@ export default async function GuideArticlePage(props: Props) {
           <header className={styles.intro}>
             <h1>{article.title}</h1>
             <p>{article.introduction}</p>
+            {resource && (
+              <a className={toolStyles.jump} href="#instrument">
+                {resource.jumpLabel}
+              </a>
+            )}
           </header>
           <nav className={styles.contents} aria-label="Cuprinsul ghidului">
             <h2>În acest ghid</h2>
@@ -93,6 +101,16 @@ export default async function GuideArticlePage(props: Props) {
               ))}
             </section>
           ))}
+          {resource && (
+            <section
+              className={toolStyles.tool}
+              id="instrument"
+              aria-labelledby="instrument-title"
+            >
+              <h2 id="instrument-title">{resource.title}</h2>
+              <resource.Content />
+            </section>
+          )}
           {article.sources && (
             <section className={styles.contents} aria-labelledby="surse">
               <h2 id="surse">Unde poți verifica informațiile</h2>

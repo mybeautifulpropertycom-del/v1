@@ -5,7 +5,10 @@ import { DiscoveryHeader } from "@/components/discovery-header";
 import { discoveryPath } from "@/lib/property-discovery";
 import { publicRobots, siteUrl } from "@/lib/seo";
 import "@/styles/discovery.css";
+import { GuideChecklist } from "../guide-checklist";
+import { apartmentViewingChecklist } from "../guide-checklists";
 import { GuideLinks } from "../guide-links";
+import toolStyles from "../guide-tools.module.css";
 import { viewingGuide } from "./guide";
 import styles from "./guide.module.css";
 
@@ -33,6 +36,9 @@ export default function ApartmentViewingGuide() {
               ai trece zilnic. Lasă câteva minute la final pentru cheltuieli și
               acte.
             </p>
+            <a className={toolStyles.jump} href="#checklist">
+              Deschide lista de vizionare
+            </a>
           </header>
           <nav className={styles.contents} aria-label="Cuprinsul ghidului">
             <h2>În acest ghid</h2>
@@ -99,6 +105,17 @@ export default function ApartmentViewingGuide() {
               notarului să verifice actele proprietății și situația din cartea
               funciară.
             </p>
+          </section>
+          <section
+            className={toolStyles.tool}
+            id="checklist"
+            aria-labelledby="checklist-title"
+          >
+            <h2 id="checklist-title">Lista de verificare pentru vizionare</h2>
+            <GuideChecklist
+              id="vizionare-bloc-vechi"
+              groups={apartmentViewingChecklist}
+            />
           </section>
           <aside className={styles.next} aria-labelledby="alege">
             <h2 id="alege">Alege apartamentele pe care vrei să le vizitezi</h2>

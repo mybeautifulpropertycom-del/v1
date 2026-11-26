@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
+import { strFromU8, unzipSync } from "fflate";
 import {
   guideArticlePath,
   guideArticles,
 } from "../../src/app/ghiduri/articles";
 import { viewingGuide } from "../../src/app/ghiduri/vizionare-apartament-bloc-vechi/guide";
+import { handoverTemplate } from "../../src/app/ghiduri/handover-template";
 
 test("a guide has its own searchable page and links to the existing property search", async ({
   page,
@@ -111,3 +114,129 @@ for (const article of guideArticles) {
     ).toBeLessThanOrEqual(390);
   });
 }
+
+test("the buying budget handles Romanian amounts, lending, deficits and cash purchases", async ({
+  page,
+}) => {
+  const format = new Intl.NumberFormat("ro-RO", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/ghiduri/costuri-cumparare-apartament");
+  await page.getByRole("link", { name: "Mergi la calculator" }).click();
+  await expect(page).toHaveURL(/#instrument$/);
+  const calculator = page.getByRole("form", {
+    name: "Calculator costuri cumpărare",
+  });
+  const enter = async (label: string, value: string) => {
+    await calculator.getByLabel(label, { exact: true }).fill(value);
+  };
+  const calculate = () =>
+    calculator.getByRole("button", { name: "Calculează bugetul" }).click();
+  await enter("Prețul apartamentului", "100.000");
+  await enter("Bani disponibili acum", "23 000");
+  await enter("Avans din surse proprii", "20.000");
+  await enter("Notar și înscriere", "1.000,50");
+  await enter("Bancă și evaluare", "500");
+  await enter("Comision și alte cheltuieli la semnare", "1.000");
+  await enter("Mutare și lucrări inițiale", "2.000");
+  await calculate();
+  await expect(
+    calculator.getByText(format(22500.5), { exact: true }),
+  ).toBeVisible();
+  await expect(
+    calculator.getByText(format(80000), { exact: true }),
+  ).toBeVisible();
+  await expect(
+    calculator.getByText(format(104500.5), { exact: true }),
+  ).toBeVisible();
+  await expect(
+    calculator.getByText("Sumă care lipsește până la mutare"),
+  ).toBeVisible();
+  await expect(
+    calculator.getByText(format(1500.5), { exact: true }),
+  ).toBeVisible();
+
+  await enter("Avans din surse proprii", "100.001");
+  await calculate();
+  await expect(calculator.getByRole("alert")).toContainText("Avansul trebuie");
+  await calculator.getByLabel("Tipul plății").selectOption("cash");
+  await expect(calculator.getByLabel("Avans din surse proprii")).toHaveCount(0);
+  await enter("Bani disponibili acum", "105000");
+  await calculate();
+  await expect(
+    calculator.getByText(format(102000.5), { exact: true }),
+  ).toBeVisible();
+  await expect(
+    calculator.getByText(format(999.5), { exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
+});
+
+test("the viewing checklist remembers checked items independently of the documents checklist", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(viewingGuide.path);
+  await page.getByRole("link", { name: "Deschide lista de vizionare" }).click();
+  await expect(page).toHaveURL(/#checklist$/);
+  const viewing = page.getByRole("region", {
+    name: "Lista de verificare pentru vizionare",
+  });
+  await viewing
+    .getByRole("checkbox", {
+      name: "Am văzut intrarea, liftul și spațiile comune.",
+    })
+    .check();
+  await expect(viewing.getByRole("status")).toHaveText("1 din 10 verificate");
+
+  await page.goto("/ghiduri/acte-cumparare-apartament");
+  const documents = page.getByRole("region", {
+    name: "Lista de acte și verificări pe etape",
+  });
+  await expect(documents.getByRole("status")).toHaveText("0 din 9 verificate");
+  await documents
+    .getByRole("group", { name: "Înainte de contract" })
+    .getByRole("checkbox")
+    .first()
+    .check();
+  await expect(documents.getByRole("status")).toHaveText("1 din 9 verificate");
+  await page.reload();
+  await expect(documents.getByRole("status")).toHaveText("1 din 9 verificate");
+  await documents.getByRole("button", { name: "Resetează lista" }).click();
+  await expect(documents.getByRole("status")).toHaveText("0 din 9 verificate");
+  await page.goto(viewingGuide.path);
+  await expect(viewing.getByRole("status")).toHaveText("1 din 10 verificate");
+});
+
+test("the editable Word handover includes meter, inventory and signature fields", async ({
+  page,
+}) => {
+  await page.goto("/ghiduri/contract-inchiriere-apartament");
+  const downloadReady = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Descarcă modelul Word" }).click();
+  const download = await downloadReady;
+  expect(download.suggestedFilename()).toBe(
+    "proces-verbal-predare-apartament.docx",
+  );
+  const file = await download.path();
+  expect(file).toBeTruthy();
+  const archive = unzipSync(await readFile(file!));
+  expect(Object.keys(archive)).toEqual(
+    expect.arrayContaining([
+      "[Content_Types].xml",
+      "_rels/.rels",
+      "word/document.xml",
+    ]),
+  );
+  const document = strFromU8(archive["word/document.xml"]);
+  expect(document).toContain(handoverTemplate.title);
+  expect(document).toContain("Energie electrică");
+  expect(document).toContain("Inventar, stare și fotografii");
+  expect(document).toContain("Semnătură chiriaș");
+});
