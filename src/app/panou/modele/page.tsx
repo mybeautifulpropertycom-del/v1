@@ -9,7 +9,7 @@ export default function Page() {
         <div>
           <span className="eyebrow">COLECȚIA DE DESIGNURI</span>
           <h1>
-            O prezentare deosebită.
+            O primă impresie diferită.
             <br />
             <em>Pentru o locuință deosebită.</em>
           </h1>
