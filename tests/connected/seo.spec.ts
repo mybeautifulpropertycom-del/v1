@@ -169,6 +169,38 @@ test("search pagination has a canonical page of its own while budget variants st
   expect((await request.get(`${path}?pagina=3`)).status()).toBe(404);
 });
 
+test("a temporary search failure returns a server error and empty results stay noindex", async ({
+  request,
+}) => {
+  const options = { maxRedirects: 0, headers: { "User-Agent": "Googlebot" } };
+  const base = "/cauta/de-vanzare/apartamente";
+  const failed = await request.get(
+    `${base}/test-serviciu-indisponibil`,
+    options,
+  );
+  expect(failed.status()).toBeGreaterThanOrEqual(500);
+  expect(failed.status()).toBeLessThan(600);
+  const empty = await request.get(`${base}/test-fara-rezultate`, options);
+  expect(empty.status()).toBe(200);
+  expect(await empty.text()).toContain(
+    'name="robots" content="noindex, follow"',
+  );
+});
+
+test("the www alias redirects to the canonical host and preserves the path and query", async ({
+  request,
+}) => {
+  const path = "/ghiduri/apartament-nou-sau-vechi?utm_source=exemplu";
+  const response = await request.get(path, {
+    maxRedirects: 0,
+    headers: { Host: "www.urmatoarea-proprietate.ro" },
+  });
+  expect(response.status()).toBe(308);
+  expect(response.headers().location).toBe(
+    `https://urmatoarea-proprietate.ro${path}`,
+  );
+});
+
 test("anonymous visitors see the property quiz at an indexable homepage", async ({
   page,
   request,

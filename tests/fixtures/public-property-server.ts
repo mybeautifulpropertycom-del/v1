@@ -45,6 +45,12 @@ globalThis.fetch = async (input, init) => {
     ]);
   }
   if (url.pathname === "/rest/v1/rpc/find_public_listings") {
+    if (body.city_filter === "test-serviciu-indisponibil") {
+      return Response.json(
+        { message: "Temporary fixture outage" },
+        { status: 503 },
+      );
+    }
     if (body.city_filter === "bucuresti")
       await new Promise((resolve) => setTimeout(resolve, 60));
     const template = {

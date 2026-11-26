@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { PLATFORM_ORIGIN } from "./src/lib/platform-brand";
+import { PLATFORM_DOMAIN, PLATFORM_ORIGIN } from "./src/lib/platform-brand";
 import { platformRedirects } from "./src/lib/platform-redirects";
 
 const photoOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -37,6 +37,7 @@ const config: NextConfig = {
 
     const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
     const aliases = new Set([
+      `www.${PLATFORM_DOMAIN}`,
       "mybeautifulproperty.com",
       "www.mybeautifulproperty.com",
       "pucioasa-premium-beige.vercel.app",

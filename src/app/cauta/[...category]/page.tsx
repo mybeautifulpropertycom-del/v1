@@ -56,12 +56,14 @@ async function search(props: PageProps) {
     filters.currency,
     filters.page,
   );
+  if (!result)
+    throw new Error("Serviciul de căutare este temporar indisponibil.");
   const resultPages = Math.min(
     5000,
-    Math.max(1, Math.ceil((result?.total ?? 0) / DISCOVERY_PAGE_SIZE)),
+    Math.max(1, Math.ceil(result.total / DISCOVERY_PAGE_SIZE)),
   );
-  if (result && filters.page > resultPages) notFound();
-  const title = discoveryTitle(category, result?.city);
+  if (filters.page > resultPages) notFound();
+  const title = discoveryTitle(category, result.city);
   return { category, filters, result, resultPages, title };
 }
 
@@ -75,9 +77,10 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     title: `${title}${pageLabel}`,
     description: `${title}${pageLabel}. Compară prețurile și vezi fotografiile, detaliile și opțiunile de vizionare din prezentările publicate.`,
     alternates: { canonical: siteUrl(canonical) },
-    robots: result?.total && !filters.currency
-      ? publicRobots()
-      : { index: false, follow: true },
+    robots:
+      result.total && !filters.currency
+        ? publicRobots()
+        : { index: false, follow: true },
   };
 }
 
@@ -152,8 +155,7 @@ function ListingCard({ listing }: { listing: DiscoveryListing }) {
 
 export default async function ResultsPage(props: PageProps) {
   const { category, filters, result, resultPages, title } = await search(props);
-  const items = result?.items ?? [];
-  const total = result?.total ?? 0;
+  const { items, total } = result;
   const count =
     total === 1
       ? "1 proprietate"
@@ -216,11 +218,9 @@ export default async function ResultsPage(props: PageProps) {
               ? `${count} ${total === 1 ? "potrivită" : "potrivite"} pentru tine`
               : title}
           </h1>
-          {result && (
-            <p className="discovery-result-count">
-              {personalized ? title : count}
-            </p>
-          )}
+          <p className="discovery-result-count">
+            {personalized ? title : count}
+          </p>
         </header>
         {items.length > 0 && (
           <DiscoveryResultsMap
@@ -291,19 +291,7 @@ export default async function ResultsPage(props: PageProps) {
             </>
           ) : (
             <div className="discovery-empty">
-              <h2>
-                {result
-                  ? "Nu am găsit proprietăți pentru această căutare."
-                  : "Listările sunt temporar indisponibile."}
-              </h2>
-              {!result && (
-                <Link
-                  className="discovery-primary"
-                  href={discoveryPath(category, filters)}
-                >
-                  Încearcă din nou <ArrowRight size={16} aria-hidden="true" />
-                </Link>
-              )}
+              <h2>Nu am găsit proprietăți pentru această căutare.</h2>
             </div>
           )}
           {resultPages > 1 && (
