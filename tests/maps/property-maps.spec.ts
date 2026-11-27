@@ -125,6 +125,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     expect(requests.searches[0].maxResultCount).toBe(6);
     expect(requests.searches[0].rankPreference).toBe("DISTANCE");
     expect(requests.searches[0].fields).not.toContain("*");
+    expect(requests.searches[0].fields).toContain("photos");
     expect(requests.photos).toBe(0);
     expect(
       requests.details.filter((request) => request.fields.includes("photos")),
@@ -203,6 +204,64 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     });
   });
 }
+
+test("place photos stay on their own cards and additional photos load on expansion", async ({
+  page,
+}, testInfo) => {
+  await mockGoogleMaps(page);
+  const imageRequests: string[] = [];
+  await page.route("https://place-photos.example.test/**", (route) => {
+    const path = new URL(route.request().url()).pathname;
+    imageRequests.push(path);
+    return path === "/place-2.jpg"
+      ? route.fulfill({ status: 404 })
+      : route.fulfill({
+          path: "public/images/villa.jpg",
+          contentType: "image/jpeg",
+        });
+  });
+  await page.goto("/map-test-editorial");
+  await page.evaluate(() => {
+    window.__mapsTest.hasPlacePhotos = true;
+  });
+  const section = page.locator(".property-neighbourhood");
+  await section.scrollIntoViewIfNeeded();
+  const cards = section.locator(".neighbourhood-card");
+  await expect(cards).toHaveCount(3);
+  const thumbnail = cards.first().locator("img");
+  await expect
+    .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+  await expect(
+    cards.first().getByRole("link", { name: "Photo contributor 0" }),
+  ).toHaveAttribute("href", "https://example.com/contributors/0");
+  await expect(cards.nth(2).locator("img")).toHaveCount(0);
+  await expect(
+    cards.nth(2).locator(".neighbourhood-thumbnail svg"),
+  ).toBeVisible();
+  expect(imageRequests).not.toContain("/place-3.jpg");
+  const more = section.getByRole("button", {
+    name: "Vezi toate cele 5 locuri",
+  });
+  await more.click();
+  await expect(cards).toHaveCount(5);
+  await cards.nth(3).scrollIntoViewIfNeeded();
+  await expect.poll(() => imageRequests.includes("/place-3.jpg")).toBe(true);
+  await expect(cards.nth(4).locator("img")).toHaveCount(0);
+  expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(1);
+  const carousel = section.locator(".neighbourhood-categories");
+  await section.getByRole("button", { name: "Categorii următoare" }).click();
+  await expect
+    .poll(() => carousel.evaluate((track) => track.scrollLeft))
+    .toBeGreaterThan(0);
+  await section.screenshot({
+    path: testInfo.outputPath("photo-cards-desktop.png"),
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await section.screenshot({
+    path: testInfo.outputPath("photo-cards-mobile.png"),
+  });
+});
 
 for (const [template, gallery, videoPadding] of [
   ["panorama", ".atelier-gallery", "100px"],

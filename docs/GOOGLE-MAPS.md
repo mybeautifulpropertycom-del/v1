@@ -26,7 +26,7 @@ Search Console verification does not enable these services.
   the normal retry state. The sample marker reads **Adresă demonstrativă**.
   These photographs illustrate the design;
   they are not verification of the real appearance of the demonstration address.
-- All three property templates show **Descoperă cartierul.** before the
+- All three property templates show **Cunoaște zonele din apropiere** before the
   contact section for selected addresses. The map loads automatically when the
   section approaches the viewport (200 px margin), with Școli preselected.
   There is no introductory card or Show map button. Visitors who never approach
@@ -48,9 +48,13 @@ Search Console verification does not enable these services.
   Category badges come from Google's types. Line numbers, schedules and walking
   durations are not inferred or invented. Empty results and API failures remain
   explicit, with the same retry behavior as other categories.
-- Numbered pins and list entries correspond. Selecting an entry focuses its
-  location within the map. No place photographs, photo metadata, or photo-media
-  requests are used. Returned data providers retain their attribution links.
+- Numbered pins and cards correspond. Selecting a card focuses the map on that
+  place. The category carousel uses the same nearby queries as the cards. The
+  first three cards show initially. Visitors can expand the list to see all six.
+  Non-transport searches include photo metadata. Each displayed card loads one
+  Places photo near the viewport and shows the returned author attribution. A
+  category icon fills the space when the photo is missing or fails to load.
+  Returned data providers retain their attribution links.
   Generic "Open in Google Maps" / "View place" links are omitted; Google's native
   map attribution is preserved. Transport cards have a specific **Traseu pe jos**
   link to Google Maps with origin/destination coordinates and place IDs. The link
@@ -122,8 +126,11 @@ Search Console verification does not enable these services.
   not a tamper-proof billing limit.
 - Each public visit or saved-preview visit that reaches the map section can incur one map load, one home Place
   Details request and one Schools Nearby Search. Scrolling away and back does
-  not repeat these requests. There are no automatic retries, panning-triggered
-  searches or photo requests. Other categories load on selection.
+  not repeat these searches. There are no automatic retries or panning-triggered
+  searches. Other categories load on selection. Photos are requested directly
+  from Google by the browser. The first three cards can request one photo each.
+  Expanding the list and switching categories can load additional photos in the
+  current view. Place photo media can add Google Maps charges.
   Design samples add one Text Search request with only the `id` field to resolve
   their demonstration address. They use the same configured Maps/Places key and
   project quotas, including the Text Search quota. No extra API needs enabling.
@@ -144,6 +151,8 @@ Official configuration/pricing references (verify current terms before activatio
 - https://developers.google.com/maps/documentation/javascript/get-api-key
 - https://developers.google.com/maps/documentation/javascript/place-autocomplete-data
 - https://developers.google.com/maps/documentation/javascript/nearby-search
+- https://developers.google.com/maps/documentation/javascript/place-photos
+- https://developers.google.com/maps/documentation/javascript/cloud-customization
 - https://developers.google.com/maps/documentation/places/web-service/policies
 - https://mapsplatform.google.com/pricing/
 
