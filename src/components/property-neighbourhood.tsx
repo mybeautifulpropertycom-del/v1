@@ -246,7 +246,7 @@ function Neighbourhood({
         position: centre.current,
         title: markerTitle,
         content: label,
-        anchorTop: "-46px",
+        anchorTop: "-42px",
         zIndex: 100,
       });
       initialized = true;

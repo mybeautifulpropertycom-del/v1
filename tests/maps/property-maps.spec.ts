@@ -160,7 +160,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       await pin.evaluate(
         (element) => getComputedStyle(element, "::before").width,
       ),
-    ).toBe("40px");
+    ).toBe("36px");
     await expect(section.locator(".neighbourhood-map-wrap")).toHaveCSS(
       "border-radius",
       "20px",
@@ -169,6 +169,11 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       "box-shadow",
       /rgba\(85, 66, 31/,
     );
+    for (const tab of await section
+      .locator(".neighbourhood-categories button")
+      .all()) {
+      await expect(tab).toHaveCSS("box-shadow", /rgba\(85, 66, 31/);
+    }
     const tabs = await section
       .locator(".neighbourhood-categories")
       .boundingBox();
