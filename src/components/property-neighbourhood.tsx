@@ -246,7 +246,7 @@ function Neighbourhood({
         position: centre.current,
         title: markerTitle,
         content: label,
-        anchorTop: "-51px",
+        anchorTop: "-46px",
         zIndex: 100,
       });
       initialized = true;
@@ -402,6 +402,10 @@ function Neighbourhood({
           ÎN APROPIEREA VIITOAREI TALE LOCUINȚE
         </span>
         <h2 id={heading}>{presentationCopy.neighbourhood}</h2>
+        <div className="neighbourhood-address">
+          <MapPin size={17} aria-hidden="true" />
+          <span>{property.location}</span>
+        </div>
       </div>
       <div className="neighbourhood-layout">
         <div className="neighbourhood-map-wrap">
@@ -425,10 +429,6 @@ function Neighbourhood({
               )}
             </div>
           )}
-          <div className="neighbourhood-address">
-            <MapPin size={17} aria-hidden="true" />
-            <span>{property.location}</span>
-          </div>
         </div>
         <div className="neighbourhood-panel">
           <h3>

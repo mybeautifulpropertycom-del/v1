@@ -150,10 +150,17 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       ),
     ).toHaveCount(0);
     const address = section.locator(
-      ".neighbourhood-map-wrap .neighbourhood-address",
+      ".neighbourhood-heading h2 + .neighbourhood-address",
     );
     await expect(address).toHaveText("Strada Test 123, București, România");
     await expect(address).toHaveCSS("font-size", "12px");
+    await expect(address).toHaveCSS("position", "static");
+    const pin = section.locator(".neighbourhood-home-pin");
+    expect(
+      await pin.evaluate(
+        (element) => getComputedStyle(element, "::before").width,
+      ),
+    ).toBe("40px");
     await expect(section.locator(".neighbourhood-map-wrap")).toHaveCSS(
       "border-radius",
       "20px",
