@@ -63,8 +63,11 @@ async function checkPresentation(
     );
   }
   if (prefix === "atelier") {
-    await expect(page.locator("#details h2")).toHaveText(
+    await expect(page.locator("#details .atelier-kicker")).toHaveText(
       "Caracteristici principale",
+    );
+    await expect(page.locator("#details h2")).toHaveText(
+      "Detalii de care te vei bucura zilnic",
     );
   }
   const contact = page.locator("#contact");

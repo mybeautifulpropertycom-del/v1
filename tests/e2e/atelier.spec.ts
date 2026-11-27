@@ -149,12 +149,18 @@ test("Atelier fits phones and keeps the tour action available without blocking i
   );
   await expect(page.locator("#gallery")).toHaveCSS("padding-top", "32px");
   const details = page.locator("#details");
-  await expect(details.locator(".atelier-kicker")).toHaveCount(0);
+  const kicker = details.locator(".atelier-details-heading .atelier-kicker");
+  await expect(kicker).toHaveText("Caracteristici principale");
+  expect(
+    await kicker.evaluate(
+      (element) => getComputedStyle(element, "::after").content,
+    ),
+  ).toBe("none");
   await expect(
     details.getByRole("heading", { name: "Dotările locuinței" }),
   ).toHaveCSS("font-size", "15px");
   const heading = details.getByRole("heading", {
-    name: "Caracteristici principale",
+    name: "Detalii de care te vei bucura zilnic",
     exact: true,
     level: 2,
   });

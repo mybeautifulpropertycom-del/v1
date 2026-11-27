@@ -357,9 +357,15 @@ export function AtelierWebsite({
           </div>
         </section>
         <section className="atelier-details atelier-pad" id="details">
-          <h2 className="atelier-details-heading">
-            {presentationCopy.panoramaDetails}
-          </h2>
+          <div className="atelier-details-heading">
+            <span className="atelier-kicker">
+              {presentationCopy.panoramaDetails.label}
+            </span>
+            <h2>
+              {presentationCopy.panoramaDetails.title}{" "}
+              <em>{presentationCopy.panoramaDetails.accent}</em>
+            </h2>
+          </div>
           <div className="atelier-details-copy">
             <dl className="atelier-spec-grid">
               <div>

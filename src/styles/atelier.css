@@ -479,10 +479,19 @@
   padding-block: 54px;
   background: #f8f7f0;
 }
-.atelier-details .atelier-details-heading {
+.atelier-details-heading {
   grid-column: 1 / -1;
+}
+.atelier-details-heading .atelier-kicker {
+  color: var(--at-details-label);
+}
+.atelier-details-heading h2 {
+  margin-top: 8px;
   font-size: clamp(28px, 3.2vw, 48px);
   text-wrap: pretty;
+}
+.atelier-details-heading h2 em {
+  display: inline;
 }
 .atelier-details-copy {
   min-width: 0;
