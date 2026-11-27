@@ -62,11 +62,11 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
     .click();
   await expect(page.locator("#atelier-menu")).toHaveCount(0);
   await page.setViewportSize(desktopViewport);
-  await expect(
-    page
-      .locator("#details")
-      .getByRole("heading", { name: "Dotările locuinței" }),
-  ).toBeVisible();
+  const amenitiesHeading = page
+    .locator("#details")
+    .getByRole("heading", { name: "Dotările locuinței" });
+  await expect(amenitiesHeading).toBeVisible();
+  await expect(amenitiesHeading).toHaveCSS("font-size", "19.16px");
   await expect(page.locator(".atelier-extras ul")).toContainText(
     "Grădină privată",
   );
@@ -88,6 +88,7 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
     galleryHeading.y - detailsEnd.y - detailsEnd.height,
   ).toBeLessThanOrEqual(100);
   const specs = page.locator(".atelier-spec-grid");
+  await expect(specs.locator("div").first()).toHaveCSS("padding-top", "12px");
   const desktopPhoto = page.locator(".atelier-detail-cover");
   await expect(desktopPhoto).toBeVisible();
   const specsBox = (await specs.boundingBox())!;
@@ -172,7 +173,7 @@ test("Atelier fits phones and keeps the tour action available without blocking i
   ).toBe("none");
   await expect(
     details.getByRole("heading", { name: "Dotările locuinței" }),
-  ).toHaveCSS("font-size", "15px");
+  ).toHaveCSS("font-size", "14px");
   const heading = details.getByRole("heading", {
     name: "Detalii de care te vei bucura zilnic",
     exact: true,
@@ -180,6 +181,8 @@ test("Atelier fits phones and keeps the tour action available without blocking i
   });
   await expect(heading).toBeVisible();
   const specs = page.locator("#details .atelier-spec-grid");
+  await expect(specs.locator("div").first()).toHaveCSS("padding-top", "6px");
+  await expect(specs.locator("div").first()).toHaveCSS("padding-bottom", "6px");
   const detailGallery = page.locator("#details .atelier-mobile-gallery");
   await expect(detailGallery).toBeVisible();
   const headingBox = (await heading.boundingBox())!;
