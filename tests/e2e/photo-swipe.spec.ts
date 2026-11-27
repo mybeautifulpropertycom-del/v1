@@ -33,7 +33,7 @@ async function swipe(
   await new Promise((resolve) => setTimeout(resolve, 350));
 }
 
-test("Panorama shows an inline photo slider after the details and in the mobile gallery", async ({
+test("Panorama shows an inline photo slider under the details title and in the mobile gallery", async ({
   page,
   context,
 }) => {

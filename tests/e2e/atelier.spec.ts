@@ -134,12 +134,15 @@ test("Atelier fits phones and keeps the tour action available without blocking i
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/modele/panorama");
-  const summary = page.locator(".atelier-details-summary");
+  const heading = page.locator("#details h2");
+  const specs = page.locator("#details .atelier-spec-grid");
   const detailGallery = page.locator("#details .atelier-mobile-gallery");
   await expect(detailGallery).toBeVisible();
-  const summaryBox = (await summary.boundingBox())!;
-  expect((await detailGallery.boundingBox())!.y).toBeGreaterThan(
-    summaryBox.y + summaryBox.height,
+  const headingBox = (await heading.boundingBox())!;
+  const photoBox = (await detailGallery.boundingBox())!;
+  expect(photoBox.y).toBeGreaterThan(headingBox.y + headingBox.height);
+  expect(photoBox.y + photoBox.height).toBeLessThan(
+    (await specs.boundingBox())!.y,
   );
   const mobileContact = page.locator(".property-mobile-contact");
   await expect(mobileContact).toBeHidden();
