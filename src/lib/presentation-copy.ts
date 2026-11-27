@@ -14,10 +14,7 @@ export const presentationCopy = {
     title: "O locuință potrivită",
     accent: "pe termen lung",
   },
-  panoramaDetails: {
-    title: "Detalii de care",
-    accent: "te vei bucura zilnic",
-  },
+  panoramaDetails: "Caracteristici principale",
   heritageSetting: {
     title: "Mai aproape de",
     accent: "locuința ta",

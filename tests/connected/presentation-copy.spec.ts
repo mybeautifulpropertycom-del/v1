@@ -64,7 +64,7 @@ async function checkPresentation(
   }
   if (prefix === "atelier") {
     await expect(page.locator("#details h2")).toHaveText(
-      "Detalii de care te vei bucura zilnic",
+      "Caracteristici principale",
     );
   }
   const contact = page.locator("#contact");

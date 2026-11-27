@@ -42,10 +42,7 @@ export function PropertyPrint({
             presentationCopy.heritageDetails.accent,
           ]
         : property.template === "panorama"
-          ? [
-              presentationCopy.panoramaDetails.title,
-              presentationCopy.panoramaDetails.accent,
-            ]
+          ? [presentationCopy.panoramaDetails, ""]
           : [copy.detailsTitle, copy.detailsAccent]),
       copy.detailsBody,
     ],

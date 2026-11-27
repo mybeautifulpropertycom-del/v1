@@ -75,6 +75,11 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   await expect(page.locator(".atelier-spec-grid")).toContainText("302");
   await expect(page.locator("#details")).toHaveCSS("padding-top", "54px");
   await expect(page.locator("#details")).toHaveCSS("padding-bottom", "54px");
+  await expect(page.locator(".atelier-story")).toHaveCSS(
+    "padding-bottom",
+    "96px",
+  );
+  await expect(page.locator("#gallery")).toHaveCSS("padding-top", "74px");
   const specs = page.locator(".atelier-spec-grid");
   const desktopPhoto = page.locator(".atelier-detail-cover");
   await expect(desktopPhoto).toBeVisible();
@@ -138,13 +143,22 @@ test("Atelier fits phones and keeps the tour action available without blocking i
   await page.goto("/modele/panorama");
   await expect(page.locator("#details")).toHaveCSS("padding-top", "30px");
   await expect(page.locator("#details")).toHaveCSS("padding-bottom", "30px");
-  const kicker = page.locator("#details .atelier-kicker");
-  expect(
-    await kicker.evaluate(
-      (element) => getComputedStyle(element, "::after").content,
-    ),
-  ).toBe("none");
-  const heading = page.locator("#details h2");
+  await expect(page.locator(".atelier-story")).toHaveCSS(
+    "padding-bottom",
+    "45px",
+  );
+  await expect(page.locator("#gallery")).toHaveCSS("padding-top", "32px");
+  const details = page.locator("#details");
+  await expect(details.locator(".atelier-kicker")).toHaveCount(0);
+  await expect(
+    details.getByRole("heading", { name: "Dotările locuinței" }),
+  ).toHaveCSS("font-size", "15px");
+  const heading = details.getByRole("heading", {
+    name: "Caracteristici principale",
+    exact: true,
+    level: 2,
+  });
+  await expect(heading).toBeVisible();
   const specs = page.locator("#details .atelier-spec-grid");
   const detailGallery = page.locator("#details .atelier-mobile-gallery");
   await expect(detailGallery).toBeVisible();

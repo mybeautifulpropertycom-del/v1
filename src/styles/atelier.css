@@ -426,7 +426,7 @@
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   gap: 10%;
-  padding-block: 84px 110px;
+  padding-block: 84px 96px;
   align-items: center;
 }
 .atelier-story figure {
@@ -479,26 +479,17 @@
   padding-block: 54px;
   background: #f8f7f0;
 }
-.atelier-details-heading {
+.atelier-details .atelier-details-heading {
   grid-column: 1 / -1;
-}
-.atelier-details-heading .atelier-kicker {
-  color: var(--at-details-label);
-}
-.atelier-details h2 {
-  margin-top: 8px;
   font-size: clamp(28px, 3.2vw, 48px);
   text-wrap: pretty;
-}
-.atelier-details h2 em {
-  display: inline;
 }
 .atelier-details-copy {
   min-width: 0;
 }
-.atelier-details-copy h3 {
+.atelier-extras h3 {
   margin-bottom: 12px;
-  font: 600 clamp(16px, 1.5vw, 22px)/1.25 var(--sans);
+  font: 600 clamp(15px, 1.4vw, 21px)/1.25 var(--sans);
   letter-spacing: -0.02em;
 }
 .atelier-spec-grid {
@@ -746,7 +737,7 @@
   }
 }
 .atelier-gallery {
-  padding-block: 88px 100px;
+  padding-block: 74px 100px;
   overflow: hidden;
 }
 .atelier-section-heading {
@@ -1048,7 +1039,7 @@
   }
   .atelier-story {
     gap: 6%;
-    padding-block: 54px 70px;
+    padding-block: 54px 58px;
   }
   .atelier-contact {
     gap: 6%;
@@ -1176,7 +1167,7 @@
   .atelier-story {
     grid-template-columns: 1fr;
     gap: 35px;
-    padding-block: 42px 55px;
+    padding-block: 42px 45px;
   }
   .atelier-story-photo {
     aspect-ratio: 1/1;
@@ -1190,7 +1181,7 @@
     margin-bottom: 28px;
   }
   .atelier-gallery {
-    padding-block: 42px 48px;
+    padding-block: 32px 48px;
   }
   .atelier-photo-grid {
     grid-template-columns: 1fr;

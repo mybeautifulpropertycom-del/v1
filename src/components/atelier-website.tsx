@@ -357,15 +357,10 @@ export function AtelierWebsite({
           </div>
         </section>
         <section className="atelier-details atelier-pad" id="details">
-          <div className="atelier-details-heading">
-            <span className="atelier-kicker">DETALIILE CARE CONTEAZĂ</span>
-            <h2>
-              {presentationCopy.panoramaDetails.title}{" "}
-              <em>{presentationCopy.panoramaDetails.accent}</em>
-            </h2>
-          </div>
+          <h2 className="atelier-details-heading">
+            {presentationCopy.panoramaDetails}
+          </h2>
           <div className="atelier-details-copy">
-            <h3>Caracteristici principale</h3>
             <dl className="atelier-spec-grid">
               <div>
                 <dt>Tipul proprietății</dt>
