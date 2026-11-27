@@ -746,7 +746,7 @@
   }
 }
 .atelier-gallery {
-  padding-block: 60px 100px;
+  padding-block: 44px 100px;
   overflow: hidden;
 }
 .atelier-section-heading {
@@ -755,9 +755,6 @@
   gap: 12%;
   align-items: end;
   margin-bottom: 45px;
-}
-.atelier-section-heading h2 {
-  margin-top: 20px;
 }
 .atelier-photo-grid {
   display: grid;
@@ -1190,7 +1187,7 @@
     margin-bottom: 28px;
   }
   .atelier-gallery {
-    padding-block: 24px 48px;
+    padding-block: 16px 48px;
   }
   .atelier-photo-grid {
     grid-template-columns: 1fr;
