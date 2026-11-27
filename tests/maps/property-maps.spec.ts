@@ -113,9 +113,18 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       section.getByRole("button", { name: "Show map", exact: true }),
     ).toHaveCount(0);
     await section.scrollIntoViewIfNeeded();
-    await expect(
-      section.getByText("Următoarea ta locuință", { exact: true }),
-    ).toBeVisible();
+    const pin = section.getByRole("button", { name: "Marcajul proprietății" });
+    const pinCaption = section.getByText("Următoarea ta locuință", {
+      exact: true,
+    });
+    await expect(pin).toBeVisible();
+    await expect(pinCaption).toBeHidden();
+    await pin.click();
+    await expect(pinCaption).toBeVisible();
+    await expect(pin).toHaveAttribute("aria-expanded", "true");
+    await pin.click();
+    await expect(pinCaption).toBeHidden();
+    await expect(pin).toHaveAttribute("aria-expanded", "false");
     await expect(
       section.getByRole("button", { name: "Școli", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
@@ -155,7 +164,6 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect(address).toHaveText("Strada Test 123, București, România");
     await expect(address).toHaveCSS("font-size", "12px");
     await expect(address).toHaveCSS("position", "static");
-    const pin = section.locator(".neighbourhood-home-pin");
     expect(
       await pin.evaluate(
         (element) => getComputedStyle(element, "::before").width,
@@ -224,6 +232,9 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       animations: "disabled",
     });
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(pinCaption).toBeHidden();
+    await pin.click();
+    await expect(pinCaption).toBeVisible();
     await expect(address).toHaveCSS("font-size", "11px");
     await expect(section.locator(".neighbourhood-map")).toHaveCSS(
       "height",
@@ -462,7 +473,9 @@ test("a manually entered full address shows the neighbourhood only at the verifi
     window.__mapsTest.templateAddressResult = "match";
   });
   await retry.click();
-  await expect(section.getByText("Următoarea ta locuință")).toBeVisible();
+  await expect(
+    section.getByRole("button", { name: "Marcajul proprietății" }),
+  ).toBeVisible();
   await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
   const search = await page.evaluate(() => window.__mapsTest.textSearches[0]);
   expect(search.textQuery).toBe("Strada Traian 15, București, România");
@@ -479,9 +492,16 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     await expect(section).toContainText("Strada Sipca Numar 9, București");
     expect(await page.evaluate(() => window.__mapsTest.imports.length)).toBe(0);
     await section.scrollIntoViewIfNeeded();
-    await expect(
-      section.getByText("Adresă demonstrativă", { exact: true }),
-    ).toBeVisible();
+    const pin = section.getByRole("button", {
+      name: "Marcajul adresei demonstrative",
+    });
+    const pinCaption = section.getByText("Următoarea ta locuință", {
+      exact: true,
+    });
+    await expect(pin).toBeVisible();
+    await expect(pinCaption).toBeHidden();
+    await pin.click();
+    await expect(pinCaption).toBeVisible();
     await expect(section.locator(".neighbourhood-card")).toHaveCount(2);
     const initial = await page.evaluate(() => window.__mapsTest);
     expect(initial.textSearches).toHaveLength(1);
@@ -553,7 +573,7 @@ for (const result of ["wrong-address", "empty"] as const) {
       .getByRole("button", { name: "Reîncarcă harta", exact: true })
       .click();
     await expect(
-      section.getByText("Adresă demonstrativă", { exact: true }),
+      section.getByRole("button", { name: "Marcajul adresei demonstrative" }),
     ).toBeVisible();
     expect(await page.evaluate(() => window.__mapsTest.maps)).toBe(1);
   });

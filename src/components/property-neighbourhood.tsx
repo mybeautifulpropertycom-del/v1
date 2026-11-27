@@ -235,20 +235,30 @@ function Neighbourhood({
       });
       const label = document.createElement("div");
       label.className = "neighbourhood-home-pin";
-      const markerTitle = resolveSampleAddress
-        ? "Adresă demonstrativă"
-        : "Următoarea ta locuință";
       const caption = document.createElement("span");
-      caption.textContent = markerTitle;
+      caption.textContent = "Următoarea ta locuință";
+      caption.hidden = true;
       label.append(caption);
-      homeMarker.current = new markerLibrary.AdvancedMarkerElement({
+      const marker = new markerLibrary.AdvancedMarkerElement({
         map: map.current,
         position: centre.current,
-        title: markerTitle,
         content: label,
+        gmpClickable: true,
         anchorTop: "-42px",
         zIndex: 100,
       });
+      marker.setAttribute(
+        "aria-label",
+        resolveSampleAddress
+          ? "Marcajul adresei demonstrative"
+          : "Marcajul proprietății",
+      );
+      marker.setAttribute("aria-expanded", "false");
+      marker.addEventListener("gmp-click", () => {
+        caption.hidden = !caption.hidden;
+        marker.setAttribute("aria-expanded", String(!caption.hidden));
+      });
+      homeMarker.current = marker;
       initialized = true;
       setReady(true);
     } catch {

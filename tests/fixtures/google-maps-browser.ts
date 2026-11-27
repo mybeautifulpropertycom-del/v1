@@ -268,13 +268,22 @@ export async function mockGoogleMaps(page: Page) {
         map,
         content,
         title,
+        gmpClickable,
       }: {
         map: MockMap;
         content: HTMLElement;
-        title: string;
+        title?: string;
+        gmpClickable?: boolean;
       }) {
         this.content = content;
-        content.title = title;
+        if (title) content.title = title;
+        if (gmpClickable) {
+          content.setAttribute("role", "button");
+          content.tabIndex = 0;
+          content.addEventListener("click", () => {
+            content.dispatchEvent(new Event("gmp-click"));
+          });
+        }
         this.map = map;
       }
       set map(value: MockMap | null) {
@@ -284,6 +293,12 @@ export async function mockGoogleMaps(page: Page) {
       }
       addListener(event: string, callback: () => void) {
         this.content.addEventListener(event, callback);
+      }
+      addEventListener(event: string, callback: () => void) {
+        this.content.addEventListener(event, callback);
+      }
+      setAttribute(name: string, value: string) {
+        this.content.setAttribute(name, value);
       }
     }
     class Bounds {

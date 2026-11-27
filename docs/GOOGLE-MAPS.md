@@ -23,7 +23,7 @@ Search Console verification does not enable these services.
   section approaches the viewport, Places Text Search requests one place ID for
   this fixed address. Place Details then checks the street number, street, city,
   and country before showing a pin. A missing or mismatched address shows
-  the normal retry state. The sample marker reads **Adresă demonstrativă**.
+  the normal retry state. The sample pin is labelled as a demonstration address.
   These photographs illustrate the design;
   they are not verification of the real appearance of the demonstration address.
 - All three property templates show **Cunoaște zonele din apropiere** before the
@@ -32,9 +32,10 @@ Search Console verification does not enable these services.
   There is no introductory card or Show map button. Visitors who never approach
   the section do not trigger its Google requests.
 - The map appears on the left and categories with a compact place list on the
-  right; on narrow screens they stack vertically. The **Următoarea ta locuință** pin
-  marks the property. Școli, Grădinițe, Restaurante, Parcuri, Cumpărături and Cultură
-  return up to six places within approximately five kilometres, ordered by distance.
+  right; on narrow screens they stack vertically. Selecting the property pin
+  toggles the **Următoarea ta locuință** label. Școli, Grădinițe, Restaurante,
+  Parcuri, Cumpărături and Cultură return up to six places within approximately
+  five kilometres, ordered by distance.
   Schools are requested on initialization; other categories are requested on
   selection. Successful results are reused within the mounted view. This is
   nearby discovery, not an exhaustive list or school zoning advice.
