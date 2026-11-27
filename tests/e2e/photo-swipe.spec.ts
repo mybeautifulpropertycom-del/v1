@@ -33,39 +33,39 @@ async function swipe(
   await new Promise((resolve) => setTimeout(resolve, 350));
 }
 
-test("Panorama shows an inline photo slider under the details title and in the mobile gallery", async ({
+test("Panorama keeps the inline photo slider under the details title and displays a separate photo grid", async ({
   page,
   context,
 }) => {
   await page.goto("/modele/panorama");
   const client = await context.newCDPSession(page);
-  for (const [section, initial] of [
-    ["#details", 3],
-    ["#gallery", 1],
-  ] as const) {
-    const gallery = page.locator(`${section} .atelier-mobile-gallery`);
-    const count = gallery.locator(".atelier-mobile-gallery-count");
-    await expect(count).toHaveText(`${initial} / 40`);
-    await gallery.getByRole("button", { name: "Fotografia următoare" }).click();
-    await expect(count).toHaveText(`${initial + 1} / 40`);
-    await gallery
-      .getByRole("button", { name: "Fotografia anterioară" })
-      .click();
-    await gallery.scrollIntoViewIfNeeded();
-    const box = (await gallery.boundingBox())!;
-    await swipe(client, -180, 0, false, box.y + box.height / 2);
-    await expect(count).toHaveText(`${initial + 1} / 40`);
-    await gallery
-      .getByRole("button", {
-        name: `Mărește fotografia proprietății ${initial + 1}`,
-      })
-      .click();
-    await expect(page.locator(".property-photo-count")).toHaveText(
-      `${initial + 1} / 40`,
-    );
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).toHaveCount(0);
-  }
+  const gallery = page.locator("#details .atelier-mobile-gallery");
+  const count = gallery.locator(".atelier-mobile-gallery-count");
+  await expect(count).toHaveText("3 / 40");
+  await gallery.getByRole("button", { name: "Fotografia următoare" }).click();
+  await expect(count).toHaveText("4 / 40");
+  await gallery.getByRole("button", { name: "Fotografia anterioară" }).click();
+  await gallery.scrollIntoViewIfNeeded();
+  const box = (await gallery.boundingBox())!;
+  await swipe(client, -180, 0, false, box.y + box.height / 2);
+  await expect(count).toHaveText("4 / 40");
+  await gallery
+    .getByRole("button", {
+      name: "Mărește fotografia proprietății 4",
+    })
+    .click();
+  await expect(page.locator(".property-photo-count")).toHaveText("4 / 40");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const photos = page.locator("#gallery .atelier-photo-grid figure");
+  await expect(photos).toHaveCount(40);
+  await expect(photos.first()).toBeVisible();
+  const firstBox = (await photos.first().boundingBox())!;
+  const secondBox = (await photos.nth(1).boundingBox())!;
+  expect(secondBox.x).toBe(firstBox.x);
+  expect(secondBox.y).toBeGreaterThan(firstBox.y + firstBox.height);
+  await photos.nth(1).getByRole("button").click();
+  await expect(page.locator(".property-photo-count")).toHaveText("2 / 40");
 });
 
 for (const theme of ["editorial", "minimal", "panorama"]) {

@@ -277,11 +277,9 @@ for (const [template, gallery, videoPadding] of [
       await page.setViewportSize({ width, height: 900 });
       const gaps = await map.evaluate((section) => {
         const top = section.getBoundingClientRect().top;
-        const photos = [
-          ...section.previousElementSibling!.querySelectorAll(
-            ".atelier-photo-grid, .atelier-mobile-gallery, .estate-gallery-grid",
-          ),
-        ].find((element) => element.clientHeight > 0)!;
+        const photos = section.previousElementSibling!.querySelector(
+          ".atelier-photo-grid, .estate-gallery-grid",
+        )!;
         const heading = section.querySelector(".neighbourhood-heading")!;
         const border = parseFloat(getComputedStyle(section).borderTopWidth);
         return {

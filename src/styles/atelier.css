@@ -476,7 +476,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 24px clamp(22px, 3vw, 54px);
-  padding-block: 72px;
+  padding-block: 54px;
   background: #f8f7f0;
 }
 .atelier-details-heading {
@@ -484,11 +484,6 @@
 }
 .atelier-details-heading .atelier-kicker {
   color: var(--at-details-label);
-}
-.atelier-details-heading .atelier-kicker::after {
-  content: "";
-  width: 44px;
-  border-top: 1px solid #bfa98a;
 }
 .atelier-details h2 {
   margin-top: 8px;
@@ -640,6 +635,7 @@
   .atelier-details {
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
+    padding-block: 30px;
   }
   .atelier-spec-grid,
   .atelier-extras ul {
@@ -683,8 +679,7 @@
     grid-row: 2;
     min-height: 0;
   }
-  .atelier-detail-cover,
-  .atelier-website .atelier-photo-grid {
+  .atelier-detail-cover {
     display: none;
   }
   .atelier-mobile-gallery {
@@ -1189,9 +1184,6 @@
   .atelier-round-link {
     margin-top: 25px;
   }
-  .atelier-details {
-    padding-block: 42px;
-  }
   .atelier-section-heading {
     grid-template-columns: 1fr;
     gap: 25px;
@@ -1199,6 +1191,17 @@
   }
   .atelier-gallery {
     padding-block: 42px 48px;
+  }
+  .atelier-photo-grid {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .atelier-photo-grid figure:nth-child(n) {
+    grid-column: 1;
+  }
+  .atelier-photo-grid button {
+    height: auto;
+    aspect-ratio: 4 / 3;
   }
   .atelier-film {
     padding-block: 45px;

@@ -466,16 +466,7 @@ export function AtelierWebsite({
               <figure key={`${src}-${index}`}>{photo(src, index)}</figure>
             ))}
           </div>
-          {property.images.length ? (
-            <AtelierMobileGallery
-              images={property.images}
-              captions={copy.captions}
-              title={property.title}
-              onOpen={setLightbox}
-            />
-          ) : (
-            <p>Fotografiile tale vor apărea aici.</p>
-          )}
+          {!property.images.length && <p>Fotografiile tale vor apărea aici.</p>}
         </section>
         {videoIncluded && (film?.src || isPreview) && (
           <section className="atelier-film atelier-pad" id="film">
