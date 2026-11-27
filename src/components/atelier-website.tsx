@@ -5,6 +5,7 @@ import { PropertyMortgage } from "./property-mortgage";
 import { PropertyNeighbourhood } from "./property-neighbourhood";
 import { PropertySectionLinks } from "./property-section-links";
 import { PropertyImage } from "./property-image";
+import { AtelierMobileGallery } from "./atelier-mobile-gallery";
 import { AgentAvatar } from "./agent-avatar";
 import { PropertyWhatsAppLink } from "./property-whatsapp-link";
 import { PropertyMobileContact } from "./property-mobile-contact";
@@ -67,7 +68,7 @@ export function AtelierWebsite({
   const location = property.location.trim();
   const hasConstructionYear = property.construction_year != null;
   const secondary = property.images[1] || property.images[0];
-  const detail = property.images[2] || secondary;
+  const detailIndex = Math.min(2, property.images.length - 1);
   const initials = profile.name
     .split(" ")
     .map((n) => n[0])
@@ -356,84 +357,99 @@ export function AtelierWebsite({
           </div>
         </section>
         <section className="atelier-details atelier-pad" id="details">
-          <div className="atelier-details-heading">
-            <span className="atelier-kicker">DETALIILE CARE CONTEAZĂ</span>
-            <h2>
-              {presentationCopy.panoramaDetails.title}{" "}
-              <em>{presentationCopy.panoramaDetails.accent}</em>
-            </h2>
-          </div>
-          <div className="atelier-details-copy">
-            <dl className="atelier-spec-grid">
-              <div
-                className={
-                  hasConstructionYear ? undefined : "atelier-spec-wide"
-                }
-              >
-                <dt>Tipul proprietății</dt>
-                <dd>{propertyTypeLabel(property.type)}</dd>
-              </div>
-              {hasConstructionYear && (
+          <div className="atelier-details-surface">
+            <div className="atelier-details-heading">
+              <span className="atelier-kicker">DETALIILE CARE CONTEAZĂ</span>
+              <h2>
+                {presentationCopy.panoramaDetails.title}{" "}
+                <em>{presentationCopy.panoramaDetails.accent}</em>
+              </h2>
+            </div>
+            <div className="atelier-details-copy">
+              <h3>Caracteristici principale</h3>
+              <dl className="atelier-spec-grid">
                 <div>
-                  <dt>Anul de construcție</dt>
-                  <dd>{property.construction_year}</dd>
+                  <dt>Tipul proprietății</dt>
+                  <dd>{propertyTypeLabel(property.type)}</dd>
                 </div>
-              )}
-              <div className={extraDetail ? undefined : "atelier-spec-wide"}>
-                <dt>
-                  {property.type === "Land"
-                    ? "Suprafață teren"
-                    : "Suprafață utilă"}
-                </dt>
-                <dd>
-                  {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
-                </dd>
-              </div>
-              {extraDetail && (
+                {hasConstructionYear && (
+                  <div>
+                    <dt>Anul de construcție</dt>
+                    <dd>{property.construction_year}</dd>
+                  </div>
+                )}
                 <div>
-                  <dt>{extraDetail.label}</dt>
-                  <dd>{extraDetail.value}</dd>
+                  <dt>
+                    {property.type === "Land"
+                      ? "Suprafață teren"
+                      : "Suprafață utilă"}
+                  </dt>
+                  <dd>
+                    {property.area.toLocaleString("ro-RO")}{" "}
+                    <small>{unit}</small>
+                  </dd>
+                </div>
+                {extraDetail && (
+                  <div>
+                    <dt>{extraDetail.label}</dt>
+                    <dd>{extraDetail.value}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Dormitoare</dt>
+                  <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
+                </div>
+                <div>
+                  <dt>Băi</dt>
+                  <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
+                </div>
+              </dl>
+              {property.amenities.length > 0 && (
+                <div className="atelier-extras">
+                  <h3>Dotările locuinței</h3>
+                  <ul>
+                    {property.amenities.map((amenity) => (
+                      <li key={amenity}>{amenity}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
-              <div>
-                <dt>Dormitoare</dt>
-                <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
-              </div>
-              <div>
-                <dt>Băi</dt>
-                <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
-              </div>
-              {location && (
-                <div className="atelier-spec-location atelier-spec-wide">
-                  <dt>Adresă</dt>
-                  <dd>{location}</dd>
+              <dl className="atelier-details-summary">
+                <div>
+                  <dt>
+                    {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
+                  </dt>
+                  <dd>{formatPrice(property)}</dd>
                 </div>
+                {location && (
+                  <div className="atelier-spec-location">
+                    <dt>Adresă</dt>
+                    <dd>{location}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+            <div className="atelier-detail-image">
+              {detailIndex >= 0 ? (
+                <>
+                  {photo(
+                    property.images[detailIndex],
+                    detailIndex,
+                    "atelier-detail-cover",
+                  )}
+                  <AtelierMobileGallery
+                    images={property.images}
+                    captions={copy.captions}
+                    title={property.title}
+                    initial={detailIndex}
+                    onOpen={setLightbox}
+                  />
+                </>
+              ) : (
+                <div className="atelier-no-photo">Detaliile fac diferența.</div>
               )}
-              <div className="atelier-spec-wide">
-                <dt>
-                  {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
-                </dt>
-                <dd>{formatPrice(property)}</dd>
-              </div>
-            </dl>
-            {property.amenities.length > 0 && (
-              <div className="atelier-extras">
-                <h3>Dotările locuinței</h3>
-                <ul>
-                  {property.amenities.map((amenity) => (
-                    <li key={amenity}>{amenity}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            </div>
             <div className="atelier-details-tour">{tour()}</div>
-          </div>
-          <div className="atelier-detail-image">
-            {detail ? (
-              photo(detail, property.images[2] ? 2 : property.images[1] ? 1 : 0)
-            ) : (
-              <div className="atelier-no-photo">Detaliile fac diferența.</div>
-            )}
           </div>
         </section>
         <section className="atelier-gallery atelier-pad" id="gallery">
@@ -453,7 +469,16 @@ export function AtelierWebsite({
               <figure key={`${src}-${index}`}>{photo(src, index)}</figure>
             ))}
           </div>
-          {!property.images.length && <p>Fotografiile tale vor apărea aici.</p>}
+          {property.images.length ? (
+            <AtelierMobileGallery
+              images={property.images}
+              captions={copy.captions}
+              title={property.title}
+              onOpen={setLightbox}
+            />
+          ) : (
+            <p>Fotografiile tale vor apărea aici.</p>
+          )}
         </section>
         {videoIncluded && (film?.src || isPreview) && (
           <section className="atelier-film atelier-pad" id="film">

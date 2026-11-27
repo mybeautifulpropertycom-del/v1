@@ -73,6 +73,12 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   await expect(page.locator(".atelier-extras li").first()).toBeVisible();
   await expect(page.locator("#details details")).toHaveCount(0);
   await expect(page.locator(".atelier-spec-grid")).toContainText("302");
+  const specs = page.locator(".atelier-spec-grid");
+  const desktopPhoto = page.locator(".atelier-detail-cover");
+  await expect(desktopPhoto).toBeVisible();
+  const specsBox = (await specs.boundingBox())!;
+  const desktopPhotoBox = (await desktopPhoto.boundingBox())!;
+  expect(desktopPhotoBox.x).toBeGreaterThan(specsBox.x + specsBox.width);
   await expect(page.locator(".atelier-invitation-background")).toHaveCSS(
     "opacity",
     "0.15",
@@ -128,7 +134,15 @@ test("Atelier fits phones and keeps the tour action available without blocking i
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/modele/panorama");
-  await expect(page.locator(".atelier-mobile-tour")).toBeHidden();
+  const summary = page.locator(".atelier-details-summary");
+  const detailGallery = page.locator("#details .atelier-mobile-gallery");
+  await expect(detailGallery).toBeVisible();
+  const summaryBox = (await summary.boundingBox())!;
+  expect((await detailGallery.boundingBox())!.y).toBeGreaterThan(
+    summaryBox.y + summaryBox.height,
+  );
+  const mobileContact = page.locator(".property-mobile-contact");
+  await expect(mobileContact).toBeHidden();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -142,6 +156,6 @@ test("Atelier fits phones and keeps the tour action available without blocking i
   await page.keyboard.press("Escape");
   await page.locator(".atelier-footer").scrollIntoViewIfNeeded();
   await expect(page.locator(".atelier-footer")).toBeVisible();
-  await expect(page.locator(".atelier-mobile-tour")).toBeVisible();
-  await expect(page.locator(".atelier-mobile-tour")).toBeInViewport();
+  await expect(mobileContact).toBeVisible();
+  await expect(mobileContact).toBeInViewport();
 });

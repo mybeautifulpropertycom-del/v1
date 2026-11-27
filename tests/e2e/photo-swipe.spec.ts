@@ -33,6 +33,41 @@ async function swipe(
   await new Promise((resolve) => setTimeout(resolve, 350));
 }
 
+test("Panorama shows an inline photo slider after the details and in the mobile gallery", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/modele/panorama");
+  const client = await context.newCDPSession(page);
+  for (const [section, initial] of [
+    ["#details", 3],
+    ["#gallery", 1],
+  ] as const) {
+    const gallery = page.locator(`${section} .atelier-mobile-gallery`);
+    const count = gallery.locator(".atelier-mobile-gallery-count");
+    await expect(count).toHaveText(`${initial} / 40`);
+    await gallery.getByRole("button", { name: "Fotografia următoare" }).click();
+    await expect(count).toHaveText(`${initial + 1} / 40`);
+    await gallery
+      .getByRole("button", { name: "Fotografia anterioară" })
+      .click();
+    await gallery.scrollIntoViewIfNeeded();
+    const box = (await gallery.boundingBox())!;
+    await swipe(client, -180, 0, false, box.y + box.height / 2);
+    await expect(count).toHaveText(`${initial + 1} / 40`);
+    await gallery
+      .getByRole("button", {
+        name: `Mărește fotografia proprietății ${initial + 1}`,
+      })
+      .click();
+    await expect(page.locator(".property-photo-count")).toHaveText(
+      `${initial + 1} / 40`,
+    );
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  }
+});
+
 for (const theme of ["editorial", "minimal", "panorama"]) {
   test(`${theme}: touch swipes navigate without closing; arrows and keyboard still work`, async ({
     page,

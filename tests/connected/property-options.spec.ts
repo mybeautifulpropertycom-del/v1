@@ -251,14 +251,12 @@ test("floor and land area save for the selected property type and appear only in
       extraLabel,
       "Dormitoare",
       "Băi",
-      "Adresă",
-      panorama ? "Preț" : "Preț solicitat",
+      ...(panorama ? ["Preț", "Adresă"] : ["Adresă", "Preț solicitat"]),
     ]);
     if (panorama) {
-      await expect(specs.locator(".atelier-spec-wide dt")).toHaveText([
-        "Adresă",
-        "Preț",
-      ]);
+      await expect(
+        page.locator("#details .atelier-details-summary dt"),
+      ).toHaveText(["Preț", "Adresă"]);
       await expect(
         page.getByRole("heading", { name: "Dotările locuinței", exact: true }),
       ).toBeVisible();
