@@ -79,7 +79,7 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
     "padding-bottom",
     "96px",
   );
-  await expect(page.locator("#gallery")).toHaveCSS("padding-top", "74px");
+  await expect(page.locator("#gallery")).toHaveCSS("padding-top", "60px");
   const specs = page.locator(".atelier-spec-grid");
   const desktopPhoto = page.locator(".atelier-detail-cover");
   await expect(desktopPhoto).toBeVisible();
@@ -147,7 +147,7 @@ test("Atelier fits phones and keeps the tour action available without blocking i
     "padding-bottom",
     "45px",
   );
-  await expect(page.locator("#gallery")).toHaveCSS("padding-top", "32px");
+  await expect(page.locator("#gallery")).toHaveCSS("padding-top", "24px");
   const details = page.locator("#details");
   const kicker = details.locator(".atelier-details-heading .atelier-kicker");
   await expect(kicker).toHaveText("Caracteristici principale");
