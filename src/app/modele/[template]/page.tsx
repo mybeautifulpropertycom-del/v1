@@ -34,7 +34,7 @@ export default async function Page({
         bio: "Sunt un agent imobiliar dedicat să te ajut să găsești proprietatea potrivită. Îți ofer consultanță personalizată, transparență și sprijin la fiecare pas, de la prima vizionare până la semnarea contractului.",
         email: "contact@urmatoarea-proprietate.ro",
         agency: selectedTemplate.name,
-        phone: "0755 436 284",
+        phone: "0759 773 692",
         avatar_url: "/images/template-agent.jpg",
       }}
       film={{

@@ -14,11 +14,17 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
     page,
   }) => {
     await page.setViewportSize({ width: 360, height: 780 });
-    for (const [path, phone, street] of [
-      [`/modele/${template}`, "40755436284", "Sipca Numar 9, București"],
+    for (const [path, phone, dial, street] of [
+      [
+        `/modele/${template}`,
+        "40759773692",
+        "0759773692",
+        "Sipca Numar 9, București",
+      ],
       [
         `/photos-test-${template}`,
         "40700000000",
+        "+40700000000",
         "Test 123, București, România",
       ],
     ]) {
@@ -27,6 +33,10 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       await expect(
         contact.getByPlaceholder("Numele și prenumele tău", { exact: true }),
       ).toBeVisible();
+      await expect(contact.locator('a[href^="tel:"]')).toHaveAttribute(
+        "href",
+        `tel:${dial}`,
+      );
       const link = contact.getByRole("link", {
         name: "Trimite mesaj pe WhatsApp",
       });
@@ -35,6 +45,15 @@ for (const template of ["editorial", "minimal", "panorama"] as const) {
       const whatsapp = new URL((await link.getAttribute("href"))!);
       expect(whatsapp.origin).toBe("https://wa.me");
       expect(whatsapp.pathname).toBe(`/${phone}`);
+      const bar = page.locator(".property-mobile-contact");
+      await expect(bar.locator('a[href^="tel:"]')).toHaveAttribute(
+        "href",
+        `tel:+${phone}`,
+      );
+      await expect(bar.locator(".property-mobile-whatsapp")).toHaveAttribute(
+        "href",
+        whatsapp.href,
+      );
       expect(whatsapp.searchParams.get("text")).toBe(
         `Bună ziua! Sunt interesat de proprietatea de pe strada ${street}.`,
       );
