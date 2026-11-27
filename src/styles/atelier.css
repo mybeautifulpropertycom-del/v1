@@ -470,21 +470,14 @@
   padding: 12px;
 }
 .atelier-details {
-  padding-block: 72px;
-  background: #eeeee6;
-}
-.atelier-details-surface {
   --at-details-border: #dcd9cf;
   --at-details-label: #715b3f;
   --at-details-green: #263e32;
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 24px clamp(22px, 3vw, 54px);
-  padding: clamp(24px, 3vw, 48px);
-  border: 1px solid #fff;
-  border-radius: 21px;
+  padding-block: 72px;
   background: #f8f7f0;
-  box-shadow: 0 12px 30px #35342a10;
 }
 .atelier-details-heading {
   grid-column: 1 / -1;
@@ -644,10 +637,9 @@
   display: none;
 }
 @media (max-width: 767px) {
-  .atelier-details-surface {
+  .atelier-details {
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
-    padding: 18px;
   }
   .atelier-spec-grid,
   .atelier-extras ul {

@@ -357,100 +357,97 @@ export function AtelierWebsite({
           </div>
         </section>
         <section className="atelier-details atelier-pad" id="details">
-          <div className="atelier-details-surface">
-            <div className="atelier-details-heading">
-              <span className="atelier-kicker">DETALIILE CARE CONTEAZĂ</span>
-              <h2>
-                {presentationCopy.panoramaDetails.title}{" "}
-                <em>{presentationCopy.panoramaDetails.accent}</em>
-              </h2>
-            </div>
-            <div className="atelier-details-copy">
-              <h3>Caracteristici principale</h3>
-              <dl className="atelier-spec-grid">
-                <div>
-                  <dt>Tipul proprietății</dt>
-                  <dd>{propertyTypeLabel(property.type)}</dd>
-                </div>
-                {hasConstructionYear && (
-                  <div>
-                    <dt>Anul de construcție</dt>
-                    <dd>{property.construction_year}</dd>
-                  </div>
-                )}
-                <div>
-                  <dt>
-                    {property.type === "Land"
-                      ? "Suprafață teren"
-                      : "Suprafață utilă"}
-                  </dt>
-                  <dd>
-                    {property.area.toLocaleString("ro-RO")}{" "}
-                    <small>{unit}</small>
-                  </dd>
-                </div>
-                {extraDetail && (
-                  <div>
-                    <dt>{extraDetail.label}</dt>
-                    <dd>{extraDetail.value}</dd>
-                  </div>
-                )}
-                <div>
-                  <dt>Dormitoare</dt>
-                  <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
-                </div>
-                <div>
-                  <dt>Băi</dt>
-                  <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
-                </div>
-              </dl>
-              {property.amenities.length > 0 && (
-                <div className="atelier-extras">
-                  <h3>Dotările locuinței</h3>
-                  <ul>
-                    {property.amenities.map((amenity) => (
-                      <li key={amenity}>{amenity}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <dl className="atelier-details-summary">
-                <div>
-                  <dt>
-                    {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
-                  </dt>
-                  <dd>{formatPrice(property)}</dd>
-                </div>
-                {location && (
-                  <div className="atelier-spec-location">
-                    <dt>Adresă</dt>
-                    <dd>{location}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-            <div className="atelier-detail-image">
-              {detailIndex >= 0 ? (
-                <>
-                  {photo(
-                    property.images[detailIndex],
-                    detailIndex,
-                    "atelier-detail-cover",
-                  )}
-                  <AtelierMobileGallery
-                    images={property.images}
-                    captions={copy.captions}
-                    title={property.title}
-                    initial={detailIndex}
-                    onOpen={setLightbox}
-                  />
-                </>
-              ) : (
-                <div className="atelier-no-photo">Detaliile fac diferența.</div>
-              )}
-            </div>
-            <div className="atelier-details-tour">{tour()}</div>
+          <div className="atelier-details-heading">
+            <span className="atelier-kicker">DETALIILE CARE CONTEAZĂ</span>
+            <h2>
+              {presentationCopy.panoramaDetails.title}{" "}
+              <em>{presentationCopy.panoramaDetails.accent}</em>
+            </h2>
           </div>
+          <div className="atelier-details-copy">
+            <h3>Caracteristici principale</h3>
+            <dl className="atelier-spec-grid">
+              <div>
+                <dt>Tipul proprietății</dt>
+                <dd>{propertyTypeLabel(property.type)}</dd>
+              </div>
+              {hasConstructionYear && (
+                <div>
+                  <dt>Anul de construcție</dt>
+                  <dd>{property.construction_year}</dd>
+                </div>
+              )}
+              <div>
+                <dt>
+                  {property.type === "Land"
+                    ? "Suprafață teren"
+                    : "Suprafață utilă"}
+                </dt>
+                <dd>
+                  {property.area.toLocaleString("ro-RO")} <small>{unit}</small>
+                </dd>
+              </div>
+              {extraDetail && (
+                <div>
+                  <dt>{extraDetail.label}</dt>
+                  <dd>{extraDetail.value}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Dormitoare</dt>
+                <dd>{property.bedrooms.toString().padStart(2, "0")}</dd>
+              </div>
+              <div>
+                <dt>Băi</dt>
+                <dd>{property.bathrooms.toString().padStart(2, "0")}</dd>
+              </div>
+            </dl>
+            {property.amenities.length > 0 && (
+              <div className="atelier-extras">
+                <h3>Dotările locuinței</h3>
+                <ul>
+                  {property.amenities.map((amenity) => (
+                    <li key={amenity}>{amenity}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <dl className="atelier-details-summary">
+              <div>
+                <dt>
+                  {property.transaction === "rent" ? "Chirie lunară" : "Preț"}
+                </dt>
+                <dd>{formatPrice(property)}</dd>
+              </div>
+              {location && (
+                <div className="atelier-spec-location">
+                  <dt>Adresă</dt>
+                  <dd>{location}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+          <div className="atelier-detail-image">
+            {detailIndex >= 0 ? (
+              <>
+                {photo(
+                  property.images[detailIndex],
+                  detailIndex,
+                  "atelier-detail-cover",
+                )}
+                <AtelierMobileGallery
+                  images={property.images}
+                  captions={copy.captions}
+                  title={property.title}
+                  initial={detailIndex}
+                  onOpen={setLightbox}
+                />
+              </>
+            ) : (
+              <div className="atelier-no-photo">Detaliile fac diferența.</div>
+            )}
+          </div>
+          <div className="atelier-details-tour">{tour()}</div>
         </section>
         <section className="atelier-gallery atelier-pad" id="gallery">
           <div className="atelier-section-heading">
