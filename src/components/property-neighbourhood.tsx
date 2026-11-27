@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { presentationCopy } from "@/lib/presentation-copy";
 import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import type { PublicProperty } from "@/lib/model";
@@ -28,12 +28,6 @@ import {
   safeExternalUrl,
   type NearbyCategory,
 } from "@/lib/property-location";
-import {
-  NearbyCategoryCarousel,
-  NearbyPlaceMedia,
-} from "./property-neighbourhood-media";
-
-const initialPlaceCount = 3;
 
 type MappedProperty = Pick<
   PublicProperty,
@@ -91,11 +85,9 @@ function Neighbourhood({
   manualAddress: ReturnType<typeof manualPropertyAddress>;
 }) {
   const heading = useId();
-  const cardsId = useId();
   const section = useRef<HTMLElement>(null);
   const startMap = useRef<() => void>(() => {});
   const mapContainer = useRef<HTMLDivElement>(null);
-  const panel = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const centre = useRef<google.maps.LatLngLiteral | null>(null);
   const homePlaceId = useRef<string | null>(null);
@@ -119,10 +111,6 @@ function Neighbourhood({
   const radius = isTransport ? TRANSPORT_RADIUS_METERS : NEARBY_RADIUS_METERS;
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
-  const [showAllPlaces, setShowAllPlaces] = useState(false);
-  const visiblePlaces = showAllPlaces
-    ? places
-    : places.slice(0, initialPlaceCount);
 
   // Register lifetime cleanup before a visitor can start the first request.
   useLayoutEffect(() => {
@@ -168,8 +156,7 @@ function Neighbourhood({
     };
   }, []);
 
-  function focusPlace(place: google.maps.places.Place, index: number) {
-    if (index >= initialPlaceCount) setShowAllPlaces(true);
+  function focusPlace(place: google.maps.places.Place) {
     setSelected(place.id);
     if (place.location && map.current) {
       map.current.panTo(place.location);
@@ -306,7 +293,6 @@ function Neighbourhood({
     setError("");
     setPlaces([]);
     setSelected(null);
-    setShowAllPlaces(false);
     markers.current.forEach((marker) => {
       marker.map = null;
     });
@@ -325,7 +311,7 @@ function Neighbourhood({
               "displayName",
               "location",
               "attributions",
-              ...(transit ? ["types", "businessStatus"] : ["photos"]),
+              ...(transit ? ["types", "businessStatus"] : []),
             ],
             includedTypes: [...(transit ? mode.types : next.types)],
             maxResultCount: NEARBY_LIMIT,
@@ -383,7 +369,7 @@ function Neighbourhood({
           title: place.displayName || "Loc din apropiere",
           content: label,
         });
-        marker.addListener("click", () => focusPlace(place, index));
+        marker.addListener("click", () => focusPlace(place));
         markers.current.push(marker);
         bounds.extend(place.location!);
       });
@@ -416,10 +402,6 @@ function Neighbourhood({
           ÎN APROPIEREA VIITOAREI TALE LOCUINȚE
         </span>
         <h2 id={heading}>{presentationCopy.neighbourhood}</h2>
-        <p>
-          Vezi ce ai aproape de casă, de la școli și parcuri până la magazine și
-          transport.
-        </p>
       </div>
       <div className="neighbourhood-layout">
         <div className="neighbourhood-map-wrap">
@@ -448,11 +430,28 @@ function Neighbourhood({
             <span>{property.location}</span>
           </div>
         </div>
-        <div ref={panel} className="neighbourhood-panel">
+        <div className="neighbourhood-panel">
           <h3>
             Locuri aproape de noua ta locuință
             {property.template === "editorial" ? "." : ""}
           </h3>
+          <div
+            className="neighbourhood-categories"
+            role="group"
+            aria-label="Descoperă locurile din apropiere"
+          >
+            {nearbyCategories.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                aria-pressed={category.id === item.id}
+                disabled={!ready || busy}
+                onClick={() => void explore(item)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           {isTransport && (
             <div
               className="neighbourhood-transport-modes"
@@ -502,35 +501,21 @@ function Neighbourhood({
                 </button>
               </div>
             )}
-            <div id={cardsId} className="neighbourhood-cards">
-              {visiblePlaces.map((place, index) => (
+            <div className="neighbourhood-cards">
+              {places.map((place, index) => (
                 <article
                   key={`${category.id}:${place.id}`}
                   className={`neighbourhood-card${selected === place.id ? " is-selected" : ""}`}
                 >
-                  <NearbyPlaceMedia
-                    category={category.id}
-                    photo={place.photos?.[0]}
-                  />
                   <div className="neighbourhood-card-copy">
-                    {!isTransport && (
-                      <small className="neighbourhood-card-category">
-                        {category.label}
-                      </small>
-                    )}
                     <button
                       type="button"
-                      onClick={() => focusPlace(place, index)}
+                      onClick={() => focusPlace(place)}
                       aria-pressed={selected === place.id}
                     >
                       <span className="neighbourhood-place-number">
                         {index + 1}
                       </span>
-                      <ArrowRight
-                        className="neighbourhood-card-arrow"
-                        size={17}
-                        aria-hidden="true"
-                      />
                       <span>{place.displayName || "Loc din apropiere"}</span>
                     </button>
                     {isTransport && (
@@ -562,8 +547,7 @@ function Neighbourhood({
                         rel="noopener noreferrer"
                         aria-label={`Traseu pe jos către ${place.displayName || "stație"}`}
                       >
-                        Traseu pe jos{" "}
-                        <ArrowUpRight size={12} aria-hidden="true" />
+                        Traseu pe jos
                       </a>
                     )}
                     {place.attributions?.map((attribution, i) => (
@@ -585,19 +569,6 @@ function Neighbourhood({
                 </article>
               ))}
             </div>
-            {places.length > initialPlaceCount && (
-              <button
-                type="button"
-                className="neighbourhood-more"
-                aria-expanded={showAllPlaces}
-                aria-controls={cardsId}
-                onClick={() => setShowAllPlaces(!showAllPlaces)}
-              >
-                {showAllPlaces
-                  ? "Arată mai puține locuri"
-                  : `Vezi toate cele ${places.length} locuri`}
-              </button>
-            )}
           </div>
           {ready && (
             <p className="neighbourhood-note neighbourhood-source">
@@ -605,14 +576,6 @@ function Neighbourhood({
             </p>
           )}
         </div>
-        <NearbyCategoryCarousel
-          category={category}
-          disabled={!ready || busy}
-          onSelect={(item) => {
-            void explore(item);
-            panel.current?.scrollIntoView({ block: "nearest" });
-          }}
-        />
       </div>
     </section>
   );

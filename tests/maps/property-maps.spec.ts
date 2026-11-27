@@ -125,7 +125,7 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     expect(requests.searches[0].maxResultCount).toBe(6);
     expect(requests.searches[0].rankPreference).toBe("DISTANCE");
     expect(requests.searches[0].fields).not.toContain("*");
-    expect(requests.searches[0].fields).toContain("photos");
+    expect(requests.searches[0].fields).not.toContain("photos");
     expect(requests.photos).toBe(0);
     expect(
       requests.details.filter((request) => request.fields.includes("photos")),
@@ -145,9 +145,33 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     expect(requests.searches[0].fields).not.toContain("fotografii");
     await expect(section.locator(".neighbourhood-cards img")).toHaveCount(0);
     await expect(
+      section.locator(
+        ".neighbourhood-cards svg, .neighbourhood-categories svg",
+      ),
+    ).toHaveCount(0);
+    const address = section.locator(
+      ".neighbourhood-map-wrap .neighbourhood-address",
+    );
+    await expect(address).toHaveText("Strada Test 123, București, România");
+    await expect(address).toHaveCSS("font-size", "12px");
+    await expect(section.locator(".neighbourhood-map-wrap")).toHaveCSS(
+      "border-radius",
+      "20px",
+    );
+    await expect(section.locator(".neighbourhood-card").first()).toHaveCSS(
+      "box-shadow",
+      /rgba\(85, 66, 31/,
+    );
+    const tabs = await section
+      .locator(".neighbourhood-categories")
+      .boundingBox();
+    const list = await section.locator(".neighbourhood-cards").boundingBox();
+    expect(tabs!.y + tabs!.height).toBeLessThan(list!.y);
+    await expect(
       section.getByRole("link", { name: "Local data provider" }),
     ).toHaveCount(2);
     const mapBox = await section.locator(".neighbourhood-map").boundingBox();
+    expect(mapBox!.height).toBeCloseTo(619.2, 1);
     const panelBox = await section
       .locator(".neighbourhood-panel")
       .boundingBox();
@@ -188,6 +212,11 @@ for (const template of ["editorial", "minimal", "panorama"]) {
       animations: "disabled",
     });
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(address).toHaveCSS("font-size", "11px");
+    await expect(section.locator(".neighbourhood-map")).toHaveCSS(
+      "height",
+      "360px",
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -204,64 +233,6 @@ for (const template of ["editorial", "minimal", "panorama"]) {
     });
   });
 }
-
-test("place photos stay on their own cards and additional photos load on expansion", async ({
-  page,
-}, testInfo) => {
-  await mockGoogleMaps(page);
-  const imageRequests: string[] = [];
-  await page.route("https://place-photos.example.test/**", (route) => {
-    const path = new URL(route.request().url()).pathname;
-    imageRequests.push(path);
-    return path === "/place-2.jpg"
-      ? route.fulfill({ status: 404 })
-      : route.fulfill({
-          path: "public/images/villa.jpg",
-          contentType: "image/jpeg",
-        });
-  });
-  await page.goto("/map-test-editorial");
-  await page.evaluate(() => {
-    window.__mapsTest.hasPlacePhotos = true;
-  });
-  const section = page.locator(".property-neighbourhood");
-  await section.scrollIntoViewIfNeeded();
-  const cards = section.locator(".neighbourhood-card");
-  await expect(cards).toHaveCount(3);
-  const thumbnail = cards.first().locator("img");
-  await expect
-    .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
-    .toBeGreaterThan(0);
-  await expect(
-    cards.first().getByRole("link", { name: "Photo contributor 0" }),
-  ).toHaveAttribute("href", "https://example.com/contributors/0");
-  await expect(cards.nth(2).locator("img")).toHaveCount(0);
-  await expect(
-    cards.nth(2).locator(".neighbourhood-thumbnail svg"),
-  ).toBeVisible();
-  expect(imageRequests).not.toContain("/place-3.jpg");
-  const more = section.getByRole("button", {
-    name: "Vezi toate cele 5 locuri",
-  });
-  await more.click();
-  await expect(cards).toHaveCount(5);
-  await cards.nth(3).scrollIntoViewIfNeeded();
-  await expect.poll(() => imageRequests.includes("/place-3.jpg")).toBe(true);
-  await expect(cards.nth(4).locator("img")).toHaveCount(0);
-  expect(await page.evaluate(() => window.__mapsTest.searches.length)).toBe(1);
-  const carousel = section.locator(".neighbourhood-categories");
-  await section.getByRole("button", { name: "Categorii următoare" }).click();
-  await expect
-    .poll(() => carousel.evaluate((track) => track.scrollLeft))
-    .toBeGreaterThan(0);
-  await section.screenshot({
-    path: testInfo.outputPath("photo-cards-desktop.png"),
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await section.screenshot({
-    path: testInfo.outputPath("photo-cards-mobile.png"),
-  });
-});
 
 for (const [template, gallery, videoPadding] of [
   ["panorama", ".atelier-gallery", "100px"],

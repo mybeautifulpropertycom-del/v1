@@ -26,7 +26,6 @@ type MapsTestState = {
     };
   }>;
   photos: number;
-  hasPlacePhotos: boolean;
   maps: number;
   radii: number[];
   delay: number;
@@ -57,7 +56,6 @@ export async function mockGoogleMaps(page: Page) {
       templateAddressResult: "match",
       searches: [],
       photos: 0,
-      hasPlacePhotos: false,
       maps: 0,
       radii: [],
       delay: 0,
@@ -228,12 +226,8 @@ export async function mockGoogleMaps(page: Page) {
           };
         }
         if (request.includedTypes.includes("park")) return { places: [] };
-        const withPhotos =
-          state.hasPlacePhotos &&
-          request.fields.includes("photos") &&
-          request.includedTypes.includes("primary_school");
         return {
-          places: (withPhotos ? [0, 1, 2, 3, 4] : [0, 1]).map((n) => ({
+          places: [0, 1].map((n) => ({
             id: `ChIJ-nearby-${n}`,
             displayName: request.includedTypes.includes("restaurant")
               ? n === 0
@@ -241,28 +235,8 @@ export async function mockGoogleMaps(page: Page) {
                 : "Neighborhood Bistro"
               : n === 0
                 ? "Nearby Elementary School"
-                : n === 1
-                  ? "Nearby Learning Centre"
-                  : `School ${n + 1}`,
+                : "Nearby Learning Centre",
             location: point(44.43 + n * 0.005, 26.1),
-            ...(withPhotos && n < 4
-              ? {
-                  photos: [
-                    {
-                      getURI: () => {
-                        state.photos++;
-                        return `https://place-photos.example.test/place-${n}.jpg`;
-                      },
-                      authorAttributions: [
-                        {
-                          displayName: `Photo contributor ${n}`,
-                          uri: `https://example.com/contributors/${n}`,
-                        },
-                      ],
-                    },
-                  ],
-                }
-              : {}),
             googleMapsURI: "https://www.google.com/maps",
             attributions: [
               {
