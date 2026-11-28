@@ -11,6 +11,7 @@ export const platformRedirects = [
   ["/templates/:path*", "/modele/:path*"],
   ["/preview/:path*", "/previzualizare/:path*"],
   ["/login", "/autentificare"],
+  ["/signin", "/autentificare"],
   ["/register", "/inregistrare"],
   ["/reset-password", "/resetare-parola"],
   ["/admin/properties/:path*", "/administrare/proprietati/:path*"],

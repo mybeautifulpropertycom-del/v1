@@ -6,6 +6,9 @@ import { discoveryCities } from "./property-discovery";
 
 export const SITE_NAME = PLATFORM_NAME;
 export const HOME_IMAGE = "/images/discovery/quiz-terasa-apus.webp";
+export const HOME_SHARE_IMAGE = "/images/discovery/privire-de-la-terasa.jpg";
+export const SHARE_IMAGE_WIDTH = 1200;
+export const SHARE_IMAGE_HEIGHT = 630;
 export const HOME_TITLE =
   "Caută sau publică o locuință | Următoarea Proprietate";
 export const HOME_DESCRIPTION =
@@ -75,33 +78,47 @@ function searchWords(text: string): string {
     .trim()} `;
 }
 
-export function homeMetadata(): Metadata {
+export function socialMetadata(
+  title: string,
+  description: string,
+  path: string,
+  image = HOME_SHARE_IMAGE,
+): Pick<Metadata, "openGraph" | "twitter"> {
   const images = [
     {
-      url: siteUrl(HOME_IMAGE),
-      alt: SITE_NAME,
+      url: siteUrl(image),
+      alt: title,
+      width: SHARE_IMAGE_WIDTH,
+      height: SHARE_IMAGE_HEIGHT,
+      type: "image/jpeg",
     },
   ];
+  return {
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: "ro_RO",
+      title,
+      description,
+      url: siteUrl(path),
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images,
+    },
+  };
+}
+
+export function homeMetadata(): Metadata {
   return {
     title: { absolute: HOME_TITLE },
     description: HOME_DESCRIPTION,
     alternates: { canonical: siteUrl("/") },
     robots: publicRobots(),
-    openGraph: {
-      type: "website",
-      siteName: SITE_NAME,
-      locale: "ro_RO",
-      title: HOME_TITLE,
-      description: HOME_DESCRIPTION,
-      url: siteUrl("/"),
-      images,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: HOME_TITLE,
-      description: HOME_DESCRIPTION,
-      images,
-    },
+    ...socialMetadata(HOME_TITLE, HOME_DESCRIPTION, "/"),
   };
 }
 
@@ -198,7 +215,10 @@ function propertySearchLocation(property: PublicProperty) {
   return { city, zone, neighborhood, address: addressWithCity, street };
 }
 
-export function propertyMetadata(property: PublicProperty): Metadata {
+export function propertyMetadata(
+  property: PublicProperty,
+  shareImage?: string,
+): Metadata {
   const type =
     (property.type === "House" || property.type === "Town House") &&
     searchWords(property.title).includes(" vila ")
@@ -238,30 +258,13 @@ export function propertyMetadata(property: PublicProperty): Metadata {
   const description =
     [aboutStreet, aboutArea].find((text) => text && text.length <= 160) ||
     `${question} ${promotion} ${invitation}`;
-  const url = siteUrl(publicPath(property));
-  const images = property.images
-    .slice(0, 1)
-    .map((image) => ({ url: siteUrl(image), alt: title }));
+  const path = publicPath(property);
   return {
     title: { absolute: title },
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: siteUrl(path) },
     robots: publicRobots(),
-    openGraph: {
-      type: "website",
-      siteName: SITE_NAME,
-      locale: "ro_RO",
-      url,
-      title,
-      description,
-      images,
-    },
-    twitter: {
-      card: images.length ? "summary_large_image" : "summary",
-      title,
-      description,
-      images,
-    },
+    ...socialMetadata(title, description, path, shareImage),
   };
 }
 

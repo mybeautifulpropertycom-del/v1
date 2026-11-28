@@ -6,6 +6,8 @@ const photoOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
   : null;
 const config: NextConfig = {
+  // Some chat clients use browser-like user agents and only read the HTML head.
+  htmlLimitedBots: /.*/,
   images: {
     formats: ["image/webp"],
     qualities: [75, 80],
@@ -58,6 +60,7 @@ const config: NextConfig = {
   },
   serverExternalPackages: ["@ffmpeg-installer/linux-x64"],
   outputFileTracingIncludes: {
+    "/p/*/coperta.jpg": ["./public/images/**/*.{jpg,jpeg,png,webp}"],
     "/api/admin/*": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
     "/api/video/*": ["./node_modules/@ffmpeg-installer/linux-x64/**"],
     "/api/stripe/webhook": ["./node_modules/@ffmpeg-installer/linux-x64/**"],

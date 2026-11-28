@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { serverSupabase } from "./supabase";
 import { type PublicProfile, type PublicProperty } from "./model";
 import { propertyMetadata } from "./seo";
+import { propertyShareSource, shareImageVersion } from "./property-share-image";
 
 export const UNAVAILABLE_PAGE_TITLE = "Această pagină nu este disponibilă.";
 export const SOLD_PROPERTY_TITLE = "Această proprietate a fost vândută.";
@@ -30,7 +31,13 @@ export const getPublished = cache(
 
 export async function publishedMetadata(slug: string): Promise<Metadata> {
   const data = await getPublished(slug);
-  if (data) return propertyMetadata(data.property);
+  if (data) {
+    const source = propertyShareSource(data.property.images[0]);
+    const image = source
+      ? `/p/${data.property.slug}/coperta.jpg?v=${shareImageVersion(source)}`
+      : undefined;
+    return propertyMetadata(data.property, image);
+  }
 
   const title = await unavailablePropertyTitle(slug);
   const description = `${title} Vezi alte proprietăți pe Următoarea Proprietate.`;

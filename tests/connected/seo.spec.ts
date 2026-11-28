@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { workspace } from "./workspace-fixture";
-import { HOME_TITLE, HOME_DESCRIPTION, HOME_IMAGE } from "../../src/lib/seo";
+import {
+  HOME_TITLE,
+  HOME_DESCRIPTION,
+  HOME_SHARE_IMAGE,
+} from "../../src/lib/seo";
+import { readFile } from "node:fs/promises";
+import sharp from "sharp";
 
 test("the public sitemap leads crawlers directly to indexable canonical pages", async ({
   request,
@@ -201,6 +207,80 @@ test("the www alias redirects to the canonical host and preserves the path and q
   );
 });
 
+test("pasted public links expose JPEG previews in the HTML head", async ({
+  request,
+}) => {
+  const origin = "https://urmatoarea-proprietate.ro";
+  const userAgents = [
+    "WhatsApp/2.26.1",
+    "facebookexternalhit/1.1",
+    "Mozilla/5.0",
+  ];
+  const siteCoverUrl = origin + HOME_SHARE_IMAGE;
+  for (const route of ["/", "/inregistrare", "/autentificare", "/signin"]) {
+    const response = await request.get(route, {
+      headers: { "User-Agent": userAgents[0] },
+    });
+    expect(response.status(), route).toBe(200);
+    const head = (await response.text()).split("</head>", 1)[0];
+    expect(head).toContain(`property="og:image" content="${siteCoverUrl}"`);
+    expect(head).toContain(`name="twitter:image" content="${siteCoverUrl}"`);
+    if (route !== "/") expect(head).toContain('name="robots" content="noindex');
+  }
+  const siteCover = await request.get(HOME_SHARE_IMAGE);
+  expect(siteCover.status()).toBe(200);
+  expect(siteCover.headers()["content-type"]).toMatch(/^image\/jpeg/);
+  const homeImage = await sharp(await siteCover.body()).metadata();
+  expect(homeImage).toMatchObject({ format: "jpeg", width: 1200, height: 630 });
+
+  for (const userAgent of userAgents) {
+    const response = await request.get("/share-test-address", {
+      headers: { "User-Agent": userAgent },
+    });
+    expect(response.status()).toBe(200);
+    const head = (await response.text()).split("</head>", 1)[0];
+    const image = /property="og:image" content="([^"]+)"/.exec(head)?.[1];
+    expect(image).toMatch(
+      /^https:\/\/urmatoarea-proprietate\.ro\/p\/share-test-home\/coperta\.jpg\?v=[a-f0-9]{16}$/,
+    );
+    expect(head).toContain(`name="twitter:image" content="${image}"`);
+    expect(head).toContain('property="og:image:type" content="image/jpeg"');
+    expect(head).toContain('property="og:image:width" content="1200"');
+    expect(head).toContain('property="og:image:height" content="630"');
+
+    const url = new URL(image!);
+    const cover = await request.get(url.pathname + url.search, {
+      headers: { "User-Agent": userAgent },
+    });
+    expect(cover.status()).toBe(200);
+    expect(cover.headers()["content-type"]).toBe("image/jpeg");
+    expect(cover.headers()["cache-control"]).toContain("public");
+    const bytes = await cover.body();
+    expect(await sharp(bytes).metadata()).toMatchObject({
+      format: "jpeg",
+      width: 1200,
+      height: 630,
+    });
+    const source = await readFile("public/images/discovery/apartament.webp");
+    const fromCover = await sharp(source)
+      .rotate()
+      .resize(1200, 630, { fit: "cover" })
+      .flatten({ background: "#fff" })
+      .jpeg({ quality: 82 })
+      .toBuffer();
+    expect(bytes.equals(fromCover)).toBe(true);
+  }
+
+  const oldLink = await request.get("/p/share-test-home", {
+    headers: { "User-Agent": userAgents[0] },
+  });
+  expect(oldLink.url()).toMatch(/\/share-test-address$/);
+  const unavailable = await request.get(
+    "/p/proprietate-inexistenta/coperta.jpg",
+  );
+  expect(unavailable.status()).toBe(404);
+});
+
 test("anonymous visitors see the property quiz at an indexable homepage", async ({
   page,
   request,
@@ -238,7 +318,7 @@ test("anonymous visitors see the property quiz at an indexable homepage", async 
   );
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
     "content",
-    new RegExp(`${HOME_IMAGE}$`),
+    `https://urmatoarea-proprietate.ro${HOME_SHARE_IMAGE}`,
   );
   await expect(
     page.getByText("Vinzi sau închiriezi?").filter({ visible: true }),

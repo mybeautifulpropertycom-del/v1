@@ -2,11 +2,21 @@
 // Fake Supabase responses let browser tests exercise server-rendered public routes.
 import { demoWorkspace } from "../../src/lib/demo";
 import { DISCOVERY_PAGE_SIZE } from "../../src/lib/property-discovery";
+import { readFile } from "node:fs/promises";
+
+const coverObject =
+  "/storage/v1/object/public/property-images/test-owner/test-listing/camera.webp";
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input, init) => {
   const url = new URL(input instanceof Request ? input.url : String(input));
   if (url.origin !== "https://browser-test.supabase.co")
     return originalFetch(input, init);
+  if (url.pathname === coverObject) {
+    const bytes = await readFile("public/images/discovery/apartament.webp");
+    return new Response(new Uint8Array(bytes), {
+      headers: { "Content-Type": "image/webp" },
+    });
+  }
   const body = init?.body
     ? JSON.parse(String(init.body))
     : input instanceof Request
@@ -182,6 +192,20 @@ globalThis.fetch = async (input, init) => {
   }
   if (url.pathname !== "/rest/v1/rpc/get_public_property")
     throw new Error(`Unexpected test-server Supabase request: ${url.pathname}`);
+  if (["share-test-home", "share-test-address"].includes(body.property_slug)) {
+    const sample = demoWorkspace();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    return Response.json({
+      property: {
+        ...sample.properties[0],
+        slug: "share-test-home",
+        address_slug: "share-test-address",
+        status: "published",
+        images: [`${url.origin}${coverObject}`, ...sample.properties[0].images],
+      },
+      profile: sample.profile,
+    });
+  }
   if (
     body.property_slug?.startsWith("print-test-") ||
     body.property_slug === "proprietate-inexistenta"
