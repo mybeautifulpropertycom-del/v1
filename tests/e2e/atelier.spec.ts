@@ -144,11 +144,58 @@ test("Atelier navigation, feature details, tour popup and sample film work", asy
   ).toBeTruthy();
 });
 
+test("Panorama starts the story text centered and sticks within the section on desktop", async ({
+  page,
+}) => {
+  await page.goto("/modele/panorama");
+  await page.evaluate(() => document.fonts.ready);
+  const story = page.locator(".atelier-story");
+  const figure = story.locator("figure");
+  const copy = story.locator(".atelier-story-copy");
+  const initialFigure = (await figure.boundingBox())!;
+  const initialCopy = (await copy.boundingBox())!;
+  expect(initialCopy.y + initialCopy.height / 2).toBeCloseTo(
+    initialFigure.y + initialFigure.height / 2,
+    0,
+  );
+  const inset = await copy.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).top),
+  );
+  const travel = initialFigure.height / 2 - initialCopy.height / 2;
+  expect(travel).toBeGreaterThan(8);
+  const stickyStart = initialCopy.y - inset;
+  for (const scrollY of [stickyStart + travel / 4, stickyStart + travel / 2]) {
+    await page.evaluate(
+      (top) => window.scrollTo({ top, behavior: "instant" }),
+      scrollY,
+    );
+    await expect
+      .poll(async () => Math.round((await copy.boundingBox())!.y))
+      .toBe(Math.round(inset));
+  }
+  await story.evaluate((section) => {
+    window.scrollBy({
+      top: section.getBoundingClientRect().bottom + 20,
+      behavior: "instant",
+    });
+  });
+  const finalCopy = (await copy.boundingBox())!;
+  const finalStory = (await story.boundingBox())!;
+  expect(finalCopy.y + finalCopy.height).toBeLessThanOrEqual(
+    finalStory.y + finalStory.height,
+  );
+  expect(finalCopy.y + finalCopy.height).toBeLessThan(0);
+});
+
 test("Atelier fits phones and keeps the tour action available without blocking its dialog", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/modele/panorama");
+  await expect(page.locator(".atelier-story-copy")).toHaveCSS(
+    "position",
+    "static",
+  );
   await expect(page.locator("#details")).toHaveCSS("padding-top", "30px");
   await expect(page.locator("#details")).toHaveCSS("padding-bottom", "30px");
   await expect(page.locator(".atelier-story")).toHaveCSS(

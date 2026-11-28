@@ -446,6 +446,12 @@
   height: 100%;
   object-fit: cover;
 }
+@media (min-width: 901px) {
+  .atelier-story-copy {
+    position: sticky;
+    top: clamp(96px, 16vh, 144px);
+  }
+}
 .atelier-story-copy .atelier-kicker {
   margin-bottom: 26px;
 }
